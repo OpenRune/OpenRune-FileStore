@@ -27,13 +27,13 @@ class NPCDecoder : DefinitionDecoder<NPCDefinition>(NPCS) {
             12 -> size = buffer.readUnsignedByte()
             13 -> standAnim = buffer.readUnsignedShort()
             14 -> walkAnim = buffer.readUnsignedShort()
-            15 -> render3 = buffer.readUnsignedShort()
-            16 -> render4 = buffer.readUnsignedShort()
+            15 -> rotateLeftAnim = buffer.readUnsignedShort()
+            16 -> rotateRightAnim = buffer.readUnsignedShort()
             17 -> {
                 walkAnim = buffer.readUnsignedShort()
-                render5 = buffer.readUnsignedShort()
-                render6 = buffer.readUnsignedShort()
-                render7 = buffer.readUnsignedShort()
+                rotateBackAnim = buffer.readUnsignedShort()
+                walkLeftAnim = buffer.readUnsignedShort()
+                walkRightAnim = buffer.readUnsignedShort()
             }
             18 -> category = buffer.readUnsignedShort()
             in 30..34 -> {
