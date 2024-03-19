@@ -1,12 +1,14 @@
 package dev.openrune.cache
 
+import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.definition.data.*
 import dev.openrune.cache.filestore.definition.decoder.*
 import java.nio.file.Path
 
 object CacheManager {
 
-    lateinit var cache: dev.openrune.cache.filestore.Cache
+
+    lateinit var cache: Cache
     private lateinit var npcs: Array<NPCDefinition>
     private lateinit var objects: Array<ObjectDefinition>
     private lateinit var items: Array<ItemDefinition>
@@ -14,9 +16,12 @@ object CacheManager {
     private lateinit var varps: Array<VarpDefinition>
     private lateinit var anim: Array<AnimDefinition>
     private lateinit var enum: Array<EnumDefinition>
+    private var cacheRevision = -1
 
-    fun init(cachePath: Path) {
-        cache = dev.openrune.cache.filestore.Cache.load(cachePath, false)
+
+    fun init(cachePath: Path, cacheRevision : Int) {
+        this.cacheRevision = cacheRevision;
+        cache = Cache.load(cachePath, false)
         npcs = NPCDecoder().load(cache)
         objects = ObjectDecoder().load(cache)
         items = ItemDecoder().load(cache)
@@ -44,4 +49,7 @@ object CacheManager {
     fun anim(id: Int): AnimDefinition = anim[id]
 
     fun enum(id: Int): EnumDefinition = enum[id]
+
+    fun revisionIsOrAfter(rev : Int) = rev <= cacheRevision
+    fun revisionIsOrBefore(rev : Int) = rev >= cacheRevision
 }

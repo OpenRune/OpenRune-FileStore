@@ -1,5 +1,7 @@
 package dev.openrune.cache.filestore.definition.decoder
 
+import dev.openrune.cache.CacheManager
+import dev.openrune.cache.CacheManager.revisionIsOrBefore
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.util.Index.ANIM
 import dev.openrune.cache.filestore.buffer.Reader
@@ -62,15 +64,15 @@ class AnimDecoder : DefinitionDecoder<AnimDefinition>(ANIM) {
             13 -> {
                 val count = buffer.readUnsignedByte()
                 for (i in 0 until count) {
-                    buffer.readMedium()
+                    readSounds(buffer, CacheManager.revisionIsOrAfter(220))
                 }
             }
             14 -> buffer.readInt()
             15 -> {
                 val count = buffer.readUnsignedShort()
                 for (i in 0 until count) {
-                    buffer.readUnsignedShort()
-                    buffer.readMedium()
+                    val index: Int = buffer.readUnsignedShort()
+                    readSounds(buffer, CacheManager.revisionIsOrAfter(220))
                 }
             }
             16 -> {

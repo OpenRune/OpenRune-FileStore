@@ -1,13 +1,14 @@
 package dev.openrune.cache.filestore.definition.data
 
 import dev.openrune.cache.filestore.definition.Definition
+import dev.openrune.cache.filestore.definition.Sound
 
 data class AnimDefinition(
     override var id: Int = -1,
     var frameIds: IntArray? = null,
     var frameLengths: IntArray? = null,
     var priority: Int = -1
-) : Definition {
+) : Definition, Sound {
 
     var lengthInCycles = 0
 

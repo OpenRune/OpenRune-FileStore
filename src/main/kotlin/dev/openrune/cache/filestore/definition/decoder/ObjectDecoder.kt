@@ -1,5 +1,6 @@
 package dev.openrune.cache.filestore.definition.decoder
 
+import dev.openrune.cache.CacheManager.revisionIsOrAfter
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.util.Index.OBJECTS
 import dev.openrune.cache.filestore.buffer.Reader
@@ -82,12 +83,17 @@ class ObjectDecoder : DefinitionDecoder<ObjectDefinition>(OBJECTS) {
             78 -> {
                 ambientSoundId = buffer.readUnsignedShort()
                 soundDistance = buffer.readUnsignedByte()
+                if (revisionIsOrAfter(220)) {
+                    soundRetain = buffer.readUnsignedByte()
+                }
             }
             79 -> {
                 soundMin = buffer.readUnsignedShort()
                 soundMax = buffer.readUnsignedShort()
                 soundDistance = buffer.readUnsignedByte()
-
+                if (revisionIsOrAfter(220)) {
+                    soundRetain = buffer.readUnsignedByte()
+                }
                 val length: Int = buffer.readUnsignedByte()
                 ambientSoundIds = IntStream.range(0, length).map {
                     buffer.readUnsignedShort()

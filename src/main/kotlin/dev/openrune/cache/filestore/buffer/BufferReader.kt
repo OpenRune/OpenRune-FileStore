@@ -53,6 +53,11 @@ class BufferReader(
         return readUnsignedByteAdd() or (readByte() shl 8)
     }
 
+    override fun readShortSmart() : Int {
+        val peek = readUnsignedByte()
+        return if (peek < 128) peek - 64 else (peek shl 8 or readUnsignedByte()) - 49152
+    }
+
     override fun readUnsignedByteAdd(): Int {
         return (readByte() - 128).toByte().toInt()
     }

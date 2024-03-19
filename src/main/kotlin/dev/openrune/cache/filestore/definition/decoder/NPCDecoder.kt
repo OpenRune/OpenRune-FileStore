@@ -1,5 +1,6 @@
 package dev.openrune.cache.filestore.definition.decoder
 
+import dev.openrune.cache.CacheManager
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.util.Index.NPCS
 import dev.openrune.cache.filestore.buffer.Reader
@@ -58,8 +59,31 @@ class NPCDecoder : DefinitionDecoder<NPCDefinition>(NPCS) {
             100 -> ambient = buffer.readByte()
             101 -> contrast = buffer.readByte()
             102 -> {
-                headIconArchiveIds = intArrayOf(-1)
-                headIconSpriteIndex = IntArray(buffer.readUnsignedShort())
+                if (CacheManager.revisionIsOrBefore(210)) {
+                    headIconArchiveIds = intArrayOf(-1)
+                    headIconSpriteIndex = IntArray(buffer.readUnsignedShort())
+                } else {
+                    val bitfield = buffer.readUnsignedByte()
+                    var size = 0
+
+                    var pos = bitfield
+                    while (pos != 0) {
+                        ++size
+                        pos = pos shr 1
+                    }
+                    headIconArchiveIds = IntArray(size)
+                    headIconSpriteIndex = IntArray(size)
+
+                    for (i in 0 until size) {
+                        if (bitfield and (1 shl i) == 0) {
+                            headIconArchiveIds!![i] = -1
+                            headIconSpriteIndex!![i] = -1
+                        } else {
+                            headIconArchiveIds!![i] = buffer.readUnsignedShort()
+                            headIconSpriteIndex!![i] = buffer.readShortSmart() - 1
+                        }
+                    }
+                }
             }
             111 -> isFollower = true
             103 -> rotation = buffer.readUnsignedShort()

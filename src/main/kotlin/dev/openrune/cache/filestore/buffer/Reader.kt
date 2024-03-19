@@ -39,6 +39,8 @@ interface Reader {
 
     fun readShortAddLittle(): Int
 
+    fun readShortSmart(): Int
+
     fun readUnsignedShort(): Int
 
     fun readUnsignedShortLittle(): Int
