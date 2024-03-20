@@ -57,7 +57,7 @@ class DumpTypeId(
         for ((index, npc) in CacheManager.getNpcs().withIndex()) {
             val rawName = npc.name.replace("?", "")
             val useNullName = rawName.isNotEmpty() && rawName.isNotBlank()
-            val name = if (useNullName) namer.name(npc.name, index) else "NULL"
+            val name = if (useNullName) namer.name(npc.name, index) else "NULL_${index}"
             write(file, "const val $name = $index")
         }
     }
@@ -66,7 +66,7 @@ class DumpTypeId(
         for ((index, obj) in CacheManager.getObjects().withIndex()) {
             val rawName = obj.name.replace("?", "")
             val useNullName = rawName.isNotEmpty() && rawName.isNotBlank()
-            val name = if (useNullName) namer.name(obj.name, index) else "NULL"
+            val name = if (useNullName) namer.name(obj.name, index) else "NULL_${index}"
             write(file, "const val $name = $index")
         }
     }
