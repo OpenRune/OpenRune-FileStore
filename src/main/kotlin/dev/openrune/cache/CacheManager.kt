@@ -8,7 +8,7 @@ import java.nio.file.Path
 object CacheManager {
 
 
-    lateinit var cache: Cache
+    private lateinit var cache: Cache
     private lateinit var npcs: Array<NPCDefinition>
     private lateinit var objects: Array<ObjectDefinition>
     private lateinit var items: Array<ItemDefinition>
@@ -30,6 +30,10 @@ object CacheManager {
         anim = AnimDecoder().load(cache)
         enum = EnumDecoder().load(cache)
     }
+
+    fun getNpcs() = npcs
+    fun getObjects() = objects
+    fun getItems() = items
 
     fun npc(id: Int): NPCDefinition = npcs[id]
     fun npcCount(): Int = npcs.size

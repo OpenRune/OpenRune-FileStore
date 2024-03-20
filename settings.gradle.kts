@@ -1,2 +1,2 @@
-rootProject.name = "filestore"
+rootProject.name = "OpenRune-Filestore"
 

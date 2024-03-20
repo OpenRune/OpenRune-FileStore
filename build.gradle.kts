@@ -19,6 +19,8 @@ dependencies {
 
     // https://mvnrepository.com/artifact/com.displee/rs-cache-library
     implementation("com.displee:rs-cache-library:7.1.0")
+// https://mvnrepository.com/artifact/org.slf4j/slf4j-api
+    implementation("org.slf4j:slf4j-api:2.1.0-alpha1")
 
     implementation("com.github.jponge:lzma-java:1.3")
 
