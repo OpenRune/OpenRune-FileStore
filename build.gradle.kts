@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "dev.openrune"
-version = "2.0.0"
+version = "1.2.3"
 
 repositories {
     mavenCentral()
@@ -27,7 +27,7 @@ dependencies {
 
 // https://mvnrepository.com/artifact/net.lingala.zip4j/zip4j
     implementation("net.lingala.zip4j:zip4j:2.11.5")
-    implementation("dev.openrune:js5server:1.0.0")
+    implementation("dev.openrune:js5server:1.0.2")
 // https://mvnrepository.com/artifact/commons-io/commons-io
     implementation("commons-io:commons-io:2.15.1")
 
