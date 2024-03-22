@@ -7,76 +7,105 @@ import java.io.PrintWriter
 import java.nio.file.Files
 import java.nio.file.Path
 
-enum class Type {
-    ITEM,
-    OBJECT,
-    NPC
+enum class Language {
+    KOTLIN,
+    JAVA
 }
+
 class DumpTypeId(
     private val cache: Path,
-    private val rev : Int,
-    private val type: Type,
+    private val rev: Int,
     private val outputPath: Path,
-    private val fileName: String,
     private val packageName: String
 ) {
 
     private val logger = KotlinLogging.logger {}
 
     private val namer = Namer()
-    private val file = generateWriter(fileName)
 
-    fun dump() {
-        CacheManager.init(cache,rev)
+    private lateinit var language: Language
+
+    fun init(language: Language = Language.KOTLIN, fileNames: List<String> = listOf("items", "npcs", "objs", "objsNull")) {
+        this.language = language
+        CacheManager.init(cache, rev)
         if (!Files.exists(outputPath)) {
             Files.createDirectory(outputPath)
             logger.info { "Output path does not exist. Creating directory: $outputPath" }
         } else if (!Files.isDirectory(outputPath)) {
             logger.error { "Output path specified is a file - it must be a directory!" }
         }
-        when (type) {
-            Type.ITEM -> writeItems()
-            Type.NPC -> writeNpcs()
-            Type.OBJECT -> writeObjs()
-        }
-        endWriter(file)
+
+        writeItems(fileNames[0])
+        writeNpcs(fileNames[1])
+        writeObjs(fileNames[2])
+        writeObjsNull(fileNames[3])
     }
 
-    private fun writeItems() {
+    private fun writeItems(fileName: String) {
+        val file = generateWriter(fileName)
         for ((index, item) in CacheManager.getItems().withIndex()) {
             if (item.isPlaceholder) continue
             val rawName = if (item.noteTemplateId > 0) item.name + "_NOTED" else item.name
             if (rawName.isNotBlank()) {
                 val name = namer.name(rawName, index)
-                write(file, "const val $name = $index")
+                write(file, fieldName(name, index))
             }
         }
+        endWriter(file)
     }
 
-    private fun writeNpcs() {
+    private fun writeNpcs(fileName: String) {
+        val file = generateWriter(fileName)
         for ((index, npc) in CacheManager.getNpcs().withIndex()) {
             val rawName = npc.name.replace("?", "")
             val useNullName = rawName.isNotEmpty() && rawName.isNotBlank()
-            val name = if (useNullName) namer.name(npc.name, index) else "NULL_${index}"
-            write(file, "const val $name = $index")
+            val name = if (useNullName) namer.name(npc.name, index) else "NULL_$index"
+            write(file, fieldName(name, index))
         }
+        endWriter(file)
     }
 
-    private fun writeObjs() {
+    private fun writeObjs(fileName: String) {
+        val file = generateWriter(fileName)
         for ((index, obj) in CacheManager.getObjects().withIndex()) {
             val rawName = obj.name.replace("?", "")
-            val useNullName = rawName.isNotEmpty() && rawName.isNotBlank()
-            val name = if (useNullName) namer.name(obj.name, index) else "NULL_${index}"
-            write(file, "const val $name = $index")
+            if (rawName.isNotEmpty() && rawName.isNotBlank()) {
+                val useNullName = rawName.isNotEmpty() && rawName.isNotBlank()
+                val name = if (useNullName) namer.name(obj.name, index) else "NULL_$index"
+                write(file, fieldName(name, index))
+            }
+        }
+        endWriter(file)
+    }
+
+    private fun writeObjsNull(fileName: String) {
+        val file = generateWriter(fileName)
+        for ((index, obj) in CacheManager.getObjects().withIndex()) {
+            val rawName = obj.name.replace("?", "")
+            if (rawName.isEmpty() && rawName.isBlank()) {
+                val useNullName = rawName.isNotEmpty() && rawName.isNotBlank()
+                val name = if (useNullName) namer.name(obj.name, index) else "NULL_$index"
+                write(file, fieldName(name, index))
+            }
+        }
+        endWriter(file)
+    }
+
+    private fun fieldName(name: String?, index: Int): String {
+        return if (language == Language.KOTLIN) {
+            "const val $name = $index"
+        } else {
+            "public static final int $name = $index;"
         }
     }
 
     private fun generateWriter(fileName: String): PrintWriter {
-        val writer = PrintWriter(outputPath.resolve(fileName).toFile())
+        val writer = PrintWriter(outputPath.resolve("$fileName.${if (language == Language.KOTLIN) "kt" else "java"}").toFile())
         writer.println("/* Auto-generated file using ${this::class.java} */")
         writer.println("package $packageName")
         writer.println()
-        writer.println("object ${fileName.removeSuffix(".kt")} {")
+        val classDeclaration = if (language == Language.KOTLIN) "object" else "public class"
+        writer.println("$classDeclaration ${fileName.removeSuffix(".kt").removeSuffix(".java")} {")
         writer.println()
         return writer
     }
@@ -91,13 +120,3 @@ class DumpTypeId(
         writer.close()
     }
 }
-
-fun main() {
-    val cache = Path.of("E:\\RSPS\\OpenRune\\OpenRune-Server\\data\\cache\\")
-    val rev = 220
-    DumpTypeId(cache,rev,Type.ITEM, Path.of("./test."),"Items.kt","gg.rsmod.plugins.api.cfg").dump()
-    DumpTypeId(cache,rev,Type.NPC, Path.of("./test."),"Npcs.kt","gg.rsmod.plugins.api.cfg").dump()
-    DumpTypeId(cache,rev,Type.OBJECT, Path.of("./test."),"Objs.kt","gg.rsmod.plugins.api.cfg").dump()
-}
-
-

@@ -10,7 +10,7 @@ data class NPCDefinition(
     var name: String = "null",
     var size : Int = 1,
     var category : Int = -1,
-    var modelIds: IntArray? = null,
+    var models: IntArray? = null,
     var chatheadModels: IntArray? = null,
     var standAnim : Int = -1,
     var rotateLeftAnim : Int = -1,

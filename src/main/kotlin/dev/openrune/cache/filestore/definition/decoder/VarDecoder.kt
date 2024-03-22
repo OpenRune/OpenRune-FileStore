@@ -1,11 +1,11 @@
 package dev.openrune.cache.filestore.definition.decoder
 
+import dev.openrune.cache.VARPLAYER
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
-import dev.openrune.cache.util.Index.VARP
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.data.VarpDefinition
 
-class VarDecoder : DefinitionDecoder<VarpDefinition>(VARP) {
+class VarDecoder : DefinitionDecoder<VarpDefinition>(VARPLAYER) {
 
     override fun create(size: Int) = Array(size) { VarpDefinition(it) }
 

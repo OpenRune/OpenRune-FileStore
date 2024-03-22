@@ -1,12 +1,12 @@
 package dev.openrune.cache.filestore.definition.decoder
 
 import dev.openrune.cache.CacheManager
+import dev.openrune.cache.NPC
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
-import dev.openrune.cache.util.Index.NPCS
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.data.NPCDefinition
 
-class NPCDecoder : DefinitionDecoder<NPCDefinition>(NPCS) {
+class NPCDecoder : DefinitionDecoder<NPCDefinition>(NPC) {
     override fun create(size: Int) = Array(size) { NPCDefinition(it) }
 
     override fun getFile(id: Int) = id
@@ -15,11 +15,11 @@ class NPCDecoder : DefinitionDecoder<NPCDefinition>(NPCS) {
         when (opcode) {
             1 -> {
                 val length = buffer.readUnsignedByte()
-                modelIds = IntArray(length)
+                models = IntArray(length)
                 for (count in 0 until length) {
-                    modelIds!![count] = buffer.readUnsignedShort()
-                    if (modelIds!![count] == 65535) {
-                        modelIds!![count] = -1
+                    models!![count] = buffer.readUnsignedShort()
+                    if (models!![count] == 65535) {
+                        models!![count] = -1
                     }
                 }
             }

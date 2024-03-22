@@ -1,14 +1,13 @@
 package dev.openrune.cache.filestore.definition.decoder
 
+import dev.openrune.cache.ANIMATIONS
 import dev.openrune.cache.CacheManager
-import dev.openrune.cache.CacheManager.revisionIsOrBefore
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
-import dev.openrune.cache.util.Index.ANIM
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.data.AnimDefinition
 import kotlin.math.ceil
 
-class AnimDecoder : DefinitionDecoder<AnimDefinition>(ANIM) {
+class AnimDecoder : DefinitionDecoder<AnimDefinition>(ANIMATIONS) {
 
     override fun create(size: Int) = Array(size) { AnimDefinition(it) }
 

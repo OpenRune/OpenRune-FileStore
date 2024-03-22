@@ -6,10 +6,11 @@ plugins {
 }
 
 group = "dev.openrune"
-version = "1.0.1"
+version = "2.0.0"
 
 repositories {
     mavenCentral()
+    maven("https://raw.githubusercontent.com/OpenRune/hosting/master")
 }
 
 dependencies {
@@ -21,6 +22,14 @@ dependencies {
     implementation("com.displee:rs-cache-library:7.1.0")
 // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
     implementation("org.slf4j:slf4j-api:2.1.0-alpha1")
+// https://mvnrepository.com/artifact/com.google.code.gson/gson
+    implementation("com.google.code.gson:gson:2.10.1")
+
+// https://mvnrepository.com/artifact/net.lingala.zip4j/zip4j
+    implementation("net.lingala.zip4j:zip4j:2.11.5")
+    implementation("dev.openrune:js5server:1.0.0")
+// https://mvnrepository.com/artifact/commons-io/commons-io
+    implementation("commons-io:commons-io:2.15.1")
 
     implementation("com.github.jponge:lzma-java:1.3")
 

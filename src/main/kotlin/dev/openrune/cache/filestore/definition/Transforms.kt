@@ -1,6 +1,7 @@
 package dev.openrune.cache.filestore.definition
 
 import dev.openrune.cache.filestore.buffer.Reader
+import dev.openrune.cache.filestore.buffer.Writer
 
 interface Transforms {
     var varbit: Int
@@ -33,4 +34,24 @@ interface Transforms {
         }
         transforms!![length + 1] = last
     }
+
+    fun writeTransforms(writer: Writer, smaller: Int, larger: Int) {
+        val configIds = transforms
+        if (configIds != null && (varbit != -1 || varp != -1)) {
+            val last = configIds.last()
+            val extended = last != -1
+            writer.writeByte(if (extended) larger else smaller)
+            writer.writeShort(varbit)
+            writer.writeShort(varp)
+
+            if (extended) {
+                writer.writeShort(last)
+            }
+            writer.writeByte(configIds.size - 2)
+            for (i in 0 until configIds.size - 1) {
+                writer.writeShort(configIds[i])
+            }
+        }
+    }
+
 }

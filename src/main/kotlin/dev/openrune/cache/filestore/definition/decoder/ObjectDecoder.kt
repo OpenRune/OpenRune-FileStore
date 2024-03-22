@@ -1,13 +1,13 @@
 package dev.openrune.cache.filestore.definition.decoder
 
 import dev.openrune.cache.CacheManager.revisionIsOrAfter
+import dev.openrune.cache.OBJECT
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
-import dev.openrune.cache.util.Index.OBJECTS
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.data.ObjectDefinition
 import java.util.stream.IntStream
 
-class ObjectDecoder : DefinitionDecoder<ObjectDefinition>(OBJECTS) {
+class ObjectDecoder : DefinitionDecoder<ObjectDefinition>(OBJECT) {
     override fun create(size: Int) = Array(size) { ObjectDefinition(it) }
 
     override fun getFile(id: Int) = id
@@ -39,8 +39,8 @@ class ObjectDecoder : DefinitionDecoder<ObjectDefinition>(OBJECTS) {
                     }
                 }
             }
-            14 -> width = buffer.readUnsignedByte()
-            15 -> length = buffer.readUnsignedByte()
+            14 -> sizeX = buffer.readUnsignedByte()
+            15 -> sizeY = buffer.readUnsignedByte()
             17 -> {
                 solid = 0
                 impenetrable = false
