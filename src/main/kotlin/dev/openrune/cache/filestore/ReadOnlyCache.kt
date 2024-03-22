@@ -1,10 +1,10 @@
 package dev.openrune.cache.filestore
 
+import dev.openrune.cache.MAPS
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import dev.openrune.cache.util.compress.DecompressionContext
 import dev.openrune.cache.util.secure.VersionTableBuilder
 import dev.openrune.cache.util.secure.Whirlpool
-import dev.openrune.cache.util.Index
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.RandomAccessFile
 
@@ -38,7 +38,7 @@ abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cac
         if (sectors != null) {
             sectors[indexId]!![archiveId] = sectorData
         }
-        val keys = if (xteas != null && indexId == Index.MAPS) xteas[archiveId] else null
+        val keys = if (xteas != null && indexId == MAPS) xteas[archiveId] else null
         val decompressed = context.decompress(sectorData, keys) ?: return null
         if (fileCount == 1) {
             val fileId = fileIds[archiveId]?.last() ?: return null

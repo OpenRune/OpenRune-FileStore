@@ -1,11 +1,11 @@
 package dev.openrune.cache.filestore.definition.decoder
 
+import dev.openrune.cache.VARBIT
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
-import dev.openrune.cache.util.Index.VAR_BIT
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.data.VarBitDefinition
 
-class VarBitDecoder : DefinitionDecoder<VarBitDefinition>(VAR_BIT) {
+class VarBitDecoder : DefinitionDecoder<VarBitDefinition>(VARBIT) {
 
     override fun create(size: Int) = Array(size) { VarBitDefinition(it) }
 

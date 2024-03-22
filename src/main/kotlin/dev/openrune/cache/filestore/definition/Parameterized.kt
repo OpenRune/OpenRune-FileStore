@@ -1,6 +1,7 @@
 package dev.openrune.cache.filestore.definition
 
 import dev.openrune.cache.filestore.buffer.Reader
+import dev.openrune.cache.filestore.buffer.Writer
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap
 
 interface Parameterized {
@@ -19,6 +20,22 @@ interface Parameterized {
             params[id] = if (string) buffer.readString() else buffer.readInt()
         }
         this.params = params
+    }
+
+    fun writeParameters(writer: Writer) {
+        params?.let { params ->
+            writer.writeByte(249)
+            writer.writeByte(params.size)
+            params.forEach { (id, value) ->
+                writer.writeByte(value is String)
+                writer.writeMedium(id)
+                if (value is String) {
+                    writer.writeString(value)
+                } else if (value is Int) {
+                    writer.writeInt(value)
+                }
+            }
+        }
     }
 
 }

@@ -27,7 +27,7 @@ data class ItemDefinition(
     var cost: Int = 1,
     var isTradeable: Boolean = false,
     var stacks: Int = 0,
-    var model: Int = 0,
+    var inventoryModel: Int = 0,
     var members: Boolean = false,
     var zoom2d: Int = 2000,
     var xOffset2d: Int = 0,
@@ -121,7 +121,7 @@ data class ItemDefinition(
         if (cost != other.cost) return false
         if (isTradeable != other.isTradeable) return false
         if (stackable != other.stackable) return false
-        if (model != other.model) return false
+        if (inventoryModel != other.inventoryModel) return false
         if (members != other.members) return false
         if (zoom2d != other.zoom2d) return false
         if (xOffset2d != other.xOffset2d) return false
@@ -178,7 +178,7 @@ data class ItemDefinition(
         result = 31 * result + cost
         result = 31 * result + isTradeable.hashCode()
         result = 31 * result + stacks
-        result = 31 * result + model
+        result = 31 * result + inventoryModel
         result = 31 * result + members.hashCode()
         result = 31 * result + zoom2d
         result = 31 * result + xOffset2d

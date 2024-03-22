@@ -1,18 +1,18 @@
 package dev.openrune.cache.filestore.definition.decoder
 
+import dev.openrune.cache.ITEM
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
-import dev.openrune.cache.util.Index.ITEMS
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.data.ItemDefinition
 
-class ItemDecoder : DefinitionDecoder<ItemDefinition>(ITEMS) {
+class ItemDecoder : DefinitionDecoder<ItemDefinition>(ITEM) {
     override fun create(size: Int) = Array(size) { ItemDefinition(it) }
 
     override fun getFile(id: Int) = id
 
     override fun ItemDefinition.read(opcode: Int, buffer: Reader) {
         when (opcode) {
-            1 -> model = buffer.readUnsignedShort()
+            1 -> inventoryModel = buffer.readUnsignedShort()
             2 -> name = buffer.readString()
             4 -> zoom2d = buffer.readUnsignedShort()
             5 -> xan2d = buffer.readUnsignedShort()
