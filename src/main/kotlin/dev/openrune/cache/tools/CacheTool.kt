@@ -11,6 +11,7 @@ import dev.openrune.cache.tools.tasks.impl.RemoveXteas
 import dev.openrune.cache.tools.tasks.impl.defs.PackItems
 import dev.openrune.cache.util.FileUtil
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.jire.js5server.Js5Server
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -34,7 +35,7 @@ class CacheTool(configs: Builder) {
         if (builder.cacheLocation == DEFAULT_PATH) logger.info { "Using Default path of [${DEFAULT_PATH.absolutePath}]" }
 
         when(builder.type) {
-            TaskType.RUN_JS5 -> println("sfsd")
+            TaskType.RUN_JS5 -> Js5Server.init(builder.cacheLocation.absolutePath,builder.js5Ports.toIntArray(), builder.cacheRevision,builder.supportPrefetch)
             TaskType.BUILD -> buildCache()
             TaskType.FRESH_INSTALL -> {
                 DownloadOSRS.init()
@@ -99,7 +100,7 @@ fun main() {
     )
 
 
-    val builder2 = Builder(type = TaskType.BUILD, revision = 220)
-    builder2.extraTasks(*tasks).build().initialize()
+    val builder2 = Builder(type = TaskType.RUN_JS5, revision = 220)
+    builder2.build().initialize()
 
 }

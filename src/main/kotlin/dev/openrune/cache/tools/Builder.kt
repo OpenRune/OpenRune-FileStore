@@ -17,20 +17,15 @@ data class Builder(
     var js5Ports: List<Int> = listOf(443, 43594, 50000),
     var supportPrefetch: Boolean = true
 ) {
-    private val logger = KotlinLogging.logger {}
 
-    //Tasks to Run with build
     fun extraTasks(vararg types: CacheTask) = apply { this.extraTasks = types.toMutableList().toTypedArray() }
 
-    //Cache Location
     fun cacheLocation(cacheLocation: File) = apply { this.cacheLocation = cacheLocation }
 
-    //Cache Rev
     fun cacheRevision(rev: Int) = apply { this.cacheRevision = rev }
 
-    //Js5 Ports
     fun js5Ports(ports: List<Int>) = apply { this.js5Ports = ports }
-    //Js5 Prefetch
+
     fun supportPrefetch(state: Boolean) = apply { this.supportPrefetch = state }
 
     fun build() = CacheTool(this)

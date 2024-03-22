@@ -44,7 +44,7 @@ repositories {
 
 ```kotlin
 dependencies {
-    implementation("dev.openrune:filestore:2.0.0")
+    implementation("dev.openrune:filestore:1.2.3")
 }
 ```
 
@@ -55,7 +55,7 @@ dependencies {
 
 ```groovy
 dependencies {
-    implementation 'dev.openrune:filestore:2.0.0'
+    implementation 'dev.openrune:filestore:1.2.3'
 }
 ```
 
@@ -68,7 +68,7 @@ dependencies {
 <dependency>
     <groupId>dev.openrune</groupId>
     <artifactId>filestore</artifactId>
-    <version>2.0.0</version>
+    <version>1.2.3</version>
 </dependency>
 ```
 
@@ -105,7 +105,43 @@ This setup begins with a fresh installation, ensuring that any existing data is 
 
 ### Running JS5:
 
-HERE
+To initiate the JS5 server, you'll need to use the `Builder` with the task type set to `RUN_JS5`. Ensure you configure the necessary options to tailor the server to your needs. Below is a basic example to get you started:
+
+```kotlin
+val js5Server = Builder(type = TaskType.RUN_JS5, revision = 220)
+js5Server.build().initialize()
+```
+
+## Builder Options
+
+Configuring the JS5 server requires setting specific options via the Builder to ensure it runs correctly and efficiently. Here's a rundown of the critical options:
+
+- **cacheRevision(rev: Int)**: Sets the cache revision that the JS5 server will use to validate client connections. Using `-1` bypasses this check, allowing any client version to connect. It's crucial for maintaining compatibility and ensuring clients are up-to-date.
+
+  ```kotlin
+  .cacheRevision(24) // Use the cache version, replace with your current version.
+  ```
+
+- **js5Ports(ports: List<Int>)**: Defines the ports on which the JS5 server will listen. This can be a single port or multiple ports to accommodate various network setups and requirements.
+
+  ```kotlin
+  .js5Ports(listOf(43594)) // Specify custom JS5 ports. Adjust according to your network configuration.
+  ```
+
+- **supportPrefetch(state: Boolean)**: Toggles prefetching capabilities of the JS5 server. Enabling prefetching can lead to faster data loading at the cost of increased memory usage. Consider your server's resource availability when enabling this feature.
+
+  ```kotlin
+  .supportPrefetch(true) // Enable prefetching for improved performance.
+  ```
+
+- **cacheLocation(cacheLocation: File)**: Specifies the directory where the cache is located. This setting is essential for directing the JS5 server to the correct cache data.
+
+  ```kotlin
+  .cacheLocation(File("./path/to/your/cache")) // Set the cache location. Ensure the path is correct and accessible.
+  ```
+
+Each of these options plays a vital role in the configuration of your JS5 server, ensuring it operates as intended and provides the best possible experience for users.
+
 
 ### Builder Options:
 
