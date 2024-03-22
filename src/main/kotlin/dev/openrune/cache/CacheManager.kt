@@ -8,7 +8,7 @@ import java.nio.file.Path
 object CacheManager {
 
 
-    private lateinit var cache: Cache
+    lateinit var cache: Cache
     private lateinit var npcs: Array<NPCDefinition>
     private lateinit var objects: Array<ObjectDefinition>
     private lateinit var items: Array<ItemDefinition>

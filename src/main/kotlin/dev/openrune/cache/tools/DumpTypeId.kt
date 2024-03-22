@@ -25,7 +25,7 @@ class DumpTypeId(
 
     private lateinit var language: Language
 
-    fun init(language: Language = Language.KOTLIN, fileNames: List<String> = listOf("items", "npcs", "objs", "objsNull")) {
+    fun init(language: Language = Language.KOTLIN, fileNames: List<String> = listOf("Items", "Npcs", "Objs", "ObjsNull")) {
         this.language = language
         CacheManager.init(cache, rev)
         if (!Files.exists(outputPath)) {
@@ -38,7 +38,6 @@ class DumpTypeId(
         writeItems(fileNames[0])
         writeNpcs(fileNames[1])
         writeObjs(fileNames[2])
-        writeObjsNull(fileNames[3])
     }
 
     private fun writeItems(fileName: String) {
@@ -69,26 +68,30 @@ class DumpTypeId(
         val file = generateWriter(fileName)
         for ((index, obj) in CacheManager.getObjects().withIndex()) {
             val rawName = obj.name.replace("?", "")
-            if (rawName.isNotEmpty() && rawName.isNotBlank()) {
-                val useNullName = rawName.isNotEmpty() && rawName.isNotBlank()
-                val name = if (useNullName) namer.name(obj.name, index) else "NULL_$index"
-                write(file, fieldName(name, index))
+            if (rawName.isNotEmpty() && rawName.isNotBlank() && rawName != "null") {
+                val name = namer.name(obj.name, index)
+                write(file, "const val $name = $index")
             }
         }
         endWriter(file)
     }
 
-    private fun writeObjsNull(fileName: String) {
+    private fun writeObjs(fileName: String, fileName2 : String) {
         val file = generateWriter(fileName)
+        val file1 = generateWriter(fileName2)
         for ((index, obj) in CacheManager.getObjects().withIndex()) {
             val rawName = obj.name.replace("?", "")
-            if (rawName.isEmpty() && rawName.isBlank()) {
-                val useNullName = rawName.isNotEmpty() && rawName.isNotBlank()
-                val name = if (useNullName) namer.name(obj.name, index) else "NULL_$index"
+            val normalName = rawName.isNotEmpty() && rawName.isNotBlank()
+            val name = if (normalName) namer.name(obj.name, index) else "NULL_$index"
+            if (!name!!.contains("NULL_")) {
+                namer.name(obj.name, index)
                 write(file, fieldName(name, index))
+            } else {
+                write(file1, fieldName("NULL_$index", index))
             }
         }
         endWriter(file)
+        endWriter(file1)
     }
 
     private fun fieldName(name: String?, index: Int): String {
