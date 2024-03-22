@@ -78,6 +78,41 @@ dependencies {
 
 The Builder pattern is employed to configure and execute tasks within the OpenRune File Store framework. This approach allows for a fluent and intuitive setup process, catering to various tasks such as cache installation, building, and running a JS5 server.
 
+### Tools
+
+<details>
+<summary><b>Dump TypeId</b></summary>
+
+The `DumpTypeId` tool from the OpenRune File Store suite is crafted to facilitate the extraction and dumping of identifiers for Items, NPCs, and Objects from the game's cache. These identifiers are then written to language-specific files, either Kotlin or Java, according to the user's preference.
+
+### Usage Instructions
+
+1. **Initialization**: Begin by creating an instance of `DumpTypeId`, providing it with the necessary paths and configuration settings. The `cache` parameter specifies the location of your game's cache, while `rev` indicates the cache's revision number. The `outputPath` determines where the generated code files will be saved, and `packageName` defines the package name for these generated files.
+
+2. **Configuration**: Optionally, you can further customize the behavior of `DumpTypeId` by specifying the desired output `language` and customizing the `fileNames` for different data types. The `language` parameter can be set to either `Language.KOTLIN` or `Language.JAVA`, depending on your project's needs. The `fileNames` list allows you to define custom names for the generated files, corresponding to items, NPCs, and objects, enhancing organization and readability.
+
+```kotlin
+import dev.openrune.cache.tools.DumpTypeId
+import dev.openrune.cache.tools.Language
+import java.nio.file.Path
+
+// Initialize the DumpTypeId tool with your cache settings
+val dumper = DumpTypeId(
+    cache = Path.of("./path/to/cache"), // Path to your cache directory
+    rev = 220,                          // Cache revision number
+    outputPath = Path.of("./output/path"), // Directory where output files will be saved
+    packageName = "com.example.generated"  // Package name for generated code files
+)
+
+// (Optional) Configure additional settings
+dumper.init(
+    language = Language.KOTLIN,             // Choose between Kotlin or Java output
+    fileNames = listOf("items", "npcs", "objs", "objsNull") // Custom file names
+)
+```
+
+</details>
+
 ### Task Types:
 
 - **FRESH_INSTALL**: Performs a clean installation of the cache, followed by the execution of specified tasks.
