@@ -44,7 +44,7 @@ repositories {
 
 ```kotlin
 dependencies {
-    implementation("dev.openrune:filestore:1.2.3")
+    implementation("dev.openrune:filestore:1.2.4")
 }
 ```
 
@@ -55,7 +55,7 @@ dependencies {
 
 ```groovy
 dependencies {
-    implementation 'dev.openrune:filestore:1.2.3'
+    implementation 'dev.openrune:filestore:1.2.4'
 }
 ```
 
@@ -68,7 +68,7 @@ dependencies {
 <dependency>
     <groupId>dev.openrune</groupId>
     <artifactId>filestore</artifactId>
-    <version>1.2.3</version>
+    <version>1.2.4</version>
 </dependency>
 ```
 

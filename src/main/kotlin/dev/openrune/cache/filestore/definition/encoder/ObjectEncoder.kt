@@ -192,6 +192,10 @@ class ObjectEncoder : ConfigEncoder<ObjectDefinition>() {
             writeByte(89)
         }
 
+        if (definition.delayAnimationUpdate) {
+            writeByte(90)
+        }
+
         definition.writeTransforms(this, 77,92)
         definition.writeParameters(this)
 

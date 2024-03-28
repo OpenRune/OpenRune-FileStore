@@ -14,6 +14,7 @@ class ItemDecoder : DefinitionDecoder<ItemDefinition>(ITEM) {
         when (opcode) {
             1 -> inventoryModel = buffer.readUnsignedShort()
             2 -> name = buffer.readString()
+            3 -> description = buffer.readString()
             4 -> zoom2d = buffer.readUnsignedShort()
             5 -> xan2d = buffer.readUnsignedShort()
             6 -> yan2d = buffer.readUnsignedShort()

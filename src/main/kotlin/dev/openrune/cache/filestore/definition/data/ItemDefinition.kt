@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.bytes.Byte2ByteOpenHashMap
 data class ItemDefinition(
     override var id: Int = 0,
     var name: String = "null",
+    var description: String = "null",
     override var originalColours: ShortArray? = null,
     override var modifiedColours: ShortArray? = null,
     override var originalTextureColours: ShortArray? = null,

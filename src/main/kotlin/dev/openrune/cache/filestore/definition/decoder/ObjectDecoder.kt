@@ -102,6 +102,7 @@ class ObjectDecoder : DefinitionDecoder<ObjectDefinition>(OBJECT) {
             81 -> clipType = (buffer.readUnsignedByte()) * 256
             60,82 -> mapAreaId = buffer.readUnsignedShort()
             89 -> randomizeAnimStart = true
+            90 -> delayAnimationUpdate = true
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Npcs [${opcode}]" }
         }

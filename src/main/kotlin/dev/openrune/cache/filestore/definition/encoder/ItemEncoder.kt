@@ -17,6 +17,11 @@ class ItemEncoder : ConfigEncoder<ItemDefinition>() {
             writeString(definition.name)
         }
 
+        if (!definition.name.equals("null", ignoreCase = true)) {
+            writeByte(3)
+            writeString(definition.description)
+        }
+
         if (definition.zoom2d != 2000) {
             writeByte(4)
             writeShort(definition.zoom2d)

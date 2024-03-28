@@ -50,6 +50,7 @@ data class ObjectDefinition(
     var modelClipped: Boolean = false,
     var soundMin: Int = 0,
     var soundMax: Int = 0,
+    var delayAnimationUpdate : Boolean = false,
     var impenetrable: Boolean = true,
     override var originalColours: ShortArray? = null,
     override var modifiedColours: ShortArray? = null,
