@@ -100,7 +100,6 @@ class PackTextures(private val textureDir : File) : CacheTask() {
                     val spriteID = def.fileIds.first()
                     val sprite = SpriteSet.decode(spriteID, Unpooled.wrappedBuffer(library.data(SPRITES, spriteID))).sprites.first()
                     def.averageRgb = averageColorForPixels(sprite.image)
-                    println("averageRgb: " + def.averageRgb)
                     val encoder = TextureEncoder()
                     val writer = BufferWriter(4096)
                     with(encoder) { writer.encode(def) }
