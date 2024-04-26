@@ -1,11 +1,12 @@
 package dev.openrune.cache.tools
 
 import com.displee.cache.CacheLibrary
+import dev.openrune.cache.Constants.builder
+import dev.openrune.cache.Constants.library
 import dev.openrune.cache.DownloadOSRS
-import dev.openrune.cache.tools.tasks.CacheTask
-import dev.openrune.cache.tools.tasks.TaskType
-import dev.openrune.cache.tools.tasks.impl.PackMaps
-import dev.openrune.cache.tools.tasks.impl.defs.PackItems
+import dev.openrune.cache.tools.Builder
+import dev.openrune.cache.tools.DEFAULT_PATH
+import dev.openrune.cache.tools.TaskType
 import dev.openrune.cache.util.FileUtil
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jire.js5server.Js5Server
@@ -20,11 +21,6 @@ class CacheTool(configs: Builder) {
         builder = configs
     }
 
-    companion object {
-        var library : CacheLibrary? = null
-        lateinit var builder : Builder
-    }
-
     fun initialize() {
 
         println(builder.toString())
@@ -32,7 +28,10 @@ class CacheTool(configs: Builder) {
         if (builder.cacheLocation == DEFAULT_PATH) logger.info { "Using Default path of [${DEFAULT_PATH.absolutePath}]" }
 
         when(builder.type) {
-            TaskType.RUN_JS5 -> Js5Server.init(builder.cacheLocation.absolutePath,builder.js5Ports.toIntArray(), builder.cacheRevision,builder.supportPrefetch)
+            TaskType.RUN_JS5 -> Js5Server.init(
+                builder.cacheLocation.absolutePath,
+                builder.js5Ports.toIntArray(), builder.cacheRevision,
+                builder.supportPrefetch)
             TaskType.BUILD -> buildCache()
             TaskType.FRESH_INSTALL -> {
                 DownloadOSRS.init()
@@ -86,18 +85,5 @@ class CacheTool(configs: Builder) {
         }
 
     }
-
-}
-
-fun main() {
-
-    val tasks : Array<CacheTask> = arrayOf(
-        PackItems(File("./custom/definitions/items/")),
-        PackMaps(File("./custom/maps/"),File("./data/cache/xteas.json"),)
-    )
-
-
-    val builder2 = Builder(type = TaskType.RUN_JS5, revision = 220)
-    builder2.build().initialize()
 
 }

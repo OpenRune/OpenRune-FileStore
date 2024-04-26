@@ -4,7 +4,7 @@ import com.displee.cache.CacheLibrary
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import dev.openrune.cache.SPRITES
-import dev.openrune.cache.tools.tasks.CacheTask
+import dev.openrune.cache.tools.CacheTask
 import dev.openrune.cache.tools.tasks.impl.sprites.Sprite
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteManifest
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet

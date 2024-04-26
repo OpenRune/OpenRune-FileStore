@@ -7,7 +7,7 @@ import dev.openrune.cache.filestore.buffer.BufferWriter
 import dev.openrune.cache.filestore.buffer.Writer
 import dev.openrune.cache.filestore.definition.ConfigEncoder
 import dev.openrune.cache.filestore.definition.Definition
-import dev.openrune.cache.tools.tasks.CacheTask
+import dev.openrune.cache.tools.CacheTask
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress

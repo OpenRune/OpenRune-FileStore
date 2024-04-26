@@ -2,8 +2,7 @@ package dev.openrune.cache.tools.tasks.impl
 
 import com.displee.cache.CacheLibrary
 import dev.openrune.cache.MODELS
-import dev.openrune.cache.filestore.Cache
-import dev.openrune.cache.tools.tasks.CacheTask
+import dev.openrune.cache.tools.CacheTask
 import dev.openrune.cache.util.decompressGzipToBytes
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress

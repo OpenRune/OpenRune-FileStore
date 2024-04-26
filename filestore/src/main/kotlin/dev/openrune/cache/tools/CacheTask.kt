@@ -1,4 +1,4 @@
-package dev.openrune.cache.tools.tasks
+package dev.openrune.cache.tools
 
 import com.displee.cache.CacheLibrary
 import dev.openrune.cache.filestore.Cache

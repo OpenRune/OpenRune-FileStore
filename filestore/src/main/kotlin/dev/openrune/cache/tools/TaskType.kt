@@ -1,4 +1,4 @@
-package dev.openrune.cache.tools.tasks
+package dev.openrune.cache.tools
 
 enum class TaskType {
     BUILD,
