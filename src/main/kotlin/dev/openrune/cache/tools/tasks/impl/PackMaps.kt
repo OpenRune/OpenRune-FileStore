@@ -1,22 +1,36 @@
 package dev.openrune.cache.tools.tasks.impl
 
 import com.displee.cache.CacheLibrary
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dev.openrune.cache.MAPS
 import dev.openrune.cache.filestore.XteaLoader
+import dev.openrune.cache.filestore.logger
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.FileUtil
 import dev.openrune.cache.util.decompressGzipToBytes
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import java.io.File
-import java.io.FileWriter
 import java.nio.file.Files
+import kotlin.random.Random
 
-class PackMaps(private val mapsDirectory : File,private val xteaLocation : File = File(FileUtil.getTemp(), "xteas.json")) : CacheTask() {
+enum class XteaType {
+    NO_KEYS,
+    EMPTY_KEYS,
+    RANDOM_KEYS
+}
+
+class PackMaps(private val mapsDirectory: File, private val xteaLocation: File = File("xteas.json"), private val xteaType: XteaType = XteaType.NO_KEYS) : CacheTask() {
     override fun init(library: CacheLibrary) {
-        XteaLoader.load(xteaLocation)
+        val encodeXteas = xteaType != XteaType.NO_KEYS
+
+        if (encodeXteas && !xteaLocation.exists()) {
+            logger.info { "Unable to find Xteas File at $xteaLocation" }
+            return
+        } else if (encodeXteas) {
+            XteaLoader.load(xteaLocation)
+        }
+
         val mapSize = getFiles(mapsDirectory,"gz","dat").size
         val progressMaps = progress("Packing Maps", mapSize * 1)
         if (mapSize != 0) {
@@ -43,8 +57,17 @@ class PackMaps(private val mapsDirectory : File,private val xteaLocation : File 
                             objData = decompressGzipToBytes(objectFile.toPath())
                         }
 
-                        packMap(library,loc[0].toInt(), loc[1].toInt(), tileData, objData)
-                        XteaLoader.xteas[regionId]!!.key = intArrayOf(0,0,0,0)
+                        val keys : IntArray? = when(xteaType) {
+                            XteaType.NO_KEYS -> null
+                            XteaType.EMPTY_KEYS -> intArrayOf(0,0,0,0)
+                            XteaType.RANDOM_KEYS -> generateRandomIntArray()
+                        }
+
+                        if (keys != null) {
+                            XteaLoader.xteas[regionId]!!.key = keys
+                        }
+
+                        packMap(library,loc[0].toInt(), loc[1].toInt(), tileData, objData,keys)
                     } else {
                         println("MISSING MAP FILE: $objectFile")
                     }
@@ -54,25 +77,25 @@ class PackMaps(private val mapsDirectory : File,private val xteaLocation : File 
                 progressMaps.stepBy(3)
 
             }
-            // Create a FileWriter to write into the file
-            val fileWriter = FileWriter(xteaLocation)
 
-            val valuesList = XteaLoader.xteas.values.toList()
-
-            fileWriter.write(GsonBuilder().setPrettyPrinting().create().toJson(valuesList))
-
-            fileWriter.close()
+            if (encodeXteas) {
+                val valuesList = XteaLoader.xteas.values.toList()
+                xteaLocation.writeText(GsonBuilder().setPrettyPrinting().create().toJson(valuesList))
+            }
             progressMaps.close()
         }
     }
 
-    fun packMap(library: CacheLibrary, regionX : Int, regionY : Int, tileData : ByteArray, objData : ByteArray) {
+    fun packMap(library: CacheLibrary, regionX : Int, regionY : Int, tileData : ByteArray, objData : ByteArray, keys : IntArray?) {
         val mapArchiveName = "m" + regionX + "_" + regionY
         val landArchiveName = "l" + regionX + "_" + regionY
 
         library.put(MAPS, mapArchiveName, tileData)
-        library.put(MAPS, landArchiveName, objData)
+        library.put(MAPS, landArchiveName, objData,keys)
+    }
 
+    fun generateRandomIntArray(): IntArray {
+        return IntArray(4) { Random.nextInt(Int.MIN_VALUE, Int.MAX_VALUE) }
     }
 
 }

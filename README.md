@@ -239,13 +239,13 @@ This setup ensures a customized build process tailored to your project's specifi
 The OpenRune File Store library offers a variety of tasks to facilitate the management and manipulation of game data for Old School RuneScape (OSRS). These tasks are designed to pack various types of data into the cache, utilizing both custom and standard formats. Below is an overview of available tasks, their functionalities, and examples of how to use them.
 
 
-| Task Name     | Description                                                  | Arguments                  | Usage Example                                                      |
-|---------------|--------------------------------------------------------------|----------------------------|--------------------------------------------------------------------|
-| `PackMaps`    | Packs map files, supporting both `.gz` and `.dat` formats. | `mapsDir`, `xteasLocation` | `PackMaps(File("./custom/maps/"), File("./data/cache/xteas.json"))` |
-| `PackModels`  | Packs model files in `.gz` format. | `modelDir`                 | `PackModels(File("./custom/models/"))`                              |
-| `PackItems`   | Packs item definitions from JSON files into the cache. | `itemDir`                  | `PackItems(File("./custom/definitions/items/"))`                    |
-| `PackNpcs`    | Packs NPC definitions from JSON files. | `npcDir`                   | `PackNpcs(File("./custom/definitions/npcs/"))`                      |
-| `PackObjects` | Packs object definitions from JSON files. | `objectDir`                | `PackObjects(File("./custom/definitions/objects/"))`                |
+| Task Name     | Description                                                  | Arguments                                            | Usage Example                                                                 |
+|---------------|--------------------------------------------------------------|------------------------------------------------------|-------------------------------------------------------------------------------|
+| `PackMaps`    | Packs map files, supporting both `.gz` and `.dat` formats. | `mapsDir`, `xteasLocation (optional)`, `xteaType (optional)` | `PackMaps(File("./custom/maps/"), File("./data/cache/xteas.json"),XteaType.RANDOM_KEYS)` |
+| `PackModels`  | Packs model files in `.gz` format. | `modelDir`                                           | `PackModels(File("./custom/models/"))`                                        |
+| `PackItems`   | Packs item definitions from JSON files into the cache. | `itemDir`                                            | `PackItems(File("./custom/definitions/items/"))`                              |
+| `PackNpcs`    | Packs NPC definitions from JSON files. | `npcDir`                                             | `PackNpcs(File("./custom/definitions/npcs/"))`                                |
+| `PackObjects` | Packs object definitions from JSON files. | `objectDir`                                          | `PackObjects(File("./custom/definitions/objects/"))`                          |
 
 
 It's important to ensure that the provided directories contain valid files, as the library will recursively search through all files and subdirectories within them.
