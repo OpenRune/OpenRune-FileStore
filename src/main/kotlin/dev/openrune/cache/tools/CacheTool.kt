@@ -2,12 +2,9 @@ package dev.openrune.cache.tools
 
 import com.displee.cache.CacheLibrary
 import dev.openrune.cache.DownloadOSRS
-import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.TaskType
 import dev.openrune.cache.tools.tasks.impl.PackMaps
-import dev.openrune.cache.tools.tasks.impl.PackModels
-import dev.openrune.cache.tools.tasks.impl.RemoveXteas
 import dev.openrune.cache.tools.tasks.impl.defs.PackItems
 import dev.openrune.cache.util.FileUtil
 import io.github.oshai.kotlinlogging.KotlinLogging
