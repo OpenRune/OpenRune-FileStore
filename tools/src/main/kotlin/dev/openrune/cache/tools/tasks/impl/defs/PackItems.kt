@@ -7,7 +7,7 @@ import dev.openrune.cache.ITEM
 import dev.openrune.cache.filestore.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.data.ItemDefinition
 import dev.openrune.cache.filestore.definition.encoder.ItemEncoder
-import dev.openrune.cache.tools.CacheTask
+import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import java.io.File

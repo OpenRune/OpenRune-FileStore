@@ -1,5 +1,7 @@
 package dev.openrune.cache.tools
 
+import dev.openrune.cache.tools.tasks.CacheTask
+import dev.openrune.cache.tools.tasks.TaskType
 import java.io.File
 import java.nio.file.Path
 

@@ -33,14 +33,14 @@ allprojects {
 
 val sourcesJar by tasks.registering(Jar::class) {
     archiveClassifier.set("sources")
+    from(project(":filestore").sourceSets["main"].output)
+    from(project(":tools").sourceSets["main"].output)
     from(sourceSets.main.get().allSource)
 }
 
-tasks.named("jar",Jar::class) {
-    // Include compiled classes from all subprojects
-    from(subprojects.map { it.tasks.named("classes") }) {
-        into("classes")
-    }
+tasks.named("jar", Jar::class) {
+    from(project(":filestore").sourceSets["main"].output)
+    from(project(":tools").sourceSets["main"].output)
 
     // Set a strategy to handle duplicate files
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
