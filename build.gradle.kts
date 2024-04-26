@@ -1,62 +1,49 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     kotlin("jvm") version "1.9.0"
     `maven-publish`
 }
 
-group = "dev.openrune"
-version = "1.2.4"
+allprojects {
+    apply(plugin = "kotlin")
+    apply(plugin = "idea")
+    apply(plugin = "org.jetbrains.kotlin.jvm")
 
-repositories {
-    mavenCentral()
-    maven("https://raw.githubusercontent.com/OpenRune/hosting/master")
-}
+    group = "dev.openrune"
+    version = "1.2.4"
 
-dependencies {
+    java.sourceCompatibility = JavaVersion.VERSION_11
 
-    // https://mvnrepository.com/artifact/me.tongfei/progressbar
-    implementation("me.tongfei:progressbar:0.9.2")
+    repositories {
+        mavenCentral()
+        maven("https://raw.githubusercontent.com/OpenRune/hosting/master")
+    }
 
-    // https://mvnrepository.com/artifact/io.netty/netty-buffer
-    implementation("io.netty:netty-buffer:5.0.0.Alpha2")
+    dependencies {
+        implementation(kotlin("stdlib-jdk8"))
+        implementation("com.beust:klaxon:5.5")
+        implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
+        implementation("me.tongfei:progressbar:0.9.2")
+        implementation("com.displee:rs-cache-library:7.1.0")
+        implementation("org.slf4j:slf4j-api:2.1.0-alpha1")
+        implementation("com.google.code.gson:gson:2.10.1")
+        implementation("commons-io:commons-io:2.15.1")
+    }
 
-
-    // https://mvnrepository.com/artifact/com.displee/rs-cache-library
-    implementation("com.displee:rs-cache-library:7.1.0")
-// https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-    implementation("org.slf4j:slf4j-api:2.1.0-alpha1")
-// https://mvnrepository.com/artifact/com.google.code.gson/gson
-    implementation("com.google.code.gson:gson:2.10.1")
-
-// https://mvnrepository.com/artifact/net.lingala.zip4j/zip4j
-    implementation("net.lingala.zip4j:zip4j:2.11.5")
-    implementation("dev.openrune:js5server:1.0.2")
-// https://mvnrepository.com/artifact/commons-io/commons-io
-    implementation("commons-io:commons-io:2.15.1")
-
-    implementation("com.github.jponge:lzma-java:1.3")
-
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("it.unimi.dsi:fastutil:8.5.13")
-
-    implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
-}
-
-configure<JavaPluginExtension> {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-}
-
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    languageVersion = "1.9"
-    jvmTarget = "11"
 }
 
 val sourcesJar by tasks.registering(Jar::class) {
     archiveClassifier.set("sources")
+    from(project(":filestore").sourceSets["main"].output)
+    from(project(":tools").sourceSets["main"].output)
     from(sourceSets.main.get().allSource)
+}
+
+tasks.named("jar", Jar::class) {
+    from(project(":filestore").sourceSets["main"].output)
+    from(project(":tools").sourceSets["main"].output)
+
+    // Set a strategy to handle duplicate files
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 publishing {
@@ -74,6 +61,8 @@ publishing {
             }
         }
     }
+
+
     publications {
         register("mavenJava", MavenPublication::class) {
             from(components["java"])

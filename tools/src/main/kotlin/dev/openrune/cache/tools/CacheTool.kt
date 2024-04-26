@@ -1,12 +1,11 @@
 package dev.openrune.cache.tools
 
 import com.displee.cache.CacheLibrary
-import dev.openrune.cache.DownloadOSRS
-import dev.openrune.cache.tools.tasks.CacheTask
+import dev.openrune.cache.tools.CacheTool.Constants.builder
+import dev.openrune.cache.tools.CacheTool.Constants.library
 import dev.openrune.cache.tools.tasks.TaskType
-import dev.openrune.cache.tools.tasks.impl.PackMaps
-import dev.openrune.cache.tools.tasks.impl.defs.PackItems
 import dev.openrune.cache.util.FileUtil
+import dev.openrune.cache.util.FileUtil.cacheLocation
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jire.js5server.Js5Server
 import java.io.File
@@ -14,25 +13,28 @@ import kotlin.system.exitProcess
 
 class CacheTool(configs: Builder) {
 
+    object Constants {
+        lateinit var builder : Builder
+        lateinit var library: CacheLibrary
+    }
+
     private val logger = KotlinLogging.logger {}
 
     init {
         builder = configs
-    }
-
-    companion object {
-        var library : CacheLibrary? = null
-        lateinit var builder : Builder
+        cacheLocation = configs.cacheLocation
     }
 
     fun initialize() {
 
-        println(builder.toString())
-
         if (builder.cacheLocation == DEFAULT_PATH) logger.info { "Using Default path of [${DEFAULT_PATH.absolutePath}]" }
 
         when(builder.type) {
-            TaskType.RUN_JS5 -> Js5Server.init(builder.cacheLocation.absolutePath,builder.js5Ports.toIntArray(), builder.cacheRevision,builder.supportPrefetch)
+            TaskType.RUN_JS5 -> Js5Server.init(
+                builder.cacheLocation.absolutePath,
+                builder.js5Ports.toIntArray(), builder.cacheRevision,
+                builder.supportPrefetch
+            )
             TaskType.BUILD -> buildCache()
             TaskType.FRESH_INSTALL -> {
                 DownloadOSRS.init()
@@ -63,7 +65,7 @@ class CacheTool(configs: Builder) {
 
     fun runPacking() {
 
-        library?.let {
+        library.let {
             builder.extraTasks.forEach { task ->
                 task.init(it)
             }
@@ -81,23 +83,8 @@ class CacheTool(configs: Builder) {
                 }
 
             FileUtil.getTemp().deleteRecursively()
-        } ?: run {
-            error("Unable to load the cache")
         }
 
     }
-
-}
-
-fun main() {
-
-    val tasks : Array<CacheTask> = arrayOf(
-        PackItems(File("./custom/definitions/items/")),
-        PackMaps(File("./custom/maps/"),File("./data/cache/xteas.json"),)
-    )
-
-
-    val builder2 = Builder(type = TaskType.RUN_JS5, revision = 220)
-    builder2.build().initialize()
 
 }

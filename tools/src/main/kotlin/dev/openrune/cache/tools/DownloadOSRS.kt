@@ -1,9 +1,10 @@
-package dev.openrune.cache
+package dev.openrune.cache.tools
 
 import com.displee.cache.CacheLibrary
 import com.google.gson.Gson
 import dev.openrune.cache.filestore.XteaLoader
-import dev.openrune.cache.tools.CacheTool
+import dev.openrune.cache.tools.CacheTool.Constants.builder
+import dev.openrune.cache.tools.CacheTool.Constants.library
 import dev.openrune.cache.util.FileUtil
 import dev.openrune.cache.util.progress
 import dev.openrune.cache.util.stringToTimestamp
@@ -38,9 +39,9 @@ object DownloadOSRS {
     private const val CACHE_DOWNLOAD_LOCATION = "https://archive.openrs2.org/caches.json"
 
     fun init() {
-        println(CacheTool.builder.cacheLocation)
+
         val time = measureTimeMillis {
-            val rev = CacheTool.builder.cacheRevision
+            val rev = builder.cacheRevision
 
             logger.info { "Looking for cache to download: ${if (rev == -1) "Latest" else rev}" }
             val json = URL(CACHE_DOWNLOAD_LOCATION).readText()
@@ -52,7 +53,7 @@ object DownloadOSRS {
             saveXteas(cacheInfo.id)
             XteaLoader.load()
             println(FileUtil.getTempDir("cache").toString())
-            CacheTool.library = CacheLibrary(FileUtil.getTempDir("cache").toString())
+            library = CacheLibrary(FileUtil.getTempDir("cache").toString())
             File(FileUtil.getTemp(), "/cache.zip").delete()
         }
         val hours = TimeUnit.MILLISECONDS.toHours(time)
@@ -65,7 +66,7 @@ object DownloadOSRS {
         try {
             val url = "https://archive.openrs2.org/caches/${id}/keys.json"
             File(FileUtil.getTemp(), "xteas.json").writeText(URL(url).readText())
-            File(CacheTool.builder.cacheLocation, "xteas.json").writeText(URL(url).readText())
+            File(builder.cacheLocation, "xteas.json").writeText(URL(url).readText())
         } catch (e: Exception) {
             logger.error { "Unable to write Xteas $e" }
         }

@@ -1,12 +1,12 @@
 package dev.openrune.cache
 
+import com.displee.cache.CacheLibrary
 import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.definition.data.*
 import dev.openrune.cache.filestore.definition.decoder.*
 import java.nio.file.Path
 
 object CacheManager {
-
 
     lateinit var cache: Cache
     private lateinit var npcs: Array<NPCDefinition>
