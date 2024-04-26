@@ -33,8 +33,8 @@ allprojects {
 
 val sourcesJar by tasks.registering(Jar::class) {
     archiveClassifier.set("sources")
-    from(project(":filestore").sourceSets["main"].output)
-    from(project(":tools").sourceSets["main"].output)
+    from(project(":filestore").sourceSets["main"].allSource)
+    from(project(":tools").sourceSets["main"].allSource)
     from(sourceSets.main.get().allSource)
 }
 
