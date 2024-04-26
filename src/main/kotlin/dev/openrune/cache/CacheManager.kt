@@ -16,6 +16,7 @@ object CacheManager {
     private lateinit var varps: Array<VarpDefinition>
     private lateinit var anim: Array<AnimDefinition>
     private lateinit var enum: Array<EnumDefinition>
+    private lateinit var health: Array<HealthDefinition>
     private var cacheRevision = -1
 
 
@@ -29,11 +30,17 @@ object CacheManager {
         varps = VarDecoder().load(cache)
         anim = AnimDecoder().load(cache)
         enum = EnumDecoder().load(cache)
+        health = HealthDecoder().load(cache)
+
     }
 
     fun getNpcs() = npcs
     fun getObjects() = objects
     fun getItems() = items
+
+    fun health(id: Int): HealthDefinition = health[id]
+
+    fun healthCount(): Int = health.size
 
     fun npc(id: Int): NPCDefinition = npcs[id]
     fun npcCount(): Int = npcs.size
