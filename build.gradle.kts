@@ -18,6 +18,10 @@ dependencies {
     // https://mvnrepository.com/artifact/me.tongfei/progressbar
     implementation("me.tongfei:progressbar:0.9.2")
 
+    // https://mvnrepository.com/artifact/io.netty/netty-buffer
+    implementation("io.netty:netty-buffer:5.0.0.Alpha2")
+
+
     // https://mvnrepository.com/artifact/com.displee/rs-cache-library
     implementation("com.displee:rs-cache-library:7.1.0")
 // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
