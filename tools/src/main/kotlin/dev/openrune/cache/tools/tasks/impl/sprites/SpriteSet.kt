@@ -11,8 +11,10 @@ public data class SpriteSet(
     public val id: Int,
     public val width: Int,
     public val height: Int,
-    val sprites: MutableList<Sprite>
+    val sprites: MutableList<Sprite>,
+    val averageColor : Int
 ) {
+
     public fun encode(): ByteBuf {
         val bout = ByteArrayOutputStream()
         val dout = DataOutputStream(bout)
@@ -83,6 +85,7 @@ public data class SpriteSet(
     }
 
     public companion object {
+
         private const val FLAG_VERTICAL = 0x01
         private const val FLAG_ALPHA = 0x02
 
@@ -169,7 +172,39 @@ public data class SpriteSet(
                 }
                 images.add(image)
             }
-            return SpriteSet(id, width, height, images)
+
+            return SpriteSet(id, width, height, images, averageColorForPixels(images.first().image))
         }
+
+        fun averageColorForPixels(image: BufferedImage): Int {
+            var redTotal = 0
+            var greenTotal = 0
+            var blueTotal = 0
+            var totalPixels = 0
+
+            for (y in 0 until image.height) {
+                for (x in 0 until image.width) {
+                    val pixel = image.getRGB(x, y)
+                    if (pixel == 0xff00ff) continue  // Skip magenta pixels
+
+                    redTotal += (pixel shr 16) and 0xff
+                    greenTotal += (pixel shr 8) and 0xff
+                    blueTotal += pixel and 0xff
+                    totalPixels++
+                }
+            }
+
+            if (totalPixels == 0) return 0  // Guard against division by zero if all pixels are magenta
+
+            val averageRed = redTotal / totalPixels
+            val averageGreen = greenTotal / totalPixels
+            val averageBlue = blueTotal / totalPixels
+
+            var averageRGB = (averageRed shl 16) + (averageGreen shl 8) + averageBlue
+            if (averageRGB == 0) averageRGB = 1  // Ensure the color is not completely black if average is calculated as 0
+
+            return averageRGB
+        }
+
     }
 }

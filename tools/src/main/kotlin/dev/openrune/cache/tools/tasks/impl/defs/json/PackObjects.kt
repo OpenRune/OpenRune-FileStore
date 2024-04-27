@@ -1,4 +1,4 @@
-package dev.openrune.cache.tools.tasks.impl.defs
+package dev.openrune.cache.tools.tasks.impl.defs.json
 
 import com.displee.cache.CacheLibrary
 import com.google.gson.Gson
@@ -12,6 +12,11 @@ import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import java.io.File
 
+@Deprecated(
+    message = "Deprecated since 1.2.4 due to conversion to TOML configuration: Use PackConfig with ConfigType.OBJECTS instead",
+    replaceWith = ReplaceWith("PackConfig(ConfigType.OBJECTS)"),
+    level = DeprecationLevel.WARNING // This will generate a warning during compilation, prompting the developer to migrate
+)
 class PackObjects(private val objectDir : File) : CacheTask() {
     override fun init(library: CacheLibrary) {
         val size = getFiles(objectDir,"json").size

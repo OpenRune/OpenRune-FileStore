@@ -33,12 +33,14 @@ import javax.imageio.ImageIO
  */
 class PackSprites(
     private val spritesDirectory: File,
-    private val spriteManifest: File = File(spritesDirectory, "manifest.json")
+    private val spriteManifest: File = File(spritesDirectory, "manifest.toml")
 ) : CacheTask() {
 
     private val mapper = tomlMapper { }
 
-    private val customSprites: MutableMap<Int, SpriteSet> = mutableMapOf()
+    companion object {
+        val customSprites: MutableMap<Int, SpriteSet> = mutableMapOf()
+    }
     private var manifest: Map<String, SpriteManifest> = emptyMap()
 
     override fun init(library: CacheLibrary) {
@@ -99,6 +101,7 @@ class PackSprites(
             var sprites = emptyList<Sprite>().toMutableList()
             if (index != 0) {
                 sprites = SpriteSet.decode(group, Unpooled.wrappedBuffer(library.data(SPRITES, group))).sprites
+
                 sprites[index] = Sprite(0, 0, loadImage(spriteFile))
             } else {
                 sprites.add(Sprite(0, 0, loadImage(spriteFile)))
@@ -126,7 +129,7 @@ class PackSprites(
 
     private fun addSpriteToSet(key: Int, sprite: Sprite, width: Int, height: Int, index: Int) {
         customSprites.getOrPut(key) {
-            SpriteSet(id = key, width = width, height = height, sprites = mutableListOf())
+            SpriteSet(id = key, width = width, height = height, sprites = mutableListOf(),0)
         }.sprites.add(index, sprite)
     }
 

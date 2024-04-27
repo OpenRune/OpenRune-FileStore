@@ -1,111 +1,67 @@
 package dev.openrune.cache.tools.tasks.impl.defs
 
+import cc.ekblad.toml.decode
+import cc.ekblad.toml.tomlMapper
 import com.displee.cache.CacheLibrary
-import com.google.gson.Gson
-import dev.openrune.cache.*
+import dev.openrune.cache.SPRITES
+import dev.openrune.cache.TEXTURES
 import dev.openrune.cache.filestore.buffer.BufferWriter
-import dev.openrune.cache.filestore.buffer.Writer
-import dev.openrune.cache.filestore.definition.ConfigEncoder
-import dev.openrune.cache.filestore.definition.Definition
+import dev.openrune.cache.filestore.definition.data.TextureDefinition
+import dev.openrune.cache.filestore.definition.decoder.TextureDecoder
+import dev.openrune.cache.filestore.definition.encoder.TextureEncoder
 import dev.openrune.cache.tools.tasks.CacheTask
+import dev.openrune.cache.tools.tasks.impl.PackSprites.Companion.customSprites
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet
+import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet.Companion.averageColorForPixels
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.Unpooled
-import java.awt.image.BufferedImage
 import java.io.File
-
-data class TextureDefinition(
-    override var id : Int,
-    val isTransparent : Boolean = false,
-    val fileIds : IntArray = IntArray(0),
-    val combineModes : IntArray = IntArray(0),
-    val field2440 : IntArray = IntArray(0),
-    val colourAdjustments : IntArray = IntArray(0),
-    var averageRgb : Int = 0,
-    val animationDirection : Int = 0,
-    val animationSpeed : Int = 0
-) : Definition {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as TextureDefinition
-
-        if (id != other.id) return false
-        if (isTransparent != other.isTransparent) return false
-        if (!fileIds.contentEquals(other.fileIds)) return false
-        if (!combineModes.contentEquals(other.combineModes)) return false
-        if (!field2440.contentEquals(other.field2440)) return false
-        if (!colourAdjustments.contentEquals(other.colourAdjustments)) return false
-        if (averageRgb != other.averageRgb) return false
-        if (animationDirection != other.animationDirection) return false
-        if (animationSpeed != other.animationSpeed) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = id
-        result = 31 * result + isTransparent.hashCode()
-        result = 31 * result + fileIds.contentHashCode()
-        result = 31 * result + combineModes.contentHashCode()
-        result = 31 * result + field2440.contentHashCode()
-        result = 31 * result + colourAdjustments.contentHashCode()
-        result = 31 * result + averageRgb
-        result = 31 * result + animationDirection
-        result = 31 * result + animationSpeed
-        return result
-    }
-}
-
-class TextureEncoder: ConfigEncoder<TextureDefinition>() {
-    override fun Writer.encode(definition: TextureDefinition) {
-        writeShort(definition.averageRgb)
-        writeByte(if(definition.isTransparent) 1 else 0)
-        val fileCount = definition.fileIds.size
-        writeByte(fileCount)
-        for(index in 0..<fileCount) {
-            writeShort(definition.fileIds[index])
-        }
-        if (fileCount > 1) {
-            definition.combineModes.forEach { combineMode ->
-                writeByte(combineMode)
-            }
-
-            definition.field2440.forEach { field2440 ->
-                writeByte(field2440)
-            }
-
-            definition.colourAdjustments.forEach { colourAdjustment ->
-                writeInt(colourAdjustment)
-            }
-        }
-
-        writeByte(definition.animationDirection)
-        writeByte(definition.animationSpeed)
-    }
-}
+import java.lang.reflect.Modifier
 
 class PackTextures(private val textureDir : File) : CacheTask() {
+
+    val logger = KotlinLogging.logger {}
+
+    val mapper = tomlMapper {}
+
     override fun init(library: CacheLibrary) {
-        val size = getFiles(textureDir,"json").size
+        val size = getFiles(textureDir,"toml").size
         val progress = progress("Packing Textures", size)
         if (size != 0) {
-            getFiles(textureDir,"json").forEach {
 
-                val def: TextureDefinition = Gson().fromJson(it.readText(), TextureDefinition::class.java)
+            getFiles(textureDir,"toml").forEach {
 
-                if (def.fileIds.isNotEmpty()) {
+                var def = mapper.decode<TextureDefinition>(it.toPath())
+
+                val defId = def.id
+
+                if (def.inherit != -1) {
+                    val data = library.data(TEXTURES, 0,def.inherit)
+                    data.let {
+                        val inheritedDef = TextureDecoder().loadSingleFlat(def.inherit,data!!)
+                        def = mergeDefinitions(inheritedDef!!, def)
+                    }
+                }
+
+                if (def.fileIds.isNotEmpty() && defId != -1) {
                     val spriteID = def.fileIds.first()
-                    val sprite = SpriteSet.decode(spriteID, Unpooled.wrappedBuffer(library.data(SPRITES, spriteID))).sprites.first()
-                    def.averageRgb = averageColorForPixels(sprite.image)
+                    if (customSprites.containsKey(spriteID)) {
+                        def.averageRgb = customSprites[spriteID]?.averageColor ?: 0
+                    } else {
+                        val sprite = SpriteSet.decode(spriteID, Unpooled.wrappedBuffer(library.data(SPRITES, spriteID))).sprites.first()
+                        def.averageRgb = averageColorForPixels(sprite.image)
+                    }
                     val encoder = TextureEncoder()
                     val writer = BufferWriter(4096)
+                    println(def.toString())
                     with(encoder) { writer.encode(def) }
 
-                    library.put(TEXTURES,def.id,writer.toArray())
+                    library.put(TEXTURES,0,defId,writer.toArray())
                     progress.step()
+                } else {
+                    logger.info { "Unable to Pack Texture ID is -1 or no fileIds has been defined" }
                 }
             }
 
@@ -114,34 +70,26 @@ class PackTextures(private val textureDir : File) : CacheTask() {
         }
     }
 
-    fun averageColorForPixels(image: BufferedImage): Int {
-        var redTotal = 0
-        var greenTotal = 0
-        var blueTotal = 0
-        var totalPixels = 0
+    private fun mergeDefinitions(baseDef: TextureDefinition, inheritedDef: TextureDefinition): TextureDefinition {
+        val defaultDef = TextureDefinition()
+        val newDef = baseDef.copy()
 
-        for (y in 0 until image.height) {
-            for (x in 0 until image.width) {
-                val pixel = image.getRGB(x, y)
-                if (pixel == 0xff00ff) continue  // Skip magenta pixels
+        val ignoreFields = setOf("inherit")
 
-                redTotal += (pixel shr 16) and 0xff
-                greenTotal += (pixel shr 8) and 0xff
-                blueTotal += pixel and 0xff
-                totalPixels++
+        TextureDefinition::class.java.declaredFields.forEach { field ->
+            if (!Modifier.isStatic(field.modifiers) && !ignoreFields.contains(field.name)) {
+                field.isAccessible = true
+                val baseValue = field.get(baseDef)
+                val inheritedValue = field.get(inheritedDef)
+                val defaultValue = field.get(defaultDef)
+
+                if (inheritedValue != baseValue && inheritedValue != defaultValue) {
+                    field.set(newDef, inheritedValue)
+                }
             }
         }
 
-        if (totalPixels == 0) return 0  // Guard against division by zero if all pixels are magenta
-
-        val averageRed = redTotal / totalPixels
-        val averageGreen = greenTotal / totalPixels
-        val averageBlue = blueTotal / totalPixels
-
-        var averageRGB = (averageRed shl 16) + (averageGreen shl 8) + averageBlue
-        if (averageRGB == 0) averageRGB = 1  // Ensure the color is not completely black if average is calculated as 0
-
-        return averageRGB
+        return newDef
     }
 
 }
