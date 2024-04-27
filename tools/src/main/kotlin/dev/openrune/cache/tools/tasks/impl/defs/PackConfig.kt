@@ -24,17 +24,9 @@ class PackConfig(val type : ConfigType,private val directory : File) : CacheTask
         val progress = progress("Packing Textures", size)
         if (size != 0) {
             getFiles(directory, "json").forEach {
-
                 progress.close()
             }
         }
     }
 
-}
-
-fun main() {
-    PackConfig(ConfigType.TEXTURES,File(""))
-    PackConfig(ConfigType.NPCS,File(""))
-
-    PackItems(File(""))
 }

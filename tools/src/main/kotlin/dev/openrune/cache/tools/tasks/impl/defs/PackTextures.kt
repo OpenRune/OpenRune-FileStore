@@ -55,7 +55,6 @@ class PackTextures(private val textureDir : File) : CacheTask() {
                     }
                     val encoder = TextureEncoder()
                     val writer = BufferWriter(4096)
-                    println(def.toString())
                     with(encoder) { writer.encode(def) }
 
                     library.put(TEXTURES,0,defId,writer.toArray())
