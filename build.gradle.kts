@@ -16,6 +16,7 @@ allprojects {
     repositories {
         mavenCentral()
         maven("https://raw.githubusercontent.com/OpenRune/hosting/master")
+        maven("https://jitpack.io")
     }
 
     dependencies {

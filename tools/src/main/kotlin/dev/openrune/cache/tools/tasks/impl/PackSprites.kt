@@ -1,5 +1,7 @@
 package dev.openrune.cache.tools.tasks.impl
 
+import cc.ekblad.toml.decode
+import cc.ekblad.toml.tomlMapper
 import com.displee.cache.CacheLibrary
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -14,32 +16,44 @@ import io.netty.buffer.Unpooled
 import me.tongfei.progressbar.ProgressBar
 import java.awt.image.BufferedImage
 import java.io.File
+import java.nio.file.Path
 import javax.imageio.ImageIO
 
-
+/**
+ * The `PackSprites` class is responsible for packing sprite images into an OSRS game cache.
+ * It supports both single sprite files and spritesheets, automatically handling different packing strategies based
+ * on the provided manifest file. This class is a part of the cache update process, ensuring that all new or modified
+ * sprites are correctly encoded and stored in the game's cache system.
+ *
+ * @param spritesDirectory The directory where sprite files are stored. This should include all `.png` files that
+ *                         need to be processed.
+ * @param spriteManifest Optional parameter specifying the manifest file that contains metadata for sprites. If not
+ *                       provided, only unnamed sprites will be packed.
+ *
+ */
 class PackSprites(
     private val spritesDirectory: File,
     private val spriteManifest: File = File(spritesDirectory, "manifest.json")
 ) : CacheTask() {
 
+    private val mapper = tomlMapper { }
+
     private val customSprites: MutableMap<Int, SpriteSet> = mutableMapOf()
     private var manifest: Map<String, SpriteManifest> = emptyMap()
-    private lateinit var progress : ProgressBar
 
     override fun init(library: CacheLibrary) {
         val files = getFiles(spritesDirectory, "png")
         val alreadyPacked = mutableListOf<String>()
-        progress = progress("Packing OSRS Sprites", files.size)
+        val progress = progress("Packing OSRS Sprites", files.filter { it.extension == "png" }.size)
 
         if (spriteManifest.exists()) {
-            val type = object : TypeToken<Map<String, SpriteManifest>>() {}.type
-            manifest = Gson().fromJson(spriteManifest.readText(), type)
-        } else {
-            manifest = emptyMap()
+            manifest = mapper.decode<Map<String,SpriteManifest>>(spriteManifest.toPath())
         }
 
         files.forEach { spriteFile ->
+            progress.extraMessage = spriteFile.name
             processSpriteFile(spriteFile, alreadyPacked, library)
+            progress.step()
         }
 
         customSprites.forEach { (id, spriteSet) ->
@@ -49,19 +63,18 @@ class PackSprites(
     }
 
     private fun processSpriteFile(spriteFile: File, alreadyPacked: MutableList<String>, library: CacheLibrary) {
-        val fileName = spriteFile.nameWithoutExtension
-        manifest[fileName]?.let { data ->
+        val fileName = spriteFile.nameWithoutExtension.lowercase()
+        manifest[fileName.lowercase()]?.let { data ->
             if (data.atlas != null) {
-                packFromAtlas(spriteFile, data, library)
+                packFromAtlas(spriteFile, data)
             } else {
                 packNamedSprite(spriteFile, data)
             }
             alreadyPacked.add(spriteFile.name)
-            progress.step()
         } ?: handleUnNamedSprite(spriteFile, library)
     }
 
-    private fun packFromAtlas(spriteFile: File, data: SpriteManifest, library: CacheLibrary) {
+    private fun packFromAtlas(spriteFile: File, data: SpriteManifest) {
         data.atlas?.let { atlas ->
             val sprites = extractSpriteSheet(loadImage(spriteFile), atlas.width, atlas.height)
             sprites.forEachIndexed { index, image ->
@@ -75,6 +88,7 @@ class PackSprites(
         val image = loadImage(spriteFile)
         val sprite = Sprite(data.offsetX, data.offsetY, image)
         addSpriteToSet(data.id, sprite, image.width, image.height, 0)
+
     }
 
     private fun handleUnNamedSprite(spriteFile: File, library: CacheLibrary) {
@@ -93,7 +107,6 @@ class PackSprites(
             sprites.forEachIndexed { pos, sprite ->
                 addSpriteToSet(group, sprite, sprite.width, sprite.height, pos)
             }
-            progress.step()
         }
     }
 
