@@ -9,7 +9,9 @@ data class EnumDefinition(
     var valueType : Int = 0,
     var defaultInt : Int = 0,
     var defaultString : String = "",
-    val values : Int2ObjectOpenHashMap<Any> = Int2ObjectOpenHashMap<Any>()
+    val values : Int2ObjectOpenHashMap<Any> = Int2ObjectOpenHashMap<Any>(),
+    //Custom
+    override var inherit: Int = -1
 ) : Definition {
     fun getInt(key: Int): Int = values.get(key) as? Int ?: defaultInt
 

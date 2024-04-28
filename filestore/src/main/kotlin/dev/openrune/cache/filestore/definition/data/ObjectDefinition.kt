@@ -6,20 +6,20 @@ import dev.openrune.cache.filestore.definition.Recolourable
 import dev.openrune.cache.filestore.definition.Transforms
 
 data class ObjectDefinition(
-    override var id: Int = 0,
+    override var id: Int = -1,
     var name: String = "null",
     var decorDisplacement : Int = 16,
     var isHollow : Boolean = false,
-    var objectModels: IntArray? = null,
-    var objectTypes: IntArray? = null,
-    var recolorToFind: ShortArray? = null,
+    var objectModels: MutableList<Int>? = null,
+    var objectTypes: MutableList<Int>? = null,
+    var recolorToFind: MutableList<Short>? = null,
     var mapAreaId: Int = -1,
-    var retextureToReplace: ShortArray? = null,
+    var retextureToReplace: MutableList<Short>? = null,
     var sizeX: Int = 1,
     var sizeY: Int = 1,
     var soundDistance: Int = 0,
     var soundRetain: Int = 0,
-    var ambientSoundIds: IntArray? = null,
+    var ambientSoundIds: MutableList<Int>? = null,
     var offsetX: Int = 0,
     var nonFlatShading: Boolean = false,
     var interactive: Int = -1,
@@ -31,7 +31,7 @@ data class ObjectDefinition(
     var solid: Int = 2,
     var mapSceneID: Int = -1,
     var clipMask: Int = 0,
-    var recolorToReplace: ShortArray? = null,
+    var recolorToReplace: List<Short>? = null,
     var clipped: Boolean = true,
     var modelSizeX: Int = 128,
     var modelSizeZ: Int = 128,
@@ -52,14 +52,25 @@ data class ObjectDefinition(
     var soundMax: Int = 0,
     var delayAnimationUpdate : Boolean = false,
     var impenetrable: Boolean = true,
-    override var originalColours: ShortArray? = null,
-    override var modifiedColours: ShortArray? = null,
-    override var originalTextureColours: ShortArray? = null,
-    override var modifiedTextureColours: ShortArray? = null,
+    override var originalColours: MutableList<Short>? = null,
+    override var modifiedColours: MutableList<Short>? = null,
+    override var originalTextureColours: MutableList<Short>? = null,
+    override var modifiedTextureColours: MutableList<Short>? = null,
     override var varbit: Int = -1,
     override var varp: Int = -1,
-    override var transforms: IntArray? = null,
+    override var transforms: MutableList<Int>? = null,
     override var params: Map<Int, Any>? = null,
+
+    //Custom
+    var option1: String? = null,
+    var option2: String? = null,
+    var option3: String? = null,
+    var option4: String? = null,
+    var option5: String? = null,
+    override var inherit : Int = -1
+
 ) : Definition, Transforms, Recolourable, Parameterized {
-    var examine : String = ""
+    init {
+        actions = listOf(option1,option2,option3,option4,option5).toMutableList()
+    }
 }

@@ -6,6 +6,7 @@ import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.data.ObjectDefinition
 import java.util.stream.IntStream
+import kotlin.streams.toList
 
 class ObjectDecoder : DefinitionDecoder<ObjectDefinition>(OBJECT) {
     override fun create(size: Int) = Array(size) { ObjectDefinition(it) }
@@ -18,8 +19,9 @@ class ObjectDecoder : DefinitionDecoder<ObjectDefinition>(OBJECT) {
                 val length: Int = buffer.readUnsignedByte()
                 when {
                     length > 0 -> {
-                        objectTypes = IntArray(length)
-                        objectModels = IntArray(length)
+                        objectTypes = MutableList(length) { 0 }
+                        objectModels = MutableList(length) { 0 }
+
                         (0 until length).forEach {
                             objectModels!![it] = buffer.readUnsignedShort()
                             objectTypes!![it] = buffer.readUnsignedByte()
@@ -35,7 +37,7 @@ class ObjectDecoder : DefinitionDecoder<ObjectDefinition>(OBJECT) {
                         objectTypes = null
                         objectModels = IntStream.range(0, length).map {
                             buffer.readUnsignedShort()
-                        }.toArray()
+                        }.toList().toMutableList()
                     }
                 }
             }
@@ -97,7 +99,7 @@ class ObjectDecoder : DefinitionDecoder<ObjectDefinition>(OBJECT) {
                 val length: Int = buffer.readUnsignedByte()
                 ambientSoundIds = IntStream.range(0, length).map {
                     buffer.readUnsignedShort()
-                }.toArray()
+                }.toList().toMutableList()
             }
             81 -> clipType = (buffer.readUnsignedByte()) * 256
             60,82 -> mapAreaId = buffer.readUnsignedShort()

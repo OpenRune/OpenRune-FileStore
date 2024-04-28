@@ -19,6 +19,12 @@ fun LocalDateTime.toEchochUTC() : Long {
     return this.toEpochSecond(ZoneOffset.UTC)
 }
 
+fun String.capitalizeFirstLetter(): String {
+    return this.replaceFirstChar {
+        if (it.isLowerCase()) it.titlecase() else it.toString()
+    }
+}
+
 fun progress(task : String, amt : Long) : ProgressBar {
     return ProgressBar(
         task,

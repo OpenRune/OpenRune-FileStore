@@ -18,8 +18,8 @@ class AnimDecoder : DefinitionDecoder<AnimDefinition>(ANIMATIONS) {
             1 -> {
                 val frameCount = buffer.readUnsignedShort()
                 var totalFrameLength = 0
-                frameIds = IntArray(frameCount)
-                frameLengths = IntArray(frameCount)
+                frameIds = MutableList(frameCount) { 0 }
+                frameLengths = MutableList(frameCount) { 0 }
 
                 for (i in 0 until frameCount) {
                     frameLengths!![i] = buffer.readUnsignedShort()

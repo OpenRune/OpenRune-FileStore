@@ -6,7 +6,7 @@ import dev.openrune.cache.filestore.buffer.Writer
 interface Transforms {
     var varbit: Int
     var varp: Int
-    var transforms: IntArray?
+    var transforms: MutableList<Int>?
 
     fun readTransforms(buffer: Reader, isLast: Boolean) {
         varbit = buffer.readShort()
@@ -25,7 +25,7 @@ interface Transforms {
             }
         }
         val length = buffer.readUnsignedByte()
-        transforms = IntArray(length + 2)
+        transforms = MutableList(length + 2) { -1 }
         for (count in 0..length) {
             transforms!![count] = buffer.readUnsignedShort()
             if (transforms!![count] == 65535) {

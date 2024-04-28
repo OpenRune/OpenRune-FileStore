@@ -1,4 +1,4 @@
-package dev.openrune.cache.tools.tasks.impl.defs
+package dev.openrune.cache.tools.tasks.impl
 
 import cc.ekblad.toml.decode
 import cc.ekblad.toml.tomlMapper
@@ -11,6 +11,7 @@ import dev.openrune.cache.filestore.definition.decoder.TextureDecoder
 import dev.openrune.cache.filestore.definition.encoder.TextureEncoder
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.PackSprites.Companion.customSprites
+import dev.openrune.cache.tools.tasks.impl.defs.PackConfig.Companion.mergeDefinitions
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet.Companion.averageColorForPixels
 import dev.openrune.cache.util.getFiles
@@ -18,13 +19,12 @@ import dev.openrune.cache.util.progress
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.Unpooled
 import java.io.File
-import java.lang.reflect.Modifier
 
 class PackTextures(private val textureDir : File) : CacheTask() {
 
-    val logger = KotlinLogging.logger {}
+    private val logger = KotlinLogging.logger {}
 
-    val mapper = tomlMapper {}
+    private val mapper = tomlMapper {}
 
     override fun init(library: CacheLibrary) {
         val size = getFiles(textureDir,"toml").size
@@ -67,28 +67,6 @@ class PackTextures(private val textureDir : File) : CacheTask() {
             progress.close()
 
         }
-    }
-
-    private fun mergeDefinitions(baseDef: TextureDefinition, inheritedDef: TextureDefinition): TextureDefinition {
-        val defaultDef = TextureDefinition()
-        val newDef = baseDef.copy()
-
-        val ignoreFields = setOf("inherit")
-
-        TextureDefinition::class.java.declaredFields.forEach { field ->
-            if (!Modifier.isStatic(field.modifiers) && !ignoreFields.contains(field.name)) {
-                field.isAccessible = true
-                val baseValue = field.get(baseDef)
-                val inheritedValue = field.get(inheritedDef)
-                val defaultValue = field.get(defaultDef)
-
-                if (inheritedValue != baseValue && inheritedValue != defaultValue) {
-                    field.set(newDef, inheritedValue)
-                }
-            }
-        }
-
-        return newDef
     }
 
 }

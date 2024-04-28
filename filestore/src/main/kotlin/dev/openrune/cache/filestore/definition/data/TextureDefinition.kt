@@ -12,5 +12,5 @@ data class TextureDefinition(
     var averageRgb : Int = 0,
     var animationDirection : Int = 0,
     var animationSpeed : Int = 0,
-    var inherit : Int = -1
-) : Definition
+    override var inherit : Int = -1,
+ ) : Definition

@@ -5,4 +5,6 @@ import dev.openrune.cache.filestore.definition.Definition
 data class VarpDefinition(
     override var id: Int = -1,
     var configType: Int = 0,
+    //Custom
+    override var inherit: Int = -1
 ) : Definition

@@ -12,5 +12,7 @@ data class HealthDefinition(
     var frontSpriteId: Int? = null,
     var backSpriteId: Int? = null,
     var width: Short = 30,
-    var widthPadding: Short = 0
+    var widthPadding: Short = 0,
+    //Custom
+    override var inherit: Int = -1
 ) : Definition

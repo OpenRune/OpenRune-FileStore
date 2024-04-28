@@ -10,4 +10,9 @@ interface DefinitionEncoder<T : Definition> {
     fun Writer.encode(definition: T) {
         encode(definition, definition)
     }
+
+    fun Writer.encodeCustom(definition: T, members: T) {
+        encode(definition, definition)
+    }
+
 }

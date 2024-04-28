@@ -15,7 +15,7 @@ class NPCDecoder : DefinitionDecoder<NPCDefinition>(NPC) {
         when (opcode) {
             1 -> {
                 val length = buffer.readUnsignedByte()
-                models = IntArray(length)
+                models = MutableList(length) { 0 }
                 for (count in 0 until length) {
                     models!![count] = buffer.readUnsignedShort()
                     if (models!![count] == 65535) {
@@ -46,7 +46,7 @@ class NPCDecoder : DefinitionDecoder<NPCDefinition>(NPC) {
             41 -> readTextures(buffer)
             60 -> {
                 val length: Int = buffer.readUnsignedByte()
-                chatheadModels = IntArray(length)
+                chatheadModels = MutableList(length) { 0 }
                 (0 until length).forEach {
                     chatheadModels!![it] = buffer.readUnsignedShort()
                 }
@@ -60,8 +60,8 @@ class NPCDecoder : DefinitionDecoder<NPCDefinition>(NPC) {
             101 -> contrast = buffer.readByte()
             102 -> {
                 if (CacheManager.revisionIsOrBefore(210)) {
-                    headIconArchiveIds = intArrayOf(-1)
-                    headIconSpriteIndex = IntArray(buffer.readUnsignedShort())
+                    headIconArchiveIds = MutableList(0) { 0 }
+                    headIconSpriteIndex = MutableList(buffer.readUnsignedShort()) { 0 }
                 } else {
                     val bitfield = buffer.readUnsignedByte()
                     var size = 0
@@ -71,8 +71,8 @@ class NPCDecoder : DefinitionDecoder<NPCDefinition>(NPC) {
                         ++size
                         pos = pos shr 1
                     }
-                    headIconArchiveIds = IntArray(size)
-                    headIconSpriteIndex = IntArray(size)
+                    headIconArchiveIds =  MutableList(size) { 0 }
+                    headIconSpriteIndex = MutableList(size) { 0 }
 
                     for (i in 0 until size) {
                         if (bitfield and (1 shl i) == 0) {
