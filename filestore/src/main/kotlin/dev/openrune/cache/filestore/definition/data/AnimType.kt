@@ -3,7 +3,7 @@ package dev.openrune.cache.filestore.definition.data
 import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.cache.filestore.definition.Sound
 
-data class AnimDefinition(
+data class AnimType(
     override var id: Int = -1,
     var frameIds: MutableList<Int>? = null,
     var frameLengths: MutableList<Int>? = null,

@@ -8,15 +8,9 @@ import dev.openrune.cache.filestore.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.definition.DefinitionEncoder
-import dev.openrune.cache.filestore.definition.data.ItemDefinition
-import dev.openrune.cache.filestore.definition.data.NPCDefinition
-import dev.openrune.cache.filestore.definition.data.ObjectDefinition
-import dev.openrune.cache.filestore.definition.decoder.ItemDecoder
-import dev.openrune.cache.filestore.definition.decoder.NPCDecoder
-import dev.openrune.cache.filestore.definition.decoder.ObjectDecoder
-import dev.openrune.cache.filestore.definition.encoder.ItemEncoder
-import dev.openrune.cache.filestore.definition.encoder.NpcEncoder
-import dev.openrune.cache.filestore.definition.encoder.ObjectEncoder
+import dev.openrune.cache.filestore.definition.data.*
+import dev.openrune.cache.filestore.definition.decoder.*
+import dev.openrune.cache.filestore.definition.encoder.*
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.capitalizeFirstLetter
 import dev.openrune.cache.util.getFiles
@@ -28,7 +22,9 @@ import java.lang.reflect.Modifier
 enum class PackMode{
     NPCS,
     ITEMS,
-    OBJECTS
+    OBJECTS,
+    HITSPLATS,
+    HEALTBAR
 }
 
 class PackConfig(val type : PackMode, private val directory : File) : CacheTask() {
@@ -44,9 +40,11 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
             getFiles(directory, "toml").forEach {
                 progress.extraMessage = it.name
                 when(type) {
-                    PackMode.ITEMS -> packDefinitions<ItemDefinition>(it, ItemEncoder(),ItemDecoder(),library)
-                    PackMode.NPCS -> packDefinitions<NPCDefinition>(it, NpcEncoder(),NPCDecoder(),library)
-                    PackMode.OBJECTS -> packDefinitions<ObjectDefinition>(it, ObjectEncoder(),ObjectDecoder(),library)
+                    PackMode.ITEMS -> packDefinitions<ItemType>(it, ItemEncoder(),ItemDecoder(),library)
+                    PackMode.NPCS -> packDefinitions<NpcType>(it, NpcEncoder(),NPCDecoder(),library)
+                    PackMode.OBJECTS -> packDefinitions<ObjectType>(it, ObjectEncoder(),ObjectDecoder(),library)
+                    PackMode.HITSPLATS -> packDefinitions<HitSplatType>(it, HitSplatEncoder(),HitSplatDecoder(),library)
+                    PackMode.HEALTBAR -> packDefinitions<HealthBarType>(it, HealthBarEncoder(),HealthBarDecoder(),library)
                     else -> println("Not Supported")
                 }
                 progress.step()

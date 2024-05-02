@@ -4,11 +4,11 @@ import dev.openrune.cache.CacheManager
 import dev.openrune.cache.CacheManager.revisionIsOrAfter
 import dev.openrune.cache.filestore.buffer.Writer
 import dev.openrune.cache.filestore.definition.ConfigEncoder
-import dev.openrune.cache.filestore.definition.data.NPCDefinition
+import dev.openrune.cache.filestore.definition.data.NpcType
 
-class NpcEncoder : ConfigEncoder<NPCDefinition>() {
+class NpcEncoder : ConfigEncoder<NpcType>() {
 
-    override fun Writer.encode(definition: NPCDefinition) {
+    override fun Writer.encode(definition: NpcType) {
         if (definition.models != null && definition.models!!.isNotEmpty()) {
             writeByte(1)
             writeByte(definition.models!!.size)

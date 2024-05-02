@@ -2,7 +2,7 @@ package dev.openrune.cache.filestore.definition.data
 
 import dev.openrune.cache.filestore.definition.Definition
 
-data class TextureDefinition(
+data class TextureType(
     override var id : Int = -1,
     var isTransparent : Boolean = false,
     var fileIds : MutableList<Int> = emptyList<Int>().toMutableList(),

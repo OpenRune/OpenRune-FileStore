@@ -2,11 +2,11 @@ package dev.openrune.cache.filestore.definition.encoder
 
 import dev.openrune.cache.filestore.buffer.Writer
 import dev.openrune.cache.filestore.definition.ConfigEncoder
-import dev.openrune.cache.filestore.definition.data.ItemDefinition
+import dev.openrune.cache.filestore.definition.data.ItemType
 
-class ItemEncoder : ConfigEncoder<ItemDefinition>() {
+class ItemEncoder : ConfigEncoder<ItemType>() {
 
-    override fun Writer.encode(definition: ItemDefinition) {
+    override fun Writer.encode(definition: ItemType) {
         if (definition.inventoryModel != 0) {
             writeByte(1)
             writeShort(definition.inventoryModel)

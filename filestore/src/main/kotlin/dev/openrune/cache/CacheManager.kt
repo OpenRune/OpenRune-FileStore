@@ -1,6 +1,5 @@
 package dev.openrune.cache
 
-import com.displee.cache.CacheLibrary
 import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.definition.data.*
 import dev.openrune.cache.filestore.definition.decoder.*
@@ -9,14 +8,16 @@ import java.nio.file.Path
 object CacheManager {
 
     lateinit var cache: Cache
-    private lateinit var npcs: Array<NPCDefinition>
-    private lateinit var objects: Array<ObjectDefinition>
-    private lateinit var items: Array<ItemDefinition>
-    private lateinit var varbit: Array<VarBitDefinition>
-    private lateinit var varps: Array<VarpDefinition>
-    private lateinit var anim: Array<AnimDefinition>
-    private lateinit var enum: Array<EnumDefinition>
-    private lateinit var health: Array<HealthDefinition>
+    private lateinit var npcs: Array<NpcType>
+    private lateinit var objects: Array<ObjectType>
+    private lateinit var items: Array<ItemType>
+    private lateinit var varbit: Array<VarBitType>
+    private lateinit var varps: Array<VarpType>
+    private lateinit var anim: Array<AnimType>
+    private lateinit var enum: Array<EnumType>
+    private lateinit var health: Array<HealthBarType>
+    private lateinit var hitsplats: Array<HitSplatType>
+    private lateinit var struct: Array<StructType>
     private var cacheRevision = -1
 
 
@@ -30,7 +31,9 @@ object CacheManager {
         varps = VarDecoder().load(cache)
         anim = AnimDecoder().load(cache)
         enum = EnumDecoder().load(cache)
-        health = HealthDecoder().load(cache)
+        health = HealthBarDecoder().load(cache)
+        hitsplats = HitSplatDecoder().load(cache)
+        struct = StructDecoder().load(cache)
 
     }
 
@@ -38,28 +41,38 @@ object CacheManager {
     fun getObjects() = objects
     fun getItems() = items
 
-    fun health(id: Int): HealthDefinition = health[id]
+    fun getHitsplats() = hitsplats
+
+    fun getStructs() = struct
+
+    fun health(id: Int): HealthBarType = health[id]
 
     fun healthCount(): Int = health.size
 
-    fun npc(id: Int): NPCDefinition = npcs[id]
+    fun npc(id: Int): NpcType = npcs[id]
     fun npcCount(): Int = npcs.size
 
-    fun objects(id: Int): ObjectDefinition = objects[id]
+    fun objects(id: Int): ObjectType = objects[id]
     fun objectCount(): Int = objects.size
 
-    fun item(id: Int): ItemDefinition = items[id]
+    fun item(id: Int): ItemType = items[id]
     fun itemCount(): Int = items.size
 
-    fun varbit(id: Int): VarBitDefinition = varbit[id]
+    fun varbit(id: Int): VarBitType = varbit[id]
     fun varbitCount(): Int = varbit.size
 
-    fun varp(id: Int): VarpDefinition = varps[id]
+    fun varp(id: Int): VarpType = varps[id]
     fun varpCount(): Int = varps.size
 
-    fun anim(id: Int): AnimDefinition = anim[id]
+    fun anim(id: Int): AnimType = anim[id]
 
-    fun enum(id: Int): EnumDefinition = enum[id]
+    fun enum(id: Int): EnumType = enum[id]
+
+    fun hitsplat(id: Int): HitSplatType = hitsplats[id]
+    fun hitsplatCount(): Int = hitsplats.size
+
+    fun struct(id: Int): StructType = struct[id]
+    fun structCount(): Int = struct.size
 
     fun revisionIsOrAfter(rev : Int) = rev <= cacheRevision
     fun revisionIsOrBefore(rev : Int) = rev >= cacheRevision

@@ -6,7 +6,7 @@ import com.displee.cache.CacheLibrary
 import dev.openrune.cache.SPRITES
 import dev.openrune.cache.TEXTURES
 import dev.openrune.cache.filestore.buffer.BufferWriter
-import dev.openrune.cache.filestore.definition.data.TextureDefinition
+import dev.openrune.cache.filestore.definition.data.TextureType
 import dev.openrune.cache.filestore.definition.decoder.TextureDecoder
 import dev.openrune.cache.filestore.definition.encoder.TextureEncoder
 import dev.openrune.cache.tools.tasks.CacheTask
@@ -33,7 +33,7 @@ class PackTextures(private val textureDir : File) : CacheTask() {
 
             getFiles(textureDir,"toml").forEach {
 
-                var def = mapper.decode<TextureDefinition>(it.toPath())
+                var def = mapper.decode<TextureType>(it.toPath())
 
                 val defId = def.id
 

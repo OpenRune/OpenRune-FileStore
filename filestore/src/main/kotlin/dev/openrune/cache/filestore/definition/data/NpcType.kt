@@ -5,7 +5,7 @@ import dev.openrune.cache.filestore.definition.Parameterized
 import dev.openrune.cache.filestore.definition.Recolourable
 import dev.openrune.cache.filestore.definition.Transforms
 
-data class NPCDefinition(
+data class NpcType(
     override var id: Int = -1,
     var name: String = "null",
     var size : Int = 1,

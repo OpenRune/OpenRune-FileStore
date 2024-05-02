@@ -3,13 +3,11 @@ package dev.openrune.cache.filestore.definition.encoder
 import dev.openrune.cache.CacheManager
 import dev.openrune.cache.filestore.buffer.Writer
 import dev.openrune.cache.filestore.definition.ConfigEncoder
-import dev.openrune.cache.filestore.definition.data.ItemDefinition
-import dev.openrune.cache.filestore.definition.data.NPCDefinition
-import dev.openrune.cache.filestore.definition.data.ObjectDefinition
+import dev.openrune.cache.filestore.definition.data.ObjectType
 
-class ObjectEncoder : ConfigEncoder<ObjectDefinition>() {
+class ObjectEncoder : ConfigEncoder<ObjectType>() {
 
-    override fun Writer.encode(definition: ObjectDefinition) {
+    override fun Writer.encode(definition: ObjectType) {
         if (definition.objectModels != null) {
             if (definition.objectTypes != null) {
                 writeByte(1)

@@ -5,7 +5,7 @@ import dev.openrune.cache.filestore.definition.Parameterized
 import dev.openrune.cache.filestore.definition.Recolourable
 import dev.openrune.cache.filestore.definition.Transforms
 
-data class ObjectDefinition(
+data class ObjectType(
     override var id: Int = -1,
     var name: String = "null",
     var decorDisplacement : Int = 16,

@@ -4,16 +4,16 @@ import dev.openrune.cache.CacheManager.revisionIsOrAfter
 import dev.openrune.cache.OBJECT
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
-import dev.openrune.cache.filestore.definition.data.ObjectDefinition
+import dev.openrune.cache.filestore.definition.data.ObjectType
 import java.util.stream.IntStream
 import kotlin.streams.toList
 
-class ObjectDecoder : DefinitionDecoder<ObjectDefinition>(OBJECT) {
-    override fun create(size: Int) = Array(size) { ObjectDefinition(it) }
+class ObjectDecoder : DefinitionDecoder<ObjectType>(OBJECT) {
+    override fun create(size: Int) = Array(size) { ObjectType(it) }
 
     override fun getFile(id: Int) = id
 
-    override fun ObjectDefinition.read(opcode: Int, buffer: Reader) {
+    override fun ObjectType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
             1 -> {
                 val length: Int = buffer.readUnsignedByte()

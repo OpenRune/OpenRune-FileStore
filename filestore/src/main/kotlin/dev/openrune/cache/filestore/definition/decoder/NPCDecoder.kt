@@ -4,14 +4,14 @@ import dev.openrune.cache.CacheManager
 import dev.openrune.cache.NPC
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
-import dev.openrune.cache.filestore.definition.data.NPCDefinition
+import dev.openrune.cache.filestore.definition.data.NpcType
 
-class NPCDecoder : DefinitionDecoder<NPCDefinition>(NPC) {
-    override fun create(size: Int) = Array(size) { NPCDefinition(it) }
+class NPCDecoder : DefinitionDecoder<NpcType>(NPC) {
+    override fun create(size: Int) = Array(size) { NpcType(it) }
 
     override fun getFile(id: Int) = id
 
-    override fun NPCDefinition.read(opcode: Int, buffer: Reader) {
+    override fun NpcType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
             1 -> {
                 val length = buffer.readUnsignedByte()

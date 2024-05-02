@@ -5,7 +5,7 @@ import com.google.gson.Gson
 import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.NPC
 import dev.openrune.cache.filestore.buffer.BufferWriter
-import dev.openrune.cache.filestore.definition.data.NPCDefinition
+import dev.openrune.cache.filestore.definition.data.NpcType
 import dev.openrune.cache.filestore.definition.encoder.NpcEncoder
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.getFiles
@@ -24,7 +24,7 @@ class PackNpcs(private val npcDir : File) : CacheTask() {
         val errors : MutableMap<String, String> = emptyMap<String, String>().toMutableMap()
         if (size != 0) {
             getFiles(npcDir,"json").forEach {
-                val def: NPCDefinition = Gson().fromJson(it.readText(), NPCDefinition::class.java)
+                val def: NpcType = Gson().fromJson(it.readText(), NpcType::class.java)
                 if (def.id == 0) {
                     errors[it.toString()] = "ID is 0 please set a id for the npc to pack"
                     return@forEach

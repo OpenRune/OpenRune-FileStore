@@ -3,15 +3,15 @@ package dev.openrune.cache.filestore.definition.decoder
 import dev.openrune.cache.ENUM
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
-import dev.openrune.cache.filestore.definition.data.EnumDefinition
+import dev.openrune.cache.filestore.definition.data.EnumType
 
-class EnumDecoder : DefinitionDecoder<EnumDefinition>(ENUM) {
+class EnumDecoder : DefinitionDecoder<EnumType>(ENUM) {
 
-    override fun create(size: Int) = Array(size) { EnumDefinition(it) }
+    override fun create(size: Int) = Array(size) { EnumType(it) }
 
     override fun getFile(id: Int) = id
 
-    override fun EnumDefinition.read(opcode: Int, buffer: Reader) {
+    override fun EnumType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
             1 -> keyType = buffer.readUnsignedByte()
             2 -> valueType = buffer.readUnsignedByte()

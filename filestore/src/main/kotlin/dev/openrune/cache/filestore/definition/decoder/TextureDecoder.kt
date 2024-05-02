@@ -3,15 +3,15 @@ package dev.openrune.cache.filestore.definition.decoder
 import dev.openrune.cache.TEXTURES
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
-import dev.openrune.cache.filestore.definition.data.TextureDefinition
+import dev.openrune.cache.filestore.definition.data.TextureType
 
-class TextureDecoder : DefinitionDecoder<TextureDefinition>(TEXTURES) {
+class TextureDecoder : DefinitionDecoder<TextureType>(TEXTURES) {
 
-    override fun create(size: Int) = Array(size) { TextureDefinition(it) }
+    override fun create(size: Int) = Array(size) { TextureType(it) }
 
     override fun getFile(id: Int) = id
 
-    override fun TextureDefinition.read(opcode: Int,buffer: Reader) {
+    override fun TextureType.read(opcode: Int, buffer: Reader) {
         averageRgb = buffer.readUnsignedShort()
         isTransparent = buffer.readUnsignedByte() == 1
         val count: Int = buffer.readUnsignedByte()

@@ -5,7 +5,7 @@ import dev.openrune.cache.filestore.definition.Parameterized
 import dev.openrune.cache.filestore.definition.Recolourable
 import it.unimi.dsi.fastutil.bytes.Byte2ByteOpenHashMap
 
-data class ItemDefinition(
+data class ItemType(
     override var id: Int = -1,
     var name: String = "null",
     var description: String = "null",

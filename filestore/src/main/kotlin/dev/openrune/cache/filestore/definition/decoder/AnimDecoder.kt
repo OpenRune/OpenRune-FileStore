@@ -4,16 +4,16 @@ import dev.openrune.cache.ANIMATIONS
 import dev.openrune.cache.CacheManager
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
-import dev.openrune.cache.filestore.definition.data.AnimDefinition
+import dev.openrune.cache.filestore.definition.data.AnimType
 import kotlin.math.ceil
 
-class AnimDecoder : DefinitionDecoder<AnimDefinition>(ANIMATIONS) {
+class AnimDecoder : DefinitionDecoder<AnimType>(ANIMATIONS) {
 
-    override fun create(size: Int) = Array(size) { AnimDefinition(it) }
+    override fun create(size: Int) = Array(size) { AnimType(it) }
 
     override fun getFile(id: Int) = id
 
-    override fun AnimDefinition.read(opcode: Int, buffer: Reader) {
+    override fun AnimType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
             1 -> {
                 val frameCount = buffer.readUnsignedShort()

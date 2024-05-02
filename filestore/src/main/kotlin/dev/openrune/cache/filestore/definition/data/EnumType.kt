@@ -3,7 +3,7 @@ package dev.openrune.cache.filestore.definition.data
 import dev.openrune.cache.filestore.definition.Definition
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
-data class EnumDefinition(
+data class EnumType(
     override var id: Int = -1,
     var keyType : Int = 0,
     var valueType : Int = 0,

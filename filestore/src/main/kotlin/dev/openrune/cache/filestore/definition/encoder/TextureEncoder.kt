@@ -2,11 +2,11 @@ package dev.openrune.cache.filestore.definition.encoder
 
 import dev.openrune.cache.filestore.buffer.Writer
 import dev.openrune.cache.filestore.definition.ConfigEncoder
-import dev.openrune.cache.filestore.definition.data.TextureDefinition
+import dev.openrune.cache.filestore.definition.data.TextureType
 
-class TextureEncoder: ConfigEncoder<TextureDefinition>() {
+class TextureEncoder: ConfigEncoder<TextureType>() {
 
-    override fun Writer.encode(definition: TextureDefinition) {
+    override fun Writer.encode(definition: TextureType) {
         writeShort(definition.averageRgb)
         writeByte(if(definition.isTransparent) 1 else 0)
         val fileCount = definition.fileIds.size
