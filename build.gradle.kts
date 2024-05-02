@@ -9,7 +9,7 @@ allprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
 
     group = "dev.openrune"
-    version = "1.2.7"
+    version = "1.2.8"
 
     java.sourceCompatibility = JavaVersion.VERSION_11
 
