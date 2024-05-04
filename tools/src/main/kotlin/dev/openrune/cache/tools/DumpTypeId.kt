@@ -42,7 +42,7 @@ class DumpTypeId(
 
     private fun writeItems(fileName: String) {
         val file = generateWriter(fileName)
-        for ((index, item) in CacheManager.getItems().withIndex()) {
+        for ((index, item) in CacheManager.getItems()) {
             if (item.isPlaceholder) continue
             val rawName = if (item.noteTemplateId > 0) item.name + "_NOTED" else item.name
             if (rawName.isNotBlank()) {
@@ -55,7 +55,7 @@ class DumpTypeId(
 
     private fun writeNpcs(fileName: String) {
         val file = generateWriter(fileName)
-        for ((index, npc) in CacheManager.getNpcs().withIndex()) {
+        for ((index, npc) in CacheManager.getNpcs()) {
             val rawName = npc.name.replace("?", "")
             val useNullName = rawName.isNotEmpty() && rawName.isNotBlank()
             val name = if (useNullName) namer.name(npc.name, index) else "NULL_$index"
@@ -66,7 +66,7 @@ class DumpTypeId(
 
     private fun writeObjs(fileName: String) {
         val file = generateWriter(fileName)
-        for ((index, obj) in CacheManager.getObjects().withIndex()) {
+        for ((index, obj) in CacheManager.getObjects()) {
             val rawName = obj.name.replace("?", "")
             if (rawName.isNotEmpty() && rawName.isNotBlank() && rawName != "null") {
                 val name = namer.name(obj.name, index)
@@ -79,7 +79,7 @@ class DumpTypeId(
     private fun writeObjs(fileName: String, fileName2 : String) {
         val file = generateWriter(fileName)
         val file1 = generateWriter(fileName2)
-        for ((index, obj) in CacheManager.getObjects().withIndex()) {
+        for ((index, obj) in CacheManager.getObjects()) {
             val rawName = obj.name.replace("?", "")
             val normalName = rawName.isNotEmpty() && rawName.isNotBlank()
             val name = if (normalName) namer.name(obj.name, index) else "NULL_$index"

@@ -8,72 +8,123 @@ import java.nio.file.Path
 object CacheManager {
 
     lateinit var cache: Cache
-    private lateinit var npcs: Array<NpcType>
-    private lateinit var objects: Array<ObjectType>
-    private lateinit var items: Array<ItemType>
-    private lateinit var varbit: Array<VarBitType>
-    private lateinit var varps: Array<VarpType>
-    private lateinit var anim: Array<AnimType>
-    private lateinit var enum: Array<EnumType>
-    private lateinit var health: Array<HealthBarType>
-    private lateinit var hitsplats: Array<HitSplatType>
-    private lateinit var struct: Array<StructType>
+
+    private val npcs: MutableMap<Int, NpcType> = mutableMapOf()
+    private val objects: MutableMap<Int, ObjectType> = mutableMapOf()
+    private val items: MutableMap<Int, ItemType> = mutableMapOf()
+    private val varbits: MutableMap<Int, VarBitType> = mutableMapOf()
+    private val varps: MutableMap<Int, VarpType> = mutableMapOf()
+    private val anims: MutableMap<Int, AnimType> = mutableMapOf()
+    private val enums: MutableMap<Int, EnumType> = mutableMapOf()
+    private val healthBars: MutableMap<Int, HealthBarType> = mutableMapOf()
+    private val hitsplats: MutableMap<Int, HitSplatType> = mutableMapOf()
+    private val structs: MutableMap<Int, StructType> = mutableMapOf()
+
     private var cacheRevision = -1
 
 
     fun init(cachePath: Path, cacheRevision : Int) {
         this.cacheRevision = cacheRevision;
         cache = Cache.load(cachePath, false)
-        npcs = NPCDecoder().load(cache)
-        objects = ObjectDecoder().load(cache)
-        items = ItemDecoder().load(cache)
-        varbit = VarBitDecoder().load(cache)
-        varps = VarDecoder().load(cache)
-        anim = AnimDecoder().load(cache)
-        enum = EnumDecoder().load(cache)
-        health = HealthBarDecoder().load(cache)
-        hitsplats = HitSplatDecoder().load(cache)
-        struct = StructDecoder().load(cache)
+        npcs.putAll(NPCDecoder().load(cache))
+        objects.putAll(ObjectDecoder().load(cache))
+        items.putAll(ItemDecoder().load(cache))
+        varbits.putAll(VarBitDecoder().load(cache))
+        varps.putAll(VarDecoder().load(cache))
+        anims.putAll(AnimDecoder().load(cache))
+        enums.putAll(EnumDecoder().load(cache))
+        healthBars.putAll(HealthBarDecoder().load(cache))
+        hitsplats.putAll(HitSplatDecoder().load(cache))
+        structs.putAll(StructDecoder().load(cache))
+        cache.close()
 
     }
 
-    fun getNpcs() = npcs
-    fun getObjects() = objects
-    fun getItems() = items
 
-    fun getHitsplats() = hitsplats
+    fun getNpc(id: Int): NpcType {
+        return npcs.getOrDefault(id, NpcType(id)).also {
+            if (it.id != id) println("Npc with id $id is missing.")
+        }
+    }
 
-    fun getStructs() = struct
+    fun getObject(id: Int): ObjectType {
+        return objects.getOrDefault(id, ObjectType(id)).also {
+            if (it.id != id) println("Object with id $id is missing.")
+        }
+    }
 
-    fun health(id: Int): HealthBarType = health[id]
+    fun getItem(id: Int): ItemType {
+        return items.getOrDefault(id, ItemType(id)).also {
+            if (it.id != id) println("Item with id $id is missing.")
+        }
+    }
 
-    fun healthCount(): Int = health.size
+    fun getVarbit(id: Int): VarBitType {
+        return varbits.getOrDefault(id, VarBitType(id)).also {
+            if (it.id != id) println("Varbit with id $id is missing.")
+        }
+    }
 
-    fun npc(id: Int): NpcType = npcs[id]
-    fun npcCount(): Int = npcs.size
+    fun getVarp(id: Int): VarpType {
+        return varps.getOrDefault(id, VarpType(id)).also {
+            if (it.id != id) println("Varp with id $id is missing.")
+        }
+    }
 
-    fun objects(id: Int): ObjectType = objects[id]
-    fun objectCount(): Int = objects.size
+    fun getAnim(id: Int): AnimType {
+        return anims.getOrDefault(id, AnimType(id)).also {
+            if (it.id != id) println("Anim with id $id is missing.")
+        }
+    }
 
-    fun item(id: Int): ItemType = items[id]
-    fun itemCount(): Int = items.size
+    fun getEnum(id: Int): EnumType {
+        return enums.getOrDefault(id, EnumType(id)).also {
+            if (it.id != id) println("Enum with id $id is missing.")
+        }
+    }
 
-    fun varbit(id: Int): VarBitType = varbit[id]
-    fun varbitCount(): Int = varbit.size
+    fun getHealthBar(id: Int): HealthBarType {
+        return healthBars.getOrDefault(id, HealthBarType(id)).also {
+            if (it.id != id) println("HealthBar with id $id is missing.")
+        }
+    }
 
-    fun varp(id: Int): VarpType = varps[id]
-    fun varpCount(): Int = varps.size
+    fun getHitsplat(id: Int): HitSplatType {
+        return hitsplats.getOrDefault(id, HitSplatType(id)).also {
+            if (it.id != id) println("Hitsplat with id $id is missing.")
+        }
+    }
 
-    fun anim(id: Int): AnimType = anim[id]
+    fun getStruct(id: Int): StructType {
+        return structs.getOrDefault(id, StructType(id)).also {
+            if (it.id != id) println("Struct with id $id is missing.")
+        }
+    }
 
-    fun enum(id: Int): EnumType = enum[id]
+    fun npcSize() = npcs.size
+    fun objectSize() = objects.size
+    fun itemSize() = items.size
+    fun varbitSize() = varbits.size
+    fun varpSize() = varps.size
+    fun animSize() = anims.size
+    fun enumSize() = enums.size
+    fun healthBarSize() = healthBars.size
+    fun hitsplatSize() = hitsplats.size
+    fun structSize() = structs.size
 
-    fun hitsplat(id: Int): HitSplatType = hitsplats[id]
-    fun hitsplatCount(): Int = hitsplats.size
-
-    fun struct(id: Int): StructType = struct[id]
-    fun structCount(): Int = struct.size
+    fun getNpcs(): Map<Int, NpcType> = npcs
+    fun getObjects(): Map<Int, ObjectType> = objects
+    fun getItems(): Map<Int, ItemType> = items
+    fun getVarbits(): Map<Int, VarBitType> = varbits
+    fun getVarps(): Map<Int, VarpType> = varps
+    fun getAnims(): Map<Int, AnimType> = anims
+    fun getEnums(): Map<Int, EnumType> = enums
+    fun getHealthBars(): Map<Int, HealthBarType> = healthBars
+    fun getHitsplats(): Map<Int, HitSplatType> = hitsplats
+    fun getStructs(): Map<Int, StructType> = structs
 
     fun revisionIsOrAfter(rev : Int) = rev <= cacheRevision
     fun revisionIsOrBefore(rev : Int) = rev >= cacheRevision
+
+
 }

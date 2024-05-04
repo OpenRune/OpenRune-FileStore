@@ -5,6 +5,7 @@ import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.buffer.BufferReader
 import dev.openrune.cache.filestore.buffer.Reader
 import io.github.oshai.kotlinlogging.KotlinLogging
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import java.nio.BufferUnderflowException
 
 abstract class DefinitionDecoder<T : Definition>(val index: Int) {
@@ -23,7 +24,30 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
     /**
      * Load from cache
      */
-    open fun load(cache: Cache): Array<T> {
+    open fun load(cache: Cache): Int2ObjectOpenHashMap<T> {
+        val start = System.currentTimeMillis()
+        val size = size(cache) + 1
+        val definitions = create(size)
+        for (id in 0 until size) {
+            try {
+                load(definitions, cache, id)
+            } catch (e: BufferUnderflowException) {
+                logger.error(e) { "Error reading definition $id" }
+                throw e
+            }
+        }
+        val map : Int2ObjectOpenHashMap<T> = Int2ObjectOpenHashMap()
+        definitions.forEach {
+            map.put(it.id,it)
+        }
+        logger.info { "$size ${this::class.simpleName} definitions loaded in ${System.currentTimeMillis() - start}ms" }
+        return map
+    }
+
+    /**
+     * Load from cache
+     */
+    open fun loadOLD(cache: Cache): Array<T> {
         val start = System.currentTimeMillis()
         val size = size(cache) + 1
         val definitions = create(size)
@@ -38,6 +62,7 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
         logger.info { "$size ${this::class.simpleName} definitions loaded in ${System.currentTimeMillis() - start}ms" }
         return definitions
     }
+
 
 
     open fun size(cache: Cache): Int {
