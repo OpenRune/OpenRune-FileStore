@@ -36,7 +36,6 @@ object CacheManager {
         healthBars.putAll(HealthBarDecoder().load(cache))
         hitsplats.putAll(HitSplatDecoder().load(cache))
         structs.putAll(StructDecoder().load(cache))
-        cache.close()
 
     }
 

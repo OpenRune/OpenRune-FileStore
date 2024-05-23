@@ -48,7 +48,7 @@ data class ItemType(
     var femaleModel0: Int = -1,
     var femaleModel1: Int = -1,
     var femaleModel2: Int = -1,
-    var femaleOffset: Int = -1,
+    var femaleOffset: Int = 0,
     var femaleHeadModel0: Int = -1,
     var femaleHeadModel1: Int = -1,
     var noteLinkId: Int = -1,

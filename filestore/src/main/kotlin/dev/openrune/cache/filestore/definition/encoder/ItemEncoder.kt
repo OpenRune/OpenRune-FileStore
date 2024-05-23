@@ -81,7 +81,7 @@ class ItemEncoder : ConfigEncoder<ItemType>() {
             writeShort(definition.maleModel1)
         }
 
-        if (definition.femaleModel0 != -1 || definition.femaleOffset != -1) {
+        if (definition.femaleModel0 != -1 || definition.femaleOffset != 0) {
             writeByte(25)
             writeShort(definition.femaleModel0)
             writeByte(definition.femaleOffset)
