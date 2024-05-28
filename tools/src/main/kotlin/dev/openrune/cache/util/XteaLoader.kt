@@ -1,7 +1,6 @@
-package dev.openrune.cache.filestore
+package dev.openrune.cache.util
 
 import com.google.gson.Gson
-import dev.openrune.cache.util.FileUtil
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.File
 

@@ -3,8 +3,8 @@ package dev.openrune.cache.tools.tasks.impl
 import com.displee.cache.CacheLibrary
 import com.google.gson.GsonBuilder
 import dev.openrune.cache.MAPS
-import dev.openrune.cache.filestore.XteaLoader
-import dev.openrune.cache.filestore.logger
+import dev.openrune.cache.util.XteaLoader
+import dev.openrune.cache.util.logger
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.decompressGzipToBytes
 import dev.openrune.cache.util.getFiles

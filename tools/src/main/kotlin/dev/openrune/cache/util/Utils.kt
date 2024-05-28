@@ -13,7 +13,6 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.zip.GZIPInputStream
-import kotlin.system.exitProcess
 
 fun LocalDateTime.toEchochUTC() : Long {
     return this.toEpochSecond(ZoneOffset.UTC)

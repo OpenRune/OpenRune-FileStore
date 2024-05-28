@@ -2,7 +2,7 @@ package dev.openrune.cache.tools
 
 import com.displee.cache.CacheLibrary
 import com.google.gson.Gson
-import dev.openrune.cache.filestore.XteaLoader
+import dev.openrune.cache.util.XteaLoader
 import dev.openrune.cache.tools.CacheTool.Constants.builder
 import dev.openrune.cache.tools.CacheTool.Constants.library
 import dev.openrune.cache.util.FileUtil

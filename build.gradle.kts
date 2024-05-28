@@ -9,7 +9,7 @@ allprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
 
     group = "dev.openrune"
-    version = "1.2.11"
+    version = "1.3.0"
 
     java.sourceCompatibility = JavaVersion.VERSION_11
 
@@ -21,53 +21,23 @@ allprojects {
 
     dependencies {
         implementation(kotlin("stdlib-jdk8"))
-        implementation("com.beust:klaxon:5.5")
+        implementation("it.unimi.dsi:fastutil:8.5.13")
         implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
-        implementation("me.tongfei:progressbar:0.9.2")
         implementation("com.displee:rs-cache-library:7.1.0")
         implementation("org.slf4j:slf4j-api:2.1.0-alpha1")
-        implementation("com.google.code.gson:gson:2.10.1")
-        implementation("commons-io:commons-io:2.15.1")
     }
-
-}
-
-val sourcesJar by tasks.registering(Jar::class) {
-    archiveClassifier.set("sources")
-    from(project(":filestore").sourceSets["main"].allSource)
-    from(project(":tools").sourceSets["main"].allSource)
-    from(sourceSets.main.get().allSource)
-}
-
-tasks.named("jar", Jar::class) {
-    from(project(":filestore").sourceSets["main"].output)
-    from(project(":tools").sourceSets["main"].output)
-
-    // Set a strategy to handle duplicate files
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
-publishing {
-    repositories {
-        maven {
-            url = uri("$buildDir/repo")
-        }
-        if (System.getenv("REPO_URL") != null) {
-            maven {
-                url = uri(System.getenv("REPO_URL"))
-                credentials {
-                    username = System.getenv("REPO_USERNAME")
-                    password = System.getenv("REPO_PASSWORD")
-                }
+    plugins.withType<MavenPublishPlugin> {
+        configure<PublishingExtension> {
+            publications.withType<MavenPublication> {
+                groupId = "dev.openrune"
+                artifactId = if (project.name == "filestore") "filestore" else "filestore-tools"
+                version = version
             }
         }
     }
+}
 
-
-    publications {
-        register("mavenJava", MavenPublication::class) {
-            from(components["java"])
-            artifact(sourcesJar.get())
-        }
-    }
+subprojects {
+    apply(plugin = "maven-publish")
+    apply(plugin = "org.jetbrains.kotlin.jvm")
 }

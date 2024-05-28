@@ -3,8 +3,6 @@ package dev.openrune.cache.tools.tasks.impl
 import cc.ekblad.toml.decode
 import cc.ekblad.toml.tomlMapper
 import com.displee.cache.CacheLibrary
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import dev.openrune.cache.SPRITES
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.sprites.Sprite
@@ -13,10 +11,8 @@ import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import io.netty.buffer.Unpooled
-import me.tongfei.progressbar.ProgressBar
 import java.awt.image.BufferedImage
 import java.io.File
-import java.nio.file.Path
 import javax.imageio.ImageIO
 
 /**

@@ -2,7 +2,7 @@ package dev.openrune.cache.tools.tasks.impl
 
 import com.displee.cache.CacheLibrary
 import dev.openrune.cache.MAPS
-import dev.openrune.cache.filestore.XteaLoader
+import dev.openrune.cache.util.XteaLoader
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.FileUtil
 import dev.openrune.cache.util.progress
