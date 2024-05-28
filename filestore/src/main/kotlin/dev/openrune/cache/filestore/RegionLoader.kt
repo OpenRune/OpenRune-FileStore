@@ -35,7 +35,7 @@ fun loadLocations(b: ByteArray, fn: (LocationData) -> Unit) {
     }
 }
 
-fun loadTerrain(b: ByteArray): Array<Array<Array<TileData>>> {
+fun loadTerrain(b: ByteArray, after208: Boolean = true): Array<Array<Array<TileData>>> {
     val tiles = Array(4) { Array(64) { Array(64) { TileData() } } }
     val buf = BufferReader(b)
     for (z in 0 until 4) {
@@ -44,7 +44,7 @@ fun loadTerrain(b: ByteArray): Array<Array<Array<TileData>>> {
                 val tile = tiles[z][x][y]
 
                 while (true) {
-                    val attribute = buf.readUnsignedShort()
+                    val attribute = if (after208) buf.readUnsignedShort() else buf.readUnsignedByte()
                     if (attribute == 0) {
                         break
                     }
@@ -55,7 +55,7 @@ fun loadTerrain(b: ByteArray): Array<Array<Array<TileData>>> {
                     }
                     if (attribute <= 49) {
                         tile.attrOpcode = attribute
-                        tile.overlayId = buf.readShort().toShort()
+                        tile.overlayId = if (after208) buf.readShort().toShort() else buf.readByte().toShort()
                         tile.overlayPath = ((attribute - 2) / 4).toByte()
                         tile.overlayRotation = (attribute - 2 and 3).toByte()
                     } else if (attribute <= 81) {
