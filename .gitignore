@@ -4,3 +4,5 @@ tools/build/
 /.gradle/
 /.idea/
 *.class
+websiteData/
+cache/
