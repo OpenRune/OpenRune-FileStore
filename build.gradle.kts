@@ -30,7 +30,7 @@ allprojects {
         configure<PublishingExtension> {
             publications.withType<MavenPublication> {
                 groupId = "dev.openrune"
-                artifactId = if (project.name == "filestore") "filestore" else "filestore-tools"
+                artifactId = if (project.name == "filestore") "filestore" else if (project.name == "tools") "filestore-tools" else "filestore-integration"
                 version = version
             }
         }

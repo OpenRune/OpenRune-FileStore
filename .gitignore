@@ -1,6 +1,7 @@
 /build/
 filestore/build/
 tools/build/
+integration/build/
 /.gradle/
 /.idea/
 *.class

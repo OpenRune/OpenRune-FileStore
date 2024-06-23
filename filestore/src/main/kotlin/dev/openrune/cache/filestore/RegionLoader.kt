@@ -1,5 +1,6 @@
 package dev.openrune.cache.filestore
 
+import dev.openrune.cache.CacheManager
 import dev.openrune.cache.filestore.buffer.BufferReader
 
 class TileData {
@@ -35,7 +36,7 @@ fun loadLocations(b: ByteArray, fn: (LocationData) -> Unit) {
     }
 }
 
-fun loadTerrain(b: ByteArray, after208: Boolean = true): Array<Array<Array<TileData>>> {
+fun loadTerrain(b: ByteArray, after208: Boolean = CacheManager.revisionIsOrAfter(209)): Array<Array<Array<TileData>>> {
     val tiles = Array(4) { Array(64) { Array(64) { TileData() } } }
     val buf = BufferReader(b)
     for (z in 0 until 4) {
