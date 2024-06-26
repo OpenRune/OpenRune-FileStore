@@ -188,4 +188,12 @@ data class NpcType(
         return result
     }
 
+    companion object {
+        const val ATTACK = 0
+        const val DEFENCE = 1
+        const val STRENGTH = 2
+        const val HITPOINTS = 3
+        const val RANGED = 4
+        const val MAGIC = 5
+    }
 }
