@@ -2,9 +2,10 @@ package dev.openrune.cache.filestore.definition.decoder
 
 import dev.openrune.cache.CacheManager
 import dev.openrune.cache.NPC
-import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
+import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.definition.data.NpcType
+
 
 class NPCDecoder : DefinitionDecoder<NpcType>(NPC) {
     override fun create(size: Int) = Array(size) { NpcType(it) }
@@ -51,6 +52,12 @@ class NPCDecoder : DefinitionDecoder<NpcType>(NPC) {
                     chatheadModels!![it] = buffer.readUnsignedShort()
                 }
             }
+            74 -> stats[0] = buffer.readUnsignedShort()
+            75 -> stats[1] = buffer.readUnsignedShort()
+            76 -> stats[2] = buffer.readUnsignedShort()
+            77 -> stats[3] = buffer.readUnsignedShort()
+            78 -> stats[4] = buffer.readUnsignedShort()
+            79 -> stats[5] = buffer.readUnsignedShort()
             93 -> isMinimapVisible = false
             95 -> combatLevel = buffer.readUnsignedShort()
             97 -> widthScale = buffer.readUnsignedShort()
@@ -106,6 +113,7 @@ class NPCDecoder : DefinitionDecoder<NpcType>(NPC) {
             }
             122 -> lowPriorityFollowerOps = true
             123 -> isFollower = true
+            124 -> height = buffer.readUnsignedShort()
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Npcs [${opcode}]" }
         }
