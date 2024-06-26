@@ -52,12 +52,7 @@ class NPCDecoder : DefinitionDecoder<NpcType>(NPC) {
                     chatheadModels!![it] = buffer.readUnsignedShort()
                 }
             }
-            74 -> stats[0] = buffer.readUnsignedShort()
-            75 -> stats[1] = buffer.readUnsignedShort()
-            76 -> stats[2] = buffer.readUnsignedShort()
-            77 -> stats[3] = buffer.readUnsignedShort()
-            78 -> stats[4] = buffer.readUnsignedShort()
-            79 -> stats[5] = buffer.readUnsignedShort()
+            in 74..79 -> stats[opcode - 74] = buffer.readUnsignedShort()
             93 -> isMinimapVisible = false
             95 -> combatLevel = buffer.readUnsignedShort()
             97 -> widthScale = buffer.readUnsignedShort()
