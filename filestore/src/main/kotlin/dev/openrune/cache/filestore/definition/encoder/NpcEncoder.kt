@@ -2,6 +2,7 @@ package dev.openrune.cache.filestore.definition.encoder
 
 import dev.openrune.cache.CacheManager
 import dev.openrune.cache.CacheManager.revisionIsOrAfter
+import dev.openrune.cache.filestore.buffer.BufferWriter
 import dev.openrune.cache.filestore.buffer.Writer
 import dev.openrune.cache.filestore.definition.ConfigEncoder
 import dev.openrune.cache.filestore.definition.data.NpcType
@@ -77,6 +78,13 @@ class NpcEncoder : ConfigEncoder<NpcType>() {
             writeByte(definition.chatheadModels!!.size)
             for (i in definition.chatheadModels!!.indices) {
                 writeShort(definition.chatheadModels!![i])
+            }
+        }
+
+        for (i in 0 .. 5) {
+            if (definition.stats[i] != 1) {
+                writeByte(74 + i)
+                writeShort(definition.stats[i])
             }
         }
 
@@ -171,7 +179,12 @@ class NpcEncoder : ConfigEncoder<NpcType>() {
             writeShort(definition.crawlRightSequence)
             writeShort(definition.crawlLeftSequence)
         }
-        
+
+        if(definition.height != -1) {
+            writeByte(124)
+            writeShort(definition.height)
+        }
+
         definition.writeParameters(this)
 
         writeByte(0)
