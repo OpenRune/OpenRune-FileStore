@@ -49,6 +49,7 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
                     PackMode.HITSPLATS -> packDefinitions<HitSplatType>(it, HitSplatEncoder(),HitSplatDecoder(),library)
                     PackMode.HEALTBAR -> packDefinitions<HealthBarType>(it, HealthBarEncoder(),HealthBarDecoder(),library)
                     PackMode.SEQUENCE -> packDefinitions<SequenceType>(it, SequenceEncoder(),SequenceDecoder(),library)
+                    PackMode.AREA -> packDefinitions<AreaType>(it, AreaEncoder(),AreaDecoder(),library)
                     else -> println("Not Supported")
                 }
                 progress.step()
