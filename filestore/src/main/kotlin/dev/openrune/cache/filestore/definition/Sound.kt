@@ -1,13 +1,25 @@
 package dev.openrune.cache.filestore.definition
 
 import dev.openrune.cache.filestore.buffer.Reader
+import dev.openrune.cache.filestore.buffer.Writer
 
 data class SoundData(
     var id: Int,
     var loops: Int,
     var location: Int,
     var retain: Int,
-)
+) {
+    fun writeSound(writer: Writer, after220 : Boolean) {
+        if (!after220) {
+            val payload: Int = (location and 15) or (id shl 8) or (loops shl 4 and 7)
+            writer.writeMedium(payload)
+        } else {
+            writer.writeByte(id)
+            writer.writeByte(location)
+            writer.writeByte(retain)
+        }
+    }
+}
 
 interface Sound {
 

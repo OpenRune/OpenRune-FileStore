@@ -14,7 +14,7 @@ object CacheManager {
     private val items: MutableMap<Int, ItemType> = mutableMapOf()
     private val varbits: MutableMap<Int, VarBitType> = mutableMapOf()
     private val varps: MutableMap<Int, VarpType> = mutableMapOf()
-    private val anims: MutableMap<Int, AnimType> = mutableMapOf()
+    private val anims: MutableMap<Int, SequenceType> = mutableMapOf()
     private val enums: MutableMap<Int, EnumType> = mutableMapOf()
     private val healthBars: MutableMap<Int, HealthBarType> = mutableMapOf()
     private val hitsplats: MutableMap<Int, HitSplatType> = mutableMapOf()
@@ -31,7 +31,7 @@ object CacheManager {
         items.putAll(ItemDecoder().load(cache))
         varbits.putAll(VarBitDecoder().load(cache))
         varps.putAll(VarDecoder().load(cache))
-        anims.putAll(AnimDecoder().load(cache))
+        anims.putAll(SequenceDecoder().load(cache))
         enums.putAll(EnumDecoder().load(cache))
         healthBars.putAll(HealthBarDecoder().load(cache))
         hitsplats.putAll(HitSplatDecoder().load(cache))
@@ -70,8 +70,8 @@ object CacheManager {
         }
     }
 
-    fun getAnim(id: Int): AnimType {
-        return anims.getOrDefault(id, AnimType(id)).also {
+    fun getAnim(id: Int): SequenceType {
+        return anims.getOrDefault(id, SequenceType(id)).also {
             if (it.id != id) println("Anim with id $id is missing.")
         }
     }
@@ -116,7 +116,7 @@ object CacheManager {
     fun getItems(): Map<Int, ItemType> = items
     fun getVarbits(): Map<Int, VarBitType> = varbits
     fun getVarps(): Map<Int, VarpType> = varps
-    fun getAnims(): Map<Int, AnimType> = anims
+    fun getAnims(): Map<Int, SequenceType> = anims
     fun getEnums(): Map<Int, EnumType> = enums
     fun getHealthBars(): Map<Int, HealthBarType> = healthBars
     fun getHitsplats(): Map<Int, HitSplatType> = hitsplats

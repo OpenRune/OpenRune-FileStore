@@ -24,7 +24,10 @@ enum class PackMode{
     ITEMS,
     OBJECTS,
     HITSPLATS,
-    HEALTBAR
+    HEALTBAR,
+    SEQUENCE,
+    AREA
+
 }
 
 class PackConfig(val type : PackMode, private val directory : File) : CacheTask() {
@@ -45,6 +48,7 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
                     PackMode.OBJECTS -> packDefinitions<ObjectType>(it, ObjectEncoder(),ObjectDecoder(),library)
                     PackMode.HITSPLATS -> packDefinitions<HitSplatType>(it, HitSplatEncoder(),HitSplatDecoder(),library)
                     PackMode.HEALTBAR -> packDefinitions<HealthBarType>(it, HealthBarEncoder(),HealthBarDecoder(),library)
+                    PackMode.SEQUENCE -> packDefinitions<SequenceType>(it, SequenceEncoder(),SequenceDecoder(),library)
                     else -> println("Not Supported")
                 }
                 progress.step()
