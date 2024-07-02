@@ -24,8 +24,12 @@ object CacheManager {
 
 
     fun init(cachePath: Path, cacheRevision : Int) {
+        init(Cache.load(cachePath, false), cacheRevision)
+    }
+
+    fun init(cache: Cache, cacheRevision : Int) {
         this.cacheRevision = cacheRevision;
-        cache = Cache.load(cachePath, false)
+        this.cache = cache
         npcs.putAll(NPCDecoder().load(cache))
         objects.putAll(ObjectDecoder().load(cache))
         items.putAll(ItemDecoder().load(cache))
