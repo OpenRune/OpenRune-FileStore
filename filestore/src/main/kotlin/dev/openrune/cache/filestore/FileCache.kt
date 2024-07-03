@@ -2,11 +2,8 @@ package dev.openrune.cache.filestore
 
 import dev.openrune.cache.util.compress.DecompressionContext
 import dev.openrune.cache.util.secure.VersionTableBuilder
-import dev.openrune.cache.util.secure.Whirlpool
-
 import java.io.File
 import java.io.RandomAccessFile
-import java.math.BigInteger
 
 /**
  * [Cache] which reads data directly from file
@@ -60,11 +57,11 @@ class FileCache(
         }
     }
 
-    companion object : dev.openrune.cache.filestore.CacheLoader {
+    companion object : CacheLoader {
         const val CACHE_FILE_NAME = "main_file_cache"
 
-        operator fun invoke(path: String, exponent: BigInteger? = null, modulus: BigInteger? = null, xteas: Map<Int, IntArray>? = null): dev.openrune.cache.filestore.Cache {
-            return load(path, exponent, modulus, xteas)
+        operator fun invoke(path: String, xteas: Map<Int, IntArray>? = null): Cache {
+            return load(path, xteas)
         }
 
         /**
@@ -80,19 +77,18 @@ class FileCache(
             versionTable: VersionTableBuilder?,
             xteas: Map<Int, IntArray>?,
             threadUsage: Double
-        ): dev.openrune.cache.filestore.Cache {
+        ): Cache {
             val length = mainFile.length()
             val context = DecompressionContext()
             val indices = Array(indexCount) { indexId ->
                 val file = File(path, "$CACHE_FILE_NAME.idx$indexId")
                 if (file.exists()) RandomAccessFile(file, "r") else null
             }
-            val whirlpool = Whirlpool()
             val cache = FileCache(main, index255, indices, indexCount, xteas)
             for (indexId in 0 until indexCount) {
-                cache.archiveData(context, main, length, index255, indexId, versionTable, whirlpool)
+                cache.archiveData(context, main, length, index255, indexId, versionTable)
             }
-            cache.versionTable = versionTable?.build(whirlpool) ?: ByteArray(0)
+            cache.versionTable = versionTable?.build() ?: ByteArray(0)
             return cache
         }
     }
