@@ -4,7 +4,6 @@ import dev.openrune.cache.MAPS
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import dev.openrune.cache.util.compress.DecompressionContext
 import dev.openrune.cache.util.secure.VersionTableBuilder
-import dev.openrune.cache.util.secure.Whirlpool
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.RandomAccessFile
 
@@ -89,7 +88,6 @@ abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cac
         index255: RandomAccessFile,
         indexId: Int,
         versionTable: VersionTableBuilder?,
-        whirlpool: Whirlpool,
         sectors: Array<ByteArray?>? = null
     ): Int {
         val archiveSector = readSector(main, length, index255, 255, indexId)
@@ -101,7 +99,7 @@ abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cac
             versionTable?.skip(indexId)
             return -1
         }
-        versionTable?.sector(indexId, archiveSector, whirlpool)
+        versionTable?.sector(indexId, archiveSector)
         val decompressed = context.decompress(archiveSector) ?: return -1
         val reader = dev.openrune.cache.filestore.buffer.BufferReader(decompressed)
         val version = reader.readUnsignedByte()

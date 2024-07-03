@@ -2,12 +2,10 @@ package dev.openrune.cache.filestore
 
 import dev.openrune.cache.util.compress.DecompressionContext
 import dev.openrune.cache.util.secure.VersionTableBuilder
-import dev.openrune.cache.util.secure.Whirlpool
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.RandomAccessFile
-import java.math.BigInteger
 
 /**
  * [Cache] that holds all data in memory
@@ -36,11 +34,11 @@ class MemoryCache(indexCount: Int) : ReadOnlyCache(indexCount) {
         return data.getOrNull(index)?.getOrNull(archive)?.getOrNull(file)
     }
 
-    companion object : dev.openrune.cache.filestore.CacheLoader {
+    companion object : CacheLoader {
         private val logger = KotlinLogging.logger {}
 
-        operator fun invoke(path: String, threadUsage: Double = 1.0, exponent: BigInteger? = null, modulus: BigInteger? = null, xteas: Map<Int, IntArray>? = null): dev.openrune.cache.filestore.Cache {
-            return load(path, exponent, modulus, xteas, threadUsage) as ReadOnlyCache
+        operator fun invoke(path: String, threadUsage: Double = 1.0, xteas: Map<Int, IntArray>? = null): Cache {
+            return load(path, xteas, threadUsage) as ReadOnlyCache
         }
 
         /**
@@ -57,7 +55,7 @@ class MemoryCache(indexCount: Int) : ReadOnlyCache(indexCount) {
             versionTable: VersionTableBuilder?,
             xteas: Map<Int, IntArray>?,
             threadUsage: Double
-        ): dev.openrune.cache.filestore.Cache {
+        ): Cache {
             val cache = MemoryCache(indexCount)
             val processors = (Runtime.getRuntime().availableProcessors() * threadUsage).toInt().coerceAtLeast(1)
             newFixedThreadPoolContext(processors, "cache-loader").use { dispatcher ->
@@ -104,8 +102,7 @@ class MemoryCache(indexCount: Int) : ReadOnlyCache(indexCount) {
                     RandomAccessFile(index255File, "r")
                 }
                 val context = DecompressionContext()
-                val whirlpool = Whirlpool()
-                val highest = cache.archiveData(context, main, mainFileLength, index255, indexId, versionTable, whirlpool, cache.index255)
+                val highest = cache.archiveData(context, main, mainFileLength, index255, indexId, versionTable, cache.index255)
                 if (highest == -1) {
                     return
                 }
