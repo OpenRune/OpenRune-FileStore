@@ -93,8 +93,8 @@ class SequenceDecoder : DefinitionDecoder<SequenceType>(SEQUENCE) {
             }
 
             17 -> {
+                mask = MutableList(256) { false }
                 val count = buffer.readUnsignedByte()
-                mask = MutableList(count) { false }
                 for (i in 0 until count) {
                     mask!![buffer.readUnsignedByte()] = true
                 }
