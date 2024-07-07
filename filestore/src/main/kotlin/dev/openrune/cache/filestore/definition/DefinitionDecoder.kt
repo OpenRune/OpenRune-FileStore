@@ -1,6 +1,5 @@
 package dev.openrune.cache.filestore.definition
 
-import com.displee.cache.CacheLibrary
 import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.buffer.BufferReader
 import dev.openrune.cache.filestore.buffer.Reader

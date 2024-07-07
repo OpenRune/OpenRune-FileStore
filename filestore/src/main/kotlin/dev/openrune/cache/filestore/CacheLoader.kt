@@ -9,27 +9,25 @@ import java.util.*
 
 interface CacheLoader {
 
-    fun load(properties: Properties, xteas: Map<Int, IntArray>? = null): dev.openrune.cache.filestore.Cache {
-        val fileModulus = BigInteger(properties.getProperty("fileModulus"), 16)
-        val filePrivate = BigInteger(properties.getProperty("filePrivate"), 16)
+    fun load(properties: Properties, xteas: Map<Int, IntArray>? = null): Cache {
         val cachePath = properties.getProperty("cachePath")
         val threadUsage = properties.getProperty("threadUsage", "1.0").toDouble()
-        return load(cachePath, filePrivate, fileModulus, threadUsage = threadUsage)
+        return load(cachePath, threadUsage = threadUsage)
     }
 
-    fun load(path: String, exponent: BigInteger? = null, modulus: BigInteger? = null, xteas: Map<Int, IntArray>? = null, threadUsage: Double = 1.0): dev.openrune.cache.filestore.Cache {
-        val mainFile = File(path, "${dev.openrune.cache.filestore.FileCache.Companion.CACHE_FILE_NAME}.dat2")
+    fun load(path: String, xteas: Map<Int, IntArray>? = null, threadUsage: Double = 1.0): Cache {
+        val mainFile = File(path, "${FileCache.CACHE_FILE_NAME}.dat2")
         if (!mainFile.exists()) {
             throw FileNotFoundException("Main file not found at '${mainFile.absolutePath}'.")
         }
         val main = RandomAccessFile(mainFile, "r")
-        val index255File = File(path, "${dev.openrune.cache.filestore.FileCache.Companion.CACHE_FILE_NAME}.idx255")
+        val index255File = File(path, "${FileCache.CACHE_FILE_NAME}.idx255")
         if (!index255File.exists()) {
             throw FileNotFoundException("Checksum file not found at '${index255File.absolutePath}'.")
         }
         val index255 = RandomAccessFile(index255File, "r")
-        val indexCount = index255.length().toInt() / dev.openrune.cache.filestore.ReadOnlyCache.Companion.INDEX_SIZE
-        val versionTable = if (exponent != null && modulus != null) VersionTableBuilder(exponent, modulus, indexCount) else null
+        val indexCount = index255.length().toInt() / ReadOnlyCache.INDEX_SIZE
+        val versionTable = VersionTableBuilder(indexCount)
         return load(path, mainFile, main, index255File, index255, indexCount, versionTable, xteas, threadUsage)
     }
 
@@ -43,5 +41,5 @@ interface CacheLoader {
         versionTable: VersionTableBuilder? = null,
         xteas: Map<Int, IntArray>? = null,
         threadUsage: Double = 1.0
-    ): dev.openrune.cache.filestore.Cache
+    ): Cache
 }
