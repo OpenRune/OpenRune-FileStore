@@ -45,7 +45,7 @@ class FileCache(
         val hash = index + (archive shl 6)
         val files = dataCache.getOrPut(hash) {
             val indexRaf = indexes[index] ?: return null
-            fileData(context, main, length, indexRaf, index, archive, xteas) ?: return null
+            fileData(context, main, length, indexRaf, index, archive, xtea) ?: return null
         }
         return files[matchingIndex]
     }
