@@ -30,6 +30,21 @@ abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cac
         xteas: Map<Int, IntArray>?,
         sectors: Array<Array<ByteArray?>?>? = null
     ): Array<ByteArray?>? {
+        val keys = if (xteas != null && indexId == MAPS) xteas[archiveId] else null
+        return fileData(context, main, mainLength, indexRaf, indexId, archiveId, keys, sectors)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    internal fun fileData(
+        context: DecompressionContext,
+        main: RandomAccessFile,
+        mainLength: Long,
+        indexRaf: RandomAccessFile,
+        indexId: Int,
+        archiveId: Int,
+        xtea: IntArray?,
+        sectors: Array<Array<ByteArray?>?>? = null
+    ): Array<ByteArray?>? {
         val fileCounts = fileCounts[indexId] ?: return null
         val fileIds = files[indexId] ?: return null
         val fileCount = fileCounts.getOrNull(archiveId) ?: return null
@@ -37,7 +52,7 @@ abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cac
         if (sectors != null) {
             sectors[indexId]!![archiveId] = sectorData
         }
-        val keys = if (xteas != null && indexId == MAPS) xteas[archiveId] else null
+        val keys = if (xtea != null && indexId == MAPS) xtea else null
         val decompressed = context.decompress(sectorData, keys) ?: return null
         if (fileCount == 1) {
             val fileId = fileIds[archiveId]?.last() ?: return null
