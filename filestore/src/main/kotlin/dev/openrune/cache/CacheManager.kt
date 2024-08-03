@@ -103,6 +103,13 @@ object CacheManager {
         }
     }
 
+    fun findScriptId(name: String): Int {
+        val cacheName = "[clientscript,$name]"
+        return cache.archiveId(CLIENTSCRIPT, cacheName).also { id ->
+            if (id == -1) println("Unable to find script: $cacheName")
+        }
+    }
+
     fun npcSize() = npcs.size
     fun objectSize() = objects.size
     fun itemSize() = items.size

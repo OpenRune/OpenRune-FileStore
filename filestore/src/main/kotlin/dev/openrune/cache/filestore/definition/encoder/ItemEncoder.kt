@@ -56,14 +56,14 @@ class ItemEncoder : ConfigEncoder<ItemType>() {
             writeInt(definition.cost)
         }
 
-        if (definition.wearPos1 != 0) {
+        if (definition.equipSlot != -1) {
             writeByte(13)
-            writeByte(definition.wearPos1)
+            writeByte(definition.equipSlot)
         }
 
-        if (definition.wearPos2 != 0) {
+        if (definition.appearanceOverride1 != -1) {
             writeByte(14)
-            writeByte(definition.wearPos2)
+            writeByte(definition.appearanceOverride1)
         }
 
         if (definition.members) {
@@ -92,9 +92,9 @@ class ItemEncoder : ConfigEncoder<ItemType>() {
             writeShort(definition.femaleModel1)
         }
 
-        if (definition.wearPos3 != 0) {
+        if (definition.appearanceOverride2 != 0) {
             writeByte(27)
-            writeByte(definition.wearPos3)
+            writeByte(definition.appearanceOverride2)
         }
 
         if (definition.options != mutableListOf(null, null, "Take", null, null)) {

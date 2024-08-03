@@ -22,8 +22,8 @@ class ItemDecoder : DefinitionDecoder<ItemType>(ITEM) {
             8 -> yOffset2d = buffer.readUnsignedShort()
             11 -> stacks = 1
             12 -> cost = buffer.readInt()
-            13 -> wearPos1 = buffer.readUnsignedByte()
-            14 -> wearPos2 = buffer.readUnsignedByte()
+            13 -> equipSlot = buffer.readUnsignedByte()
+            14 -> appearanceOverride1 = buffer.readUnsignedByte()
             16 -> members = true
             23 -> {
                 maleModel0 = buffer.readUnsignedShort()
@@ -35,7 +35,7 @@ class ItemDecoder : DefinitionDecoder<ItemType>(ITEM) {
                 femaleOffset = buffer.readUnsignedByte()
             }
             26 -> femaleModel1 = buffer.readUnsignedShort()
-            27 -> wearPos3 = buffer.readByte()
+            27 -> appearanceOverride2 = buffer.readByte()
             in 30..34 -> options[opcode - 30] = buffer.readString()
             in 35..39 -> interfaceOptions[opcode - 35] = buffer.readString()
             40 -> readColours(buffer)

@@ -3,7 +3,6 @@ package dev.openrune.cache.filestore.definition.data
 import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.cache.filestore.definition.Parameterized
 import dev.openrune.cache.filestore.definition.Recolourable
-import it.unimi.dsi.fastutil.bytes.Byte2ByteOpenHashMap
 
 data class ItemType(
     override var id: Int = -1,
@@ -21,9 +20,9 @@ data class ItemType(
     var category : Int = -1,
     var yan2d: Int = 0,
     var zan2d: Int = 0,
-    var wearPos1: Int = 0,
-    var wearPos2: Int = 0,
-    var wearPos3: Int = 0,
+    var equipSlot: Int = -1,
+    var appearanceOverride1: Int = -1,
+    var appearanceOverride2: Int = -1,
     var weight: Double = 0.0,
     var cost: Int = 1,
     var isTradeable: Boolean = false,
@@ -72,22 +71,12 @@ data class ItemType(
     var ioption4: String? = null,
     var ioption5: String = "Drop",
 
-) : Definition, Recolourable, Parameterized {
+    ) : Definition, Recolourable, Parameterized {
 
     init {
         options = listOf(option1,option2,option3,option4,option5).toMutableList()
         interfaceOptions = listOf(ioption1,ioption2,ioption3,ioption4,ioption5).toMutableList()
     }
-
-    lateinit var bonuses: IntArray
-
-    var examine: String? = null
-    var attackSpeed = -1
-    var equipSlot = -1
-    var equipType = 0
-    var weaponType = -1
-    var renderAnimations: IntArray? = null
-    var skillReqs: Byte2ByteOpenHashMap? = null
 
     val stackable: Boolean
         get() = stacks == 1 || noteTemplateId > 0
