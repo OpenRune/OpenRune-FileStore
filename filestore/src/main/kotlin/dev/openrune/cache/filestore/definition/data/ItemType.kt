@@ -3,11 +3,12 @@ package dev.openrune.cache.filestore.definition.data
 import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.cache.filestore.definition.Parameterized
 import dev.openrune.cache.filestore.definition.Recolourable
+import it.unimi.dsi.fastutil.bytes.Byte2ByteOpenHashMap
 
 data class ItemType(
     override var id: Int = -1,
     var name: String = "null",
-    var description: String = "null",
+    var examine: String = "null",
     override var originalColours: MutableList<Int>? = null,
     override var modifiedColours: MutableList<Int>? = null,
     override var originalTextureColours: MutableList<Int>? = null,
@@ -77,6 +78,13 @@ data class ItemType(
         options = listOf(option1,option2,option3,option4,option5).toMutableList()
         interfaceOptions = listOf(ioption1,ioption2,ioption3,ioption4,ioption5).toMutableList()
     }
+
+    lateinit var bonuses: IntArray
+    var attackSpeed = -1
+    var equipType = 0
+    var weaponType = -1
+    var renderAnimations: IntArray? = null
+    var skillReqs: Byte2ByteOpenHashMap? = null
 
     val stackable: Boolean
         get() = stacks == 1 || noteTemplateId > 0

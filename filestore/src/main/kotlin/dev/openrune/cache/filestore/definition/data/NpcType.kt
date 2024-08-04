@@ -66,6 +66,9 @@ data class NpcType(
     init {
         actions = listOf(option1,option2,option3,option4,option5).toMutableList()
     }
+
+    var examine : String = ""
+
     fun isAttackable(): Boolean = combatLevel > 0 && actions.any { it == "Attack" }
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -125,6 +128,7 @@ data class NpcType(
         if (option5 != other.option5) return false
         if (height != other.height) return false
         if (!stats.contentEquals(other.stats)) return false
+        if (examine != other.examine) return false
 
         return true
     }
@@ -182,6 +186,8 @@ data class NpcType(
         result = 31 * result + (option5?.hashCode() ?: 0)
         result = 31 * result + height
         result = 31 * result + stats.contentHashCode()
+        result = 31 * result + examine.hashCode()
+
         return result
     }
 
