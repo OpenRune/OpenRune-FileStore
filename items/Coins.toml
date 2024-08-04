@@ -1,0 +1,6 @@
+id = 995
+inherit = 995
+name = "Coins new"
+
+[server.weapon]
+attack_stab = 900

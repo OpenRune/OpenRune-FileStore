@@ -7,4 +7,3 @@ integration/build/
 *.class
 websiteData/
 cache/
-!cache/items/

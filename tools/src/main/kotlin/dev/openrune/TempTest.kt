@@ -11,7 +11,7 @@ import java.io.File
 fun main() {
     File("./cache/items").mkdirs()
     val tasks : MutableList<CacheTask> = listOf(
-        PackConfig(PackMode.ITEMS,File("./cache/items")),
+        PackConfig(PackMode.ITEMS,File("./items")),
     ).toMutableList()
 
     val builder = Builder(type = TaskType.FRESH_INSTALL, 223, File("./cache/"))
@@ -21,6 +21,9 @@ fun main() {
 
     val item1 = CacheManager.getItem(995)
     System.out.println("Name: " + item1.name + " Server: ${item1.server}")
+
+    val item = CacheManager.getItem(29685)
+    System.out.println("Name: " + item.name + " Server: ${item.server}")
 
 
 }

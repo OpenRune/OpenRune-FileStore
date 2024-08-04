@@ -1,0 +1,21 @@
+id = 29685
+name = "Starter Staff"
+description = "A staff from the gods of valor."
+inventoryModel = 63002
+zoom2d = 3000
+yan2d = 774
+xan2d = 530
+zan2d = 61
+xOffset2d = -26
+yOffset2d = -43
+maleModel = 63002
+femaleModel = 63002
+contrast = 40
+ambient = 40
+ioption2 = "Wear"
+
+[server]
+quest_item = true
+
+[server.weapon]
+attack_stab = 3
