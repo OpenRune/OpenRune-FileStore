@@ -3,6 +3,7 @@ package dev.openrune.cache.filestore.definition.data
 import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.cache.filestore.definition.Parameterized
 import dev.openrune.cache.filestore.definition.Recolourable
+import dev.openrune.cache.filestore.definition.data.server.ServerDataItem
 import it.unimi.dsi.fastutil.bytes.Byte2ByteOpenHashMap
 
 data class ItemType(
@@ -18,7 +19,7 @@ data class ItemType(
     var resizeY: Int = 128,
     var resizeZ: Int = 128,
     var xan2d: Int = 0,
-    var category : Int = -1,
+    var category: Int = -1,
     var yan2d: Int = 0,
     var zan2d: Int = 0,
     var equipSlot: Int = -1,
@@ -37,8 +38,8 @@ data class ItemType(
     var contrast: Int = 0,
     var countCo: MutableList<Int> = MutableList(10) { 0 },
     var countObj: MutableList<Int> = MutableList(10) { 0 },
-    var options : MutableList<String?> = mutableListOf(null, null, "Take", null, null),
-    var interfaceOptions  : MutableList<String?> = mutableListOf(null, null, null, null, "Drop"),
+    var options: MutableList<String?> = mutableListOf(null, null, "Take", null, null),
+    var interfaceOptions: MutableList<String?> = mutableListOf(null, null, null, null, "Drop"),
     var maleModel0: Int = -1,
     var maleModel1: Int = -1,
     var maleModel2: Int = -1,
@@ -71,6 +72,8 @@ data class ItemType(
     var ioption3: String? = null,
     var ioption4: String? = null,
     var ioption5: String = "Drop",
+
+    var server: ServerDataItem = ServerDataItem()
 
     ) : Definition, Recolourable, Parameterized {
 

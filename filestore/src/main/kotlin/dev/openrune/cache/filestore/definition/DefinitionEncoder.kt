@@ -7,6 +7,14 @@ interface DefinitionEncoder<T : Definition> {
         encode(definition)
     }
 
+    fun Writer.encodeServer(definition: T, members: T) {
+        encode(definition)
+    }
+
+    fun Writer.encodeServer(definition: T) {
+        encodeServer(definition, definition)
+    }
+
     fun Writer.encode(definition: T) {
         encode(definition, definition)
     }

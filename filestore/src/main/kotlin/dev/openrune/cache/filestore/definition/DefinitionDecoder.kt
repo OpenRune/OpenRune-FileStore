@@ -1,5 +1,7 @@
 package dev.openrune.cache.filestore.definition
 
+import dev.openrune.cache.CONFIGS
+import dev.openrune.cache.CONFIGS_SERVER
 import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.buffer.BufferReader
 import dev.openrune.cache.filestore.buffer.Reader
@@ -8,8 +10,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import java.nio.BufferUnderflowException
 
 abstract class DefinitionDecoder<T : Definition>(val index: Int) {
-
-    val configArchive = 2
 
     abstract fun create(size: Int): Array<T>
 
@@ -65,16 +65,26 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
 
 
     open fun size(cache: Cache): Int {
-        return cache.fileCount(configArchive,index)
+        return cache.fileCount(CONFIGS,index)
     }
 
     open fun load(definitions: Array<T>, cache: Cache, id: Int) {
         val file = getFile(id)
-        val data = cache.data(configArchive, index, file) ?: return
-        read(definitions, id, dev.openrune.cache.filestore.buffer.BufferReader(data))
+        val data = cache.data(CONFIGS, index, file) ?: return
+        read(definitions, id, BufferReader(data))
+        val dataServer = cache.data(CONFIGS_SERVER, index, file)
+        if (dataServer != null) {
+            readServer(definitions, id, BufferReader(dataServer))
+        }
+
     }
 
     open fun getFile(id: Int) = id
+
+    protected fun readServer(definitions: Array<T>, id: Int, reader: Reader) {
+        val definition = definitions[id]
+        readLoopServer(definition, reader)
+    }
 
     protected fun read(definitions: Array<T>, id: Int, reader: Reader) {
         val definition = definitions[id]
@@ -86,6 +96,16 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
         val definition = definitions[id]
         readFlatFile(definition, reader)
         changeValues(definitions, definition)
+    }
+
+    open fun readLoopServer(definition: T, buffer: Reader) {
+        while (true) {
+            val opcode = buffer.readUnsignedByte()
+            if (opcode == 0) {
+                break
+            }
+            definition.readServer(opcode, buffer)
+        }
     }
 
     open fun readLoop(definition: T, buffer: Reader) {
@@ -117,6 +137,10 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
     }
 
     protected abstract fun T.read(opcode: Int, buffer: Reader)
+
+    protected open fun T.readServer(opcode: Int, buffer: Reader) {
+
+    }
 
     open fun changeValues(definitions: Array<T>, definition: T) {
     }

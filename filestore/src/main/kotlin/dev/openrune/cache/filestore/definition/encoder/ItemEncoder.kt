@@ -244,4 +244,19 @@ class ItemEncoder : ConfigEncoder<ItemType>() {
         writeByte(0)
     }
 
+    override fun Writer.encodeServer(definition: ItemType) {
+
+        if (definition.server.quest_item) {
+            writeByte(1)
+        }
+
+        if (definition.server.weapon.attack_stab != -1) {
+            writeByte(2)
+            writeInt(definition.server.weapon.attack_stab)
+        }
+
+        writeByte(0)
+    }
+
+
 }

@@ -9,6 +9,13 @@ class ItemDecoder : DefinitionDecoder<ItemType>(ITEM) {
     override fun create(size: Int) = Array(size) { ItemType(it) }
 
     override fun getFile(id: Int) = id
+    override fun ItemType.readServer(opcode: Int, buffer: Reader) {
+        when (opcode) {
+            1 -> server.quest_item = true
+            2 -> server.weapon.attack_stab = buffer.readInt()
+            else -> logger.info { "Unable to decode Server Items [${opcode}]" }
+        }
+    }
 
     override fun ItemType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
@@ -68,7 +75,7 @@ class ItemDecoder : DefinitionDecoder<ItemType>(ITEM) {
             148 -> placeholderLink = buffer.readUnsignedShort()
             149 -> placeholderTemplate = buffer.readUnsignedShort()
             249 -> readParameters(buffer)
-            else -> logger.info { "Unable to decode Npcs [${opcode}]" }
+            else -> logger.info { "Unable to decode Items [${opcode}]" }
         }
     }
 

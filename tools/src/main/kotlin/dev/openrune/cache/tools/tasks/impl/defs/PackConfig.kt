@@ -3,6 +3,7 @@ package dev.openrune.cache.tools.tasks.impl.defs
 import cc.ekblad.toml.decode
 import cc.ekblad.toml.tomlMapper
 import com.displee.cache.CacheLibrary
+import com.displee.cache.index.Index
 import dev.openrune.cache.*
 import dev.openrune.cache.filestore.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.Definition
@@ -82,9 +83,23 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
         }
 
         val writer = BufferWriter(4096)
-        with(encoder) { writer.encode(def) }
+        with(encoder) {
+            writer.encode(def)
+            library.index(CONFIGS).archive(decoder.index)?.add(defId, writer.toArray())
+        }
 
-        library.index(CONFIGS).archive(decoder.index)?.add(defId, writer.toArray())
+
+        val writerServer = BufferWriter(4096)
+        with(encoder) {
+            writerServer.encodeServer(def)
+            if (writerServer.array().isNotEmpty()) {
+                if (!library.exists(CONFIGS_SERVER)) {
+                    library.createIndex(id = CONFIGS_SERVER)
+                }
+                library.put(CONFIGS_SERVER, decoder.index, defId, writerServer.toArray())
+            }
+        }
+
     }
 
     companion object {

@@ -2,6 +2,7 @@ package dev.openrune.cache
 
 import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.definition.data.*
+import dev.openrune.cache.filestore.definition.data.server.ServerDataItem
 import dev.openrune.cache.filestore.definition.decoder.*
 import java.nio.file.Path
 
@@ -59,6 +60,10 @@ object CacheManager {
         return items.getOrDefault(id, ItemType(id)).also {
             if (it.id != id) println("Item with id $id is missing.")
         }
+    }
+
+    fun getItemServer(id: Int): ServerDataItem {
+        return getItem(id).server
     }
 
     fun getVarbit(id: Int): VarBitType {
