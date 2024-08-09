@@ -2,6 +2,9 @@ package dev.openrune.cache.filestore.definition.data
 
 import dev.openrune.cache.filestore.definition.Definition
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class VarBitType(
     override var id: Int = -1,
     var varp: Int = 0,

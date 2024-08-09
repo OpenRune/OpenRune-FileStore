@@ -4,6 +4,9 @@ import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.cache.filestore.definition.Sound
 import dev.openrune.cache.filestore.definition.SoundData
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class SequenceType(
     override var id: Int = -1,
     var frameIDs: MutableList<Int>? = null,

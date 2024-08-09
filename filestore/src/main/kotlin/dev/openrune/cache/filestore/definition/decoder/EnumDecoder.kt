@@ -22,9 +22,9 @@ class EnumDecoder : DefinitionDecoder<EnumType>(ENUM) {
                 for (i in 0 until count) {
                     val key = buffer.readInt()
                     if (opcode == 5) {
-                        values[key] = buffer.readString()
+                        buffer.readString()
                     } else {
-                        values[key] = buffer.readInt()
+                        buffer.readInt()
                     }
                 }
             }

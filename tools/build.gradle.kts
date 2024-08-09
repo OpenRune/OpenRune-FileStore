@@ -1,3 +1,8 @@
+plugins {
+    kotlin("plugin.serialization") version "1.9.0"
+}
+
+
 dependencies {
     implementation(project(":filestore"))
     implementation("io.netty:netty-buffer:4.1.107.Final")
@@ -8,6 +13,9 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("commons-io:commons-io:2.15.1")
     implementation("com.displee:rs-cache-library:7.1.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.3.2")
+
 }
 
 val sourcesJar by tasks.registering(Jar::class) {

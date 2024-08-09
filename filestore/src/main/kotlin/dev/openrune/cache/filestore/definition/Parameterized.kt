@@ -2,22 +2,32 @@ package dev.openrune.cache.filestore.definition
 
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.buffer.Writer
+import dev.openrune.cache.filestore.definition.data.DataValue
+import dev.openrune.cache.filestore.definition.data.IntValue
+import dev.openrune.cache.filestore.definition.data.StringValue
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Polymorphic
 
 interface Parameterized {
 
-    var params: Map<Int, Any>?
+    @Contextual
+    var params: Map<Int, @Polymorphic DataValue?>?
 
     fun readParameters(buffer: Reader) {
         val length = buffer.readUnsignedByte()
         if (length == 0) {
             return
         }
-        val params = Int2ObjectArrayMap<Any>()
+        val params = HashMap<Int, DataValue?>()
         for (i in 0 until length) {
             val string = buffer.readUnsignedBoolean()
             val id = buffer.readUnsignedMedium()
-            params[id] = if (string) buffer.readString() else buffer.readInt()
+            if (string) {
+                params[id] = StringValue(buffer.readString())
+            } else {
+                params[id] = IntValue(buffer.readInt())
+            }
         }
         this.params = params
     }
@@ -27,12 +37,12 @@ interface Parameterized {
             writer.writeByte(249)
             writer.writeByte(params.size)
             params.forEach { (id, value) ->
-                writer.writeByte(value is String)
+                writer.writeByte(value is StringValue)
                 writer.writeMedium(id)
-                if (value is String) {
-                    writer.writeString(value)
-                } else if (value is Int) {
-                    writer.writeInt(value)
+                if (value is StringValue) {
+                    writer.writeString(value.value)
+                } else if (value is IntValue) {
+                    writer.writeInt(value.value)
                 }
             }
         }

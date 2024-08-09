@@ -3,6 +3,9 @@ package dev.openrune.cache.filestore.definition.data
 import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.cache.filestore.definition.Transforms
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class HitSplatType(
     override var id: Int = -1,
     var font: Int = -1,

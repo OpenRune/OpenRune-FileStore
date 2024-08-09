@@ -28,7 +28,7 @@ class DBRowDecoder : DefinitionDecoder<DBRowType>(DBROW) {
                     columnId = buffer.readUnsignedByte()
                 }
                 columnTypes = types
-                this.columnValues = columnValues
+
             }
 
             4 -> this.tableId = buffer.readVarInt2()

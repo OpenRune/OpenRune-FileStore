@@ -4,6 +4,7 @@ import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.cache.filestore.definition.Parameterized
 import dev.openrune.cache.filestore.definition.Recolourable
 import dev.openrune.cache.filestore.definition.Transforms
+import kotlinx.serialization.Polymorphic
 
 data class NpcType(
     override var id: Int = -1,
@@ -20,10 +21,10 @@ data class NpcType(
     var walkLeftAnim : Int = -1,
     var walkRightAnim : Int = -1,
     var actions : MutableList<String?> = mutableListOf(null, null, null, null, null),
-    override var originalColours: MutableList<Int>? = null,
-    override var modifiedColours: MutableList<Int>? = null,
-    override var originalTextureColours: MutableList<Int>? = null,
-    override var modifiedTextureColours: MutableList<Int>? = null,
+    override var originalColours: List<UShort> = emptyList(),
+    override var modifiedColours: List<UShort> = emptyList(),
+    override var originalTextureColours: List<UShort> = emptyList(),
+    override var modifiedTextureColours: List<UShort> = emptyList(),
     override var varbit: Int = -1,
     override var varp: Int = -1,
     override var transforms: MutableList<Int>? = null,
@@ -34,6 +35,7 @@ data class NpcType(
     var hasRenderPriority : Boolean = false,
     var ambient : Int = 0,
     var contrast : Int = 0,
+    val serer : server,
     var headIconArchiveIds: MutableList<Int>? = null,
     var headIconSpriteIndex: MutableList<Int>? = null,
     var rotation : Int = 32,
@@ -49,7 +51,7 @@ data class NpcType(
     var crawlBackSequence : Int = -1,
     var crawlRightSequence : Int = -1,
     var crawlLeftSequence : Int = -1,
-    override var params: Map<Int, Any>? = null,
+    override var params: Map<Int, @Polymorphic DataValue?>? = null,
     var height: Int = -1,
     var stats: IntArray = intArrayOf(1, 1, 1, 1, 1, 1),
 
@@ -61,11 +63,13 @@ data class NpcType(
     var option4: String? = null,
     var option5: String? = null,
 
-) : Definition, Transforms, Recolourable, Parameterized {
+    ) : Definition, Transforms, Recolourable, Parameterized {
 
     init {
         actions = listOf(option1,option2,option3,option4,option5).toMutableList()
     }
+
+    data class server(val hey : Boolean = true)
 
     var examine : String = ""
 

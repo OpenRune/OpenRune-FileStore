@@ -1,6 +1,11 @@
+plugins {
+    kotlin("plugin.serialization") version "1.9.0"
+}
+
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("com.github.jponge:lzma-java:1.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
 }
 
 configure<JavaPluginExtension> {

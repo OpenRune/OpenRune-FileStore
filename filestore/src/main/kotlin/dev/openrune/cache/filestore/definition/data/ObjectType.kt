@@ -4,6 +4,7 @@ import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.cache.filestore.definition.Parameterized
 import dev.openrune.cache.filestore.definition.Recolourable
 import dev.openrune.cache.filestore.definition.Transforms
+import kotlinx.serialization.Polymorphic
 
 data class ObjectType(
     override var id: Int = -1,
@@ -52,14 +53,14 @@ data class ObjectType(
     var soundMax: Int = 0,
     var delayAnimationUpdate : Boolean = false,
     var impenetrable: Boolean = true,
-    override var originalColours: MutableList<Int>? = null,
-    override var modifiedColours: MutableList<Int>? = null,
-    override var originalTextureColours: MutableList<Int>? = null,
-    override var modifiedTextureColours: MutableList<Int>? = null,
+    override var originalColours: List<UShort> = emptyList(),
+    override var modifiedColours: List<UShort> = emptyList(),
+    override var originalTextureColours: List<UShort> = emptyList(),
+    override var modifiedTextureColours: List<UShort> = emptyList(),
     override var varbit: Int = -1,
     override var varp: Int = -1,
     override var transforms: MutableList<Int>? = null,
-    override var params: Map<Int, Any>? = null,
+    override var params: Map<Int, @Polymorphic DataValue?>? = null,
 
     //Custom
     var option1: String? = null,

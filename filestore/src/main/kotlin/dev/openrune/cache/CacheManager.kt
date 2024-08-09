@@ -49,6 +49,13 @@ object CacheManager {
         }
     }
 
+    fun getNpcServer(id: Int): NpcType {
+        return npcs.getOrDefault(id, NpcType(id)).also {
+            if (it.id != id) println("Npc with id $id is missing.")
+        }.serer
+    }
+
+
     fun getObject(id: Int): ObjectType {
         return objects.getOrDefault(id, ObjectType(id)).also {
             if (it.id != id) println("Object with id $id is missing.")

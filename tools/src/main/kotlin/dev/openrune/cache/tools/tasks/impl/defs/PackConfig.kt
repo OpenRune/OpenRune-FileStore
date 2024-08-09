@@ -1,7 +1,5 @@
 package dev.openrune.cache.tools.tasks.impl.defs
 
-import cc.ekblad.toml.decode
-import cc.ekblad.toml.tomlMapper
 import com.displee.cache.CacheLibrary
 import dev.openrune.cache.*
 import dev.openrune.cache.filestore.buffer.BufferWriter
@@ -18,6 +16,11 @@ import dev.openrune.cache.util.progress
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.File
 import java.lang.reflect.Modifier
+import kotlinx.serialization.*
+import kotlinx.serialization.modules.SerializersModule
+import com.akuleshov7.ktoml.Toml
+import dev.openrune.cache.filestore.serialization.UShortCustomSerializer
+import kotlin.io.path.readText
 
 enum class PackMode{
     NPCS,
@@ -33,10 +36,15 @@ enum class PackMode{
 class PackConfig(val type : PackMode, private val directory : File) : CacheTask() {
 
     val logger = KotlinLogging.logger {}
-    val mapper = tomlMapper {}
 
+    lateinit var toml : Toml
 
     override fun init(library: CacheLibrary) {
+        val module = SerializersModule {
+            contextual(UShort::class, UShortCustomSerializer)
+        }
+        toml = Toml(serializersModule = module)
+
         val size = getFiles(directory, "toml").size
         val progress = progress("Packing ${type.name.lowercase().capitalizeFirstLetter()}", size)
         if (size != 0) {
@@ -59,8 +67,7 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
     }
 
     private inline fun <reified T: Definition> packDefinitions(file: File, encoder: DefinitionEncoder<T>, decoder: DefinitionDecoder<T>, library: CacheLibrary) {
-
-        var def: T = mapper.decode<T>(file.toPath())
+        var def: T = toml.decodeFromString<T>(file.toPath().readText())
 
         if (def.id == -1) {
             logger.info { "Unable to pack as the ID is -1 or has not been defined" }

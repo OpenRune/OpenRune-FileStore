@@ -7,3 +7,4 @@ integration/build/
 *.class
 websiteData/
 cache/
+items/shooting_star.toml

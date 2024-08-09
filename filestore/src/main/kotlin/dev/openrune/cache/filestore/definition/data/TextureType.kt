@@ -2,6 +2,9 @@ package dev.openrune.cache.filestore.definition.data
 
 import dev.openrune.cache.filestore.definition.Definition
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class TextureType(
     override var id : Int = -1,
     var isTransparent : Boolean = false,

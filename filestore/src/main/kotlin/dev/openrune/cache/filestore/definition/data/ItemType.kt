@@ -3,17 +3,23 @@ package dev.openrune.cache.filestore.definition.data
 import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.cache.filestore.definition.Parameterized
 import dev.openrune.cache.filestore.definition.Recolourable
+import dev.openrune.cache.filestore.serialization.UShortList
 import it.unimi.dsi.fastutil.bytes.Byte2ByteOpenHashMap
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class ItemType(
     override var id: Int = -1,
     var name: String = "null",
     var examine: String = "null",
-    override var originalColours: MutableList<Int>? = null,
-    override var modifiedColours: MutableList<Int>? = null,
-    override var originalTextureColours: MutableList<Int>? = null,
-    override var modifiedTextureColours: MutableList<Int>? = null,
-    override var params: Map<Int, Any>? = null,
+    override var originalColours: UShortList = emptyList(),
+    override var modifiedColours: UShortList = emptyList(),
+    override var originalTextureColours: UShortList = emptyList(),
+    override var modifiedTextureColours: UShortList = emptyList(),
+    @Contextual
+    override var params: Map<Int, @Polymorphic DataValue?>? = null,
     var resizeX: Int = 128,
     var resizeY: Int = 128,
     var resizeZ: Int = 128,
@@ -79,11 +85,12 @@ data class ItemType(
         interfaceOptions = listOf(ioption1,ioption2,ioption3,ioption4,ioption5).toMutableList()
     }
 
-    lateinit var bonuses: IntArray
+    var bonuses: IntArray = IntArray(0)
     var attackSpeed = -1
     var equipType = 0
     var weaponType = -1
     var renderAnimations: IntArray? = null
+    @Contextual
     var skillReqs: Byte2ByteOpenHashMap? = null
 
     val stackable: Boolean
