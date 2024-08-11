@@ -117,7 +117,7 @@ abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cac
         versionTable?.sector(indexId, archiveSector)
         val decompressed = context.decompress(archiveSector) ?: return -1
         val reader = dev.openrune.cache.filestore.buffer.BufferReader(decompressed)
-        val version = reader.readUnsignedByte()
+        val version = reader.readUnsignedByteOLD()
         if (version < 5 || version > 7) {
             throw RuntimeException("Unknown version: $version")
         }
@@ -125,7 +125,7 @@ abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cac
             val revision = reader.readInt()
             versionTable?.revision(indexId, revision)
         }
-        val flags = reader.readByte()
+        val flags = reader.readByteOLD()
         val archiveCount = reader.readSmart(version)
         var previous = 0
         var highest = 0
@@ -215,7 +215,7 @@ abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cac
         private const val SECTOR_HEADER_SIZE_BIG = 10
         private const val SECTOR_DATA_SIZE_BIG = 510
 
-        private fun dev.openrune.cache.filestore.buffer.BufferReader.readSmart(version: Int) = if (version >= 7) readBigSmart() else readUnsignedShort()
+        private fun dev.openrune.cache.filestore.buffer.BufferReader.readSmart(version: Int) = if (version >= 7) readBigSmart() else readUnsignedShortOLD()
 
         /**
          * Reads a section of a cache's archive
@@ -250,10 +250,10 @@ abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cac
                 mainFile.seek(sectorPosition.toLong() * SECTOR_SIZE)
                 mainFile.read(sectorData, 0, requiredToRead + sectorHeaderSize)
                 buffer.position(0)
-                val id = if (bigSector) buffer.readInt() else buffer.readUnsignedShort()
-                val sectorChunk = buffer.readUnsignedShort()
+                val id = if (bigSector) buffer.readInt() else buffer.readUnsignedShortOLD()
+                val sectorChunk = buffer.readUnsignedShortOLD()
                 val sectorNextPosition = buffer.readUnsignedMedium()
-                val sectorIndex = buffer.readUnsignedByte()
+                val sectorIndex = buffer.readUnsignedByteOLD()
                 if (sectorIndex != indexId || id != sectorId || sectorChunk != chunk) {
                     return null
                 } else if (sectorNextPosition < 0 || sectorNextPosition > mainFile.length() / SECTOR_SIZE) {

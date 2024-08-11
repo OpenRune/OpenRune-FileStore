@@ -8,8 +8,8 @@ import kotlinx.serialization.Serializable
 data class VarBitType(
     override var id: Int = -1,
     var varp: Int = 0,
-    var startBit: Int = 0,
-    var endBit: Int = 0,
+    var startBit: UByte = 0u,
+    var endBit: UByte = 0u,
     //Custom
     override var inherit: Int = -1
 ) : Definition

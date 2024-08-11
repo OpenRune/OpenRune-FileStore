@@ -3,7 +3,6 @@ package dev.openrune.cache.filestore.definition
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.buffer.Writer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Serializer
 
 @Serializable
 data class SoundData(
@@ -40,10 +39,10 @@ interface Sound {
             id  = payload shr 8
             loops = payload shr 4 and 7
         } else {
-            id = buffer.readUnsignedShort()
-            loops = buffer.readUnsignedByte()
-            location = buffer.readUnsignedByte()
-            retain = buffer.readUnsignedByte()
+            id = buffer.readUnsignedShortOLD()
+            loops = buffer.readUnsignedByteOLD()
+            location = buffer.readUnsignedByteOLD()
+            retain = buffer.readUnsignedByteOLD()
         }
 
         return if (id >= 1 && loops >= 1 && location >= 0 && retain >= 0) { SoundData(id, loops, location, retain) } else { null }

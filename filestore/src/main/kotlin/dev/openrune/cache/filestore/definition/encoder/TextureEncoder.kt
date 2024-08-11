@@ -7,7 +7,7 @@ import dev.openrune.cache.filestore.definition.data.TextureType
 class TextureEncoder: ConfigEncoder<TextureType>() {
 
     override fun Writer.encode(definition: TextureType) {
-        writeShort(definition.averageRgb)
+        writeShort(definition.getAverageRgb())
         writeByte(if(definition.isTransparent) 1 else 0)
         val fileCount = definition.fileIds.size
         writeByte(fileCount)
@@ -29,7 +29,7 @@ class TextureEncoder: ConfigEncoder<TextureType>() {
             writeInt(colourAdjustment)
         }
 
-        writeByte(definition.animationDirection)
-        writeByte(definition.animationSpeed)
+        writeByte(definition.getAnimatedDirection())
+        writeByte(definition.getAnimatedSpeed())
     }
 }

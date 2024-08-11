@@ -67,7 +67,7 @@ class DumpTypeId(
         val file = generateWriter(fileName)
         for ((index, item) in CacheManager.getItems()) {
             if (item.isPlaceholder) continue
-            val rawName = if (item.noteTemplateId > 0) item.name + "_NOTED" else item.name
+            val rawName = if (item.getNoteLinkId() > 0) item.name + "_NOTED" else item.name
             if (rawName.isNotBlank()) {
                 val name = namer.name(rawName, index)
                 write(file, fieldName(name, index))

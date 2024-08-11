@@ -9,7 +9,7 @@ interface Reader {
 
     val remaining: Int
 
-    fun readBoolean() = readByte() == 1
+    fun readBoolean() = readByteOLD() == 1
 
     fun readBooleanAdd() = readByteAdd() == 1
 
@@ -17,9 +17,11 @@ interface Reader {
 
     fun readBooleanSubtract() = readByteSubtract() == 1
 
-    fun readUnsignedBoolean() = readUnsignedByte() == 1
+    fun readUnsignedBoolean() = readUnsignedByteOLD() == 1
 
-    fun readByte(): Int
+    fun readByteOLD(): Int
+
+    fun readByte(): Byte
 
     fun readByteAdd(): Int
 
@@ -27,11 +29,15 @@ interface Reader {
 
     fun readByteSubtract(): Int
 
-    fun readUnsignedByte(): Int
+    fun readUnsignedByteOLD(): Int
+
+    fun readUnsignedByte(): UByte
 
     fun readUnsignedByteAdd(): Int
 
-    fun readShort(): Int
+    fun readShortOLD(): Int
+
+    fun readShort(): Short
 
     fun readShortAdd(): Int
 
@@ -41,7 +47,9 @@ interface Reader {
 
     fun readShortSmart(): Int
 
-    fun readUnsignedShort(): Int
+    fun readUnsignedShortOLD(): Int
+
+    fun readUnsignedShort(): UShort
 
     fun readUnsignedShortLittle(): Int
 

@@ -19,6 +19,8 @@ import java.lang.reflect.Modifier
 import kotlinx.serialization.*
 import kotlinx.serialization.modules.SerializersModule
 import com.akuleshov7.ktoml.Toml
+import dev.openrune.cache.filestore.serialization.ShortCustomSerializer
+import dev.openrune.cache.filestore.serialization.UByteCustomSerializer
 import dev.openrune.cache.filestore.serialization.UShortCustomSerializer
 import kotlin.io.path.readText
 
@@ -42,6 +44,8 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
     override fun init(library: CacheLibrary) {
         val module = SerializersModule {
             contextual(UShort::class, UShortCustomSerializer)
+            contextual(UByte::class, UByteCustomSerializer)
+            contextual(Short::class, ShortCustomSerializer)
         }
         toml = Toml(serializersModule = module)
 
@@ -67,31 +71,35 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
     }
 
     private inline fun <reified T: Definition> packDefinitions(file: File, encoder: DefinitionEncoder<T>, decoder: DefinitionDecoder<T>, library: CacheLibrary) {
-        var def: T = toml.decodeFromString<T>(file.toPath().readText())
+        try {
+            var def: T = toml.decodeFromString<T>(file.toPath().readText())
 
-        if (def.id == -1) {
-            logger.info { "Unable to pack as the ID is -1 or has not been defined" }
-            return
-        }
-
-        val defId = def.id
-
-        if (def.inherit != -1) {
-            val data = library.data(CONFIGS, decoder.index, def.inherit)
-            if (data != null) {
-
-                val inheritedDef = decoder.loadSingle(def.inherit, data)!!
-                def = mergeDefinitions<T>(inheritedDef, def)
-            } else {
-                logger.warn { "No inherited definition found for ID ${def.inherit}" }
+            if (def.id == -1) {
+                logger.info { "Unable to pack as the ID is -1 or has not been defined" }
                 return
             }
+
+            val defId = def.id
+
+            if (def.inherit != -1) {
+                val data = library.data(CONFIGS, decoder.index, def.inherit)
+                if (data != null) {
+
+                    val inheritedDef = decoder.loadSingle(def.inherit, data)!!
+                    def = mergeDefinitions<T>(inheritedDef, def)
+                } else {
+                    logger.warn { "No inherited definition found for ID ${def.inherit}" }
+                    return
+                }
+            }
+
+            val writer = BufferWriter(4096)
+            with(encoder) { writer.encode(def) }
+
+            library.index(CONFIGS).archive(decoder.index)?.add(defId, writer.toArray())
+        }catch ( e: Exception) {
+            e.printStackTrace()
         }
-
-        val writer = BufferWriter(4096)
-        with(encoder) { writer.encode(def) }
-
-        library.index(CONFIGS).archive(decoder.index)?.add(defId, writer.toArray())
     }
 
     companion object {

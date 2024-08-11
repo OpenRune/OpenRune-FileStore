@@ -1,9 +1,6 @@
 package dev.openrune.cache.filestore.definition.decoder
 
-import dev.openrune.cache.DBTABLE
-import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
-import dev.openrune.cache.filestore.definition.data.DBTableType
 import dev.openrune.cache.util.ScriptVarType
 
 

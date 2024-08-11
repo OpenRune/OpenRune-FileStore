@@ -1,6 +1,5 @@
 package dev.openrune.cache.util.compress
 
-import dev.openrune.cache.filestore.buffer.BufferReader
 import dev.openrune.cache.util.secure.Xtea
 import io.github.oshai.kotlinlogging.KotlinLogging
 import lzma.sdk.lzma.Decoder
@@ -22,7 +21,7 @@ internal class DecompressionContext {
             Xtea.decipher(data, keys, 5)
         }
         val buffer = dev.openrune.cache.filestore.buffer.BufferReader(data)
-        val type = buffer.readUnsignedByte()
+        val type = buffer.readUnsignedByteOLD()
         val compressedSize = buffer.readInt() and 0xFFFFFF
         var decompressedSize = 0
         if (type != 0) {
@@ -45,7 +44,7 @@ internal class DecompressionContext {
             }
             GZIP -> {
                 val offset = buffer.position()
-                if (buffer.readByte() != 31 || buffer.readByte() != -117) {
+                if (buffer.readByteOLD() != 31 || buffer.readByteOLD() != -117) {
                     return null
                 }
                 return try {

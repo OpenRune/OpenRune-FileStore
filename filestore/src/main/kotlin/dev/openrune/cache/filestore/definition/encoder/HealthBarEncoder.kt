@@ -8,42 +8,42 @@ import dev.openrune.cache.filestore.definition.data.HitSplatType
 class HealthBarEncoder : ConfigEncoder<HealthBarType>() {
 
     override fun Writer.encode(definition: HealthBarType) {
-        if (definition.int1 != 255) {
+        if (definition.getInt1() != 255) {
             writeByte(2)
-            writeByte(definition.int1)
+            writeByte(definition.getInt1())
         }
-        if (definition.int2 != 255) {
+        if (definition.getInt2() != 255) {
             writeByte(3)
-            writeByte(definition.int2)
+            writeByte(definition.getInt2())
         }
-        if (definition.int3 != -1) {
+        if (definition.getInt3() != -1) {
             writeByte(4)
         }
-        if (definition.int4 != 70) {
+        if (definition.getInt4() != 70) {
             writeByte(5)
-            writeShort(definition.int4)
+            writeShort(definition.getInt4())
         }
 
-        if (definition.frontSpriteId != -1) {
+        if (definition.getFrontSpriteId() != -1) {
             writeByte(7)
-            writeShort(definition.frontSpriteId)
+            writeShort(definition.getFrontSpriteId())
         }
-        if (definition.backSpriteId != -1) {
+        if (definition.getBackSpriteId() != -1) {
             writeByte(8)
-            writeShort(definition.backSpriteId)
+            writeShort(definition.getBackSpriteId())
         }
-        if (definition.int3 != -1) {
+        if (definition.getInt3() != -1) {
             writeByte(11)
-            writeShort(definition.int3)
+            writeShort(definition.getInt3())
         }
-        if (definition.width != 30) {
+        if (definition.getWidth() != 30) {
             writeByte(14)
-            writeByte(definition.width)
+            writeByte(definition.getWidth())
         }
 
-        if (definition.widthPadding != 0) {
+        if (definition.getWidthPadding() != 0) {
             writeByte(15)
-            writeByte(definition.widthPadding)
+            writeByte(definition.getWidthPadding())
         }
 
         writeByte(0)

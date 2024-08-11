@@ -90,7 +90,7 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
 
     open fun readLoop(definition: T, buffer: Reader) {
         while (true) {
-            val opcode = buffer.readUnsignedByte()
+            val opcode = buffer.readUnsignedByteOLD()
             if (opcode == 0) {
                 break
             }

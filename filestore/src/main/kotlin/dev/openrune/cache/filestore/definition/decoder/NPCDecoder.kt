@@ -12,17 +12,16 @@ class NPCDecoder : DefinitionDecoder<NpcType>(NPC) {
 
     override fun getFile(id: Int) = id
 
+    @OptIn(ExperimentalUnsignedTypes::class)
     override fun NpcType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
             1 -> {
-                val length = buffer.readUnsignedByte()
-                models = MutableList(length) { 0 }
+                val length = buffer.readUnsignedByte().toInt()
+                val tmpmodels = MutableList(length) { 0.toUShort() }
                 for (count in 0 until length) {
-                    models!![count] = buffer.readUnsignedShort()
-                    if (models!![count] == 65535) {
-                        models!![count] = -1
-                    }
+                    tmpmodels[count] = buffer.readUnsignedShort()
                 }
+                models = tmpmodels
             }
             2 -> name = buffer.readString()
             12 -> size = buffer.readUnsignedByte()
@@ -46,13 +45,16 @@ class NPCDecoder : DefinitionDecoder<NpcType>(NPC) {
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
             60 -> {
-                val length: Int = buffer.readUnsignedByte()
-                chatheadModels = MutableList(length) { 0 }
+                val length: Int = buffer.readUnsignedByte().toInt()
+                val tempChatheadModels = MutableList(length) { 0.toUShort() }
                 (0 until length).forEach {
-                    chatheadModels!![it] = buffer.readUnsignedShort()
+                    tempChatheadModels[it] = buffer.readUnsignedShort()
                 }
+                chatheadModels = tempChatheadModels
             }
-            in 74..79 -> stats[opcode - 74] = buffer.readUnsignedShort()
+            in 74..79 -> {
+                stats[opcode - 74] = buffer.readUnsignedShort()
+            }
             93 -> isMinimapVisible = false
             95 -> combatLevel = buffer.readUnsignedShort()
             97 -> widthScale = buffer.readUnsignedShort()
@@ -63,9 +65,9 @@ class NPCDecoder : DefinitionDecoder<NpcType>(NPC) {
             102 -> {
                 if (CacheManager.revisionIsOrBefore(210)) {
                     headIconArchiveIds = MutableList(0) { 0 }
-                    headIconSpriteIndex = MutableList(buffer.readUnsignedShort()) { 0 }
+                    headIconSpriteIndex = MutableList(buffer.readUnsignedShort().toInt()) { 0 }
                 } else {
-                    val bitfield = buffer.readUnsignedByte()
+                    val bitfield = buffer.readUnsignedByte().toInt()
                     var size = 0
 
                     var pos = bitfield
@@ -81,7 +83,7 @@ class NPCDecoder : DefinitionDecoder<NpcType>(NPC) {
                             headIconArchiveIds!![i] = -1
                             headIconSpriteIndex!![i] = -1
                         } else {
-                            headIconArchiveIds!![i] = buffer.readUnsignedShort()
+                            headIconArchiveIds!![i] = buffer.readUnsignedShort().toInt()
                             headIconSpriteIndex!![i] = buffer.readShortSmart() - 1
                         }
                     }
@@ -108,7 +110,7 @@ class NPCDecoder : DefinitionDecoder<NpcType>(NPC) {
             }
             122 -> lowPriorityFollowerOps = true
             123 -> isFollower = true
-            124 -> height = buffer.readUnsignedShort()
+            124 -> gfx2dHeight = buffer.readUnsignedShort()
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Npcs [${opcode}]" }
         }

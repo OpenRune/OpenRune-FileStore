@@ -23,9 +23,9 @@ class SequenceEncoder: ConfigEncoder<SequenceType>() {
             }
         }
 
-        if (definition.frameStep != -1) {
+        if (definition.getFrameStep() != -1) {
             writeByte(2)
-            writeShort(definition.frameStep)
+            writeShort(definition.getFrameStep())
         }
 
         if (definition.interleaveLeave != null) {
@@ -40,39 +40,39 @@ class SequenceEncoder: ConfigEncoder<SequenceType>() {
             writeByte(4)
         }
 
-        if (definition.forcedPriority != 5) {
+        if (definition.getForcedPriority() != 5) {
             writeByte(5)
-            writeByte(definition.forcedPriority)
+            writeByte(definition.getForcedPriority())
         }
 
-        if (definition.leftHandItem != -1) {
+        if (definition.getLeftHandItem() != -1) {
             writeByte(6)
-            writeShort(definition.leftHandItem)
+            writeShort(definition.getLeftHandItem())
         }
 
-        if (definition.rightHandItem != -1) {
+        if (definition.getRightHandItem() != -1) {
             writeByte(7)
-            writeShort(definition.rightHandItem)
+            writeShort(definition.getRightHandItem())
         }
 
-        if (definition.maxLoops != 99) {
+        if (definition.getMaxLoops() != 99) {
             writeByte(8)
-            writeByte(definition.maxLoops)
+            writeByte(definition.getMaxLoops())
         }
 
-        if (definition.precedenceAnimating != -1) {
+        if (definition.getPrecedenceAnimating() != -1) {
             writeByte(9)
-            writeByte(definition.precedenceAnimating)
+            writeByte(definition.getPrecedenceAnimating())
         }
 
-        if (definition.priority != -1) {
+        if (definition.getPriority() != -1) {
             writeByte(10)
-            writeByte(definition.priority)
+            writeByte(definition.getPriority())
         }
 
-        if (definition.replyMode != 2) {
+        if (definition.getReplyMode() != 2) {
             writeByte(11)
-            writeByte(definition.replyMode)
+            writeByte(definition.getReplyMode())
         }
 
         if (definition.chatFrameIds != null) {
@@ -110,10 +110,10 @@ class SequenceEncoder: ConfigEncoder<SequenceType>() {
             }
         }
 
-        if (definition.rangeBegin != 0 || definition.rangeEnd != 0) {
+        if (definition.getRangeBegin() != 0 || definition.getRangeEnd() != 0) {
             writeByte(16)
-            writeShort(definition.rangeBegin)
-            writeShort(definition.rangeEnd)
+            writeShort(definition.getRangeBegin())
+            writeShort(definition.getRangeEnd())
         }
 
         if (definition.mask != null) {

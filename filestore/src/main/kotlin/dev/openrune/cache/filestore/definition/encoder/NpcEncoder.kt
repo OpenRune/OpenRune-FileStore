@@ -10,11 +10,11 @@ import dev.openrune.cache.filestore.definition.data.NpcType
 class NpcEncoder : ConfigEncoder<NpcType>() {
 
     override fun Writer.encode(definition: NpcType) {
-        if (definition.models != null && definition.models!!.isNotEmpty()) {
+        if (definition.models.isNotEmpty()) {
             writeByte(1)
-            writeByte(definition.models!!.size)
-            for (i in definition.models!!.indices) {
-                writeShort(definition.models!![i])
+            writeByte(definition.models.size)
+            for (i in definition.models.indices) {
+                writeShort(definition.models[i].toInt())
             }
         }
 
@@ -23,42 +23,42 @@ class NpcEncoder : ConfigEncoder<NpcType>() {
             writeString(definition.name)
         }
 
-        if (definition.size != -1) {
+        if (definition.getSize() != -1) {
             writeByte(12)
-            writeByte(definition.size)
+            writeByte(definition.getSize())
         }
 
-        if (definition.standAnim != -1) {
+        if (definition.getStandAnim() != -1) {
             writeByte(13)
-            writeShort(definition.standAnim)
+            writeShort(definition.getStandAnim())
         }
 
-        if (definition.walkAnim != -1) {
+        if (definition.getWalkAnim() != -1) {
             writeByte(14)
-            writeShort(definition.walkAnim)
+            writeShort(definition.getWalkAnim())
         }
 
-        if (definition.rotateLeftAnim != -1) {
+        if (definition.getRotateLeftAnim() != -1) {
             writeByte(15)
-            writeShort(definition.rotateLeftAnim)
+            writeShort(definition.getRotateLeftAnim())
         }
 
-        if (definition.rotateRightAnim != -1) {
+        if (definition.getRotateRightAnim() != -1) {
             writeByte(16)
-            writeShort(definition.rotateRightAnim)
+            writeShort(definition.getRotateRightAnim())
         }
 
-        if (definition.walkAnim != -1 || definition.rotateBackAnim != -1 || definition.walkLeftAnim != -1 || definition.walkRightAnim != -1) {
+        if (definition.getWalkAnim() != -1 || definition.getRotateBackAnim() != -1 || definition.getWalkLeftAnim() != -1 || definition.getWalkRightAnim() != -1) {
             writeByte(17)
-            writeShort(definition.walkAnim)
-            writeShort(definition.rotateBackAnim)
-            writeShort(definition.walkLeftAnim)
-            writeShort(definition.walkRightAnim)
+            writeShort(definition.getWalkAnim())
+            writeShort(definition.getRotateBackAnim())
+            writeShort(definition.getWalkLeftAnim())
+            writeShort(definition.getWalkRightAnim())
         }
 
-        if (definition.category != -1) {
+        if (definition.getCategory() != -1) {
             writeByte(18)
-            writeShort(definition.category)
+            writeShort(definition.getCategory())
         }
 
         if (definition.actions.any { it != null }) {
@@ -73,35 +73,35 @@ class NpcEncoder : ConfigEncoder<NpcType>() {
 
         definition.writeColoursTextures(this)
 
-        if (definition.chatheadModels != null) {
+        if (definition.chatheadModels.isNotEmpty()) {
             writeByte(60)
-            writeByte(definition.chatheadModels!!.size)
-            for (i in definition.chatheadModels!!.indices) {
-                writeShort(definition.chatheadModels!![i])
+            writeByte(definition.chatheadModels.size)
+            for (i in definition.chatheadModels.indices) {
+                writeShort(definition.chatheadModels[i].toInt())
             }
         }
 
         for (i in 0 .. 5) {
-            if (definition.stats[i] != 1) {
+            if (definition.stats[i].toInt() != 1) {
                 writeByte(74 + i)
-                writeShort(definition.stats[i])
+                writeShort(definition.stats[i].toInt())
             }
         }
 
         if (!definition.isMinimapVisible) {
             writeByte(93)
         }
-        if (definition.combatLevel != -1) {
+        if (definition.getContrast() != -1) {
             writeByte(95)
-            writeShort(definition.combatLevel)
+            writeShort(definition.getContrast())
         }
 
 
         writeByte(97)
-        writeShort(definition.widthScale)
+        writeShort(definition.getWidthScale())
 
         writeByte(98)
-        writeShort(definition.heightScale)
+        writeShort(definition.getHeightScale())
 
 
         if (definition.hasRenderPriority) {
@@ -110,10 +110,10 @@ class NpcEncoder : ConfigEncoder<NpcType>() {
 
 
         writeByte(100)
-        writeByte(definition.ambient)
+        writeByte(definition.getAmbient())
 
         writeByte(101)
-        writeByte(definition.contrast)
+        writeByte(definition.getContrast())
 
         if (definition.headIconSpriteIndex != null) {
             writeByte(102)
@@ -129,7 +129,7 @@ class NpcEncoder : ConfigEncoder<NpcType>() {
         }
 
         writeByte(103)
-        writeShort(definition.rotation)
+        writeShort(definition.getRotation())
 
         definition.writeTransforms(this, 106, 118)
 
@@ -154,35 +154,35 @@ class NpcEncoder : ConfigEncoder<NpcType>() {
             }
         }
 
-        if (definition.runSequence != -1) {
+        if (definition.getRunSequence() != -1) {
             writeByte(114)
-            writeShort(definition.runSequence)
+            writeShort(definition.getRunSequence())
         }
 
-        if (definition.runSequence != -1) {
+        if (definition.getRunSequence() != -1) {
             writeByte(115)
-            writeShort(definition.runSequence)
-            writeShort(definition.runBackSequence)
-            writeShort(definition.runRightSequence)
-            writeShort(definition.runLeftSequence)
+            writeShort(definition.getRunSequence())
+            writeShort(definition.getRunBackSequence())
+            writeShort(definition.getRunRightSequence()  )
+            writeShort(definition.getRunLeftSequence())
         }
 
-        if (definition.crawlSequence != -1) {
+        if (definition.getCrawlSequence() != -1) {
             writeByte(116)
-            writeShort(definition.crawlSequence)
+            writeShort(definition.getCrawlSequence())
         }
 
-        if (definition.crawlSequence != -1) {
+        if (definition.getCrawlSequence() != -1) {
             writeByte(117)
-            writeShort(definition.crawlSequence)
-            writeShort(definition.crawlBackSequence)
-            writeShort(definition.crawlRightSequence)
-            writeShort(definition.crawlLeftSequence)
+            writeShort(definition.getCrawlSequence())
+            writeShort(definition.getCrawlBackSequence())
+            writeShort(definition.getCrawlRightSequence())
+            writeShort(definition.getCrawlLeftSequence())
         }
 
-        if(definition.height != -1) {
+        if(definition.getHeight() != -1) {
             writeByte(124)
-            writeShort(definition.height)
+            writeShort(definition.getHeight())
         }
 
         definition.writeParameters(this)

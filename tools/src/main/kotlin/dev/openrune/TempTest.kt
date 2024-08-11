@@ -18,19 +18,19 @@ fun main() {
     val runtime = Runtime.getRuntime()
 
 
-    val CACHE = File("./cache/ ")
+    val CACHE = File("./cache/")
 
     val memoryBefore = runtime.totalMemory() - runtime.freeMemory()
     println("Memory before initialization: $memoryBefore bytes")
 
-    //CacheManager.init(CACHE.toPath(), 223)
+    CacheManager.init(CACHE.toPath(), 223)
     val memoryAfter = runtime.totalMemory() - runtime.freeMemory()
     val memoryUsed = memoryAfter - memoryBefore
 
     println("Memory used by CacheManager: $memoryUsed bytes")
 
 
-    //System.out.println("Old: " + CacheManager.getItem(1079).getModifiedColours().contentDeepToString())
+    System.out.println("Old: " + CacheManager.getItem(1079).modifiedColours)
 
     val tasks : MutableList<CacheTask> = listOf(
         PackConfig(PackMode.ITEMS,File("./items")),
@@ -41,6 +41,6 @@ fun main() {
 
     CacheManager.init(CACHE.toPath(), 223)
 
-    System.out.println("New: " + CacheManager.getItem(1079).modifiedColours)
+    println(CacheManager.getItem(1079).toString())
 
 }

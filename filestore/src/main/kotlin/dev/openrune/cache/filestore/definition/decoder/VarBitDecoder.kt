@@ -13,7 +13,7 @@ class VarBitDecoder : DefinitionDecoder<VarBitType>(VARBIT) {
 
     override fun VarBitType.read(opcode: Int, buffer: Reader) {
         if (opcode == 1) {
-            varp = buffer.readShort()
+            varp = buffer.readShortOLD()
             startBit = buffer.readUnsignedByte()
             endBit = buffer.readUnsignedByte()
         }

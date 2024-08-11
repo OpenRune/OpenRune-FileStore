@@ -12,22 +12,22 @@ class ItemDecoder : DefinitionDecoder<ItemType>(ITEM) {
 
     override fun ItemType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
-            1 -> inventoryModel = buffer.readUnsignedShort()
+            1 -> inventoryModel = buffer.readUnsignedShortOLD()
             2 -> name = buffer.readString()
             3 -> examine = buffer.readString()
-            4 -> zoom2d = buffer.readUnsignedShort()
+            4 -> zoom2d = buffer.readUnsignedShortOLD()
             5 -> xan2d = buffer.readUnsignedShort()
             6 -> yan2d = buffer.readUnsignedShort()
             7 -> xOffset2d = buffer.readUnsignedShort()
             8 -> yOffset2d = buffer.readUnsignedShort()
-            11 -> stacks = 1
+            11 -> stacks = 1u
             12 -> cost = buffer.readInt()
             13 -> equipSlot = buffer.readUnsignedByte()
             14 -> appearanceOverride1 = buffer.readUnsignedByte()
             16 -> members = true
             23 -> {
                 maleModel0 = buffer.readUnsignedShort()
-                maleOffset = buffer.readUnsignedByte()
+                maleOffset = buffer.readUnsignedByteOLD()
             }
             24 -> maleModel1 = buffer.readUnsignedShort()
             25 -> {
@@ -35,14 +35,14 @@ class ItemDecoder : DefinitionDecoder<ItemType>(ITEM) {
                 femaleOffset = buffer.readUnsignedByte()
             }
             26 -> femaleModel1 = buffer.readUnsignedShort()
-            27 -> appearanceOverride2 = buffer.readByte()
+            27 -> appearanceOverride2 = buffer.readUnsignedByte()
             in 30..34 -> options[opcode - 30] = buffer.readString()
             in 35..39 -> interfaceOptions[opcode - 35] = buffer.readString()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
             42 -> dropOptionIndex = buffer.readByte()
             65 -> isTradeable = true
-            75 -> weight = buffer.readUnsignedShort().toDouble()
+            75 -> weight = buffer.readUnsignedShort()
             78 -> maleModel2 = buffer.readUnsignedShort()
             79 -> femaleModel2 = buffer.readUnsignedShort()
             90 -> maleHeadModel0 = buffer.readUnsignedShort()

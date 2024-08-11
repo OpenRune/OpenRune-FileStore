@@ -18,9 +18,9 @@ class AreaDecoder : DefinitionDecoder<AreaType>(AREA) {
             3 -> name = buffer.readString()
             4 -> fontColor = buffer.readMedium()
             5 -> buffer.readMedium()
-            6 -> textSize = buffer.readUnsignedByte()
+            6 -> textSize = buffer.readUnsignedByteOLD()
             7 -> {
-                val size = buffer.readUnsignedByte()
+                val size = buffer.readUnsignedByteOLD()
                 if ((size and 1) == 0) {
                     renderOnWorldMap = false
                 }
@@ -29,40 +29,40 @@ class AreaDecoder : DefinitionDecoder<AreaType>(AREA) {
                     renderOnMinimap = true
                 }
             }
-            8 -> buffer.readUnsignedByte()
+            8 -> buffer.readUnsignedByteOLD()
             in 10..14 -> options[opcode - 10] = buffer.readString()
             15 -> {
-                val length: Int = buffer.readUnsignedByte()
+                val length: Int = buffer.readUnsignedByteOLD()
                 field1933 = MutableList(length * 2) { 0 }
                 (0 until length * 2).forEach {
-                    field1933!![it] = buffer.readShort()
+                    field1933!![it] = buffer.readShortOLD()
                 }
                 buffer.readInt()
-                val subLength: Int = buffer.readUnsignedByte()
+                val subLength: Int = buffer.readUnsignedByteOLD()
                 field1930 = MutableList(subLength) { 0 }
                 (0 until subLength).forEach {
                     field1930[it] = buffer.readInt()
                 }
                 field1948 = MutableList(length) { 0 }
                 (0 until length).forEach {
-                    field1948[it] = buffer.readByte()
+                    field1948[it] = buffer.readByteOLD()
                 }
             }
-            16 -> buffer.readByte()
+            16 -> buffer.readByteOLD()
             17 -> menuTargetName = buffer.readString()
             18 -> buffer.readLargeSmart()
-            19 -> category = buffer.readUnsignedShort()
+            19 -> category = buffer.readUnsignedShortOLD()
             21 -> buffer.readInt()
             22 -> buffer.readInt()
             23 -> buffer.readMedium()
             24 -> {
-                buffer.readShort()
-                buffer.readShort()
+                buffer.readShortOLD()
+                buffer.readShortOLD()
             }
             25 -> buffer.readLargeSmart()
-            28 -> buffer.readByte()
-            29 -> horizontalAlignment = buffer.readUnsignedByte()
-            30 -> verticalAlignment = buffer.readUnsignedByte()
+            28 -> buffer.readByteOLD()
+            29 -> horizontalAlignment = buffer.readUnsignedByteOLD()
+            30 -> verticalAlignment = buffer.readUnsignedByteOLD()
         }
     }
 }

@@ -2,23 +2,23 @@ package dev.openrune.cache.filestore.definition
 
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.buffer.Writer
-import dev.openrune.cache.filestore.serialization.UShortCustomSerializer
+import dev.openrune.cache.filestore.serialization.UShortList
 
 interface Recolourable {
 
-    var originalColours: List<UShort>
-    var modifiedColours: List<UShort>
-    var originalTextureColours: List<UShort>
-    var modifiedTextureColours: List<UShort>
+    var originalColours: UShortList
+    var modifiedColours: UShortList
+    var originalTextureColours: UShortList
+    var modifiedTextureColours: UShortList
 
     fun readColours(buffer: Reader) {
-        val size = buffer.readUnsignedByte()
+        val size = buffer.readUnsignedByteOLD()
         val tempOriginalColours = MutableList(size) { 0.toUShort() }
         val tempModifiedColours = MutableList(size) { 0.toUShort() }
 
         for (i in 0 until size) {
-            tempOriginalColours[i] = buffer.readUnsignedShort().toUShort()
-            tempModifiedColours[i] = buffer.readUnsignedShort().toUShort()
+            tempOriginalColours[i] = buffer.readUnsignedShortOLD().toUShort()
+            tempModifiedColours[i] = buffer.readUnsignedShortOLD().toUShort()
         }
 
         originalColours = tempOriginalColours
@@ -26,13 +26,13 @@ interface Recolourable {
     }
 
     fun readTextures(buffer: Reader) {
-        val size = buffer.readUnsignedByte()
+        val size = buffer.readUnsignedByteOLD()
         val tempOriginalTextures = MutableList(size) { 0.toUShort() }
         val tempModifiedTextures = MutableList(size) { 0.toUShort() }
 
         for (i in 0 until size) {
-            tempOriginalTextures[i] = buffer.readShort().toUShort()
-            tempModifiedTextures[i] = buffer.readShort().toUShort()
+            tempOriginalTextures[i] = buffer.readShortOLD().toUShort()
+            tempModifiedTextures[i] = buffer.readShortOLD().toUShort()
         }
 
         originalTextureColours = tempOriginalTextures

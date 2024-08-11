@@ -15,17 +15,17 @@ class DBRowDecoder : DefinitionDecoder<DBRowType>(DBROW) {
     override fun DBRowType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
             3 -> {
-                val numColumns = buffer.readUnsignedByte()
+                val numColumns = buffer.readUnsignedByteOLD()
                 val types = arrayOfNulls<Array<ScriptVarType>?>(numColumns)
                 val columnValues = arrayOfNulls<Array<Any?>?>(numColumns)
-                var columnId = buffer.readUnsignedByte()
+                var columnId = buffer.readUnsignedByteOLD()
                 while (columnId != 255) {
-                    val columnTypes = Array(buffer.readUnsignedByte()) {
+                    val columnTypes = Array(buffer.readUnsignedByteOLD()) {
                         ScriptVarType.forId(buffer.readSmart())!!
                     }
                     types[columnId] = columnTypes
                     columnValues[columnId] = decodeColumnFields(buffer, columnTypes)
-                    columnId = buffer.readUnsignedByte()
+                    columnId = buffer.readUnsignedByteOLD()
                 }
                 columnTypes = types
 
@@ -41,7 +41,7 @@ fun Reader.readVarInt2(): Int {
     var bits = 0
     var read: Int
     do {
-        read = readUnsignedByte()
+        read = readUnsignedByteOLD()
         value = value or (read and 0x7F shl bits)
         bits += 7
     } while (read > 127)

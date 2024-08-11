@@ -18,7 +18,7 @@ class EnumDecoder : DefinitionDecoder<EnumType>(ENUM) {
             3 -> defaultString = buffer.readString()
             4 -> defaultInt = buffer.readInt()
             5, 6 -> {
-                val count = buffer.readUnsignedShort()
+                val count = buffer.readUnsignedShort().toInt()
                 for (i in 0 until count) {
                     val key = buffer.readInt()
                     if (opcode == 5) {

@@ -13,25 +13,25 @@ class TextureDecoder : DefinitionDecoder<TextureType>(TEXTURES) {
 
     override fun TextureType.read(opcode: Int, buffer: Reader) {
         averageRgb = buffer.readUnsignedShort()
-        isTransparent = buffer.readUnsignedByte() == 1
-        val count: Int = buffer.readUnsignedByte()
+        isTransparent = buffer.readUnsignedByte().toInt() == 1
+        val count: Int = buffer.readUnsignedByte().toInt()
 
         if (count in 1..4) {
             fileIds = IntArray(count).toMutableList()
             for (index in 0 until count) {
-                fileIds[index] = buffer.readUnsignedShort()
+                fileIds[index] = buffer.readUnsignedShort().toInt()
             }
 
             if (count > 1) {
 
                 combineModes = IntArray(count -1).toMutableList()
                 for (index in 0 until count - 1) {
-                    combineModes[index] = buffer.readUnsignedShort()
+                    combineModes[index] = buffer.readUnsignedShort().toInt()
                 }
 
                 field2440 = IntArray(count -1).toMutableList()
                 for (index in 0 until count - 1) {
-                    field2440[index] = buffer.readUnsignedShort()
+                    field2440[index] = buffer.readUnsignedShort().toInt()
                 }
 
             }

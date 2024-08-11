@@ -9,25 +9,25 @@ interface Transforms {
     var transforms: MutableList<Int>?
 
     fun readTransforms(buffer: Reader, isLast: Boolean) {
-        varbit = buffer.readShort()
+        varbit = buffer.readShortOLD()
         if (varbit == 65535) {
             varbit = -1
         }
-        varp = buffer.readShort()
+        varp = buffer.readShortOLD()
         if (varp == 65535) {
             varp = -1
         }
         var last = -1
         if (isLast) {
-            last = buffer.readUnsignedShort()
+            last = buffer.readUnsignedShortOLD()
             if (last == 65535) {
                 last = -1
             }
         }
-        val length = buffer.readUnsignedByte()
+        val length = buffer.readUnsignedByteOLD()
         transforms = MutableList(length + 2) { -1 }
         for (count in 0..length) {
-            transforms!![count] = buffer.readUnsignedShort()
+            transforms!![count] = buffer.readUnsignedShortOLD()
             if (transforms!![count] == 65535) {
                 transforms!![count] = -1
             }

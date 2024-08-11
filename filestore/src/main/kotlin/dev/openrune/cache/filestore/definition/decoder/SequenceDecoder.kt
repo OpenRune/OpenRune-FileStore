@@ -16,24 +16,24 @@ class SequenceDecoder : DefinitionDecoder<SequenceType>(SEQUENCE) {
     override fun SequenceType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
             1 -> {
-                val frameCount = buffer.readUnsignedShort()
+                val frameCount = buffer.readUnsignedShort().toInt()
                 var totalFrameLength = 0
                 frameIDs = MutableList(frameCount) { 0 }
                 frameDelays = MutableList(frameCount) { 0 }
 
                 for (i in 0 until frameCount) {
-                    frameDelays!![i] = buffer.readUnsignedShort()
+                    frameDelays!![i] = buffer.readUnsignedShort().toInt()
                     if (i < frameCount - 1 || frameDelays!![i] < 200) {
                         totalFrameLength += frameDelays!![i]
                     }
                 }
 
                 for (i in 0 until frameCount) {
-                    frameIDs!![i] = buffer.readUnsignedShort()
+                    frameIDs!![i] = buffer.readUnsignedShort().toInt()
                 }
 
                 for (i in 0 until frameCount) {
-                    frameIDs!![i] += buffer.readUnsignedShort() shl 16
+                    frameIDs!![i] += buffer.readUnsignedShort().toInt() shl 16
                 }
 
                 lengthInCycles = ceil((totalFrameLength * 20.0) / 600.0).toInt()
@@ -41,10 +41,10 @@ class SequenceDecoder : DefinitionDecoder<SequenceType>(SEQUENCE) {
 
             2 -> frameStep = buffer.readUnsignedShort()
             3 -> {
-                val count = buffer.readUnsignedByte()
+                val count = buffer.readUnsignedByte().toInt()
                 interleaveLeave = MutableList(count + 1) { 0 }
                 for (i in 0 until count) {
-                    interleaveLeave!![i] = buffer.readUnsignedByte()
+                    interleaveLeave!![i] = buffer.readUnsignedByte().toInt()
                 }
                 interleaveLeave!![count] = 0x98967f
             }
@@ -58,19 +58,19 @@ class SequenceDecoder : DefinitionDecoder<SequenceType>(SEQUENCE) {
             10 -> priority = buffer.readUnsignedByte()
             11 -> replyMode = buffer.readUnsignedByte()
             12 -> {
-                val count = buffer.readUnsignedByte()
+                val count = buffer.readUnsignedByte().toInt()
                 chatFrameIds = MutableList(count) { 0 }
                 for (i in 0 until count) {
-                    chatFrameIds!![i] = buffer.readUnsignedShort()
+                    chatFrameIds!![i] = buffer.readUnsignedShort().toInt()
                 }
 
                 for (i in 0 until count) {
-                    chatFrameIds!![i] += buffer.readUnsignedShort() shl 16
+                    chatFrameIds!![i] += buffer.readUnsignedShort().toInt() shl 16
                 }
             }
 
             13 -> {
-                val count = buffer.readUnsignedByte()
+                val count = buffer.readUnsignedByte().toInt()
                 soundEffects = MutableList(count) { null }
                 for (i in 0 until count) {
                     soundEffects[i] = readSounds(buffer, CacheManager.revisionIsOrAfter(220))
@@ -79,24 +79,24 @@ class SequenceDecoder : DefinitionDecoder<SequenceType>(SEQUENCE) {
 
             14 -> skeletalId = buffer.readInt()
             15 -> {
-                val count = buffer.readUnsignedShort()
+                val count = buffer.readUnsignedShort().toInt()
                 for (i in 0 until count) {
-                    val index = buffer.readUnsignedShort()
+                    val index = buffer.readUnsignedShort().toInt()
                     val sound = readSounds(buffer, CacheManager.revisionIsOrAfter(220))
                     skeletalSounds[index] = sound!!
                 }
             }
 
             16 -> {
-                rangeBegin = buffer.readUnsignedShort()
-                rangeEnd = buffer.readUnsignedShort()
+                rangeBegin = buffer.readShort()
+                rangeEnd = buffer.readShort()
             }
 
             17 -> {
                 mask = MutableList(256) { false }
-                val count = buffer.readUnsignedByte()
+                val count = buffer.readUnsignedByte().toInt()
                 for (i in 0 until count) {
-                    mask!![buffer.readUnsignedByte()] = true
+                    mask!![buffer.readUnsignedByte().toInt()] = true
                 }
             }
         }

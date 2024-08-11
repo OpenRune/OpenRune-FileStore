@@ -31,40 +31,40 @@ class HitSplatEncoder : ConfigEncoder<HitSplatType>() {
             writeByte(6)
             writeShort(definition.right)
         }
-        if (definition.offsetX != 0) {
+        if (definition.getOffsetX() != 0) {
             writeByte(7)
-            writeShort(definition.offsetX)
+            writeShort(definition.getOffsetX())
         }
         if (definition.amount != "") {
             writeByte(8)
             writePrefixedString(definition.amount)
         }
-        if (definition.duration != 70) {
+        if (definition.getDuration() != 70) {
             writeByte(9)
-            writeShort(definition.duration)
+            writeShort(definition.getDuration())
         }
-        if (definition.offsetY != 0) {
+        if (definition.getOffsetY() != 0) {
             writeByte(10)
-            writeShort(definition.offsetY)
+            writeShort(definition.getOffsetY())
         }
 
-        if (definition.fade != -1) {
+        if (definition.getFade() != -1) {
             writeByte(11)
         }
 
-        if (definition.comparisonType != -1) {
+        if (definition.getComparisonType() != -1) {
             writeByte(12)
-            writeByte(definition.comparisonType)
+            writeByte(definition.getComparisonType())
         }
 
-        if (definition.damageYOfset != 0) {
+        if (definition.getDamageYOfset() != 0) {
             writeByte(13)
-            writeShort(definition.damageYOfset)
+            writeShort(definition.getDamageYOfset())
         }
 
-        if (definition.fade != 0) {
+        if (definition.getFade() != 0) {
             writeByte(14)
-            writeShort(definition.fade)
+            writeShort(definition.getFade())
         }
 
         definition.writeTransforms(this, 17, 18)

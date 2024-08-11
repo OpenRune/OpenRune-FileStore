@@ -36,10 +36,10 @@ class ObjectEncoder : ConfigEncoder<ObjectType>() {
 
 
         writeByte(14)
-        writeByte(definition.sizeX)
+        writeByte(definition.getSizeX())
 
         writeByte(15)
-        writeByte(definition.sizeY)
+        writeByte(definition.getSizeY())
 
 
         if (definition.solid == 0 && !definition.impenetrable) {
@@ -50,12 +50,12 @@ class ObjectEncoder : ConfigEncoder<ObjectType>() {
             writeByte(18)
         }
 
-        if (definition.interactive != -1) {
+        if (definition.getInteractive() != -1) {
             writeByte(19)
-            writeByte(definition.interactive)
+            writeByte(definition.getInteractive())
         }
 
-        if (definition.clipType == 0) {
+        if (definition.getClipType() == 0) {
             writeByte(21)
         }
 
@@ -67,9 +67,9 @@ class ObjectEncoder : ConfigEncoder<ObjectType>() {
             writeByte(23)
         }
 
-        if (definition.animationId != -1) {
+        if (definition.getAnimationId() != -1) {
             writeByte(24)
-            writeShort(definition.animationId)
+            writeShort(definition.getAnimationId())
         }
 
         if (definition.solid == 1) {
@@ -77,7 +77,7 @@ class ObjectEncoder : ConfigEncoder<ObjectType>() {
         }
 
         writeByte(28)
-        writeByte(definition.decorDisplacement)
+        writeByte(definition.getDecorDisplacement())
 
         writeByte(29)
         writeByte(definition.ambient)
@@ -98,9 +98,9 @@ class ObjectEncoder : ConfigEncoder<ObjectType>() {
 
         definition.writeColoursTextures(this)
 
-        if (definition.category != -1) {
+        if (definition.getCategory() != -1) {
             writeByte(61)
-            writeShort(definition.category)
+            writeShort(definition.getCategory())
         }
 
         if (definition.isRotated) {
@@ -112,17 +112,17 @@ class ObjectEncoder : ConfigEncoder<ObjectType>() {
         }
 
         writeByte(65)
-        writeShort(definition.modelSizeX)
+        writeShort(definition.getModelSizeX())
 
         writeByte(66)
-        writeShort(definition.modelSizeZ)
+        writeShort(definition.getModelSizeZ())
 
         writeByte(67)
-        writeShort(definition.modelSizeY)
+        writeShort(definition.getModelSizeY())
 
-        if (definition.mapSceneID != -1) {
+        if (definition.getMapSceneID() != -1) {
             writeByte(68)
-            writeShort(definition.mapSceneID)
+            writeShort(definition.getMapSceneID())
         }
 
         if (definition.clipMask != 0) {
@@ -131,13 +131,13 @@ class ObjectEncoder : ConfigEncoder<ObjectType>() {
         }
 
         writeByte(70)
-        writeShort(definition.offsetX)
+        writeShort(definition.getOffsetX())
 
         writeByte(71)
-        writeShort(definition.offsetZ)
+        writeShort(definition.getOffsetZ())
 
         writeByte(72)
-        writeShort(definition.offsetY)
+        writeShort(definition.getOffsetY())
 
         if (definition.obstructive) {
             writeByte(73)
@@ -147,27 +147,27 @@ class ObjectEncoder : ConfigEncoder<ObjectType>() {
             writeByte(74)
         }
 
-        if (definition.supportsItems != -1) {
+        if (definition.getSupportsItems() != -1) {
             writeByte(75)
-            writeByte(definition.supportsItems)
+            writeByte(definition.getSupportsItems())
         }
 
-        if (definition.ambientSoundId != -1) {
+        if (definition.getAmbientSoundId() != -1) {
             writeByte(78)
-            writeShort(definition.ambientSoundId)
-            writeByte(definition.soundDistance)
+            writeShort(definition.getAmbientSoundId())
+            writeByte(definition.getSoundDistance())
             if (CacheManager.revisionIsOrAfter(220)) {
-                writeByte(definition.soundRetain)
+                writeByte(definition.getSoundRetain())
             }
         }
 
         if (definition.ambientSoundIds != null) {
             writeByte(79)
-            writeShort(definition.soundMin)
-            writeShort(definition.soundMax)
-            writeByte(definition.soundDistance)
+            writeShort(definition.getSoundMin())
+            writeShort(definition.getSoundMax())
+            writeByte(definition.getSoundDistance())
             if (CacheManager.revisionIsOrAfter(220)) {
-                writeByte(definition.soundRetain)
+                writeByte(definition.getSoundRetain())
             }
 
             writeByte(definition.ambientSoundIds!!.size)
@@ -176,14 +176,14 @@ class ObjectEncoder : ConfigEncoder<ObjectType>() {
             }
         }
 
-        if (definition.clipType != -1) {
+        if (definition.getClipType() != -1) {
             writeByte(81)
-            writeByte(definition.clipType / 256)
+            writeByte(definition.getClipType() / 256)
         }
 
-        if (definition.mapAreaId != -1) {
+        if (definition.getMapAreaId() != -1) {
             writeByte(82)
-            writeShort(definition.mapAreaId)
+            writeShort(definition.getMapAreaId())
         }
 
         if (!definition.randomizeAnimStart) {

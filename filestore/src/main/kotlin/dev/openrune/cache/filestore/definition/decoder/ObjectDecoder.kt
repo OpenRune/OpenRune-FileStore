@@ -16,27 +16,27 @@ class ObjectDecoder : DefinitionDecoder<ObjectType>(OBJECT) {
     override fun ObjectType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
             1 -> {
-                val length: Int = buffer.readUnsignedByte()
+                val length: Int = buffer.readUnsignedByte().toInt()
                 when {
                     length > 0 -> {
                         objectTypes = MutableList(length) { 0 }
                         objectModels = MutableList(length) { 0 }
 
                         (0 until length).forEach {
-                            objectModels!![it] = buffer.readUnsignedShort()
-                            objectTypes!![it] = buffer.readUnsignedByte()
+                            objectModels!![it] = buffer.readUnsignedShort().toInt()
+                            objectTypes!![it] = buffer.readUnsignedByte().toInt()
                         }
                     }
                 }
             }
             2 -> name = buffer.readString()
             5 -> {
-                val length: Int = buffer.readUnsignedByte()
+                val length: UByte = buffer.readUnsignedByte()
                 when {
-                    length > 0 -> {
+                    length > 0u -> {
                         objectTypes = null
-                        objectModels = IntStream.range(0, length).map {
-                            buffer.readUnsignedShort()
+                        objectModels = IntStream.range(0, length.toInt()).map {
+                            buffer.readUnsignedShort().toInt()
                         }.toList().toMutableList()
                     }
                 }
@@ -49,19 +49,19 @@ class ObjectDecoder : DefinitionDecoder<ObjectType>(OBJECT) {
             }
             18 -> impenetrable = false
             19 -> interactive = buffer.readUnsignedByte()
-            21 -> clipType = 0
+            21 -> clipType = 0u
             22 -> nonFlatShading = true
             23 -> modelClipped = true
             24 -> {
                 animationId = buffer.readUnsignedShort()
-                if (animationId == 65535) {
-                    animationId = -1
+                if (animationId.toInt() == 65535) {
+                    animationId = (-1).toUShort()
                 }
             }
             27 -> solid = 1
             28 -> decorDisplacement = buffer.readUnsignedByte()
-            29 -> ambient = buffer.readByte()
-            39 -> contrast = buffer.readByte()
+            29 -> ambient = buffer.readByteOLD()
+            39 -> contrast = buffer.readByteOLD()
             in 30..34 -> {
                 actions[opcode - 30] = buffer.readString()
             }
@@ -74,7 +74,7 @@ class ObjectDecoder : DefinitionDecoder<ObjectType>(OBJECT) {
             66 -> modelSizeZ = buffer.readUnsignedShort()
             67 -> modelSizeY = buffer.readUnsignedShort()
             68 -> mapSceneID = buffer.readUnsignedShort()
-            69 -> clipMask = buffer.readByte()
+            69 -> clipMask = buffer.readByteOLD()
             70 -> offsetX = buffer.readUnsignedShort()
             71 -> offsetZ = buffer.readUnsignedShort()
             72 -> offsetY = buffer.readUnsignedShort()
@@ -96,12 +96,12 @@ class ObjectDecoder : DefinitionDecoder<ObjectType>(OBJECT) {
                 if (revisionIsOrAfter(220)) {
                     soundRetain = buffer.readUnsignedByte()
                 }
-                val length: Int = buffer.readUnsignedByte()
+                val length: Int = buffer.readUnsignedByte().toInt()
                 ambientSoundIds = IntStream.range(0, length).map {
-                    buffer.readUnsignedShort()
+                    buffer.readUnsignedShort().toInt()
                 }.toList().toMutableList()
             }
-            81 -> clipType = (buffer.readUnsignedByte()) * 256
+            81 -> clipType = (((buffer.readUnsignedByte()) * 256u).toUByte())
             60,82 -> mapAreaId = buffer.readUnsignedShort()
             89 -> randomizeAnimStart = true
             90 -> delayAnimationUpdate = true

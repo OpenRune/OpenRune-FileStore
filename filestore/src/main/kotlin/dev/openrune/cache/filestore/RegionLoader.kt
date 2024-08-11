@@ -28,7 +28,7 @@ fun loadLocations(b: ByteArray, fn: (LocationData) -> Unit) {
             val localY = position and 63
             val localX = position shr 6 and 63
             val height = position shr 12 and 3
-            val attributes = buf.readUnsignedByte()
+            val attributes = buf.readUnsignedByteOLD()
             val type = attributes shr 2
             val orientation = attributes and 3
             fn.invoke(LocationData(id, type, orientation, localX, localY, height))
@@ -45,18 +45,18 @@ fun loadTerrain(b: ByteArray, after208: Boolean = CacheManager.revisionIsOrAfter
                 val tile = tiles[z][x][y]
 
                 while (true) {
-                    val attribute = if (after208) buf.readUnsignedShort() else buf.readUnsignedByte()
+                    val attribute = if (after208) buf.readUnsignedShortOLD() else buf.readUnsignedByteOLD()
                     if (attribute == 0) {
                         break
                     }
                     if (attribute == 1) {
-                        val height = buf.readUnsignedByte()
+                        val height = buf.readUnsignedByteOLD()
                         tile.height = height
                         break
                     }
                     if (attribute <= 49) {
                         tile.attrOpcode = attribute
-                        tile.overlayId = if (after208) buf.readShort().toShort() else buf.readByte().toShort()
+                        tile.overlayId = if (after208) buf.readShortOLD().toShort() else buf.readByteOLD().toShort()
                         tile.overlayPath = ((attribute - 2) / 4).toByte()
                         tile.overlayRotation = (attribute - 2 and 3).toByte()
                     } else if (attribute <= 81) {

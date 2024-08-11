@@ -5,7 +5,6 @@ import dev.openrune.cache.filestore.buffer.Writer
 import dev.openrune.cache.filestore.definition.data.DataValue
 import dev.openrune.cache.filestore.definition.data.IntValue
 import dev.openrune.cache.filestore.definition.data.StringValue
-import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Polymorphic
 
@@ -15,7 +14,7 @@ interface Parameterized {
     var params: Map<Int, @Polymorphic DataValue?>?
 
     fun readParameters(buffer: Reader) {
-        val length = buffer.readUnsignedByte()
+        val length = buffer.readUnsignedByteOLD()
         if (length == 0) {
             return
         }

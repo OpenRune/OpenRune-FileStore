@@ -27,24 +27,24 @@ class ItemEncoder : ConfigEncoder<ItemType>() {
             writeShort(definition.zoom2d)
         }
 
-        if (definition.xan2d != 0) {
+        if (definition.getXan2d() != 0) {
             writeByte(5)
-            writeShort(definition.xan2d)
+            writeShort(definition.getXan2d())
         }
 
-        if (definition.yan2d != 0) {
+        if (definition.getYan2d() != 0) {
             writeByte(6)
-            writeShort(definition.yan2d)
+            writeShort(definition.getYan2d())
         }
 
-        if (definition.xOffset2d != 0) {
+        if (definition.getXOffset2d() != 0) {
             writeByte(7)
-            writeShort(definition.xOffset2d)
+            writeShort(definition.getXOffset2d())
         }
 
-        if (definition.yOffset2d != 0) {
+        if (definition.getYOffset2d() != 0) {
             writeByte(8)
-            writeShort(definition.yOffset2d)
+            writeShort(definition.getYOffset2d())
         }
 
         if (definition.stackable) {
@@ -56,45 +56,45 @@ class ItemEncoder : ConfigEncoder<ItemType>() {
             writeInt(definition.cost)
         }
 
-        if (definition.equipSlot != -1) {
+        if (definition.getEquipSlot() != -1) {
             writeByte(13)
-            writeByte(definition.equipSlot)
+            writeByte(definition.getEquipSlot())
         }
 
-        if (definition.appearanceOverride1 != -1) {
+        if (definition.getAppearanceOverride1() != -1) {
             writeByte(14)
-            writeByte(definition.appearanceOverride1)
+            writeByte(definition.getAppearanceOverride1())
         }
 
         if (definition.members) {
             writeByte(16)
         }
 
-        if (definition.maleModel0 != -1 || definition.maleOffset != 0) {
+        if (definition.getMaleModel0() != -1 || definition.maleOffset != 0) {
             writeByte(23)
-            writeShort(definition.maleModel0)
+            writeShort(definition.getMaleModel0())
             writeByte(definition.maleOffset)
         }
 
-        if (definition.maleModel1 != -1) {
+        if (definition.getMaleModel1() != -1) {
             writeByte(24)
-            writeShort(definition.maleModel1)
+            writeShort(definition.getMaleModel1())
         }
 
-        if (definition.femaleModel0 != -1 || definition.femaleOffset != 0) {
+        if (definition.getFemaleModel0() != -1 || definition.getFemaleOffset() != 0) {
             writeByte(25)
-            writeShort(definition.femaleModel0)
-            writeByte(definition.femaleOffset)
+            writeShort(definition.getFemaleModel0())
+            writeByte(definition.getFemaleOffset())
         }
 
-        if (definition.femaleModel1 != -1) {
+        if (definition.getMaleModel1() != -1) {
             writeByte(26)
-            writeShort(definition.femaleModel1)
+            writeShort(definition.getMaleModel1())
         }
 
-        if (definition.appearanceOverride2 != 0) {
+        if (definition.getAppearanceOverride2() != 0) {
             writeByte(27)
-            writeByte(definition.appearanceOverride2)
+            writeByte(definition.getAppearanceOverride2())
         }
 
         if (definition.options != mutableListOf(null, null, "Take", null, null)) {
@@ -119,124 +119,124 @@ class ItemEncoder : ConfigEncoder<ItemType>() {
 
         definition.writeColoursTextures(this)
 
-        if (definition.dropOptionIndex != -2) {
+        if (definition.getDropOptionIndex() != -2) {
             writeByte(42)
-            writeByte(definition.dropOptionIndex)
+            writeByte(definition.getDropOptionIndex())
         }
 
         if (definition.isTradeable) {
             writeByte(65)
         }
 
-        if (definition.weight != 0.0) {
+        if (definition.getWeight() != 0) {
             writeByte(75)
             writeShort(definition.weight.toInt())
         }
 
-        if (definition.maleModel2 != -1) {
+        if (definition.getMaleModel2() != -1) {
             writeByte(78)
-            writeShort(definition.maleModel2)
+            writeShort(definition.getMaleModel2())
         }
 
-        if (definition.femaleModel2 != -1) {
+        if (definition.getFemaleModel2() != -1) {
             writeByte(79)
-            writeShort(definition.femaleModel2)
+            writeShort(definition.getFemaleModel2())
         }
 
-        if (definition.maleHeadModel0 != -1) {
+        if (definition.getMaleHeadModel0() != -1) {
             writeByte(90)
-            writeShort(definition.maleHeadModel0)
+            writeShort(definition.getMaleHeadModel0())
         }
 
-        if (definition.femaleHeadModel0 != -1) {
+        if (definition.getFemaleHeadModel0() != -1) {
             writeByte(91)
-            writeShort(definition.femaleHeadModel0)
+            writeShort(definition.getFemaleHeadModel0())
         }
 
-        if (definition.maleHeadModel1 != -1) {
+        if (definition.getMaleHeadModel1() != -1) {
             writeByte(92)
-            writeShort(definition.maleHeadModel1)
+            writeShort(definition.getMaleHeadModel1())
         }
 
-        if (definition.femaleHeadModel1 != -1) {
+        if (definition.getFemaleHeadModel1() != -1) {
             writeByte(93)
-            writeShort(definition.femaleHeadModel1)
+            writeShort(definition.getFemaleHeadModel1())
         }
 
-        if (definition.category != -1) {
+        if (definition.getCategory() != -1) {
             writeByte(94)
-            writeShort(definition.category)
+            writeShort(definition.getCategory())
         }
 
-        if (definition.zan2d != 0) {
+        if (definition.getZan2d() != 0) {
             writeByte(95)
-            writeShort(definition.zan2d)
+            writeShort(definition.getZan2d())
         }
 
-        if (definition.noteLinkId != -1) {
+        if (definition.getNoteLinkId() != -1) {
             writeByte(97)
-            writeShort(definition.noteLinkId)
+            writeShort(definition.getNoteLinkId())
         }
 
-        if (definition.noteTemplateId != -1) {
+        if (definition.getNoteTemplateId() != -1) {
             writeByte(98)
-            writeShort(definition.noteTemplateId)
+            writeShort(definition.getNoteTemplateId())
         }
 
         for (i in definition.countObj.indices) {
             writeByte(100 + i)
-            writeShort(definition.countObj[i])
-            writeShort(definition.countCo[i])
+            writeShort(definition.countObj[i].toInt())
+            writeShort(definition.countCo[i].toInt())
         }
 
-        if (definition.resizeX != 128) {
+        if (definition.getResizeX() != 128) {
             writeByte(110)
-            writeShort(definition.resizeX)
+            writeShort(definition.getResizeX())
         }
 
-        if (definition.resizeY != 128) {
+        if (definition.getResizeY() != 128) {
             writeByte(111)
-            writeShort(definition.resizeY)
+            writeShort(definition.getResizeY())
         }
 
-        if (definition.resizeZ != 128) {
+        if (definition.getResizeZ() != 128) {
             writeByte(112)
-            writeShort(definition.resizeZ)
+            writeShort(definition.getResizeZ())
         }
 
-        if (definition.ambient != 0) {
+        if (definition.getAmbient() != 0) {
             writeByte(113)
-            writeByte(definition.ambient)
+            writeByte(definition.getAmbient())
         }
 
-        if (definition.contrast != 0) {
+        if (definition.getContrast() != 0) {
             writeByte(114)
-            writeByte(definition.contrast)
+            writeByte(definition.getContrast())
         }
 
-        if (definition.teamCape != 0) {
+        if (definition.getTeamCape() != 0) {
             writeByte(115)
-            writeByte(definition.teamCape)
+            writeByte(definition.getTeamCape())
         }
 
-        if (definition.unnotedId != -1) {
+        if (definition.getUnnotedId() != -1) {
             writeByte(139)
-            writeShort(definition.unnotedId)
+            writeShort(definition.getUnnotedId())
         }
 
-        if (definition.notedId != -1) {
+        if (definition.getNotedId() != -1) {
             writeByte(140)
-            writeShort(definition.notedId)
+            writeShort(definition.getNotedId())
         }
 
-        if (definition.placeholderLink != -1) {
+        if (definition.getPlaceholderLink() != -1) {
             writeByte(148)
-            writeShort(definition.placeholderLink )
+            writeShort(definition.getPlaceholderLink() )
         }
 
-        if (definition.placeholderTemplate != -1) {
+        if (definition.getPlaceholderTemplate() != -1) {
             writeByte(149)
-            writeShort(definition.placeholderTemplate)
+            writeShort(definition.getPlaceholderTemplate())
         }
 
         definition.writeParameters(this)

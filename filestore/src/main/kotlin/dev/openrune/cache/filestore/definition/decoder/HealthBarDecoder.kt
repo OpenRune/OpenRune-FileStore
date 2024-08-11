@@ -16,7 +16,7 @@ class HealthBarDecoder : DefinitionDecoder<HealthBarType>(HEALTHBAR) {
             1 -> buffer.readUnsignedShort()
             2 -> int1 = buffer.readUnsignedByte()
             3 -> int2 = buffer.readUnsignedByte()
-            4 -> int3 = 0
+            4 -> int3 = 0u
             5 -> int4 = buffer.readUnsignedShort()
             6 -> buffer.readUnsignedByte()
             7 -> frontSpriteId = buffer.readUnsignedShort()

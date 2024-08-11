@@ -1,6 +1,7 @@
 package dev.openrune.cache.filestore.definition.data
 
 import dev.openrune.cache.filestore.definition.Definition
+import dev.openrune.cache.filestore.serialization.toIntWithMaxCheck
 
 import kotlinx.serialization.Serializable
 
@@ -12,8 +13,16 @@ data class TextureType(
     var combineModes : MutableList<Int> = emptyList<Int>().toMutableList(),
     var field2440 : MutableList<Int> = emptyList<Int>().toMutableList(),
     var colourAdjustments : MutableList<Int> = emptyList<Int>().toMutableList(),
-    var averageRgb : Int = 0,
-    var animationDirection : Int = 0,
-    var animationSpeed : Int = 0,
+    var averageRgb : UShort = 0u,
+    var animationDirection : UByte = 0u,
+    var animationSpeed : UByte = 0u,
     override var inherit : Int = -1,
- ) : Definition
+ ) : Definition {
+
+     fun getAnimatedDirection() = animationDirection.toIntWithMaxCheck()
+
+     fun getAnimatedSpeed() = animationSpeed.toIntWithMaxCheck()
+
+    fun getAverageRgb() = averageRgb.toIntWithMaxCheck()
+
+ }

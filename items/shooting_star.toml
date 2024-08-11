@@ -2,3 +2,15 @@
  inherit = 1079
  originalColours = [61, 41, 57]
  modifiedColours = [3, 3, 4]
+
+ resizeX = 100
+ ambient = 4
+ femaleOffset = 343
+ notedId = 3434
+ cost = 4000
+
+ option1 = "Action 1"
+ option2 = "Action 2"
+ option3 = "Action 3"
+ option4 = "Action 4"
+ option5 = "Action 5"
