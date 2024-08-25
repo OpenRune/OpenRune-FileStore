@@ -124,6 +124,20 @@ class ItemEncoder : ConfigEncoder<ItemType>() {
             writeByte(definition.dropOptionIndex)
         }
 
+        definition.subops?.forEachIndexed { opId, subopArray ->
+            writeByte(43)
+            if (subopArray != null) {
+                writeByte(opId)
+                subopArray.forEachIndexed { subopId, op ->
+                    if (op != null) {
+                        writeByte(subopId + 1)
+                        writeString(op)
+                    }
+                }
+                writeByte(0)
+            }
+        }
+
         if (definition.isTradeable) {
             writeByte(65)
         }
