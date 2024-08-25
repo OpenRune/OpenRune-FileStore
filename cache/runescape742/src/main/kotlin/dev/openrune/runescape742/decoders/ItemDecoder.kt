@@ -15,207 +15,97 @@ class ItemDecoder : DefinitionDecoder<ItemType>(ITEMS) {
 
     override fun ItemType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
-            1 -> {
-                inventoryModel = buffer.readBigSmart()
-            }
-            2 -> {
-                name = buffer.readString()
-            }
-            // Other opcodes are recognized but no assignments are performed
-            4 -> {
-                buffer.readShort().toInt()
-            }
-            5 -> {
-                buffer.readShort().toInt()
-            }
-            6 -> {
-                buffer.readShort().toInt()
-            }
-            7 -> {
-                var xOffset2d = buffer.readShort().toInt()
-                if (xOffset2d > 32767) {
-                    xOffset2d -= 65536
-                }
-            }
-            8 -> {
-                var yOffset2d = buffer.readShort().toInt()
-                if (yOffset2d > 32767) {
-                    yOffset2d -= 65536
-                }
-            }
-            11 -> {
-                buffer.readBoolean()  // stackable
-            }
-            12 -> {
-                buffer.readInt()  // cost
-            }
-            13 -> {
-                buffer.readUnsignedByte().toInt()  // equipSlot
-            }
-            14 -> {
-                buffer.readUnsignedByte().toInt()  // appearanceOverride1
-            }
-            16 -> {
-                buffer.readBoolean()  // members
-            }
-            18 -> {
-                buffer.readShort().toInt()  // multiStackSize
-            }
-            23 -> {
-                buffer.readBigSmart()  // primaryMaleModel
-            }
-            24 -> {
-                buffer.readBigSmart()  // secondaryMaleModel
-            }
-            25 -> {
-                buffer.readBigSmart()  // primaryFemaleModel
-            }
-            26 -> {
-                buffer.readBigSmart()  // secondaryFemaleModel
-            }
-            in 30..34 -> {
-                buffer.readString()  // groundActions
-            }
-            in 35..39 -> {
-                buffer.readString()  // inventoryActions
-            }
-            40 -> {
-                val size = buffer.readUnsignedByte().toInt()
-                val recolorFrom = ShortArray(size)
-                val recolorTo = ShortArray(size)
-                for (i in 0 until size) {
-                    recolorFrom[i] = buffer.readShort().toShort()
-                    recolorTo[i] = buffer.readShort().toShort()
-                }
-            }
-            41 -> {
-                val size = buffer.readUnsignedByte().toInt()
-                val retextureFrom = ShortArray(size)
-                val retextureTo = ShortArray(size)
-                for (i in 0 until size) {
-                    buffer.readShort().toShort()
-                    buffer.readShort().toShort()
-                }
-            }
-            42 -> {
-                val length = buffer.readUnsignedByte().toInt()
-                val recolourPallete = ByteArray(length)
-                for (index in 0 until length) {
-                    recolourPallete[index] = buffer.readByte().toByte()
-                }
-            }
-            65 -> {
-                buffer.readBoolean()  // isTradable
-            }
-            78 -> {
-                buffer.readBigSmart()  // tertiaryMaleModel
-            }
-            79 -> {
-                buffer.readBigSmart()  // tertiaryFemaleModel
-            }
-            90 -> {
-                buffer.readBigSmart()  // primaryMaleDialogueHead
-            }
-            91 -> {
-                buffer.readBigSmart()  // primaryFemaleDialogueHead
-            }
-            92 -> {
-                buffer.readBigSmart()  // secondaryMaleDialogueHead
-            }
-            93 -> {
-                buffer.readBigSmart()  // secondaryFemaleDialogueHead
-            }
-            95 -> {
-                buffer.readShort().toInt()  // zan2d
-            }
-            96 -> {
-                buffer.readUnsignedByte().toInt()  // category
-            }
-            97 -> {
-                buffer.readShort().toInt()  // notedID
-            }
-            98 -> {
-                buffer.readShort().toInt()  // notedTemplate
-            }
+            1 -> inventoryModel = buffer.readBigSmart()
+            2 -> name = buffer.readString()
+            4 -> zoom2d = buffer.readShort()
+            5 -> xan2d = buffer.readShort()
+            6 -> yan2d = buffer.readShort()
+            7 -> xOffset2d = buffer.readShort()
+            8 -> yOffset2d = buffer.readShort()
+            11 -> stacks = 1
+            12 -> cost = buffer.readInt()
+            13 -> equipSlot = buffer.readUnsignedByte()
+            14 -> appearanceOverride1 = buffer.readUnsignedByte()
+            16 -> members = true
+            18 -> buffer.readShort()
+            23 -> maleModel0 = buffer.readBigSmart()
+            24 -> maleModel1 = buffer.readBigSmart()
+            25 -> femaleModel0 = buffer.readBigSmart()
+            26 -> femaleModel1 = buffer.readBigSmart()
+            in 30..34 -> options[opcode - 30] = buffer.readString()
+            in 35..39 -> interfaceOptions[opcode - 35] = buffer.readString()
+            40 -> readColours(buffer)
+            41 -> readTextures(buffer)
+            42 -> readColourPalette(buffer)
+            65 -> isTradeable = true
+            78 -> maleModel2 = buffer.readBigSmart()
+            79 -> femaleModel2 = buffer.readBigSmart()
+            90 -> maleHeadModel0 = buffer.readBigSmart()
+            91 -> femaleHeadModel0 = buffer.readBigSmart()
+            92 -> maleHeadModel1 = buffer.readBigSmart()
+            93 -> femaleHeadModel1 = buffer.readBigSmart()
+            95 -> zan2d = buffer.readShort()
+            96 -> category = buffer.readUnsignedByte()
+            97 -> noteLinkId = buffer.readShort()
+            98 -> noteTemplateId = buffer.readShort()
             in 100..109 -> {
-                buffer.readShort().toInt()
-                buffer.readShort().toInt()
+                countObj[opcode - 100] = buffer.readShort()
+                countCo[opcode - 100] = buffer.readShort()
             }
-            110 -> {
-                buffer.readShort().toInt()  // resizeX
-            }
-            111 -> {
-                buffer.readShort().toInt()  // resizeY
-            }
-            112 -> {
-                buffer.readShort().toInt()  // resizeZ
-            }
-            113 -> {
-                buffer.readByte()  // ambient
-            }
-            114 -> {
-                buffer.readByte() * 5  // contrast
-            }
-            115 -> {
-                buffer.readUnsignedByte().toInt()  // team
-            }
+            110 -> resizeX = buffer.readShort()
+            111 -> resizeY = buffer.readShort()
+            112 -> resizeZ = buffer.readShort()
+            113 -> ambient = buffer.readByte()
+            114 -> contrast = buffer.readByte() * 5
+            115 -> teamCape = buffer.readUnsignedByte()
             121 -> {
-                buffer.readShort().toInt()  // lendId
+                val lendId = buffer.readShort()
             }
             122 -> {
-                buffer.readShort().toInt()  // lendTemplateId
+                val lendTemplateId = buffer.readShort()
             }
             125 -> {
-                buffer.readByte().toInt() shl 2
-                buffer.readByte().toInt() shl 2
-                buffer.readByte().toInt() shl 2  // maleWieldX, maleWieldZ, maleWieldY
+                maleOffset = buffer.readByte() shl 2
+                val maleWieldZ = buffer.readByte() shl 2
+                val maleWieldY = buffer.readByte() shl 2
             }
             126 -> {
-                buffer.readByte().toInt() shl 2
-                buffer.readByte().toInt() shl 2
-                buffer.readByte().toInt() shl 2  // femaleWieldX, femaleWieldZ, femaleWieldY
+                femaleOffset = buffer.readByte() shl 2
+                val femaleWieldZ = buffer.readByte() shl 2
+                val femaleWieldY = buffer.readByte() shl 2
             }
             127 -> {
-                buffer.readUnsignedByte().toInt()  // primaryCursorOpcode
-                buffer.readShort().toInt()  // primaryCursor
+                val primaryCursorOpcode = buffer.readUnsignedByte()
+                val primaryCursor = buffer.readShort()
             }
             128 -> {
-                buffer.readUnsignedByte().toInt()  // secondaryCursorOpcode
-                buffer.readShort().toInt()  // secondaryCursor
+                val secondaryCursorOpcode = buffer.readUnsignedByte()
+                val secondaryCursor = buffer.readShort()
             }
             129 -> {
-                buffer.readUnsignedByte().toInt()  // primaryInterfaceCursorOpcode
-                buffer.readShort().toInt()  // primaryInterfaceCursor
+                val primaryInterfaceCursorOpcode = buffer.readUnsignedByte()
+                val primaryInterfaceCursor = buffer.readShort()
             }
             130 -> {
-                buffer.readUnsignedByte().toInt()  // secondaryInterfaceCursorOpcode
-                buffer.readShort().toInt()  // secondaryInterfaceCursor
+                val secondaryInterfaceCursorOpcode = buffer.readUnsignedByte()
+                val secondaryInterfaceCursor = buffer.readShort()
             }
             132 -> {
-                val length = buffer.readUnsignedByte().toInt()
-                val campaigns = IntArray(length)
-                for (i in 0 until length) {
-                    campaigns[i] = buffer.readShort().toInt()
-                }
+                val length = buffer.readUnsignedByte()
+                val campaigns = IntArray(length) { buffer.readShort() }
             }
             134 -> {
-                buffer.readUnsignedByte().toInt()  // pickSizeShift
+                val pickSizeShift = buffer.readUnsignedByte()
             }
-            139 -> {
-                buffer.readShort().toInt()  // singleNoteId
-            }
-            140 -> {
-                buffer.readShort().toInt()  // singleNoteTemplateId
-            }
-            249 -> {
-                 readParameters(buffer)
-            }
+            139 -> unnotedId = buffer.readShort()
+            140 -> notedId = buffer.readShort()
+            249 -> readParameters(buffer)
         }
     }
 
-    fun readColourPalette(buffer: Reader) {
+    private fun readColourPalette(buffer: Reader) {
         val length = buffer.readUnsignedByte()
-         ByteArray(length) { buffer.readByte().toByte() }
+        ByteArray(length) { buffer.readByte().toByte() }
     }
 
 }

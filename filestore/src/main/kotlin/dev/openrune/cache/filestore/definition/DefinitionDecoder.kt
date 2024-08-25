@@ -95,12 +95,8 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
 
     protected fun read(definitions: Array<T>, id: Int, reader: Reader) {
         val definition = definitions[id]
-        try {
-            readLoop(definition, reader)
-            changeValues(definitions, definition)
-        }catch (e : Exception){
-
-        }
+        readLoop(definition, reader)
+        changeValues(definitions, definition)
     }
 
     protected fun readFlat(definitions: Array<T>, id: Int, reader: Reader) {

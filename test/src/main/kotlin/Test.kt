@@ -32,7 +32,7 @@ fun exmaple3() {
 
     CacheManager.init(cacheOSRS, cache742)
     System.out.println(CacheManager.getItem(28254).name)
-    System.out.println(CacheManager.getItem(20709 + cache742.itemOffset).name)
+    System.out.println(CacheManager.getItem(20709 + cache742.itemOffset).inventoryModel)
 }
 
 
