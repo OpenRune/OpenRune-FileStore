@@ -41,6 +41,29 @@ class ItemDecoder : DefinitionDecoder<ItemType>(ITEM) {
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
             42 -> dropOptionIndex = buffer.readByte()
+            43 -> {
+                val opId = buffer.readUnsignedByte()
+                if (subops == null) {
+                    subops = arrayOfNulls(5)
+                }
+
+                val valid = opId in 0..4
+                if (valid && subops!![opId] == null) {
+                    subops!![opId] = arrayOfNulls(20)
+                }
+
+                while (true) {
+                    val subopId = buffer.readUnsignedByte() - 1
+                    if (subopId == -1) {
+                        break
+                    }
+
+                    val op = buffer.readString()
+                    if (valid && subopId in 0..19) {
+                        subops!![opId]?.set(subopId, op)
+                    }
+                }
+            }
             65 -> isTradeable = true
             75 -> weight = buffer.readUnsignedShort().toDouble()
             78 -> maleModel2 = buffer.readUnsignedShort()

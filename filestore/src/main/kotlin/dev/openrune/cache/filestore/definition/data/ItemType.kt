@@ -59,6 +59,7 @@ data class ItemType(
     var notedId: Int = -1,
     var placeholderLink: Int = -1,
     var placeholderTemplate: Int = -1,
+    var subops: Array<Array<String?>?>? = null,
     //Custom
     override var inherit: Int = -1,
     var option1: String? = null,
