@@ -8,9 +8,6 @@ import dev.openrune.cache.filestore.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.definition.DefinitionEncoder
-import dev.openrune.cache.filestore.definition.data.*
-import dev.openrune.cache.filestore.definition.decoder.*
-import dev.openrune.cache.filestore.definition.encoder.*
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.capitalizeFirstLetter
 import dev.openrune.cache.util.getFiles
@@ -37,19 +34,20 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
 
 
     override fun init(library: CacheLibrary) {
+        //Removed for now to moduelse or somthing
         val size = getFiles(directory, "toml").size
         val progress = progress("Packing ${type.name.lowercase().capitalizeFirstLetter()}", size)
         if (size != 0) {
             getFiles(directory, "toml").forEach {
                 progress.extraMessage = it.name
                 when(type) {
-                    PackMode.ITEMS -> packDefinitions<ItemType>(it, ItemEncoder(),ItemDecoder(),library)
-                    PackMode.NPCS -> packDefinitions<NpcType>(it, NpcEncoder(),NPCDecoder(),library)
-                    PackMode.OBJECTS -> packDefinitions<ObjectType>(it, ObjectEncoder(),ObjectDecoder(),library)
-                    PackMode.HITSPLATS -> packDefinitions<HitSplatType>(it, HitSplatEncoder(),HitSplatDecoder(),library)
-                    PackMode.HEALTBAR -> packDefinitions<HealthBarType>(it, HealthBarEncoder(),HealthBarDecoder(),library)
-                    PackMode.SEQUENCE -> packDefinitions<SequenceType>(it, SequenceEncoder(),SequenceDecoder(),library)
-                    PackMode.AREA -> packDefinitions<AreaType>(it, AreaEncoder(),AreaDecoder(),library)
+                    //PackMode.ITEMS -> packDefinitions<ItemType>(it, ItemEncoder(),ItemDecoder(),library)
+                    //PackMode.NPCS -> packDefinitions<NpcType>(it, NpcEncoder(),NPCDecoder(),library)
+                    //PackMode.OBJECTS -> packDefinitions<ObjectType>(it, ObjectEncoder(),ObjectDecoder(),library)
+                    //PackMode.HITSPLATS -> packDefinitions<HitSplatType>(it, HitSplatEncoder(),HitSplatDecoder(),library)
+                    //PackMode.HEALTBAR -> packDefinitions<HealthBarType>(it, HealthBarEncoder(),HealthBarDecoder(),library)
+                    //PackMode.SEQUENCE -> packDefinitions<SequenceType>(it, SequenceEncoder(),SequenceDecoder(),library)
+                    //PackMode.AREA -> packDefinitions<AreaType>(it, AreaEncoder(),AreaDecoder(),library)
                     else -> println("Not Supported")
                 }
                 progress.step()

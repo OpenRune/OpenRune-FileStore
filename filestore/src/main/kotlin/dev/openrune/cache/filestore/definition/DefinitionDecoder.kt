@@ -9,9 +9,11 @@ import java.nio.BufferUnderflowException
 
 abstract class DefinitionDecoder<T : Definition>(val index: Int) {
 
-    val configArchive = 2
+    var configArchive = 2
 
     abstract fun create(size: Int): Array<T>
+
+    var isRS2 = false
 
     open fun load(definitions: Array<T>, reader: Reader) {
         val id = readId(reader)
@@ -23,7 +25,11 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
     /**
      * Load from cache
      */
-    open fun load(cache: Cache): Int2ObjectOpenHashMap<T> {
+    open fun load(cache: Cache, isRS2 : Boolean = false): Int2ObjectOpenHashMap<T> {
+        this.isRS2 = isRS2
+        if(isRS2) {
+            configArchive = 19
+        }
         val start = System.currentTimeMillis()
         val size = size(cache) + 1
         val definitions = create(size)
@@ -65,21 +71,36 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
 
 
     open fun size(cache: Cache): Int {
-        return cache.fileCount(configArchive,index)
+        if (!isRS2) {
+            return cache.fileCount(2,index)
+        }
+        return cache.lastArchiveId(index) * 256 + (cache.fileCount(index, cache.lastArchiveId(index)))
     }
 
     open fun load(definitions: Array<T>, cache: Cache, id: Int) {
         val file = getFile(id)
-        val data = cache.data(configArchive, index, file) ?: return
-        read(definitions, id, dev.openrune.cache.filestore.buffer.BufferReader(data))
+        val archive = getArchive(id)
+        val data : ByteArray
+        if (isRS2) {
+            data = cache.data(configArchive, archive, file) ?: return
+        } else {
+            data = cache.data(configArchive, index, file) ?: return
+        }
+        read(definitions, id, BufferReader(data))
     }
 
     open fun getFile(id: Int) = id
 
+    open fun getArchive(id: Int) = id
+
     protected fun read(definitions: Array<T>, id: Int, reader: Reader) {
         val definition = definitions[id]
-        readLoop(definition, reader)
-        changeValues(definitions, definition)
+        try {
+            readLoop(definition, reader)
+            changeValues(definitions, definition)
+        }catch (e : Exception){
+
+        }
     }
 
     protected fun readFlat(definitions: Array<T>, id: Int, reader: Reader) {

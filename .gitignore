@@ -1,9 +1,15 @@
-/build/
-filestore/build/
-tools/build/
-integration/build/
-/.gradle/
-/.idea/
+# Ignore specific directories
+.gradle/
+.idea/
+
+# Ignore all .class files
 *.class
+
+# Ignore specific directories
 websiteData/
+
+# Ignore everything inside the cache directory
 cache/
+
+# Ensure that no other "build" directories are tracked
+**/build/
