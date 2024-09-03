@@ -38,7 +38,7 @@ object CacheManager {
         }
     }
 
-    fun <T : Definition> applyIdOffset(definitions: MutableMap<Int, T>, offset: Int): MutableMap<Int, T> {
+    private fun <T : Definition> applyIdOffset(definitions: MutableMap<Int, T>, offset: Int): MutableMap<Int, T> {
         return if (offset != 0) {
             definitions.mapKeys { (key, definition) ->
                 val newKey = key + offset
@@ -55,13 +55,15 @@ object CacheManager {
         id: Int,
         typeName: String
     ): T {
-        // Get the value from the map based on the provided id, not by index
-        return map.getOrDefault(id, createMissingType<T>(id)).also {
-            // If the object retrieved doesn't match the id (likely in the case of the default), print a message
-            if (it.toString() != id.toString()) {
-                //println("$typeName with id $id is missing.")
-            }
+        val defaultValue = createMissingType<T>(id)
+        val result = map.getOrDefault(id, defaultValue)
+
+        // Print a message only if the result is the default value
+        if (result === defaultValue) {
+            println("$typeName with id $id is missing.")
         }
+
+        return result
     }
 
     // Implementations for specific types, method names are kept the same

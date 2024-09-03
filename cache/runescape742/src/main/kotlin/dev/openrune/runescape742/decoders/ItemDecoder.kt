@@ -1,10 +1,11 @@
 package dev.openrune.runescape742.decoders
 
 import dev.openrune.Index.ITEMS
-import dev.openrune.cache.CacheManager
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.definition.data.ItemType
+import dev.openrune.runescape742.ColourPalette
+import dev.openrune.runescape742.getColourPalette
 
 
 fun ItemType.getPrimaryCursorOpcode(): Int {
@@ -70,6 +71,13 @@ fun ItemType.getNoteLinkId(): Int {
 fun ItemType.getNoteTemplateId(): Int {
     return getIntProperty("noteTemplateId")
 }
+
+fun ItemType.getColourPalette(): ColourPalette {
+    return getColourPalette("colourPalette")
+}
+
+
+
 class ItemDecoder : DefinitionDecoder<ItemType>(ITEMS) {
 
     override fun create(size: Int) = Array(size) { ItemType(it) }
@@ -101,7 +109,7 @@ class ItemDecoder : DefinitionDecoder<ItemType>(ITEMS) {
             in 35..39 -> interfaceOptions[opcode - 35] = buffer.readString()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
-            42 -> readColourPalette(buffer)
+            42 -> setExtraProperty("colourPalette",readColourPalette(buffer))
             65 -> isTradeable = true
             78 -> maleModel2 = buffer.readBigSmart()
             79 -> femaleModel2 = buffer.readBigSmart()

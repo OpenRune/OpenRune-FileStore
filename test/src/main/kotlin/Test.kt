@@ -2,6 +2,7 @@ import dev.openrune.OsrsGameDataSource
 import dev.openrune.Runescape717GameDataSource
 import dev.openrune.cache.CacheManager
 import dev.openrune.cache.filestore.Cache
+import dev.openrune.runescape742.decoders.getColourPalette
 import dev.openrune.runescape742.decoders.getPrimaryCursorOpcode
 
 import java.nio.file.Path
@@ -31,12 +32,12 @@ fun exmaple3() {
     val cache742 = Runescape717GameDataSource(Cache.load(Path.of("C:\\Users\\Home\\Desktop\\Vorkath High Rev Data\\build"), false),717)
 
 
-    CacheManager.init(cache742)
-    System.out.println(CacheManager.getItem(1).getPrimaryCursorOpcode())
+    cache742.itemOffset = 60000
+
+    CacheManager.init(cacheOSRS,cache742)
+    System.out.println(CacheManager.getItem(20799).name)
+    System.out.println(CacheManager.getItem(20709 + 60000).getColourPalette().recolourPalette.contentToString())
 }
-
-
-
 
 fun main(){
     exmaple3()
