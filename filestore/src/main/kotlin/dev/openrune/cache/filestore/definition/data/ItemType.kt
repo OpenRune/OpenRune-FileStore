@@ -71,6 +71,7 @@ data class ItemType(
     var ioption3: String? = null,
     var ioption4: String? = null,
     var ioption5: String = "Drop",
+    override var extra: MutableMap<String, Any?> = mutableMapOf<String, Any?>()
 
     ) : Definition, Recolourable, Parameterized {
 

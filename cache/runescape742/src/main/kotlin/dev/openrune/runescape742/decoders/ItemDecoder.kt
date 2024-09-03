@@ -1,10 +1,75 @@
 package dev.openrune.runescape742.decoders
 
 import dev.openrune.Index.ITEMS
+import dev.openrune.cache.CacheManager
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.definition.data.ItemType
 
+
+fun ItemType.getPrimaryCursorOpcode(): Int {
+    return getIntProperty("primaryCursorOpcode")
+}
+
+fun ItemType.getPrimaryCursor(): Int {
+    return getIntProperty("primaryCursor")
+}
+
+fun ItemType.getSecondaryCursorOpcode(): Int {
+    return getIntProperty("Int")
+}
+
+fun ItemType.getSecondaryCursor(): Int {
+    return getIntProperty("secondaryCursor")
+}
+
+fun ItemType.getCampaigns(): IntArray {
+    return getIntArrayProperty("campaigns")
+}
+
+fun ItemType.getPickSizeShift(): Int {
+    return getIntProperty("pickSizeShift")
+}
+
+fun ItemType.getLendId(): Int {
+    return getIntProperty("lendId")
+}
+
+fun ItemType.getLendTemplateId(): Int {
+    return getIntProperty("lendTemplateId")
+}
+
+fun ItemType.getMaleWieldZ(): Int {
+    return getIntProperty("maleWieldZ")
+}
+
+fun ItemType.getMaleWieldY(): Int {
+    return getIntProperty("maleWieldY")
+}
+
+fun ItemType.getFemaleWieldZ(): Int {
+    return getIntProperty("femaleWieldZ")
+}
+
+fun ItemType.getFemaleWieldY(): Int {
+    return getIntProperty("femaleWieldY")
+}
+
+fun ItemType.getUnknown18(): Int {
+    return getIntProperty("unknown18")
+}
+
+fun ItemType.getAppearanceOverride1(): Int {
+    return getIntProperty("appearanceOverride1")
+}
+
+fun ItemType.getNoteLinkId(): Int {
+    return getIntProperty("noteLinkId")
+}
+
+fun ItemType.getNoteTemplateId(): Int {
+    return getIntProperty("noteTemplateId")
+}
 class ItemDecoder : DefinitionDecoder<ItemType>(ITEMS) {
 
     override fun create(size: Int) = Array(size) { ItemType(it) }
@@ -27,7 +92,7 @@ class ItemDecoder : DefinitionDecoder<ItemType>(ITEMS) {
             13 -> equipSlot = buffer.readUnsignedByte()
             14 -> appearanceOverride1 = buffer.readUnsignedByte()
             16 -> members = true
-            18 -> buffer.readShort()
+            18 -> setExtraProperty("unknown18", buffer.readShort()) // Storing unknown value
             23 -> maleModel0 = buffer.readBigSmart()
             24 -> maleModel1 = buffer.readBigSmart()
             25 -> femaleModel0 = buffer.readBigSmart()
@@ -58,45 +123,36 @@ class ItemDecoder : DefinitionDecoder<ItemType>(ITEMS) {
             113 -> ambient = buffer.readByte()
             114 -> contrast = buffer.readByte() * 5
             115 -> teamCape = buffer.readUnsignedByte()
-            121 -> {
-                val lendId = buffer.readShort()
-            }
-            122 -> {
-                val lendTemplateId = buffer.readShort()
-            }
+            121 -> setExtraProperty("lendId", buffer.readShort())
+            122 -> setExtraProperty("lendTemplateId", buffer.readShort())
             125 -> {
                 maleOffset = buffer.readByte() shl 2
-                val maleWieldZ = buffer.readByte() shl 2
-                val maleWieldY = buffer.readByte() shl 2
+                setExtraProperty("maleWieldZ", buffer.readByte() shl 2)
+                setExtraProperty("maleWieldY", buffer.readByte() shl 2)
             }
             126 -> {
                 femaleOffset = buffer.readByte() shl 2
-                val femaleWieldZ = buffer.readByte() shl 2
-                val femaleWieldY = buffer.readByte() shl 2
+                setExtraProperty("femaleWieldZ", buffer.readByte() shl 2)
+                setExtraProperty("femaleWieldY", buffer.readByte() shl 2)
             }
             127 -> {
-                val primaryCursorOpcode = buffer.readUnsignedByte()
-                val primaryCursor = buffer.readShort()
+                setExtraProperty("primaryCursorOpcode", buffer.readUnsignedByte())
+                setExtraProperty("primaryCursor", buffer.readShort())
             }
             128 -> {
-                val secondaryCursorOpcode = buffer.readUnsignedByte()
-                val secondaryCursor = buffer.readShort()
+                setExtraProperty("secondaryCursorOpcode", buffer.readUnsignedByte())
+                setExtraProperty("secondaryCursor", buffer.readShort())
             }
             129 -> {
-                val primaryInterfaceCursorOpcode = buffer.readUnsignedByte()
-                val primaryInterfaceCursor = buffer.readShort()
+                setExtraProperty("primaryInterfaceCursorOpcode", buffer.readUnsignedByte())
+                setExtraProperty("primaryInterfaceCursor", buffer.readShort())
             }
-            130 -> {
-                val secondaryInterfaceCursorOpcode = buffer.readUnsignedByte()
-                val secondaryInterfaceCursor = buffer.readShort()
-            }
+            130 -> setExtraProperty("secondaryInterfaceCursor", buffer.readShort())
             132 -> {
                 val length = buffer.readUnsignedByte()
-                val campaigns = IntArray(length) { buffer.readShort() }
+                setExtraProperty("campaigns", IntArray(length) { buffer.readShort() })
             }
-            134 -> {
-                val pickSizeShift = buffer.readUnsignedByte()
-            }
+            134 -> setExtraProperty("pickSizeShift", buffer.readUnsignedByte())
             139 -> unnotedId = buffer.readShort()
             140 -> notedId = buffer.readShort()
             249 -> readParameters(buffer)
