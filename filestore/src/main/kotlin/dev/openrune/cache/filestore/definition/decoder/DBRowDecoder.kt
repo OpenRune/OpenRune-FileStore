@@ -1,12 +1,16 @@
 package dev.openrune.cache.filestore.definition.decoder
 
+import dev.openrune.cache.AREA
+import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.DBROW
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.definition.data.DBRowType
 import dev.openrune.cache.util.ScriptVarType
 
-class DBRowDecoder : DefinitionDecoder<DBRowType>(DBROW) {
+class DBRowDecoder : DefinitionDecoder<DBRowType>(CONFIGS) {
+
+    override fun getArchive(id: Int) = DBROW
 
     override fun create(size: Int) = Array(size) { DBRowType(it) }
 

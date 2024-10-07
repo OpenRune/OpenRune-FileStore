@@ -1,11 +1,15 @@
 package dev.openrune.cache.filestore.definition.decoder
 
+import dev.openrune.cache.CONFIGS
+import dev.openrune.cache.DBROW
 import dev.openrune.cache.HEALTHBAR
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.data.HealthBarType
 
-class HealthBarDecoder : DefinitionDecoder<HealthBarType>(HEALTHBAR) {
+class HealthBarDecoder : DefinitionDecoder<HealthBarType>(CONFIGS) {
+
+    override fun getArchive(id: Int) = HEALTHBAR
 
     override fun create(size: Int) = Array(size) { HealthBarType(it) }
 

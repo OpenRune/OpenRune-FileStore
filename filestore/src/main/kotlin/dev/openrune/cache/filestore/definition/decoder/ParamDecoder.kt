@@ -1,5 +1,7 @@
 package dev.openrune.cache.filestore.definition.decoder
 
+import dev.openrune.cache.CONFIGS
+import dev.openrune.cache.DBROW
 import dev.openrune.cache.PARAMS
 import dev.openrune.cache.STRUCT
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
@@ -8,7 +10,9 @@ import dev.openrune.cache.filestore.definition.data.ParamType
 import dev.openrune.cache.filestore.definition.data.StructType
 import dev.openrune.cache.util.ScriptVarType
 
-class ParamDecoder : DefinitionDecoder<ParamType>(PARAMS) {
+class ParamDecoder : DefinitionDecoder<ParamType>(CONFIGS) {
+
+    override fun getArchive(id: Int) = PARAMS
 
     override fun create(size: Int) = Array(size) { ParamType(it) }
 

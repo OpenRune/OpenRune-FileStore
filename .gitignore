@@ -1,9 +1,11 @@
-/build/
-filestore/build/
-tools/build/
-integration/build/
+filestore/build/*
+/build/*
+cache/runescape742/build/*
+cache/runescape742/repo/*
+cache/osrs/build/*
+cache/osrs/repo/*
+tools/build/*
 /.gradle/
 /.idea/
+
 *.class
-websiteData/
-cache/

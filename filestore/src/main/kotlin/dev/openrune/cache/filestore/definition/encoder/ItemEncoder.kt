@@ -197,10 +197,12 @@ class ItemEncoder : ConfigEncoder<ItemType>() {
             writeShort(definition.noteTemplateId)
         }
 
-        for (i in definition.countObj.indices) {
-            writeByte(100 + i)
-            writeShort(definition.countObj[i])
-            writeShort(definition.countCo[i])
+        if (definition.countObj != null) {
+            for (i in definition.countObj!!.indices) {
+                writeByte(100 + i)
+                writeShort(definition.countObj!![i])
+                writeShort(definition.countCo!![i])
+            }
         }
 
         if (definition.resizeX != 128) {

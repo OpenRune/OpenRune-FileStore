@@ -1,11 +1,14 @@
 package dev.openrune.cache.filestore.definition.decoder
 
+import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.ITEM
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.data.ItemType
 
-class ItemDecoder : DefinitionDecoder<ItemType>(ITEM) {
+class ItemDecoder : DefinitionDecoder<ItemType>(CONFIGS) {
+
+    override fun getArchive(id: Int) = ITEM
     override fun create(size: Int) = Array(size) { ItemType(it) }
 
     override fun getFile(id: Int) = id
@@ -18,8 +21,20 @@ class ItemDecoder : DefinitionDecoder<ItemType>(ITEM) {
             4 -> zoom2d = buffer.readUnsignedShort()
             5 -> xan2d = buffer.readUnsignedShort()
             6 -> yan2d = buffer.readUnsignedShort()
-            7 -> xOffset2d = buffer.readUnsignedShort()
-            8 -> yOffset2d = buffer.readUnsignedShort()
+            7 -> {
+                xOffset2d = buffer.readUnsignedShort()
+                if (xOffset2d > 32767)
+                {
+                    xOffset2d -= 65536
+                }
+            }
+            8 -> {
+                yOffset2d = buffer.readUnsignedShort()
+                if (yOffset2d > 32767)
+                {
+                    yOffset2d -= 65536;
+                }
+            }
             11 -> stacks = 1
             12 -> cost = buffer.readInt()
             13 -> equipSlot = buffer.readUnsignedByte()
@@ -77,8 +92,12 @@ class ItemDecoder : DefinitionDecoder<ItemType>(ITEM) {
             97 -> noteLinkId = buffer.readUnsignedShort()
             98 -> noteTemplateId = buffer.readUnsignedShort()
             in 100..109 -> {
-                countObj[opcode - 100] = buffer.readUnsignedShort()
-                countCo[opcode - 100] = buffer.readUnsignedShort()
+                if (countCo == null) {
+                    countObj = MutableList(10) { 0 }
+                    countCo = MutableList(10) { 0 }
+                }
+                countObj!![opcode - 100] = buffer.readUnsignedShort()
+                countCo!![opcode - 100] = buffer.readUnsignedShort()
             }
             110 -> resizeX = buffer.readUnsignedShort()
             111 -> resizeY = buffer.readUnsignedShort()

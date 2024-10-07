@@ -1,11 +1,14 @@
 package dev.openrune.cache.filestore.definition.decoder
 
 import dev.openrune.cache.AREA
+import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.definition.data.AreaType
 
-class AreaDecoder : DefinitionDecoder<AreaType>(AREA) {
+class AreaDecoder : DefinitionDecoder<AreaType>(CONFIGS) {
+
+    override fun getArchive(id: Int) = AREA
 
     override fun create(size: Int) = Array(size) { AreaType(it) }
 

@@ -73,8 +73,8 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
             val data = library.data(CONFIGS, decoder.index, def.inherit)
             if (data != null) {
 
-                val inheritedDef = decoder.loadSingle(def.inherit, data)!!
-                def = mergeDefinitions<T>(inheritedDef, def)
+                //val inheritedDef = decoder.loadSingle(def.inherit, data)!!
+                //def = mergeDefinitions<T>(inheritedDef, def)
             } else {
                 logger.warn { "No inherited definition found for ID ${def.inherit}" }
                 return

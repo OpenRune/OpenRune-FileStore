@@ -1,11 +1,15 @@
 package dev.openrune.cache.filestore.definition.decoder
 
+import dev.openrune.cache.CONFIGS
+import dev.openrune.cache.DBROW
 import dev.openrune.cache.STRUCT
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.data.StructType
 
-class StructDecoder : DefinitionDecoder<StructType>(STRUCT) {
+class StructDecoder : DefinitionDecoder<StructType>(CONFIGS) {
+
+    override fun getArchive(id: Int) = STRUCT
 
     override fun create(size: Int) = Array(size) { StructType(it) }
 

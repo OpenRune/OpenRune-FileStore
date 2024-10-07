@@ -1,11 +1,15 @@
 package dev.openrune.cache.filestore.definition.decoder
 
+import dev.openrune.cache.CONFIGS
+import dev.openrune.cache.DBROW
 import dev.openrune.cache.ENUM
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.data.EnumType
 
-class EnumDecoder : DefinitionDecoder<EnumType>(ENUM) {
+class EnumDecoder : DefinitionDecoder<EnumType>(CONFIGS) {
+
+    override fun getArchive(id: Int) = ENUM
 
     override fun create(size: Int) = Array(size) { EnumType(it) }
 

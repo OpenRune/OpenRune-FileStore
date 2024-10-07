@@ -1,13 +1,17 @@
 package dev.openrune.cache.filestore.definition.decoder
 
+import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.CacheManager
+import dev.openrune.cache.DBROW
 import dev.openrune.cache.SEQUENCE
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.definition.data.SequenceType
 import kotlin.math.ceil
 
-class SequenceDecoder : DefinitionDecoder<SequenceType>(SEQUENCE) {
+class SequenceDecoder : DefinitionDecoder<SequenceType>(CONFIGS) {
+
+    override fun getArchive(id: Int) = SEQUENCE
 
     override fun create(size: Int) = Array(size) { SequenceType(it) }
 
