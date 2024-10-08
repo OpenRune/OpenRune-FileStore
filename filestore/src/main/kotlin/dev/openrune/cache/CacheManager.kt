@@ -25,6 +25,7 @@ object CacheManager {
         init(Cache.load(cachePath, false), cacheRevision)
     }
 
+    @JvmStatic
     fun init(cache: Cache, cacheRevision: Int) {
         this.cacheRevision = cacheRevision
         this.cache = cache
