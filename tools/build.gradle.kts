@@ -18,7 +18,7 @@ val sourcesJar by tasks.registering(Jar::class) {
 publishing {
     repositories {
         maven {
-            url = uri("K:/rsprot/repo")
+            url = uri("E:\\RSPS\\OpenRune\\hosting")
         }
     }
     publications {
