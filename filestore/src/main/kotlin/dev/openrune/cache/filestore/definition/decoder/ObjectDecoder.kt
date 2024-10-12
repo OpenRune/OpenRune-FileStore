@@ -2,12 +2,9 @@ package dev.openrune.cache.filestore.definition.decoder
 
 import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.CacheManager.revisionIsOrAfter
-import dev.openrune.cache.DBROW
-import dev.openrune.cache.NPC
 import dev.openrune.cache.OBJECT
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
-import dev.openrune.cache.filestore.definition.data.NpcType
 import dev.openrune.cache.filestore.definition.data.ObjectType
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import java.util.stream.IntStream

@@ -1,4 +1,4 @@
-
+package dev.openrune.serialization
 import dev.openrune.RSCMHandler
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException

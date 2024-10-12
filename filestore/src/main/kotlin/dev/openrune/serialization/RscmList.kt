@@ -1,3 +1,5 @@
+package dev.openrune.serialization
+
 import dev.openrune.RSCMHandler
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer

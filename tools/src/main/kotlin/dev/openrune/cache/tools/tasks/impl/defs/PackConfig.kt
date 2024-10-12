@@ -91,8 +91,6 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
             }
         }
 
-        System.out.println(def.toString())
-
         val writer = BufferWriter(4096)
         with(encoder) { writer.encode(def) }
 

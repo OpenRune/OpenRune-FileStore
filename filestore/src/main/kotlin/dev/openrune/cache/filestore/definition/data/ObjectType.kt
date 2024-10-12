@@ -1,21 +1,22 @@
 package dev.openrune.cache.filestore.definition.data
 
-import RscmString
-import RscmList
+import dev.openrune.serialization.RscmString
 import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.cache.filestore.definition.Parameterized
 import dev.openrune.cache.filestore.definition.Recolourable
 import dev.openrune.cache.filestore.definition.Transforms
+import dev.openrune.serialization.ListRscm
+import dev.openrune.serialization.Rscm
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class ObjectType(
-    @Serializable(RscmString::class) override var id: Int = -1,
+    override var id: Rscm = -1,
     var name: String = "null",
-    var decorDisplacement : Int = 16,
-    var isHollow : Boolean = false,
-    @Serializable(RscmList::class)  var objectModels: MutableList<Int>? = null,
+    var decorDisplacement: Int = 16,
+    var isHollow: Boolean = false,
+    var objectModels: ListRscm? = null,
     var objectTypes: MutableList<Int>? = null,
     var recolorToFind: MutableList<Int>? = null,
     var mapAreaId: Int = -1,
@@ -32,7 +33,7 @@ data class ObjectType(
     var varbitId: Int = -1,
     var ambient: Int = 0,
     var contrast: Int = 0,
-    var actions : MutableList<String?> = mutableListOf(null, null, null, null, null),
+    var actions: MutableList<String?> = mutableListOf(null, null, null, null, null),
     var solid: Int = 2,
     var mapSceneID: Int = -1,
     var clipMask: Int = 0,
@@ -46,7 +47,7 @@ data class ObjectType(
     var obstructive: Boolean = false,
     var randomizeAnimStart: Boolean = true,
     var clipType: Int = -1,
-    var category : Int = -1,
+    var category: Int = -1,
     var supportsItems: Int = -1,
     var configs: IntArray? = null,
     var isRotated: Boolean = false,
@@ -55,7 +56,7 @@ data class ObjectType(
     var modelClipped: Boolean = false,
     var soundMin: Int = 0,
     var soundMax: Int = 0,
-    var delayAnimationUpdate : Boolean = false,
+    var delayAnimationUpdate: Boolean = false,
     var impenetrable: Boolean = true,
     override var originalColours: MutableList<Int>? = null,
     override var modifiedColours: MutableList<Int>? = null,
@@ -72,7 +73,7 @@ data class ObjectType(
     var option3: String? = null,
     var option4: String? = null,
     var option5: String? = null,
-    @Serializable(RscmString::class) override var inherit : Int = -1
+    @Serializable(RscmString::class) override var inherit: Int = -1
 
 ) : Definition, Transforms, Recolourable, Parameterized {
     init {
