@@ -1,22 +1,24 @@
 package dev.openrune.cache.filestore.definition.decoder
 
+import dev.openrune.cache.CacheManager.cache
+import dev.openrune.cache.PARAMS
 import dev.openrune.cache.SPRITES
 import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
+import dev.openrune.cache.filestore.definition.data.ParamType
 import dev.openrune.cache.filestore.definition.data.SpriteType
 import dev.openrune.game.IndexedSprite
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 private const val FLAG_VERTICAL = 0x01
 private const val FLAG_ALPHA = 0x02
 
 class SpriteDecoder : DefinitionDecoder<SpriteType>(SPRITES) {
 
-    override fun size(cache: Cache): Int {
-        return cache.lastArchiveId(index)
-    }
+    override fun files() = cache.archives(SPRITES)
 
-    override fun create(size: Int) = Array(size) { SpriteType(it) }
+    override fun create(): Int2ObjectOpenHashMap<SpriteType> = createMap { SpriteType(it) }
 
     override fun getFile(id: Int) = 0
 

@@ -1,17 +1,17 @@
 package dev.openrune.cache.filestore.definition.decoder
 
-import dev.openrune.cache.CONFIGS
-import dev.openrune.cache.DBROW
-import dev.openrune.cache.ENUM
+import dev.openrune.cache.*
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
+import dev.openrune.cache.filestore.definition.data.DBTableType
 import dev.openrune.cache.filestore.definition.data.EnumType
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 class EnumDecoder : DefinitionDecoder<EnumType>(CONFIGS) {
 
     override fun getArchive(id: Int) = ENUM
 
-    override fun create(size: Int) = Array(size) { EnumType(it) }
+    override fun create(): Int2ObjectOpenHashMap<EnumType> = createMap { EnumType(it) }
 
     override fun getFile(id: Int) = id
 

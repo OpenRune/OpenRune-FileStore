@@ -1,18 +1,20 @@
 package dev.openrune.cache.filestore.definition.decoder
 
 import dev.openrune.cache.CacheManager
+import dev.openrune.cache.STRUCT
 import dev.openrune.cache.TEXTURES
 import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.buffer.BufferReader
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
+import dev.openrune.cache.filestore.definition.data.StructType
 import dev.openrune.cache.filestore.definition.data.TextureType
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 class TextureDecoder : DefinitionDecoder<TextureType>(TEXTURES) {
 
 
-    override fun create(size: Int) = Array(size) { TextureType(it) }
+    override fun create(): Int2ObjectOpenHashMap<TextureType> = createMap { TextureType(it) }
 
     override fun getArchive(id: Int) = 0
 

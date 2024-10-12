@@ -1,15 +1,19 @@
 package dev.openrune.cache.filestore.definition.decoder
 
 import dev.openrune.cache.CONFIGS
+import dev.openrune.cache.HITSPLAT
 import dev.openrune.cache.ITEM
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
+import dev.openrune.cache.filestore.definition.data.HitSplatType
 import dev.openrune.cache.filestore.definition.data.ItemType
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 class ItemDecoder : DefinitionDecoder<ItemType>(CONFIGS) {
 
     override fun getArchive(id: Int) = ITEM
-    override fun create(size: Int) = Array(size) { ItemType(it) }
+
+    override fun create(): Int2ObjectOpenHashMap<ItemType> = createMap { ItemType(it) }
 
     override fun getFile(id: Int) = id
 

@@ -1,5 +1,6 @@
 package dev.openrune.cache.filestore.definition
 
+import dev.openrune.cache.CacheManager.cache
 import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.buffer.BufferReader
 import dev.openrune.cache.filestore.buffer.Reader
@@ -9,9 +10,15 @@ import java.nio.BufferUnderflowException
 
 abstract class DefinitionDecoder<T : Definition>(val index: Int) {
 
-    abstract fun create(size: Int): Array<T>
+    open fun files() = cache.files(2,getArchive(0))
 
-    open fun load(definitions: Array<T>, reader: Reader) {
+    fun createMap(factory: (Int) -> T): Int2ObjectOpenHashMap<T> =
+        Int2ObjectOpenHashMap<T>().apply {
+            files().forEach { put(it, factory(it)) }}
+
+    abstract fun create(): Int2ObjectOpenHashMap<T>
+
+    open fun load(definitions: Int2ObjectOpenHashMap<T>, reader: Reader) {
         val id = readId(reader)
         read(definitions, id, reader)
     }
@@ -23,36 +30,27 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
      */
     open fun load(cache: Cache): Int2ObjectOpenHashMap<T> {
         val start = System.currentTimeMillis()
-        val size = 65514 + 1
-        val definitions = create(size)
-        for (id in 0 until size) {
+        val definitions = create()
+        definitions.forEach {
             try {
-                load(definitions, cache, id)
+                load(definitions, cache, it.key)
             } catch (e: BufferUnderflowException) {
-                logger.error(e) { "Error reading definition $id" }
+                logger.error(e) { "Error reading definition ${it.key}" }
                 throw e
             }
         }
-        val map : Int2ObjectOpenHashMap<T> = Int2ObjectOpenHashMap()
-        definitions.forEach {
-            map.put(it.id,it)
-        }
-        logger.info { "$size ${this::class.simpleName} definitions loaded in ${System.currentTimeMillis() - start}ms" }
-        return map
+        logger.info { "${definitions.size} ${this::class.simpleName} definitions loaded in ${System.currentTimeMillis() - start}ms" }
+        return definitions
     }
 
-    open fun size(cache: Cache): Int {
-        return cache.lastArchiveId(index) * 256 + (cache.fileCount(index, cache.lastArchiveId(index)))
-    }
-
-    open fun load(definitions: Array<T>, cache: Cache, id: Int) {
+    open fun load(definitions: Int2ObjectOpenHashMap<T>, cache: Cache, id: Int) {
         val archive = getArchive(id)
         val file = getFile(id)
         val data = cache.data(index, archive, file) ?: return
         read(definitions, id, BufferReader(data))
     }
 
-    protected fun readFlat(definitions: Array<T>, id: Int, reader: Reader) {
+    protected fun readFlat(definitions: Int2ObjectOpenHashMap<T>, id: Int, reader: Reader) {
         val definition = definitions[id]
         readFlatFile(definition, reader)
         changeValues(definitions, definition)
@@ -63,14 +61,14 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
     }
 
     open fun loadSingle(id: Int, data: ByteArray): T? {
-        val definitions = create(1)
+        val definitions = Int2ObjectOpenHashMap<T>(1)
         val reader = BufferReader(data)
         read(definitions, 0, reader)
         return definitions[0]
     }
 
     open fun loadSingleFlat(id: Int, data: ByteArray): T? {
-        val definitions = create(1)
+        val definitions = Int2ObjectOpenHashMap<T>(1)
         val reader = BufferReader(data)
         readFlat(definitions, 0, reader)
         return definitions[0]
@@ -81,7 +79,7 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
 
     open fun getArchive(id: Int) = id
 
-    protected fun read(definitions: Array<T>, id: Int, reader: Reader) {
+    protected fun read(definitions: Int2ObjectOpenHashMap<T>, id: Int, reader: Reader) {
         val definition = definitions[id]
         readLoop(definition, reader)
         changeValues(definitions, definition)
@@ -99,11 +97,10 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
 
     protected abstract fun T.read(opcode: Int, buffer: Reader)
 
-    open fun changeValues(definitions: Array<T>, definition: T) {
+    open fun changeValues(definitions: Int2ObjectOpenHashMap<T>, definition: T) {
     }
 
     companion object {
         internal val logger = KotlinLogging.logger {}
     }
-
 }

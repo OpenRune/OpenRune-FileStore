@@ -2,16 +2,19 @@ package dev.openrune.cache.filestore.definition.decoder
 
 import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.DBROW
+import dev.openrune.cache.HEALTHBAR
 import dev.openrune.cache.HITSPLAT
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
+import dev.openrune.cache.filestore.definition.data.HealthBarType
 import dev.openrune.cache.filestore.definition.data.HitSplatType
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 class HitSplatDecoder : DefinitionDecoder<HitSplatType>(CONFIGS) {
 
     override fun getArchive(id: Int) = HITSPLAT
 
-    override fun create(size: Int) = Array(size) { HitSplatType(it) }
+    override fun create(): Int2ObjectOpenHashMap<HitSplatType> = createMap { HitSplatType(it) }
 
     override fun getFile(id: Int) = id
 

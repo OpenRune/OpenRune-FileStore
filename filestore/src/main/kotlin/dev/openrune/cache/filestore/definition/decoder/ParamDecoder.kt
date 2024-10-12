@@ -1,20 +1,19 @@
 package dev.openrune.cache.filestore.definition.decoder
 
-import dev.openrune.cache.CONFIGS
-import dev.openrune.cache.DBROW
-import dev.openrune.cache.PARAMS
-import dev.openrune.cache.STRUCT
+import dev.openrune.cache.*
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.buffer.Reader
+import dev.openrune.cache.filestore.definition.data.OverlayType
 import dev.openrune.cache.filestore.definition.data.ParamType
 import dev.openrune.cache.filestore.definition.data.StructType
 import dev.openrune.cache.util.ScriptVarType
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 class ParamDecoder : DefinitionDecoder<ParamType>(CONFIGS) {
 
     override fun getArchive(id: Int) = PARAMS
 
-    override fun create(size: Int) = Array(size) { ParamType(it) }
+    override fun create(): Int2ObjectOpenHashMap<ParamType> = createMap { ParamType(it) }
 
     override fun getFile(id: Int) = id
 
