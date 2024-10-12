@@ -12,3 +12,4 @@ tools/build/*
 /cache
 /mappings
 /objects
+/models
