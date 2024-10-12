@@ -23,7 +23,7 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
      */
     open fun load(cache: Cache): Int2ObjectOpenHashMap<T> {
         val start = System.currentTimeMillis()
-        val size = size(cache) + 1
+        val size = 65514 + 1
         val definitions = create(size)
         for (id in 0 until size) {
             try {

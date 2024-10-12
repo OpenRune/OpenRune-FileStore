@@ -1,16 +1,21 @@
 package dev.openrune.cache.filestore.definition.data
 
+import RscmString
+import RscmList
 import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.cache.filestore.definition.Parameterized
 import dev.openrune.cache.filestore.definition.Recolourable
 import dev.openrune.cache.filestore.definition.Transforms
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class ObjectType(
-    override var id: Int = -1,
+    @Serializable(RscmString::class) override var id: Int = -1,
     var name: String = "null",
     var decorDisplacement : Int = 16,
     var isHollow : Boolean = false,
-    var objectModels: MutableList<Int>? = null,
+    @Serializable(RscmList::class)  var objectModels: MutableList<Int>? = null,
     var objectTypes: MutableList<Int>? = null,
     var recolorToFind: MutableList<Int>? = null,
     var mapAreaId: Int = -1,
@@ -59,7 +64,7 @@ data class ObjectType(
     override var varbit: Int = -1,
     override var varp: Int = -1,
     override var transforms: MutableList<Int>? = null,
-    override var params: Map<Int, Any>? = null,
+    override var params: Map<Int, @Contextual Any>? = null,
 
     //Custom
     var option1: String? = null,
@@ -67,10 +72,47 @@ data class ObjectType(
     var option3: String? = null,
     var option4: String? = null,
     var option5: String? = null,
-    override var inherit : Int = -1
+    @Serializable(RscmString::class) override var inherit : Int = -1
 
 ) : Definition, Transforms, Recolourable, Parameterized {
     init {
         actions = listOf(option1,option2,option3,option4,option5).toMutableList()
     }
+
+    override fun hashCode(): Int {
+        return listOf(
+            name.hashCode(),
+            mapAreaId,
+            actions.hashCode(),
+            sizeX,
+            sizeY,
+            recolorToFind?.hashCode() ?: 0,
+            retextureToReplace?.hashCode() ?: 0,
+            objectModels?.hashCode() ?: 0,
+            modelSizeX,
+            modelSizeY,
+            modelSizeZ,
+            animationId
+        ).fold(0) { acc, hash -> 31 * acc + hash }
+    }
+
+    // Optional: custom equals to match based on the same fields
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is ObjectType) return false
+
+        return name == other.name &&
+                mapAreaId == other.mapAreaId &&
+                actions == other.actions &&
+                sizeX == other.sizeX &&
+                sizeY == other.sizeY &&
+                recolorToFind == other.recolorToFind &&
+                retextureToReplace == other.retextureToReplace &&
+                objectModels == other.objectModels &&
+                modelSizeX == other.modelSizeX &&
+                modelSizeY == other.modelSizeY &&
+                modelSizeZ == other.modelSizeZ &&
+                animationId == other.animationId
+    }
+
 }

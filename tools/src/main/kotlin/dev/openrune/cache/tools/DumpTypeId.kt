@@ -44,16 +44,16 @@ class DumpTypeId(
         val settingsFile = generateWriter("SettingCategories")
         val structsFile = generateWriter("SettingStructs")
         // Get all settings structs
-        CacheManager.getEnumOrDefault(422).values.forEach { (_, u) ->
+        CacheManager.getEnum(422).values.forEach { (_, u) ->
             var name = ""
-            CacheManager.getStructOrDefault(u as Int).params!!.forEach { (k, v) ->
+            CacheManager.getStruct(u as Int).params!!.forEach { (k, v) ->
                 if(k == 744) {
                     name = namer.name(v.toString() + "_enum_id", k).toString()
                 }
                 if(k == 745 && name.isNotBlank()) {
                     write(settingsFile, "const val $name = $v")
 
-                    CacheManager.getEnumOrDefault(v as Int).values.forEach { e ->
+                    CacheManager.getEnum(v as Int).values.forEach { e ->
                         System.out.println(e)
                     }
                 }

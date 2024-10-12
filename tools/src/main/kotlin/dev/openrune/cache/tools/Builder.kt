@@ -1,5 +1,6 @@
 package dev.openrune.cache.tools
 
+import dev.openrune.RSCMHandler
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.TaskType
 import java.io.File
@@ -18,6 +19,10 @@ data class Builder(
 ) {
 
     fun extraTasks(vararg types: CacheTask) = apply { this.extraTasks = types.toMutableList().toTypedArray() }
+
+    fun registerRSCM(mappingsDir: File) = apply {
+        RSCMHandler.load(mappingsDir)
+    }
 
     fun cacheLocation(cacheLocation: File) = apply { this.cacheLocation = cacheLocation }
 
