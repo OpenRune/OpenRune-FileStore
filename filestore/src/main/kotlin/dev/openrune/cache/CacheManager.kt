@@ -43,7 +43,7 @@ object CacheManager {
 
     private inline fun <T> getOrDefault(map: Map<Int, T>, id: Int, default: T, typeName: String): T {
         return map.getOrDefault(id, default).also {
-            if (it == default) println("$typeName with id $id is missing.")
+            if (id == -1) println("$typeName with id $id is missing.")
         }
     }
 
@@ -58,16 +58,16 @@ object CacheManager {
     fun getHitsplat(id: Int) = hitsplats[id]
     fun getStruct(id: Int) = structs[id]
 
-    fun getNpcOrDefault(id: Int) = getOrDefault(npcs, id, NpcType(id), "Npc")
-    fun getObjectOrDefault(id: Int) = getOrDefault(objects, id, ObjectType(id), "Object")
-    fun getItemOrDefault(id: Int) = getOrDefault(items, id, ItemType(id), "Item")
-    fun getVarbitOrDefault(id: Int) = getOrDefault(varbits, id, VarBitType(id), "Varbit")
-    fun getVarpOrDefault(id: Int) = getOrDefault(varps, id, VarpType(id), "Varp")
-    fun getAnimOrDefault(id: Int) = getOrDefault(anims, id, SequenceType(id), "Anim")
-    fun getEnumOrDefault(id: Int) = getOrDefault(enums, id, EnumType(id), "Enum")
-    fun getHealthBarOrDefault(id: Int) = getOrDefault(healthBars, id, HealthBarType(id), "HealthBar")
-    fun getHitsplatOrDefault(id: Int) = getOrDefault(hitsplats, id, HitSplatType(id), "Hitsplat")
-    fun getStructOrDefault(id: Int) = getOrDefault(structs, id, StructType(id), "Struct")
+    fun getNpcOrDefault(id: Int) = getOrDefault(npcs, id, NpcType(), "Npc")
+    fun getObjectOrDefault(id: Int) = getOrDefault(objects, id, ObjectType(), "Object")
+    fun getItemOrDefault(id: Int) = getOrDefault(items, id, ItemType(), "Item")
+    fun getVarbitOrDefault(id: Int) = getOrDefault(varbits, id, VarBitType(), "Varbit")
+    fun getVarpOrDefault(id: Int) = getOrDefault(varps, id, VarpType(), "Varp")
+    fun getAnimOrDefault(id: Int) = getOrDefault(anims, id, SequenceType(), "Anim")
+    fun getEnumOrDefault(id: Int) = getOrDefault(enums, id, EnumType(), "Enum")
+    fun getHealthBarOrDefault(id: Int) = getOrDefault(healthBars, id, HealthBarType(), "HealthBar")
+    fun getHitsplatOrDefault(id: Int) = getOrDefault(hitsplats, id, HitSplatType(), "Hitsplat")
+    fun getStructOrDefault(id: Int) = getOrDefault(structs, id, StructType(), "Struct")
 
     fun findScriptId(name: String): Int {
         val cacheName = "[clientscript,$name]"
