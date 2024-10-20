@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ObjectType(
     override var id: Rscm = -1,
-    var name: String = "null",
+    var name: String? = null,
     var decorDisplacement: Int = 16,
     var isHollow: Boolean = false,
     var objectModels: ListRscm? = null,
@@ -79,6 +79,9 @@ data class ObjectType(
     init {
         actions = listOf(option1,option2,option3,option4,option5).toMutableList()
     }
+
+
+    fun hasActions() = actions.any { it != null }
 
     override fun hashCode(): Int {
         return listOf(

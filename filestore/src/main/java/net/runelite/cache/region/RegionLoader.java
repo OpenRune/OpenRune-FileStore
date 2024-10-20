@@ -60,6 +60,13 @@ public class RegionLoader
 		this.keyProvider = keyProvider;
 	}
 
+	public RegionLoader(Store store)
+	{
+		this.store = store;
+		index = store.getIndex(IndexType.MAPS);
+		this.keyProvider = null;
+	}
+
 	public void loadRegions() throws IOException
 	{
 		if (!this.regions.isEmpty())
@@ -103,12 +110,21 @@ public class RegionLoader
 		Region region = new Region(i);
 		region.loadTerrain(mapDef);
 
-		int[] keys = keyProvider.getKey(i);
-		if (keys != null)
-		{
-			data = land.decompress(storage.loadArchive(land), keys);
+		if (keyProvider == null) {
+			data = land.decompress(storage.loadArchive(land));
 			LocationsDefinition locDef = new LocationsLoader().load(x, y, data);
 			region.loadLocations(locDef);
+			region.loadLocations(locDef);
+
+		} else {
+			int[] keys = keyProvider.getKey(i);
+			if (keys != null)
+			{
+				data = land.decompress(storage.loadArchive(land), keys);
+				LocationsDefinition locDef = new LocationsLoader().load(x, y, data);
+				region.loadLocations(locDef);
+				region.loadLocations(locDef);
+			}
 		}
 
 		regions.put(i, region);

@@ -13,7 +13,6 @@ data class Builder(
     var revision: Int,
     var cacheLocation : File = DEFAULT_PATH,
     var extraTasks: Array<CacheTask> = emptyArray(),
-    var cacheRevision: Int = -1,
     var js5Ports: List<Int> = listOf(443, 43594, 50000),
     var supportPrefetch: Boolean = true
 ) {
@@ -25,8 +24,6 @@ data class Builder(
     }
 
     fun cacheLocation(cacheLocation: File) = apply { this.cacheLocation = cacheLocation }
-
-    fun cacheRevision(rev: Int) = apply { this.cacheRevision = rev }
 
     fun js5Ports(ports: List<Int>) = apply { this.js5Ports = ports }
 

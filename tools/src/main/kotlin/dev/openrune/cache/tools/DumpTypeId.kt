@@ -90,7 +90,7 @@ class DumpTypeId(
     private fun writeObjs(fileName: String) {
         val file = generateWriter(fileName)
         for ((index, obj) in CacheManager.getObjects()) {
-            val rawName = obj.name.replace("?", "")
+            val rawName = obj.name?.replace("?", "")?: "null"
             if (rawName.isNotEmpty() && rawName.isNotBlank() && rawName != "null") {
                 val name = namer.name(obj.name, index)
                 write(file, "const val $name = $index")
@@ -103,7 +103,7 @@ class DumpTypeId(
         val file = generateWriter(fileName)
         val file1 = generateWriter(fileName2)
         for ((index, obj) in CacheManager.getObjects()) {
-            val rawName = obj.name.replace("?", "")
+            val rawName = obj.name?.replace("?", "")?: ""
             val normalName = rawName.isNotEmpty() && rawName.isNotBlank()
             val name = if (normalName) namer.name(obj.name, index) else "NULL_$index"
             if (!name!!.contains("NULL_")) {
