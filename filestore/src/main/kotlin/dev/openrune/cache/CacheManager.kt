@@ -8,7 +8,7 @@ import java.nio.file.Path
 object CacheManager {
 
     lateinit var cache: Cache
-    private var cacheRevision = -1
+    var cacheRevision = -1
 
     private val npcs = mutableMapOf<Int, NpcType>()
     private val objects = mutableMapOf<Int, ObjectType>()
