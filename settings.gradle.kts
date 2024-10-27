@@ -1,4 +1,4 @@
 rootProject.name = "filestore"
 
-include("filestore","tools")
+include("filestore","tools", "buffer", "filesystem")
 

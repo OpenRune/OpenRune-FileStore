@@ -13,3 +13,5 @@ tools/build/*
 /mappings
 /objects
 /models
+/buffer/build
+/filesystem/build

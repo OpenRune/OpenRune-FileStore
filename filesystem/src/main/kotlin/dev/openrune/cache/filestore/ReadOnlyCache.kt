@@ -1,6 +1,5 @@
 package dev.openrune.cache.filestore
 
-import dev.openrune.cache.MAPS
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import dev.openrune.cache.util.compress.DecompressionContext
 import dev.openrune.cache.util.secure.VersionTableBuilder
@@ -30,7 +29,7 @@ abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cac
         xteas: Map<Int, IntArray>?,
         sectors: Array<Array<ByteArray?>?>? = null
     ): Array<ByteArray?>? {
-        val keys = if (xteas != null && indexId == MAPS) xteas[archiveId] else null
+        val keys = if (xteas != null && indexId == 5) xteas[archiveId] else null
         return fileData(context, main, mainLength, indexRaf, indexId, archiveId, keys, sectors)
     }
 
@@ -52,7 +51,7 @@ abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cac
         if (sectors != null) {
             sectors[indexId]!![archiveId] = sectorData
         }
-        val keys = if (xtea != null && indexId == MAPS) xtea else null
+        val keys = if (xtea != null && indexId == 5) xtea else null
         val decompressed = context.decompress(sectorData, keys) ?: return null
         if (fileCount == 1) {
             val fileId = fileIds[archiveId]?.last() ?: return null
