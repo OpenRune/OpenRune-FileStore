@@ -21,12 +21,12 @@ class ParamDecoder : DefinitionDecoder<ParamType>(CONFIGS) {
         when (opcode) {
             1 -> {
                 val idx = buffer.readUnsignedByte()
-                type = ScriptVarType.forCharKey(idx.toChar())
+                ScriptVarType.forCharKey(idx.toChar())?.let { values.put("type", it) }
             }
 
-            2 -> defaultInt = buffer.readInt()
-            4 -> isMembers = false
-            5 -> defaultString = buffer.readString()
+            2 -> values["defaultInt"] = buffer.readInt()
+            4 -> values["isMembers"] = false
+            5 -> values["defaultString"] = buffer.readString()
         }
     }
 }

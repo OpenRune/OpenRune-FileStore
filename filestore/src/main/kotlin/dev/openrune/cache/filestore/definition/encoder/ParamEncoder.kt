@@ -7,20 +7,24 @@ import dev.openrune.cache.filestore.definition.data.StructType
 
 class ParamEncoder: ConfigEncoder<ParamType>() {
     override fun Writer.encode(definition: ParamType) {
-        if(definition.type != null) {
+        val type = definition.getType()
+        if(type != null) {
             writeByte(1)
-            writeByte(definition.type!!.keyChar.code)
+            writeByte(type.keyChar.code)
         }
-        if(definition.defaultInt != 0) {
+        val defaultInt = definition.getDefaultInt()
+        if(defaultInt != 0) {
             writeByte(3)
-            writeInt(definition.defaultInt)
+            writeInt(defaultInt)
         }
-        if(definition.isMembers) {
+        val isMembers = definition.isMembers()
+        if(isMembers) {
             writeByte(4)
         }
-        if(definition.defaultString != null) {
+        val defaultString = definition.getDefaultString()
+        if(defaultString != null) {
             writeByte(5)
-            writeString(definition.defaultString)
+            writeString(defaultString)
         }
         writeByte(0)
     }
