@@ -47,7 +47,7 @@ class ItemEncoder : ConfigEncoder<ItemType>() {
             writeShort(definition.yOffset2d)
         }
 
-        if (definition.stackable) {
+        if (definition.stacks == 1) {
             writeByte(11)
         }
 
