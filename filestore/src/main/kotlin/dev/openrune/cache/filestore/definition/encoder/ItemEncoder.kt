@@ -17,7 +17,7 @@ class ItemEncoder : ConfigEncoder<ItemType>() {
             writeString(definition.name)
         }
 
-        if (!definition.name.equals("null", ignoreCase = true)) {
+        if (!definition.examine.equals("null", ignoreCase = true)) {
             writeByte(3)
             writeString(definition.examine)
         }
