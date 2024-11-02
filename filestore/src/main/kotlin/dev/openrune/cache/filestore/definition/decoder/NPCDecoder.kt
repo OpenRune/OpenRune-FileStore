@@ -1,12 +1,12 @@
 package dev.openrune.cache.filestore.definition.decoder
 
-import dev.openrune.cache.*
+import dev.openrune.cache.CONFIGS
+import dev.openrune.cache.CacheManager
+import dev.openrune.cache.NPC
 import dev.openrune.cache.filestore.buffer.Reader
-import dev.openrune.cache.filestore.definition.DefinitionDecoder
-import dev.openrune.cache.filestore.definition.data.ItemType
+import dev.openrune.cache.filestore.definition.*
 import dev.openrune.cache.filestore.definition.data.NpcType
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-
 
 class NPCDecoder : DefinitionDecoder<NpcType>(CONFIGS) {
 
@@ -20,51 +20,51 @@ class NPCDecoder : DefinitionDecoder<NpcType>(CONFIGS) {
         when (opcode) {
             1 -> {
                 val length = buffer.readUnsignedByte()
-                models = MutableList(length) { 0 }
+                val models = MutableList(length) { 0 }
                 for (count in 0 until length) {
-                    models!![count] = buffer.readUnsignedShort()
-                    if (models!![count] == 65535) {
-                        models!![count] = -1
+                    models[count] = buffer.readUnsignedShort()
+                    if (models[count] == 65535) {
+                        models[count] = -1
                     }
                 }
+                values["models"] = models
             }
-            2 -> name = buffer.readString()
-            12 -> size = buffer.readUnsignedByte()
-            13 -> standAnim = buffer.readUnsignedShort()
-            14 -> walkAnim = buffer.readUnsignedShort()
-            15 -> rotateLeftAnim = buffer.readUnsignedShort()
-            16 -> rotateRightAnim = buffer.readUnsignedShort()
+            2 -> values["name"] = buffer.readString()
+            12 -> values["size"] = buffer.readUnsignedByte()
+            13 -> values["standAnim"] = buffer.readUnsignedShort()
+            14 -> values["walkAnim"] = buffer.readUnsignedShort()
+            15 -> values["rotateLeftAnim"] = buffer.readUnsignedShort()
+            16 -> values["rotateRightAnim"] = buffer.readUnsignedShort()
             17 -> {
-                walkAnim = buffer.readUnsignedShort()
-                rotateBackAnim = buffer.readUnsignedShort()
-                walkLeftAnim = buffer.readUnsignedShort()
-                walkRightAnim = buffer.readUnsignedShort()
+                values["walkAnim"] = buffer.readUnsignedShort()
+                values["rotateBackAnim"] = buffer.readUnsignedShort()
+                values["walkLeftAnim"] = buffer.readUnsignedShort()
+                values["walkRightAnim"] = buffer.readUnsignedShort()
             }
-            18 -> category = buffer.readUnsignedShort()
+            18 -> values["category"] = buffer.readUnsignedShort()
             in 30..34 -> {
-                actions[opcode - 30] = buffer.readString()
-                if (actions[opcode - 30].equals("Hidden", true)) {
-                    actions[opcode - 30] = null
-                }
+                val action = buffer.readString()
+                (values["actions"] as MutableList<String?>)[opcode - 30] = if (action.equals("Hidden", true)) null else action
             }
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
             60 -> {
                 val length: Int = buffer.readUnsignedByte()
-                chatheadModels = MutableList(length) { 0 }
-                (0 until length).forEach {
-                    chatheadModels!![it] = buffer.readUnsignedShort()
-                }
+                values["chatheadModels"] = MutableList(length) { buffer.readUnsignedShort() }
+
             }
-            in 74..79 -> stats[opcode - 74] = buffer.readUnsignedShort()
-            93 -> isMinimapVisible = false
-            95 -> combatLevel = buffer.readUnsignedShort()
-            97 -> widthScale = buffer.readUnsignedShort()
-            98 -> heightScale = buffer.readUnsignedShort()
-            99 -> hasRenderPriority = true
-            100 -> ambient = buffer.readByte()
-            101 -> contrast = buffer.readByte()
+            in 74..79 -> (values["stats"] as IntArray)[opcode - 74] = buffer.readUnsignedShort()
+
+            93 -> values["isMinimapVisible"] = false
+            95 -> values["combatLevel"] = buffer.readUnsignedShort()
+            97 -> values["widthScale"] = buffer.readUnsignedShort()
+            98 -> values["heightScale"] = buffer.readUnsignedShort()
+            99 -> values["hasRenderPriority"] = true
+            100 -> values["ambient"] = buffer.readByte()
+            101 -> values["contrast"] = buffer.readByte()
             102 -> {
+                var headIconArchiveIds: MutableList<Int>? = null;
+                var headIconSpriteIndex: MutableList<Int>? = null;
                 if (CacheManager.revisionIsOrBefore(210)) {
                     headIconArchiveIds = MutableList(0) { 0 }
                     headIconSpriteIndex = MutableList(buffer.readUnsignedShort()) { 0 }
@@ -82,37 +82,39 @@ class NPCDecoder : DefinitionDecoder<NpcType>(CONFIGS) {
 
                     for (i in 0 until size) {
                         if (bitfield and (1 shl i) == 0) {
-                            headIconArchiveIds!![i] = -1
-                            headIconSpriteIndex!![i] = -1
+                            headIconArchiveIds[i] = -1
+                            headIconSpriteIndex[i] = -1
                         } else {
-                            headIconArchiveIds!![i] = buffer.readUnsignedShort()
-                            headIconSpriteIndex!![i] = buffer.readShortSmart() - 1
+                            headIconArchiveIds[i] = buffer.readUnsignedShort()
+                            headIconSpriteIndex[i] = buffer.readShortSmart() - 1
                         }
                     }
                 }
+                values["headIconArchiveIds"] = headIconArchiveIds
+                values["headIconSpriteIndex"] = headIconSpriteIndex
             }
-            111 -> isFollower = true
-            103 -> rotation = buffer.readUnsignedShort()
+            111 -> values["isFollower"] = true
+            103 -> values["rotation"] = buffer.readUnsignedShort()
             106, 118 -> readTransforms(buffer, opcode == 118)
-            107 -> isInteractable = false
-            109 -> isClickable = false
-            114 -> runSequence = buffer.readUnsignedShort()
+            107 -> values["isInteractable"] = false
+            109 -> values["isClickable"] = false
+            114 -> values["runSequence"] = buffer.readUnsignedShort()
             115 -> {
-                runSequence = buffer.readUnsignedShort()
-                runBackSequence = buffer.readUnsignedShort()
-                runRightSequence = buffer.readUnsignedShort()
-                runLeftSequence = buffer.readUnsignedShort()
+                values["runSequence"] = buffer.readUnsignedShort()
+                values["runBackSequence"] = buffer.readUnsignedShort()
+                values["runRightSequence"] = buffer.readUnsignedShort()
+                values["runLeftSequence"] = buffer.readUnsignedShort()
             }
-            116 -> crawlSequence = buffer.readUnsignedShort()
+            116 -> values["crawlSequence"] = buffer.readUnsignedShort()
             117 -> {
-                crawlSequence = buffer.readUnsignedShort()
-                crawlBackSequence = buffer.readUnsignedShort()
-                crawlRightSequence = buffer.readUnsignedShort()
-                crawlLeftSequence = buffer.readUnsignedShort()
+                values["crawlSequence"] = buffer.readUnsignedShort()
+                values["crawlBackSequence"] = buffer.readUnsignedShort()
+                values["crawlRightSequence"] = buffer.readUnsignedShort()
+                values["crawlLeftSequence"] = buffer.readUnsignedShort()
             }
-            122 -> lowPriorityFollowerOps = true
-            123 -> isFollower = true
-            124 -> height = buffer.readUnsignedShort()
+            122 -> values["lowPriorityFollowerOps"] = true
+            123 -> values["isFollower"] = true
+            124 -> values["height"] = buffer.readUnsignedShort()
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Npcs [${opcode}]" }
         }

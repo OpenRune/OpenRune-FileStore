@@ -6,7 +6,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 
 class ParamType(
     override var id: Int = -1,
-    val values: MutableMap<String, Any> = Object2ObjectOpenHashMap(),
+    override val values: MutableMap<String, Any> = Object2ObjectOpenHashMap(),
     //Custom
     override var inherit: Int = -1
 ) : Definition {

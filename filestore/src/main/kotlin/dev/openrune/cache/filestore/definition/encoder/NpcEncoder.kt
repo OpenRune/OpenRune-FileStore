@@ -2,187 +2,198 @@ package dev.openrune.cache.filestore.definition.encoder
 
 import dev.openrune.cache.CacheManager
 import dev.openrune.cache.CacheManager.revisionIsOrAfter
-import dev.openrune.cache.filestore.buffer.BufferWriter
 import dev.openrune.cache.filestore.buffer.Writer
 import dev.openrune.cache.filestore.definition.ConfigEncoder
 import dev.openrune.cache.filestore.definition.data.NpcType
+import dev.openrune.cache.filestore.definition.writeColoursTextures
+import dev.openrune.cache.filestore.definition.writeParameters
+import dev.openrune.cache.filestore.definition.writeTransforms
 
 class NpcEncoder : ConfigEncoder<NpcType>() {
 
     override fun Writer.encode(definition: NpcType) {
-        if (definition.models != null && definition.models!!.isNotEmpty()) {
+        val models = definition.getModels()
+        if (!models.isNullOrEmpty()) {
             writeByte(1)
-            writeByte(definition.models!!.size)
-            for (i in definition.models!!.indices) {
-                writeShort(definition.models!![i])
-            }
+            writeByte(models.size)
+            models.forEach { writeShort(it) }
         }
 
-        if (definition.name != "null") {
+        val name = definition.getName()
+        if (name != "null") {
             writeByte(2)
-            writeString(definition.name)
+            writeString(name)
         }
 
-        if (definition.size != -1) {
+        val size = definition.getSize()
+        if (size != -1) {
             writeByte(12)
-            writeByte(definition.size)
+            writeByte(size)
         }
 
-        if (definition.standAnim != -1) {
+        val standAnim = definition.getStandAnim()
+        if (standAnim != -1) {
             writeByte(13)
-            writeShort(definition.standAnim)
+            writeShort(standAnim)
         }
 
-        if (definition.walkAnim != -1) {
+        val walkAnim = definition.getWalkAnim()
+        if (walkAnim != -1) {
             writeByte(14)
-            writeShort(definition.walkAnim)
+            writeShort(walkAnim)
         }
 
-        if (definition.rotateLeftAnim != -1) {
+        val rotateLeftAnim = definition.getRotateLeftAnim()
+        if (rotateLeftAnim != -1) {
             writeByte(15)
-            writeShort(definition.rotateLeftAnim)
+            writeShort(rotateLeftAnim)
         }
 
-        if (definition.rotateRightAnim != -1) {
+        val rotateRightAnim = definition.getRotateRightAnim()
+        if (rotateRightAnim != -1) {
             writeByte(16)
-            writeShort(definition.rotateRightAnim)
+            writeShort(rotateRightAnim)
         }
 
-        if (definition.walkAnim != -1 || definition.rotateBackAnim != -1 || definition.walkLeftAnim != -1 || definition.walkRightAnim != -1) {
+        if (walkAnim != -1 || definition.getRotateBackAnim() != -1 || definition.getWalkLeftAnim() != -1 || definition.getWalkRightAnim() != -1) {
             writeByte(17)
-            writeShort(definition.walkAnim)
-            writeShort(definition.rotateBackAnim)
-            writeShort(definition.walkLeftAnim)
-            writeShort(definition.walkRightAnim)
+            writeShort(walkAnim)
+            writeShort(definition.getRotateBackAnim())
+            writeShort(definition.getWalkLeftAnim())
+            writeShort(definition.getWalkRightAnim())
         }
 
-        if (definition.category != -1) {
+        val category = definition.getCategory()
+        if (category != -1) {
             writeByte(18)
-            writeShort(definition.category)
+            writeShort(category)
         }
 
-        if (definition.actions.any { it != null }) {
-            for (i in 0 until definition.actions.size) {
-                if (definition.actions[i] == null) {
-                    continue
-                }
+        val actions = definition.getActions()
+        actions.forEachIndexed { i, action ->
+            if (action != null) {
                 writeByte(30 + i)
-                writeString(definition.actions[i]!!)
+                writeString(action)
             }
         }
+
 
         definition.writeColoursTextures(this)
 
-        if (definition.chatheadModels != null) {
+        val chatheadModels = definition.getChatheadModels()
+        if (chatheadModels != null) {
             writeByte(60)
-            writeByte(definition.chatheadModels!!.size)
-            for (i in definition.chatheadModels!!.indices) {
-                writeShort(definition.chatheadModels!![i])
-            }
+            writeByte(chatheadModels.size)
+            chatheadModels.forEach { writeShort(it) }
         }
 
-        for (i in 0 .. 5) {
-            if (definition.stats[i] != 1) {
+        val stats = definition.getStats()
+        stats.forEachIndexed { i, stat ->
+            if (stat != 1) {
                 writeByte(74 + i)
-                writeShort(definition.stats[i])
+                writeShort(stat)
             }
         }
 
-        if (!definition.isMinimapVisible) {
+        if (!definition.isMinimapVisible()) {
             writeByte(93)
         }
-        if (definition.combatLevel != -1) {
+
+        val combatLevel = definition.getCombatLevel()
+        if (combatLevel != -1) {
             writeByte(95)
-            writeShort(definition.combatLevel)
+            writeShort(combatLevel)
         }
 
-
         writeByte(97)
-        writeShort(definition.widthScale)
+        writeShort(definition.getWidthScale())
 
         writeByte(98)
-        writeShort(definition.heightScale)
+        writeShort(definition.getHeightScale())
 
-
-        if (definition.hasRenderPriority) {
+        if (definition.hasRenderPriority()) {
             writeByte(99)
         }
 
-
         writeByte(100)
-        writeByte(definition.ambient)
+        writeByte(definition.getAmbient())
 
         writeByte(101)
-        writeByte(definition.contrast)
+        writeByte(definition.getContrast())
 
-        if (definition.headIconSpriteIndex != null) {
+        val headIconSpriteIndex = definition.getHeadIconSpriteIndex()
+        if (headIconSpriteIndex != null) {
             writeByte(102)
             if (CacheManager.revisionIsOrBefore(210)) {
-                writeShort(definition.headIconSpriteIndex!!.first())
+                writeShort(headIconSpriteIndex.first())
             } else {
-                writeShort(definition.headIconArchiveIds!!.size)
-                repeat(definition.headIconArchiveIds!!.size) {
-                    writeShort(definition.headIconArchiveIds!![it])
-                    writeShort(definition.headIconSpriteIndex!![it])
+                val headIconArchiveIds = definition.getHeadIconArchiveIds()
+                writeShort(headIconArchiveIds!!.size)
+                repeat(headIconArchiveIds.size) {
+                    writeShort(headIconArchiveIds[it])
+                    writeShort(headIconSpriteIndex[it])
                 }
             }
         }
 
         writeByte(103)
-        writeShort(definition.rotation)
+        writeShort(definition.getRotation())
 
         definition.writeTransforms(this, 106, 118)
 
-        if (!definition.isInteractable) {
+        if (!definition.isInteractable()) {
             writeByte(107)
         }
 
-        if (!definition.isClickable) {
+        if (!definition.isClickable()) {
             writeByte(109)
         }
 
         if (revisionIsOrAfter(220)) {
-            if (definition.lowPriorityFollowerOps) {
+            if (definition.hasLowPriorityFollowerOps()) {
                 writeByte(122)
             }
-            if (definition.isFollower) {
+            if (definition.isFollower()) {
                 writeByte(123)
             }
         } else {
-            if (definition.isFollower) {
+            if (definition.isFollower()) {
                 writeByte(111)
             }
         }
 
-        if (definition.runSequence != -1) {
+        val runSequence = definition.getRunSequence()
+        if (runSequence != -1) {
             writeByte(114)
-            writeShort(definition.runSequence)
+            writeShort(runSequence)
         }
 
-        if (definition.runSequence != -1) {
+        if (runSequence != -1) {
             writeByte(115)
-            writeShort(definition.runSequence)
-            writeShort(definition.runBackSequence)
-            writeShort(definition.runRightSequence)
-            writeShort(definition.runLeftSequence)
+            writeShort(runSequence)
+            writeShort(definition.getRunBackSequence())
+            writeShort(definition.getRunRightSequence())
+            writeShort(definition.getRunLeftSequence())
         }
 
-        if (definition.crawlSequence != -1) {
+        val crawlSequence = definition.getCrawlSequence()
+        if (crawlSequence != -1) {
             writeByte(116)
-            writeShort(definition.crawlSequence)
+            writeShort(crawlSequence)
         }
 
-        if (definition.crawlSequence != -1) {
+        if (crawlSequence != -1) {
             writeByte(117)
-            writeShort(definition.crawlSequence)
-            writeShort(definition.crawlBackSequence)
-            writeShort(definition.crawlRightSequence)
-            writeShort(definition.crawlLeftSequence)
+            writeShort(crawlSequence)
+            writeShort(definition.getCrawlBackSequence())
+            writeShort(definition.getCrawlRightSequence())
+            writeShort(definition.getCrawlLeftSequence())
         }
 
-        if(definition.height != -1) {
+        val height = definition.getHeight()
+        if(height != -1) {
             writeByte(124)
-            writeShort(definition.height)
+            writeShort(height)
         }
 
         definition.writeParameters(this)
