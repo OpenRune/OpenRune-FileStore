@@ -1,5 +1,6 @@
 package dev.openrune.cache.filestore.definition
 
+import dev.openrune.*
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.buffer.Writer
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap
@@ -44,8 +45,8 @@ fun Definition.readColours(buffer: Reader) {
         originalColours[count] = buffer.readShort().toShort().toInt()
         modifiedColours[count] = buffer.readShort().toShort().toInt()
     }
-    this.values["originalColours"] = originalColours
-    this.values["modifiedColours"] = modifiedColours
+    values.withListInt("originalColours", originalColours)
+    values.withListInt("modifiedColours", modifiedColours)
 }
 
 fun Definition.readTextures(buffer: Reader) {
@@ -56,15 +57,15 @@ fun Definition.readTextures(buffer: Reader) {
         originalTextureColours[count] = buffer.readShort().toShort().toInt()
         modifiedTextureColours[count] = buffer.readShort().toShort().toInt()
     }
-    this.values["originalTextureColours"] = originalTextureColours
-    this.values["modifiedTextureColours"] = modifiedTextureColours
+    values.withListInt("originalTextureColours", originalTextureColours)
+    values.withListInt("modifiedTextureColours", modifiedTextureColours)
 }
 
 fun Definition.writeColoursTextures(writer: Writer) {
-    val originalColours = values["originalColours"] as? MutableList<Int>?
-    val modifiedColours = values["modifiedColours"] as? MutableList<Int>?
-    val originalTextureColours = values["originalTextureColours"] as? MutableList<Int>?
-    val modifiedTextureColours = values["modifiedTextureColours"] as? MutableList<Int>?
+    val originalColours = values.getAsListInt("originalColours")
+    val modifiedColours = values.getAsListInt("modifiedColours")
+    val originalTextureColours = values.getAsListInt("originalTextureColours")
+    val modifiedTextureColours = values.getAsListInt("modifiedTextureColours")
     writeArray(writer, 40, originalColours, modifiedColours)
     writeArray(writer, 41, originalTextureColours, modifiedTextureColours)
 }
@@ -105,15 +106,15 @@ fun Definition.readTransforms(buffer: Reader, isLast: Boolean) {
         }
     }
     transforms[length + 1] = last
-    this.values["varbit"] = varbit
-    this.values["varp"] = varp
-    this.values["transforms"] = transforms
+    values.withInt("varbit", varbit)
+    values.withInt("varp", varp)
+    values.withListInt("transforms", transforms)
 }
 
 fun Definition.writeTransforms(writer: Writer, smaller: Int, larger: Int) {
-    val varbit = values.getOrDefault("varbit", -1) as Int
-    val varp = values.getOrDefault("varp", -1) as Int
-    val transforms = values["originalTextureColours"] as? MutableList<Int>?
+    val varbit = values.getAsInt("varbit")
+    val varp = values.getAsInt("varp")
+    val transforms = values.getAsListInt("transforms")
 
     val configIds = transforms
     if (configIds != null && (varbit != -1 || varp != -1)) {
