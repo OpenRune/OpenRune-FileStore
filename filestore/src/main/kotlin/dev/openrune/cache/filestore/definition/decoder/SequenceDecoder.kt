@@ -2,13 +2,14 @@ package dev.openrune.cache.filestore.definition.decoder
 
 import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.CacheManager
+import dev.openrune.cache.DBROW
 import dev.openrune.cache.SEQUENCE
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
+import dev.openrune.cache.filestore.definition.data.ParamType
 import dev.openrune.cache.filestore.definition.data.SequenceType
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import kotlin.math.ceil
-
 
 class SequenceDecoder : DefinitionDecoder<SequenceType>(CONFIGS) {
 
@@ -75,47 +76,26 @@ class SequenceDecoder : DefinitionDecoder<SequenceType>(CONFIGS) {
             }
 
             13 -> {
-                if (CacheManager.cacheRevision >= 226) {
-                    skeletalId = buffer.readInt()
-                } else {
-                    val count = buffer.readUnsignedByte()
-                    for (i in 0 until count) {
-                        sounds[i] = readSounds(buffer, CacheManager.revisionIsOrAfter(220))!!
-                    }
+                val count = buffer.readUnsignedByte()
+                soundEffects = MutableList(count) { null }
+                for (i in 0 until count) {
+                    soundEffects[i] = readSounds(buffer, CacheManager.revisionIsOrAfter(220))
                 }
             }
 
-            14 -> {
-                if (CacheManager.cacheRevision >= 226) {
-                    val count = buffer.readUnsignedShort()
-                    for (i in 0 until count) {
-                        val index = buffer.readUnsignedShort()
-                        val sound = readSounds(buffer, CacheManager.revisionIsOrAfter(220))
-                        sounds[index] = sound!!
-                    }
-                } else {
-                    skeletalId = buffer.readInt()
-                }
-            }
+            14 -> skeletalId = buffer.readInt()
             15 -> {
-                if (CacheManager.cacheRevision >= 226) {
-                    rangeBegin = buffer.readUnsignedShort()
-                    rangeEnd = buffer.readUnsignedShort()
-                } else {
-                    val count = buffer.readUnsignedShort()
-                    for (i in 0 until count) {
-                        val index = buffer.readUnsignedShort()
-                        val sound = readSounds(buffer, CacheManager.revisionIsOrAfter(220))
-                        sounds[index] = sound!!
-                    }
+                val count = buffer.readUnsignedShort()
+                for (i in 0 until count) {
+                    val index = buffer.readUnsignedShort()
+                    val sound = readSounds(buffer, CacheManager.revisionIsOrAfter(220))
+                    skeletalSounds[index] = sound!!
                 }
             }
 
             16 -> {
-                if (CacheManager.cacheRevision < 226) {
-                    rangeBegin = buffer.readUnsignedShort()
-                    rangeEnd = buffer.readUnsignedShort()
-                }
+                rangeBegin = buffer.readUnsignedShort()
+                rangeEnd = buffer.readUnsignedShort()
             }
 
             17 -> {
