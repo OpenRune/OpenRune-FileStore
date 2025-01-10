@@ -15,3 +15,4 @@ tools/build/*
 /models
 /buffer/build
 /filesystem/build
+/test/build

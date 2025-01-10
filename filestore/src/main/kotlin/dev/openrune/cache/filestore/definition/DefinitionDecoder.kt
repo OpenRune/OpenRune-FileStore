@@ -1,6 +1,5 @@
 package dev.openrune.cache.filestore.definition
 
-import dev.openrune.cache.CacheManager.cache
 import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.buffer.BufferReader
 import dev.openrune.cache.filestore.buffer.Reader
@@ -8,7 +7,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import java.nio.BufferUnderflowException
 
-abstract class DefinitionDecoder<T : Definition>(val index: Int) {
+abstract class DefinitionDecoder<T : Definition>(val cache: Cache,val index: Int) {
 
     open fun files() = cache.files(2,getArchive(0))
 
@@ -101,6 +100,6 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
     }
 
     companion object {
-        internal val logger = KotlinLogging.logger {}
+        val logger = KotlinLogging.logger {}
     }
 }

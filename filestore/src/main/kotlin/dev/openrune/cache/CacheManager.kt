@@ -1,48 +1,49 @@
 package dev.openrune.cache
 
 import dev.openrune.cache.filestore.Cache
+import dev.openrune.cache.filestore.GameDataSource
+import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.cache.filestore.definition.data.*
-import dev.openrune.cache.filestore.definition.decoder.*
 import java.nio.file.Path
 
 object CacheManager {
 
-    lateinit var cache: Cache
     var cacheRevision = -1
 
-    private val npcs = mutableMapOf<Int, NpcType>()
-
-    fun init(cachePath: Path, cacheRevision: Int) {
-        init(Cache.load(cachePath, false), cacheRevision)
-    }
+    private val combinedNpcs: MutableMap<Int, NpcType> = mutableMapOf()
 
     @JvmStatic
-    fun init(cache: Cache, cacheRevision: Int) {
-        this.cacheRevision = cacheRevision
-        this.cache = cache
-        npcs.putAll(NPCDecoder().load(cache))
-    }
-
-    private inline fun <T> getOrDefault(map: Map<Int, T>, id: Int, default: T, typeName: String): T {
-        return map.getOrDefault(id, default).also {
-            if (id == -1) println("$typeName with id $id is missing.")
+    fun init(vararg dataSources : GameDataSource) {
+        for (data in dataSources) {
+            data.init()
+            combinedNpcs.putAll(applyIdOffset(data.npcs, data.npcOffset))
         }
     }
 
-    fun getNpc(id: Int) = npcs[id]
-
-
-    fun getNpcOrDefault(id: Int) = getOrDefault(npcs, id, NpcType(), "Npc")
-
-    fun findScriptId(name: String): Int {
-        val cacheName = "[clientscript,$name]"
-        return cache.archiveId(CLIENTSCRIPT, cacheName).also { id ->
-            if (id == -1) println("Unable to find script: $cacheName")
+    private fun <T : Definition> applyIdOffset(definitions: MutableMap<Int, T>, offset: Int): MutableMap<Int, T> {
+        return if (offset != 0) {
+            definitions.mapKeys { (key, definition) ->
+                val newKey = key + offset
+                definition.id = newKey
+                newKey
+            }.toMutableMap()
+        } else {
+            definitions.toMutableMap()
         }
     }
 
-    // Size methods
-    fun npcSize() = npcs.size
+    private inline fun <reified T> getFromCombinedMap(
+        map: Map<Int, T>,
+        id: Int,
+        typeName: String
+    ): T? {
+        val result = map.get(id)
+        return result
+    }
+
+    fun getNpc(id: Int): NpcType? {
+        return getFromCombinedMap(combinedNpcs, id, "Npc")
+    }
 
     // Cache revision methods
     fun revisionIsOrAfter(rev: Int) = rev <= cacheRevision
