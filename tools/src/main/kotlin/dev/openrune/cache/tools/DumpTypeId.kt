@@ -27,7 +27,7 @@ class DumpTypeId(
 
     fun init(language: Language = Language.KOTLIN, fileNames: List<String> = listOf("Items", "Npcs", "Objs")) {
         this.language = language
-        CacheManager.init(cache, rev)
+        ///CacheManager.init(cache, rev)
         if (!Files.exists(outputPath)) {
             Files.createDirectory(outputPath)
             logger.info { "Output path does not exist. Creating directory: $outputPath" }

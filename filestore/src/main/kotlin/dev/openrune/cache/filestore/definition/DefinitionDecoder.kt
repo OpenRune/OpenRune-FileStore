@@ -69,13 +69,6 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
         logger.info { "${definitions.size} ${this::class.simpleName} definitions loaded in ${System.currentTimeMillis() - start}ms" }
     }
 
-    open fun load(definitions: Int2ObjectOpenHashMap<T>, cache: Cache, id: Int) {
-        val archive = getArchive(id)
-        val file = getFile(id)
-        val data = cache.data(index, archive, file) ?: return
-        read(definitions, id, BufferReader(data))
-    }
-
     protected fun readFlat(definitions: Int2ObjectOpenHashMap<T>, id: Int, reader: Reader) {
         val definition = definitions[id]
         readFlatFile(definition, reader)

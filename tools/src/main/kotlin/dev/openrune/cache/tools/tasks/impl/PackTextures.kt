@@ -7,8 +7,8 @@ import dev.openrune.cache.SPRITES
 import dev.openrune.cache.TEXTURES
 import dev.openrune.cache.filestore.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.data.TextureType
-import dev.openrune.cache.filestore.definition.decoder.TextureDecoder
-import dev.openrune.cache.filestore.definition.encoder.TextureEncoder
+import dev.openrune.decoder.TextureDecoder
+import dev.openrune.encoder.TextureEncoder
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.PackSprites.Companion.customSprites
 import dev.openrune.cache.tools.tasks.impl.defs.PackConfig.Companion.mergeDefinitions

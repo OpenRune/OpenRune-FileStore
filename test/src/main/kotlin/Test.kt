@@ -3,11 +3,22 @@ import dev.openrune.Runescape742Store
 import dev.openrune.cache.CacheManager
 import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.definition.data.TextureType
+import dev.openrune.cache.tools.animations.PossibleAnimations
 import dev.openrune.decoder.TextureDecoder
 import java.nio.file.Path
 
 fun main() {
-    exmaple3()
+    //exmaple3()
+
+
+    val osrsCache = Cache.load(Path.of("E:\\RSPS\\Illerai\\Illerai-Server\\data\\cache"), false)
+    val cacheOSRS = OsrsCacheProvider(osrsCache,226)
+
+    CacheManager.init(cacheOSRS)
+
+
+    PossibleAnimations.dumpPossibleAnimations()
+
 }
 
 fun exmaple3() {
