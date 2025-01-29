@@ -16,6 +16,8 @@ import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.capitalizeFirstLetter
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
+import dev.openrune.decoder.*
+import dev.openrune.encoder.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.serialization.decodeFromString
 import java.io.File
@@ -43,7 +45,7 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
             getFiles(directory, "toml").forEach {
                 progress.extraMessage = it.name
                 when(type) {
-                    PackMode.ITEMS -> packDefinitions<ItemType>(it, ItemEncoder(),ItemDecoder(),library, OBJECT)
+                    PackMode.ITEMS -> packDefinitions<ItemType>(it, ItemEncoder(), ItemDecoder(),library, OBJECT)
                     PackMode.NPCS -> packDefinitions<NpcType>(it, NpcEncoder(),NPCDecoder(),library,NPC)
                     PackMode.OBJECTS -> packDefinitions<ObjectType>(it, ObjectEncoder(),ObjectDecoder(),library, OBJECT)
                     PackMode.HITSPLATS -> packDefinitions<HitSplatType>(it, HitSplatEncoder(),HitSplatDecoder(),library, HITSPLAT)

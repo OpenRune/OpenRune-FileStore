@@ -6,7 +6,7 @@ import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.OBJECT
 import dev.openrune.cache.filestore.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.data.ObjectType
-import dev.openrune.cache.filestore.definition.encoder.ObjectEncoder
+import dev.openrune.encoder.ObjectEncoder
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress

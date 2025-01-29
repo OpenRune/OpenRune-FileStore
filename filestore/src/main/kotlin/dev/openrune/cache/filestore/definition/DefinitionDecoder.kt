@@ -1,22 +1,17 @@
 package dev.openrune.cache.filestore.definition
 
-import dev.openrune.cache.CacheManager.cache
+import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.buffer.BufferReader
 import dev.openrune.cache.filestore.buffer.Reader
 import io.github.oshai.kotlinlogging.KotlinLogging
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import java.nio.BufferUnderflowException
+import kotlin.reflect.full.createInstance
 
 abstract class DefinitionDecoder<T : Definition>(val index: Int) {
 
-    open fun files() = cache.files(2,getArchive(0))
-
-    fun createMap(factory: (Int) -> T): Int2ObjectOpenHashMap<T> =
-        Int2ObjectOpenHashMap<T>().apply {
-            files().forEach { put(it, factory(it)) }}
-
-    abstract fun create(): Int2ObjectOpenHashMap<T>
+    var isRS2 = false
 
     open fun load(definitions: Int2ObjectOpenHashMap<T>, reader: Reader) {
         val id = readId(reader)
@@ -25,22 +20,53 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
 
     open fun readId(reader: Reader) = reader.readInt()
 
+
+    fun size(cache: Cache): Int {
+        return cache.lastArchiveId(index) * 256 + (cache.fileCount(index, cache.lastArchiveId(index)))
+    }
+
+    open fun load(cache: Cache, definitions: MutableMap<Int, T>) {
+        load(cache,definitions,false)
+    }
+
+
     /**
      * Load from cache
      */
-    open fun load(cache: Cache): Int2ObjectOpenHashMap<T> {
+    open fun load(cache: Cache, definitions: MutableMap<Int, T>, isRS2 : Boolean = false) {
         val start = System.currentTimeMillis()
-        val definitions = create()
-        definitions.forEach {
-            try {
-                load(definitions, cache, it.key)
-            } catch (e: BufferUnderflowException) {
-                logger.error(e) { "Error reading definition ${it.key}" }
-                throw e
+        if (isRS2) {
+            for (id in 0..size(cache)) {
+                try {
+                    val archive = getArchive(id)
+                    val file = getFile(id)
+                    val data = cache.data(index, archive, file)
+                    if (data != null) {
+                        val definition = loadSingle(id, data)
+                        definitions[id] = definition
+                    }
+                } catch (e: BufferUnderflowException) {
+
+                }
+            }
+        } else {
+            cache.files(index, getArchive(0)).forEach { id ->
+                try {
+                    val archive = getArchive(id)
+                    val file = getFile(id)
+                    val data = cache.data(index, archive, file)
+                    if (data != null) {
+                        val definition = loadSingle(id, data)
+                        definitions[id] = definition
+                    }
+                } catch (e: BufferUnderflowException) {
+                    println("Error reading definition $id")
+                    throw e
+                }
             }
         }
+
         logger.info { "${definitions.size} ${this::class.simpleName} definitions loaded in ${System.currentTimeMillis() - start}ms" }
-        return definitions
     }
 
     open fun load(definitions: Int2ObjectOpenHashMap<T>, cache: Cache, id: Int) {
@@ -60,12 +86,27 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
         definition.read(0,buffer)
     }
 
-    open fun loadSingle(id: Int, data: ByteArray): T? {
-        val definitions = Int2ObjectOpenHashMap<T>(1)
+
+    open fun loadSingle(id: Int, data: ByteArray): T {
         val reader = BufferReader(data)
-        read(definitions, 0, reader)
-        return definitions[0]
+        val definition = createDefinition()
+        read(definition, reader)
+        return definition
     }
+
+
+    protected abstract fun createDefinition(): T
+
+    protected fun read(definition: T, reader: Reader) {
+        while (true) {
+            val opcode = reader.readUnsignedByte()
+            if (opcode == 0) {
+                break
+            }
+            definition.read(opcode, reader)
+        }
+    }
+
 
     open fun loadSingleFlat(id: Int, data: ByteArray): T? {
         val definitions = Int2ObjectOpenHashMap<T>(1)

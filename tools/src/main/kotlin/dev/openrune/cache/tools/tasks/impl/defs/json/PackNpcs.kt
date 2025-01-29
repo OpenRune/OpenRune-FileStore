@@ -6,7 +6,7 @@ import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.NPC
 import dev.openrune.cache.filestore.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.data.NpcType
-import dev.openrune.cache.filestore.definition.encoder.NpcEncoder
+import dev.openrune.encoder.NpcEncoder
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
