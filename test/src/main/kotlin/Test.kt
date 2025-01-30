@@ -8,16 +8,16 @@ import dev.openrune.decoder.TextureDecoder
 import java.nio.file.Path
 
 fun main() {
-    //exmaple3()
+    exmaple3()
 
 
-    val osrsCache = Cache.load(Path.of("E:\\RSPS\\Illerai\\Illerai-Server\\data\\cache"), false)
-    val cacheOSRS = OsrsCacheProvider(osrsCache,226)
+    //val osrsCache = Cache.load(Path.of("E:\\RSPS\\Illerai\\Illerai-Server\\data\\cache"), false)
+    //val cacheOSRS = OsrsCacheProvider(osrsCache,226)
 
-    CacheManager.init(cacheOSRS)
+    //CacheManager.init(cacheOSRS)
 
 
-    PossibleAnimations.dumpPossibleAnimations()
+    //PossibleAnimations.dumpPossibleAnimations()
 
 }
 

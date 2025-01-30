@@ -10,8 +10,6 @@ import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.definition.DefinitionEncoder
 import dev.openrune.cache.filestore.definition.data.*
-import dev.openrune.cache.filestore.definition.decoder.*
-import dev.openrune.cache.filestore.definition.encoder.*
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.capitalizeFirstLetter
 import dev.openrune.cache.util.getFiles
@@ -82,10 +80,7 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
         if (def.inherit != -1) {
             val data = library.data(CONFIGS, archive, def.inherit)
             if (data != null) {
-                val inheritedDef = decoder.loadSingle(def.inherit, data) ?: run {
-                    logger.warn { "No inherited definition found for ID ${def.inherit}" }
-                    return
-                }
+                val inheritedDef = decoder.loadData(def.inherit, data)
                 def = mergeDefinitions(inheritedDef, def)
             } else {
                 logger.warn { "No inherited definition found for ID ${def.inherit}" }

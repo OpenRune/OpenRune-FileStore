@@ -9,7 +9,6 @@ tools/build/*
 /.idea/
 
 *.class
-/cache
 /mappings
 /objects
 /models

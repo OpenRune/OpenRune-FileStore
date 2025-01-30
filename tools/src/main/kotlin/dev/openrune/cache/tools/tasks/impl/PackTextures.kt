@@ -41,8 +41,8 @@ class PackTextures(private val textureDir : File) : CacheTask() {
                 if (def.inherit != -1) {
                     val data = library.data(TEXTURES, 0,def.inherit)
                     data.let {
-                        val inheritedDef = TextureDecoder().loadSingleFlat(def.inherit,data!!)
-                        def = mergeDefinitions(inheritedDef!!, def)
+                        val inheritedDef = TextureDecoder().loadData(def.inherit,data!!)
+                        def = mergeDefinitions(inheritedDef, def)
                     }
                 }
 
