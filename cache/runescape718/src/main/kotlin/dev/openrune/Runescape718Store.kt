@@ -1,10 +1,12 @@
 package dev.openrune
 
+import dev.openrune.Index.ITEMS
+import dev.openrune.Index.NPCS
 import dev.openrune.cache.CacheStore
 import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.definition.data.*
-import dev.openrune.decoder.ItemDecoder718
-import dev.openrune.decoder.NpcDecoder718
+import dev.openrune.codec.ItemCodec718
+import dev.openrune.codec.NpcCodec718
 import java.nio.BufferUnderflowException
 
 class Runescape718Store(private val cache : Cache, override var cacheRevision : Int = -1) : CacheStore() {
@@ -30,3 +32,6 @@ class Runescape718Store(private val cache : Cache, override var cacheRevision : 
     }
 
 }
+
+class ItemDecoder718 : ModernDefinitionDecoder<ItemType>(ITEMS, 8, ::ItemType, ItemCodec718())
+class NpcDecoder718 : ModernDefinitionDecoder<NpcType>(NPCS, 7, ::NpcType, NpcCodec718())
