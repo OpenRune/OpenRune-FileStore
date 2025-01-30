@@ -1,11 +1,26 @@
-package dev.openrune.encoder
+package dev.openrune.codec
 
+import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.buffer.Writer
-import dev.openrune.cache.filestore.definition.ConfigEncoder
+import dev.openrune.cache.filestore.definition.DefinitionCodec
 import dev.openrune.cache.filestore.definition.data.HealthBarType
-import dev.openrune.cache.filestore.definition.data.HitSplatType
 
-class HealthBarEncoder : ConfigEncoder<HealthBarType>() {
+class HealthBarCodec : DefinitionCodec<HealthBarType> {
+    override fun HealthBarType.read(opcode: Int, buffer: Reader) {
+        when (opcode) {
+            1 -> buffer.readUnsignedShort()
+            2 -> int1 = buffer.readUnsignedByte()
+            3 -> int2 = buffer.readUnsignedByte()
+            4 -> int3 = 0
+            5 -> int4 = buffer.readUnsignedShort()
+            6 -> buffer.readUnsignedByte()
+            7 -> frontSpriteId = buffer.readUnsignedShort()
+            8 -> backSpriteId = buffer.readUnsignedShort()
+            11 -> int3 = buffer.readUnsignedShort()
+            14 -> width = buffer.readUnsignedByte()
+            15 -> widthPadding = buffer.readUnsignedByte()
+        }
+    }
 
     override fun Writer.encode(definition: HealthBarType) {
         if (definition.int1 != 255) {
@@ -48,5 +63,4 @@ class HealthBarEncoder : ConfigEncoder<HealthBarType>() {
 
         writeByte(0)
     }
-
 }

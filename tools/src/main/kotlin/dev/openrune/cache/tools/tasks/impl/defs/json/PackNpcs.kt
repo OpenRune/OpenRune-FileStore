@@ -6,10 +6,10 @@ import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.NPC
 import dev.openrune.cache.filestore.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.data.NpcType
-import dev.openrune.encoder.NpcEncoder
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
+import dev.openrune.codec.NPCCodec
 import java.io.File
 
 @Deprecated(
@@ -30,7 +30,7 @@ class PackNpcs(private val npcDir : File) : CacheTask() {
                     return@forEach
                 }
 
-                val encoder = NpcEncoder()
+                val encoder = NPCCodec()
                 val writer = BufferWriter(4096)
                 with(encoder) { writer.encode(def) }
                 library.index(CONFIGS).archive(NPC)!!.add(def.id, writer.toArray())

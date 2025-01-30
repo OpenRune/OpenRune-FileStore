@@ -6,10 +6,10 @@ import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.OBJECT
 import dev.openrune.cache.filestore.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.data.ObjectType
-import dev.openrune.encoder.ObjectEncoder
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
+import dev.openrune.codec.ObjectCodec
 import java.io.File
 
 @Deprecated(
@@ -30,7 +30,7 @@ class PackObjects(private val objectDir : File) : CacheTask() {
                     return@forEach
                 }
 
-                val encoder = ObjectEncoder()
+                val encoder = ObjectCodec()
                 val writer = BufferWriter(4096)
                 with(encoder) { writer.encode(def) }
                 library.index(CONFIGS).archive(OBJECT)!!.add(def.id, writer.toArray())

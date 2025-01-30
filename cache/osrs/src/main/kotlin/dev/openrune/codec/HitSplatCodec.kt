@@ -1,10 +1,30 @@
-package dev.openrune.encoder
+package dev.openrune.codec
 
+import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.buffer.Writer
-import dev.openrune.cache.filestore.definition.ConfigEncoder
+import dev.openrune.cache.filestore.definition.DefinitionCodec
 import dev.openrune.cache.filestore.definition.data.HitSplatType
 
-class HitSplatEncoder : ConfigEncoder<HitSplatType>() {
+class HitSplatCodec : DefinitionCodec<HitSplatType> {
+    override fun HitSplatType.read(opcode: Int, buffer: Reader) {
+        when (opcode) {
+            1 -> font = buffer.readShortSmart()
+            2 -> textColour = buffer.readUnsignedMedium()
+            3 -> icon = buffer.readShortSmart()
+            4 -> left = buffer.readShortSmart()
+            5 -> middle = buffer.readShortSmart()
+            6 -> right = buffer.readShortSmart()
+            7 -> offsetX = buffer.readUnsignedShort()
+            8 -> amount = buffer.readString()
+            9 -> duration = buffer.readUnsignedShort()
+            10 -> offsetY = buffer.readShort()
+            11 -> fade = 0
+            12 -> comparisonType = buffer.readUnsignedByte()
+            13 -> damageYOfset = buffer.readShort()
+            14 -> fade = buffer.readShort()
+            17, 18 -> readTransforms(buffer, opcode == 18)
+        }
+    }
 
     override fun Writer.encode(definition: HitSplatType) {
         if (definition.font != -1) {
@@ -71,5 +91,4 @@ class HitSplatEncoder : ConfigEncoder<HitSplatType>() {
 
         writeByte(0)
     }
-
 }

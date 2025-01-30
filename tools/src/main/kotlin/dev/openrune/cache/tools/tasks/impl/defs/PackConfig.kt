@@ -4,18 +4,16 @@ import cc.ekblad.toml.tomlMapper
 import com.akuleshov7.ktoml.Toml
 import com.akuleshov7.ktoml.TomlInputConfig
 import com.displee.cache.CacheLibrary
+import dev.openrune.DefinitionDecoderOSRS
 import dev.openrune.cache.*
 import dev.openrune.cache.filestore.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.Definition
-import dev.openrune.cache.filestore.definition.DefinitionDecoder
-import dev.openrune.cache.filestore.definition.DefinitionEncoder
 import dev.openrune.cache.filestore.definition.data.*
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.capitalizeFirstLetter
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import dev.openrune.decoder.*
-import dev.openrune.encoder.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.serialization.decodeFromString
 import java.io.File
@@ -43,13 +41,13 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
             getFiles(directory, "toml").forEach {
                 progress.extraMessage = it.name
                 when(type) {
-                    PackMode.ITEMS -> packDefinitions<ItemType>(it, ItemEncoder(), ItemDecoder(),library, OBJECT)
-                    PackMode.NPCS -> packDefinitions<NpcType>(it, NpcEncoder(),NPCDecoder(),library,NPC)
-                    PackMode.OBJECTS -> packDefinitions<ObjectType>(it, ObjectEncoder(),ObjectDecoder(),library, OBJECT)
-                    PackMode.HITSPLATS -> packDefinitions<HitSplatType>(it, HitSplatEncoder(),HitSplatDecoder(),library, HITSPLAT)
-                    PackMode.HEALTBAR -> packDefinitions<HealthBarType>(it, HealthBarEncoder(),HealthBarDecoder(),library, HEALTHBAR)
-                    PackMode.SEQUENCE -> packDefinitions<SequenceType>(it, SequenceEncoder(),SequenceDecoder(),library, SEQUENCE)
-                    PackMode.AREA -> packDefinitions<AreaType>(it, AreaEncoder(),AreaDecoder(),library, AREA)
+                    PackMode.ITEMS -> packDefinitions<ItemType>(it, ItemDecoder(),library, OBJECT)
+                    PackMode.NPCS -> packDefinitions<NpcType>(it, NPCDecoder(),library,NPC)
+                    PackMode.OBJECTS -> packDefinitions<ObjectType>(it, ObjectDecoder(),library, OBJECT)
+                    PackMode.HITSPLATS -> packDefinitions<HitSplatType>(it, HitSplatDecoder(),library, HITSPLAT)
+                    PackMode.HEALTBAR -> packDefinitions<HealthBarType>(it, HealthBarDecoder(),library, HEALTHBAR)
+                    PackMode.SEQUENCE -> packDefinitions<SequenceType>(it, SequenceDecoder(),library, SEQUENCE)
+                    PackMode.AREA -> packDefinitions<AreaType>(it, AreaDecoder(),library, AREA)
                     else -> println("Not Supported")
                 }
                 progress.step()
@@ -60,8 +58,7 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
 
     private inline fun <reified T : Definition> packDefinitions(
         file: File,
-        encoder: DefinitionEncoder<T>,
-        decoder: DefinitionDecoder<T>,
+        decoder: DefinitionDecoderOSRS<T>,
         library: CacheLibrary,
         archive: Int
     ) {
@@ -89,7 +86,7 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
         }
 
         val writer = BufferWriter(4096)
-        with(encoder) { writer.encode(def) }
+        with(decoder.codec) { writer.encode(def) }
 
         library.index(CONFIGS).archive(archive)?.add(defId, writer.toArray())
     }
