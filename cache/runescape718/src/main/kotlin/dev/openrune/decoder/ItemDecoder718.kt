@@ -70,7 +70,7 @@ fun ItemType.getNoteTemplateId(): Int {
 }
 
 
-class ItemDecoder742 : DefinitionDecoder<ItemType>(ITEMS) {
+class ItemDecoder718 : DefinitionDecoder<ItemType>(ITEMS) {
 
     override fun getFile(id: Int) = id and 0xff
     override fun createDefinition(): ItemType = ItemType()
@@ -91,7 +91,7 @@ class ItemDecoder742 : DefinitionDecoder<ItemType>(ITEMS) {
             13 -> equipSlot = buffer.readUnsignedByte()
             14 -> appearanceOverride1 = buffer.readUnsignedByte()
             16 -> members = true
-            18 -> setExtraProperty("unknown18", buffer.readShort()) // Storing unknown value
+            18 -> setExtraProperty("multiStackSize", buffer.readShort())
             23 -> maleModel0 = buffer.readBigSmart()
             24 -> maleModel1 = buffer.readBigSmart()
             25 -> femaleModel0 = buffer.readBigSmart()
@@ -113,8 +113,12 @@ class ItemDecoder742 : DefinitionDecoder<ItemType>(ITEMS) {
             97 -> noteLinkId = buffer.readShort()
             98 -> noteTemplateId = buffer.readShort()
             in 100..109 -> {
-                countObj?.set(opcode - 100, buffer.readShort())
-                countCo?.set(opcode - 100, buffer.readShort())
+                if (countCo == null) {
+                    countObj = MutableList(10) { 0 }
+                    countCo = MutableList(10) { 0 }
+                }
+                countObj!![opcode - 100] = buffer.readShort()
+                countCo!![opcode - 100] = buffer.readShort()
             }
             110 -> resizeX = buffer.readShort()
             111 -> resizeY = buffer.readShort()
@@ -146,7 +150,10 @@ class ItemDecoder742 : DefinitionDecoder<ItemType>(ITEMS) {
                 setExtraProperty("primaryInterfaceCursorOpcode", buffer.readUnsignedByte())
                 setExtraProperty("primaryInterfaceCursor", buffer.readShort())
             }
-            130 -> setExtraProperty("secondaryInterfaceCursor", buffer.readShort())
+            130 -> {
+                setExtraProperty("secondaryInterfaceCursorOpcode", buffer.readUnsignedByte())
+                setExtraProperty("secondaryInterfaceCursor", buffer.readShort())
+            }
             132 -> {
                 val length = buffer.readUnsignedByte()
                 setExtraProperty("campaigns", IntArray(length) { buffer.readShort() })

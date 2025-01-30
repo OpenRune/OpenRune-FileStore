@@ -1,9 +1,8 @@
 import dev.openrune.OsrsCacheProvider
-import dev.openrune.Runescape742Store
+import dev.openrune.Runescape718Store
 import dev.openrune.cache.CacheManager
 import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.definition.data.TextureType
-import dev.openrune.cache.tools.animations.PossibleAnimations
 import dev.openrune.decoder.TextureDecoder
 import java.nio.file.Path
 
@@ -26,25 +25,19 @@ fun exmaple3() {
 
 
     val osrsCache = Cache.load(Path.of("E:\\RSPS\\Illerai\\Illerai-Server\\data\\cache"), false)
-    val runescape742Cache = Cache.load(Path.of("C:\\Users\\Home\\Desktop\\Vorkath High Rev Data\\build"), false)
+    val runescape718Cache = Cache.load(Path.of("C:\\Users\\Home\\Desktop\\cache-runescape-live-en-b719-2012-06-16-00-00-00-openrs2#303\\cache"), false)
 
     val cacheOSRS = OsrsCacheProvider(osrsCache,226)
-    val cacheRunescape742 = Runescape742Store(runescape742Cache,742)
+    val cacheRunescape718 = Runescape718Store(runescape718Cache,718)
 
-    cacheRunescape742.itemOffset = 60000
+    cacheRunescape718.itemOffset = 60000
+    cacheRunescape718.npcOffset = 60000
 
-    CacheManager.init(cacheOSRS,cacheRunescape742)
+    CacheManager.init(cacheRunescape718)
 
-
-
-    System.out.println(CacheManager.getItemOrDefault(995).name)
-    System.out.println(CacheManager.getItemOrDefault(3).name)
-    System.out.println(CacheManager.getNpcOrDefault(65527).name)
-    System.out.println(CacheManager.getNpcOrDefault(1).name)
 
     System.out.println(CacheManager.getItemOrDefault(995 + 60000).name)
-    System.out.println(CacheManager.getItemOrDefault(995 + 60000).inventoryModel)
-    System.out.println(CacheManager.getItemOrDefault(995 + 60000).id)
+    System.out.println(CacheManager.getNpcOrDefault(15454 + 60000).name)
 
     val textures: MutableMap<Int, TextureType> = mutableMapOf()
     TextureDecoder().load(osrsCache,textures)

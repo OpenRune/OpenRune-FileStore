@@ -39,7 +39,6 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
                 }
             } catch (e: BufferUnderflowException) {
                 println("Error reading definition $id")
-                throw e
             }
         }
 

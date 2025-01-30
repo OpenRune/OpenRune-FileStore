@@ -1,4 +1,4 @@
 rootProject.name = "filestore"
 
-include("filestore","tools","cache:osrs","cache:runescape742","test")
+include("filestore","tools","cache:osrs","cache:runescape718","test")
 
