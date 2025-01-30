@@ -4,7 +4,6 @@ import dev.openrune.cache.CLIENTSCRIPT
 import dev.openrune.cache.CacheStore
 import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.definition.data.*
-import dev.openrune.decoder.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.BufferUnderflowException
 

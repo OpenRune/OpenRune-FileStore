@@ -1,10 +1,9 @@
 package dev.openrune.cache.tools.tasks.impl.defs
 
-import cc.ekblad.toml.tomlMapper
 import com.akuleshov7.ktoml.Toml
 import com.akuleshov7.ktoml.TomlInputConfig
 import com.displee.cache.CacheLibrary
-import dev.openrune.DefinitionDecoderOSRS
+import dev.openrune.*
 import dev.openrune.cache.*
 import dev.openrune.cache.filestore.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.Definition
@@ -13,7 +12,6 @@ import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.capitalizeFirstLetter
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
-import dev.openrune.decoder.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.serialization.decodeFromString
 import java.io.File
