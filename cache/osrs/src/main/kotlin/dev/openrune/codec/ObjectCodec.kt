@@ -1,6 +1,5 @@
 package dev.openrune.codec
 
-import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.CacheManager
 import dev.openrune.cache.CacheManager.revisionIsOrAfter
 import dev.openrune.cache.filestore.buffer.Reader
@@ -11,7 +10,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import java.util.stream.IntStream
 import kotlin.streams.toList
 
-class ObjectCodec : DefinitionCodec<ObjectType> {
+class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
 
     override fun ObjectType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
@@ -85,7 +84,7 @@ class ObjectCodec : DefinitionCodec<ObjectType> {
             78 -> {
                 ambientSoundId = buffer.readUnsignedShort()
                 soundDistance = buffer.readUnsignedByte()
-                if (revisionIsOrAfter(CACHE_REVISION, 220)) {
+                if (revisionIsOrAfter(revision, 220)) {
                     soundRetain = buffer.readUnsignedByte()
                 }
             }
@@ -93,7 +92,7 @@ class ObjectCodec : DefinitionCodec<ObjectType> {
                 soundMin = buffer.readUnsignedShort()
                 soundMax = buffer.readUnsignedShort()
                 soundDistance = buffer.readUnsignedByte()
-                if (revisionIsOrAfter(CACHE_REVISION, 220)) {
+                if (revisionIsOrAfter(revision, 220)) {
                     soundRetain = buffer.readUnsignedByte()
                 }
                 val length: Int = buffer.readUnsignedByte()
@@ -259,7 +258,7 @@ class ObjectCodec : DefinitionCodec<ObjectType> {
             writeByte(78)
             writeShort(definition.ambientSoundId)
             writeByte(definition.soundDistance)
-            if (CacheManager.revisionIsOrAfter(CACHE_REVISION, 220)) {
+            if (CacheManager.revisionIsOrAfter(revision, 220)) {
                 writeByte(definition.soundRetain)
             }
         }
@@ -269,7 +268,7 @@ class ObjectCodec : DefinitionCodec<ObjectType> {
             writeShort(definition.soundMin)
             writeShort(definition.soundMax)
             writeByte(definition.soundDistance)
-            if (CacheManager.revisionIsOrAfter(CACHE_REVISION, 220)) {
+            if (CacheManager.revisionIsOrAfter(revision, 220)) {
                 writeByte(definition.soundRetain)
             }
 

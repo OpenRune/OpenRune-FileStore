@@ -1,6 +1,5 @@
 package dev.openrune.codec
 
-import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.CacheManager
 import dev.openrune.cache.CacheManager.revisionIsOrAfter
 import dev.openrune.cache.filestore.buffer.Reader
@@ -9,7 +8,7 @@ import dev.openrune.cache.filestore.definition.DefinitionCodec
 import dev.openrune.cache.filestore.definition.data.NpcType
 import io.github.oshai.kotlinlogging.KotlinLogging
 
-class NPCCodec : DefinitionCodec<NpcType> {
+class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
     override fun NpcType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
             1 -> {
@@ -59,7 +58,7 @@ class NPCCodec : DefinitionCodec<NpcType> {
             100 -> ambient = buffer.readByte()
             101 -> contrast = buffer.readByte()
             102 -> {
-                if (CacheManager.revisionIsOrBefore(CACHE_REVISION, 210)) {
+                if (CacheManager.revisionIsOrBefore(revision, 210)) {
                     headIconArchiveIds = MutableList(0) { 0 }
                     headIconSpriteIndex = MutableList(buffer.readUnsignedShort()) { 0 }
                 } else {
@@ -220,7 +219,7 @@ class NPCCodec : DefinitionCodec<NpcType> {
 
         if (definition.headIconSpriteIndex != null) {
             writeByte(102)
-            if (CacheManager.revisionIsOrBefore(CACHE_REVISION, 210)) {
+            if (CacheManager.revisionIsOrBefore(revision, 210)) {
                 writeShort(definition.headIconSpriteIndex!!.first())
             } else {
                 writeShort(definition.headIconArchiveIds!!.size)
@@ -244,7 +243,7 @@ class NPCCodec : DefinitionCodec<NpcType> {
             writeByte(109)
         }
 
-        if (revisionIsOrAfter(CACHE_REVISION, 220)) {
+        if (revisionIsOrAfter(revision, 220)) {
             if (definition.lowPriorityFollowerOps) {
                 writeByte(122)
             }

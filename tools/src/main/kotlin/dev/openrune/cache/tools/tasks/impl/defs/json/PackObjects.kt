@@ -2,6 +2,7 @@ package dev.openrune.cache.tools.tasks.impl.defs.json
 
 import com.displee.cache.CacheLibrary
 import com.google.gson.Gson
+import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.OBJECT
 import dev.openrune.cache.filestore.buffer.BufferWriter
@@ -30,7 +31,7 @@ class PackObjects(private val objectDir : File) : CacheTask() {
                     return@forEach
                 }
 
-                val encoder = ObjectCodec()
+                val encoder = ObjectCodec(CACHE_REVISION)
                 val writer = BufferWriter(4096)
                 with(encoder) { writer.encode(def) }
                 library.index(CONFIGS).archive(OBJECT)!!.add(def.id, writer.toArray())

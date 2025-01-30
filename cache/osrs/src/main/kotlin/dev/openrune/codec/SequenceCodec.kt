@@ -1,6 +1,5 @@
 package dev.openrune.codec
 
-import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.CacheManager
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.buffer.Writer
@@ -8,7 +7,7 @@ import dev.openrune.cache.filestore.definition.DefinitionCodec
 import dev.openrune.cache.filestore.definition.data.SequenceType
 import kotlin.math.ceil
 
-class SequenceCodec : DefinitionCodec<SequenceType> {
+class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
     override fun SequenceType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
             1 -> {
@@ -69,7 +68,7 @@ class SequenceCodec : DefinitionCodec<SequenceType> {
                 val count = buffer.readUnsignedByte()
                 soundEffects = MutableList(count) { null }
                 for (i in 0 until count) {
-                    soundEffects[i] = readSounds(buffer, CacheManager.revisionIsOrAfter(CACHE_REVISION,220))
+                    soundEffects[i] = readSounds(buffer, CacheManager.revisionIsOrAfter(revision,220))
                 }
             }
 
@@ -78,7 +77,7 @@ class SequenceCodec : DefinitionCodec<SequenceType> {
                 val count = buffer.readUnsignedShort()
                 for (i in 0 until count) {
                     val index = buffer.readUnsignedShort()
-                    val sound = readSounds(buffer, CacheManager.revisionIsOrAfter(CACHE_REVISION,220))
+                    val sound = readSounds(buffer, CacheManager.revisionIsOrAfter(revision,220))
                     skeletalSounds[index] = sound!!
                 }
             }
@@ -183,7 +182,7 @@ class SequenceCodec : DefinitionCodec<SequenceType> {
             writeByte(13)
             writeByte(definition.soundEffects.size)
             definition.soundEffects.forEach {
-                it!!.writeSound(this, CacheManager.revisionIsOrAfter(CACHE_REVISION,220))
+                it!!.writeSound(this, CacheManager.revisionIsOrAfter(revision,220))
             }
         }
 
@@ -197,7 +196,7 @@ class SequenceCodec : DefinitionCodec<SequenceType> {
             writeShort(definition.skeletalSounds.size)
             definition.skeletalSounds.forEach { (index, sound) ->
                 writeShort(index)
-                sound.writeSound(this, CacheManager.revisionIsOrAfter(CACHE_REVISION,220))
+                sound.writeSound(this, CacheManager.revisionIsOrAfter(revision,220))
             }
         }
 
