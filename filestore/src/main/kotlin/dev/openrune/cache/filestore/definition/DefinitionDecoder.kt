@@ -34,11 +34,7 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
                 val file = getFile(id)
                 val data = cache.data(index, archive, file)
                 if (data != null) {
-                    val definition = if (isRS2()) {
-                        loadData(id, data)
-                    } else {
-                        loadData(id, data, isFlat())
-                    }
+                    val definition = loadData(id, data)
                     changeValues(id, definition)
                     definitions[id] = definition
                 }
@@ -51,7 +47,7 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
         logger.info { "${definitions.size} ${this::class.simpleName} definitions loaded in ${System.currentTimeMillis() - start}ms" }
     }
 
-    open fun loadData(id: Int, data: ByteArray, skipOpcode : Boolean = true): T {
+    open fun loadData(id: Int, data: ByteArray): T {
         val reader = BufferReader(data)
         val definition = createDefinition()
         readLoop(definition, reader)
