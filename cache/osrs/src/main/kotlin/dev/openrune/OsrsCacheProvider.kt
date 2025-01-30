@@ -33,16 +33,16 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     override fun init() {
         try {
             // Use the decoders to load the definitions directly into the maps
-            ObjectDecoder().load(cache, objects)
-            NPCDecoder().load(cache, npcs)
-            ItemDecoder().load(cache, items)
-            VarBitDecoder().load(cache, varbits)
-            VarDecoder().load(cache, varps)
-            SequenceDecoder().load(cache, anims)
-            EnumDecoder().load(cache, enums)
-            HealthBarDecoder().load(cache, healthBars)
-            HitSplatDecoder().load(cache, hitsplats)
-            StructDecoder().load(cache, structs)
+            DefinitionDecoderOSRS.ObjectDecoder().load(cache, objects)
+            DefinitionDecoderOSRS.NPCDecoder().load(cache, npcs)
+            DefinitionDecoderOSRS.ItemDecoder().load(cache, items)
+            DefinitionDecoderOSRS.VarBitDecoder().load(cache, varbits)
+            DefinitionDecoderOSRS.VarDecoder().load(cache, varps)
+            DefinitionDecoderOSRS.SequenceDecoder().load(cache, anims)
+            DefinitionDecoderOSRS.EnumDecoder().load(cache, enums)
+            DefinitionDecoderOSRS.HealthBarDecoder().load(cache, healthBars)
+            DefinitionDecoderOSRS.HitSplatDecoder().load(cache, hitsplats)
+            DefinitionDecoderOSRS.StructDecoder().load(cache, structs)
         } catch (e: BufferUnderflowException) {
             logger.error(e) { "Error reading definitions" }
             throw e

@@ -39,13 +39,13 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
             getFiles(directory, "toml").forEach {
                 progress.extraMessage = it.name
                 when(type) {
-                    PackMode.ITEMS -> packDefinitions<ItemType>(it, ItemDecoder(),library, OBJECT)
-                    PackMode.NPCS -> packDefinitions<NpcType>(it, NPCDecoder(),library,NPC)
-                    PackMode.OBJECTS -> packDefinitions<ObjectType>(it, ObjectDecoder(),library, OBJECT)
-                    PackMode.HITSPLATS -> packDefinitions<HitSplatType>(it, HitSplatDecoder(),library, HITSPLAT)
-                    PackMode.HEALTBAR -> packDefinitions<HealthBarType>(it, HealthBarDecoder(),library, HEALTHBAR)
-                    PackMode.SEQUENCE -> packDefinitions<SequenceType>(it, SequenceDecoder(),library, SEQUENCE)
-                    PackMode.AREA -> packDefinitions<AreaType>(it, AreaDecoder(),library, AREA)
+                    PackMode.ITEMS -> packDefinitions<ItemType>(it, DefinitionDecoderOSRS.ItemDecoder(),library, OBJECT)
+                    PackMode.NPCS -> packDefinitions<NpcType>(it, DefinitionDecoderOSRS.NPCDecoder(),library,NPC)
+                    PackMode.OBJECTS -> packDefinitions<ObjectType>(it, DefinitionDecoderOSRS.ObjectDecoder(),library, OBJECT)
+                    PackMode.HITSPLATS -> packDefinitions<HitSplatType>(it, DefinitionDecoderOSRS.HitSplatDecoder(),library, HITSPLAT)
+                    PackMode.HEALTBAR -> packDefinitions<HealthBarType>(it, DefinitionDecoderOSRS.HealthBarDecoder(),library, HEALTHBAR)
+                    PackMode.SEQUENCE -> packDefinitions<SequenceType>(it, DefinitionDecoderOSRS.SequenceDecoder(),library, SEQUENCE)
+                    PackMode.AREA -> packDefinitions<AreaType>(it, DefinitionDecoderOSRS.AreaDecoder(),library, AREA)
                     else -> println("Not Supported")
                 }
                 progress.step()
