@@ -21,7 +21,6 @@ class TextureDecoder : DefinitionDecoder<TextureType>(TEXTURES) {
     internal val logger = KotlinLogging.logger {}
 
     override fun getArchive(id: Int) = 0
-    override fun isFlat() : Boolean = true
     override fun getFile(id: Int) = id
     override fun createDefinition(): TextureType = TextureType()
 

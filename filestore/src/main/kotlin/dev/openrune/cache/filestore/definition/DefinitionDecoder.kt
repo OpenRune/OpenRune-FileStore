@@ -8,8 +8,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import java.nio.BufferUnderflowException
 
 abstract class DefinitionDecoder<T : Definition>(val index: Int) {
-    
-    open fun isFlat() : Boolean = false
+
     open fun isRS2() : Boolean = false
 
     fun size(cache: Cache): Int {
