@@ -8,9 +8,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import java.nio.BufferUnderflowException
 
 abstract class DefinitionDecoder<T : Definition>(val index: Int) {
-
-    open fun readId(reader: Reader) = reader.readInt()
-
+    
     open fun isFlat() : Boolean = false
     open fun isRS2() : Boolean = false
 
@@ -23,6 +21,7 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
      */
     open fun load(cache: Cache, definitions: MutableMap<Int, T>) {
         val start = System.currentTimeMillis()
+
         val ids: IntArray = if (isRS2()) {
             IntArray(size(cache)) { it }
         } else {
@@ -36,9 +35,9 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
                 val data = cache.data(index, archive, file)
                 if (data != null) {
                     val definition = if (isRS2()) {
-                        loadData(id, data) // RS2-specific data loading
+                        loadData(id, data)
                     } else {
-                        loadData(id, data, isFlat()) // Non-RS2-specific data loading
+                        loadData(id, data, isFlat())
                     }
                     changeValues(id, definition)
                     definitions[id] = definition
