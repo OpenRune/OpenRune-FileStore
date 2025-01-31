@@ -1,5 +1,6 @@
 package dev.openrune.cache.filestore.definition
 
+import dev.openrune.cache.filestore.buffer.BufferReader
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.buffer.Writer
 
@@ -19,4 +20,11 @@ interface DefinitionCodec<T : Definition> {
     fun Writer.encode(definition: T)
 
     fun createDefinition(): T
+
+    fun loadData(id: Int, data: ByteArray): T {
+        val reader = BufferReader(data)
+        val definition = createDefinition()
+        readLoop(definition, reader)
+        return definition
+    }
 }

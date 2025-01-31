@@ -7,7 +7,6 @@ import dev.openrune.cache.SPRITES
 import dev.openrune.cache.TEXTURES
 import dev.openrune.cache.filestore.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.data.TextureType
-import dev.openrune.decoder.TextureDecoder
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.PackSprites.Companion.customSprites
 import dev.openrune.cache.tools.tasks.impl.defs.PackConfig.Companion.mergeDefinitions
@@ -41,7 +40,7 @@ class PackTextures(private val textureDir : File) : CacheTask() {
                 if (def.inherit != -1) {
                     val data = library.data(TEXTURES, 0,def.inherit)
                     data.let {
-                        val inheritedDef = TextureDecoder().loadData(def.inherit,data!!)
+                        val inheritedDef = TextureCodec().loadData(def.inherit,data!!)
                         def = mergeDefinitions(inheritedDef, def)
                     }
                 }

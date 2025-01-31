@@ -32,7 +32,7 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int, val codec: Defi
                 val file = getFile(id)
                 val data = cache.data(index, archive, file)
                 if (data != null) {
-                    val definition = loadData(id, data)
+                    val definition = codec.loadData(id, data)
                     changeValues(id, definition)
                     definitions[id] = definition
                 }
@@ -42,13 +42,6 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int, val codec: Defi
         }
 
         logger.info { "${definitions.size} ${this::class.simpleName} definitions loaded in ${System.currentTimeMillis() - start}ms" }
-    }
-
-    open fun loadData(id: Int, data: ByteArray): T {
-        val reader = BufferReader(data)
-        val definition = codec.createDefinition()
-        codec.readLoop(definition, reader)
-        return definition
     }
 
     open fun getFile(id: Int) = id
