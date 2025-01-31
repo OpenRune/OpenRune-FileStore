@@ -4,10 +4,9 @@ import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.buffer.BufferReader
 import dev.openrune.cache.filestore.buffer.Reader
 import io.github.oshai.kotlinlogging.KotlinLogging
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import java.nio.BufferUnderflowException
 
-abstract class DefinitionDecoder<T : Definition>(val index: Int) {
+abstract class DefinitionDecoder<T : Definition>(val index: Int, val codec: DefinitionCodec<T>) {
 
     open fun isRS2() : Boolean = false
 
@@ -48,7 +47,7 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
     open fun loadData(id: Int, data: ByteArray): T {
         val reader = BufferReader(data)
         val definition = createDefinition()
-        readLoop(definition, reader)
+        codec.readLoop(definition, reader)
         return definition
     }
 
@@ -57,18 +56,6 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int) {
     open fun getFile(id: Int) = id
 
     open fun getArchive(id: Int) = id
-
-    open fun readLoop(definition: T, buffer: Reader) {
-        while (true) {
-            val opcode = buffer.readUnsignedByte()
-            if (opcode == 0) {
-                break
-            }
-            definition.read(opcode, buffer)
-        }
-    }
-
-    protected abstract fun T.read(opcode: Int, buffer: Reader)
 
     /**
      * Allows modifications to be made to the definition after loading.

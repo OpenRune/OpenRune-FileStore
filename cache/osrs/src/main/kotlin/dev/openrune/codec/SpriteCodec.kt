@@ -108,4 +108,8 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
     override fun Writer.encode(definition: SpriteType) {
         TODO("Not yet implemented")
     }
+
+    override fun readLoop(definition: SpriteType, buffer: Reader) {
+        definition.read(-1, buffer)
+    }
 }

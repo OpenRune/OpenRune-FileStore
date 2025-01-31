@@ -10,22 +10,16 @@ import dev.openrune.cache.filestore.definition.data.*
 import dev.openrune.codec.*
 
 sealed class DefinitionDecoderOSRS<T : Definition>(
-    val codec: DefinitionCodec<T>,
+    codec: DefinitionCodec<T>,
     private val archive: Int,
     private val factory: () -> T,
-) : DefinitionDecoder<T>(CONFIGS) {
+) : DefinitionDecoder<T>(CONFIGS, codec) {
 
     override fun getArchive(id: Int) = archive
 
     override fun createDefinition(): T = factory()
 
     override fun getFile(id: Int) = id
-
-    override fun T.read(opcode: Int, buffer: Reader) {
-        codec.run {
-            this@read.read(opcode, buffer)
-        }
-    }
 
     class AreaDecoder : DefinitionDecoderOSRS<AreaType>(AreaCodec(), AREA, ::AreaType)
     class DBRowDecoder : DefinitionDecoderOSRS<DBRowType>(DBRowCodec(), DBROW, ::DBRowType)
