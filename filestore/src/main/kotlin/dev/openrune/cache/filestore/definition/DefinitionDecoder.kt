@@ -46,12 +46,10 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int, val codec: Defi
 
     open fun loadData(id: Int, data: ByteArray): T {
         val reader = BufferReader(data)
-        val definition = createDefinition()
+        val definition = codec.createDefinition()
         codec.readLoop(definition, reader)
         return definition
     }
-
-    protected abstract fun createDefinition(): T
 
     open fun getFile(id: Int) = id
 

@@ -38,4 +38,6 @@ class ParamCodec : DefinitionCodec<ParamType> {
         }
         writeByte(0)
     }
+
+    override fun createDefinition() = ParamType()
 }

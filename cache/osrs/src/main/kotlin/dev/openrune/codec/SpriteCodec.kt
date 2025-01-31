@@ -109,6 +109,8 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
         TODO("Not yet implemented")
     }
 
+    override fun createDefinition() = SpriteType(0)
+
     override fun readLoop(definition: SpriteType, buffer: Reader) {
         definition.read(-1, buffer)
     }

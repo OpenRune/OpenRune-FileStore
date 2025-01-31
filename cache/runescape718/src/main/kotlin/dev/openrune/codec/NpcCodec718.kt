@@ -116,4 +116,6 @@ class NpcCodec718 : DefinitionCodec<NpcType> {
     override fun Writer.encode(definition: NpcType) {
         TODO("Not yet implemented")
     }
+
+    override fun createDefinition() = NpcType()
 }

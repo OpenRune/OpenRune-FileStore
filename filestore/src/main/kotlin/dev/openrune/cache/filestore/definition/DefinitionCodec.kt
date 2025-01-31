@@ -17,4 +17,6 @@ interface DefinitionCodec<T : Definition> {
 
     fun T.read(opcode: Int, buffer: Reader)
     fun Writer.encode(definition: T)
+
+    fun createDefinition(): T
 }

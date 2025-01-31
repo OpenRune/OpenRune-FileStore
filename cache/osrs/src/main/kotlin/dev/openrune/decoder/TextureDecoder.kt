@@ -5,6 +5,6 @@ import dev.openrune.cache.TEXTURES
 import dev.openrune.cache.filestore.definition.data.TextureType
 import dev.openrune.codec.TextureCodec
 
-class TextureDecoder : OpcodelessDecoder<TextureType>(TEXTURES, ::TextureType, TextureCodec()) {
+class TextureDecoder : OpcodelessDecoder<TextureType>(TEXTURES, TextureCodec()) {
     override fun getArchive(id: Int) = 0
 }

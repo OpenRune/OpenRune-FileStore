@@ -302,6 +302,8 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
         writeByte(0)
     }
 
+    override fun createDefinition() = ObjectType()
+
     companion object {
         internal val logger = KotlinLogging.logger {}
     }

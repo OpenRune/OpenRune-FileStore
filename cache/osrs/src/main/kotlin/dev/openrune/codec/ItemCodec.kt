@@ -362,6 +362,8 @@ class ItemCodec : DefinitionCodec<ItemType> {
         writeByte(0)
     }
 
+    override fun createDefinition() = ItemType()
+
     companion object {
         internal val logger = KotlinLogging.logger {}
     }

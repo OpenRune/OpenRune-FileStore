@@ -68,6 +68,8 @@ class TextureCodec : DefinitionCodec<TextureType> {
         writeByte(definition.animationSpeed)
     }
 
+    override fun createDefinition() = TextureType()
+
     override fun readLoop(definition: TextureType, buffer: Reader) {
         definition.read(-1, buffer)
     }

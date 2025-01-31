@@ -7,7 +7,6 @@ import dev.openrune.cache.filestore.definition.DefinitionDecoder
 abstract class ModernDefinitionDecoder<T : Definition>(
     index: Int,
     private val shift: Int,
-    private val factory: () -> T,
     codec: DefinitionCodec<T>
 ) : DefinitionDecoder<T>(index, codec) {
 
@@ -16,5 +15,4 @@ abstract class ModernDefinitionDecoder<T : Definition>(
     override fun getFile(id: Int) = id and mask
     override fun getArchive(id: Int) = id ushr shift
     override fun isRS2() = true
-    override fun createDefinition(): T = factory()
 }

@@ -15,4 +15,6 @@ class VarCodec : DefinitionCodec<VarpType> {
     override fun Writer.encode(definition: VarpType) {
         TODO("Not yet implemented")
     }
+
+    override fun createDefinition() = VarpType()
 }

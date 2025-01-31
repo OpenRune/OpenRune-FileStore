@@ -121,4 +121,6 @@ class AreaCodec : DefinitionCodec<AreaType> {
 
         writeByte(0)
     }
+
+    override fun createDefinition() = AreaType()
 }

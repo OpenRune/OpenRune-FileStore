@@ -15,4 +15,6 @@ class UnderlayCodec : DefinitionCodec<UnderlayType> {
     override fun Writer.encode(definition: UnderlayType) {
         TODO("Not yet implemented")
     }
+
+    override fun createDefinition() = UnderlayType()
 }

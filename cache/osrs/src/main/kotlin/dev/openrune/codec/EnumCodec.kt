@@ -30,4 +30,6 @@ class EnumCodec : DefinitionCodec<EnumType> {
     override fun Writer.encode(definition: EnumType) {
         TODO("Not yet implemented")
     }
+
+    override fun createDefinition() = EnumType()
 }

@@ -292,6 +292,8 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
         writeByte(0)
     }
 
+    override fun createDefinition() = NpcType()
+
     companion object {
         internal val logger = KotlinLogging.logger {}
     }

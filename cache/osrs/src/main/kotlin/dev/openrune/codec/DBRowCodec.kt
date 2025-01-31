@@ -56,6 +56,8 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
         writeByte(0)
     }
 
+    override fun createDefinition() = DBRowType()
+
     private fun Reader.readVarInt2(): Int {
         var value = 0
         var bits = 0

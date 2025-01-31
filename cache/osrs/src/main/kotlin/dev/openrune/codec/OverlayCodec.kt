@@ -18,4 +18,6 @@ class OverlayCodec : DefinitionCodec<OverlayType> {
     override fun Writer.encode(definition: OverlayType) {
         TODO("Not yet implemented")
     }
+
+    override fun createDefinition() = OverlayType()
 }

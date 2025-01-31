@@ -166,4 +166,6 @@ class ItemCodec718 : DefinitionCodec<ItemType> {
         val length = buffer.readUnsignedByte()
         ByteArray(length) { buffer.readByte().toByte() }
     }
+
+    override fun createDefinition() = ItemType()
 }

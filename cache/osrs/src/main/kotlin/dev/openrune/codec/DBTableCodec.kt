@@ -63,6 +63,8 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
         writeByte(255)
         writeByte(0)
     }
+
+    override fun createDefinition() = DBTableType()
 }
 
 fun Writer.writeColumnFields(types: Array<ScriptVarType>, values: Array<Any?>?) {

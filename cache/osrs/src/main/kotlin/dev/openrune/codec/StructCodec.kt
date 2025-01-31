@@ -17,4 +17,6 @@ class StructCodec : DefinitionCodec<StructType> {
 
         writeByte(0)
     }
+
+    override fun createDefinition() = StructType()
 }

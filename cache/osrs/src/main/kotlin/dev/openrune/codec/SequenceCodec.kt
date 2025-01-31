@@ -220,4 +220,6 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
 
         writeByte(0)
     }
+
+    override fun createDefinition() = SequenceType()
 }

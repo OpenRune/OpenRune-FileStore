@@ -17,4 +17,6 @@ class VarBitCodec : DefinitionCodec<VarBitType> {
     override fun Writer.encode(definition: VarBitType) {
         TODO("Not yet implemented")
     }
+
+    override fun createDefinition() = VarBitType()
 }

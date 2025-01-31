@@ -33,5 +33,5 @@ class Runescape718Store(private val cache : Cache, override var cacheRevision : 
 
 }
 
-class ItemDecoder718 : ModernDefinitionDecoder<ItemType>(ITEMS, 8, ::ItemType, ItemCodec718())
-class NpcDecoder718 : ModernDefinitionDecoder<NpcType>(NPCS, 7, ::NpcType, NpcCodec718())
+class ItemDecoder718 : ModernDefinitionDecoder<ItemType>(ITEMS, 8, ItemCodec718())
+class NpcDecoder718 : ModernDefinitionDecoder<NpcType>(NPCS, 7, NpcCodec718())

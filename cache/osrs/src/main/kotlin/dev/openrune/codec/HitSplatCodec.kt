@@ -91,4 +91,6 @@ class HitSplatCodec : DefinitionCodec<HitSplatType> {
 
         writeByte(0)
     }
+
+    override fun createDefinition() = HitSplatType()
 }

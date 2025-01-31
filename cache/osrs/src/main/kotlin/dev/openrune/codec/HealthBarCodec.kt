@@ -63,4 +63,6 @@ class HealthBarCodec : DefinitionCodec<HealthBarType> {
 
         writeByte(0)
     }
+
+    override fun createDefinition() = HealthBarType()
 }
