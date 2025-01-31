@@ -1,9 +1,11 @@
 package dev.openrune
 
-import dev.openrune.cache.CLIENTSCRIPT
-import dev.openrune.cache.CacheStore
+import dev.openrune.cache.*
 import dev.openrune.cache.filestore.Cache
+import dev.openrune.cache.filestore.definition.ConfigDefinitionDecoder
+import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.definition.data.*
+import dev.openrune.codec.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.BufferUnderflowException
 
@@ -33,16 +35,16 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     override fun init() {
         try {
             // Use the decoders to load the definitions directly into the maps
-            DefinitionDecoderOSRS.ObjectDecoder().load(cache, objects)
-            DefinitionDecoderOSRS.NPCDecoder().load(cache, npcs)
-            DefinitionDecoderOSRS.ItemDecoder().load(cache, items)
-            DefinitionDecoderOSRS.VarBitDecoder().load(cache, varbits)
-            DefinitionDecoderOSRS.VarDecoder().load(cache, varps)
-            DefinitionDecoderOSRS.SequenceDecoder().load(cache, anims)
-            DefinitionDecoderOSRS.EnumDecoder().load(cache, enums)
-            DefinitionDecoderOSRS.HealthBarDecoder().load(cache, healthBars)
-            DefinitionDecoderOSRS.HitSplatDecoder().load(cache, hitsplats)
-            DefinitionDecoderOSRS.StructDecoder().load(cache, structs)
+            ObjectDecoder().load(cache, objects)
+            NPCDecoder().load(cache, npcs)
+            ItemDecoder().load(cache, items)
+            VarBitDecoder().load(cache, varbits)
+            VarDecoder().load(cache, varps)
+            SequenceDecoder().load(cache, anims)
+            EnumDecoder().load(cache, enums)
+            HealthBarDecoder().load(cache, healthBars)
+            HitSplatDecoder().load(cache, hitsplats)
+            StructDecoder().load(cache, structs)
         } catch (e: BufferUnderflowException) {
             logger.error(e) { "Error reading definitions" }
             throw e
@@ -56,4 +58,29 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
         }
     }
 
+    class AreaDecoder : ConfigDefinitionDecoder<AreaType>(AreaCodec(), AREA)
+    class DBRowDecoder : ConfigDefinitionDecoder<DBRowType>(DBRowCodec(), DBROW)
+    class DBTableDecoder : ConfigDefinitionDecoder<DBTableType>(DBTableCodec(), DBTABLE)
+    class EnumDecoder : ConfigDefinitionDecoder<EnumType>(EnumCodec(), ENUM)
+    class HealthBarDecoder : ConfigDefinitionDecoder<HealthBarType>(HealthBarCodec(), HEALTHBAR)
+    class HitSplatDecoder : ConfigDefinitionDecoder<HitSplatType>(HitSplatCodec(), HITSPLAT)
+    class ItemDecoder : ConfigDefinitionDecoder<ItemType>(ItemCodec(), ITEM)
+    class NPCDecoder : ConfigDefinitionDecoder<NpcType>(NPCCodec(CACHE_REVISION), NPC)
+    class ObjectDecoder : ConfigDefinitionDecoder<ObjectType>(ObjectCodec(CACHE_REVISION), OBJECT)
+    class OverlayDecoder : ConfigDefinitionDecoder<OverlayType>(OverlayCodec(), OVERLAY)
+    class ParamDecoder : ConfigDefinitionDecoder<ParamType>(ParamCodec(), PARAMS)
+    class SequenceDecoder : ConfigDefinitionDecoder<SequenceType>(SequenceCodec(CACHE_REVISION), SEQUENCE)
+    class StructDecoder : ConfigDefinitionDecoder<StructType>(StructCodec(), STRUCT)
+    class UnderlayDecoder : ConfigDefinitionDecoder<UnderlayType>(UnderlayCodec(), UNDERLAY)
+    class VarBitDecoder : ConfigDefinitionDecoder<VarBitType>(VarBitCodec(), VARBIT)
+    class VarDecoder : ConfigDefinitionDecoder<VarpType>(VarCodec(), VARPLAYER)
+
+    class SpriteDecoder : DefinitionDecoder<SpriteType>(SPRITES, SpriteCodec()) {
+        override fun getFile(id: Int) = 0
+    }
+
+    class TextureDecoder : DefinitionDecoder<TextureType>(TEXTURES, TextureCodec()) {
+        override fun getArchive(id: Int) = 0
+        override fun getFile(id: Int) = 0
+    }
 }

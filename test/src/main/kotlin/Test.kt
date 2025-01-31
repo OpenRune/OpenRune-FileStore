@@ -3,7 +3,6 @@ import dev.openrune.Runescape718Store
 import dev.openrune.cache.CacheManager
 import dev.openrune.cache.filestore.Cache
 import dev.openrune.cache.filestore.definition.data.TextureType
-import dev.openrune.decoder.TextureDecoder
 import java.nio.file.Path
 
 fun main() {
@@ -40,7 +39,7 @@ fun exmaple3() {
     System.out.println(CacheManager.getNpcOrDefault(15454 + 60000).name)
 
     val textures: MutableMap<Int, TextureType> = mutableMapOf()
-    TextureDecoder().load(osrsCache,textures)
+    OsrsCacheProvider.TextureDecoder().load(osrsCache,textures)
     println(textures[0]!!.fileIds.first())
 
     //System.out.println(CacheManager.getItem(20709 + 60000).getColourPalette().recolourPalette.contentToString())
