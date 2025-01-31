@@ -81,6 +81,6 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
 
     class TextureDecoder : DefinitionDecoder<TextureType>(TEXTURES, TextureCodec()) {
         override fun getArchive(id: Int) = 0
-        override fun getFile(id: Int) = 0
+        override fun getFile(id: Int) = id
     }
 }
