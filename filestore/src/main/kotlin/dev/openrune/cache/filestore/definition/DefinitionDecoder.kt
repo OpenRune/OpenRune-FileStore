@@ -1,12 +1,10 @@
 package dev.openrune.cache.filestore.definition
 
 import dev.openrune.cache.filestore.Cache
-import dev.openrune.cache.filestore.buffer.BufferReader
-import dev.openrune.cache.filestore.buffer.Reader
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.BufferUnderflowException
 
-abstract class DefinitionDecoder<T : Definition>(val index: Int, val codec: DefinitionCodec<T>) {
+abstract class DefinitionDecoder<T : Definition>(val index: Int, private val codec: DefinitionCodec<T>, private var transform: DefinitionTransform<T>? = null) {
 
     open fun isRS2() : Boolean = false
 
@@ -33,7 +31,7 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int, val codec: Defi
                 val data = cache.data(index, archive, file)
                 if (data != null) {
                     val definition = codec.loadData(id, data)
-                    changeValues(id, definition)
+                    transform?.changeValues(id, definition)
                     definitions[id] = definition
                 }
             } catch (e: BufferUnderflowException) {
@@ -47,11 +45,6 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int, val codec: Defi
     open fun getFile(id: Int) = id
 
     open fun getArchive(id: Int) = id
-
-    /**
-     * Allows modifications to be made to the definition after loading.
-     */
-    open fun changeValues(id: Int, definition: T) {}
 
     companion object {
         internal val logger = KotlinLogging.logger {}
