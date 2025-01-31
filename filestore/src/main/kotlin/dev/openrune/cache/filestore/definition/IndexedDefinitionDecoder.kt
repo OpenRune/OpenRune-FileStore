@@ -1,10 +1,6 @@
-package dev.openrune
+package dev.openrune.cache.filestore.definition
 
-import dev.openrune.cache.filestore.definition.Definition
-import dev.openrune.cache.filestore.definition.DefinitionCodec
-import dev.openrune.cache.filestore.definition.DefinitionDecoder
-
-abstract class ModernDefinitionDecoder<T : Definition>(
+abstract class IndexedDefinitionDecoder<T : Definition>(
     index: Int,
     private val shift: Int,
     codec: DefinitionCodec<T>
