@@ -8,7 +8,6 @@ import dev.openrune.cache.TEXTURES
 import dev.openrune.cache.filestore.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.data.TextureType
 import dev.openrune.decoder.TextureDecoder
-import dev.openrune.encoder.TextureEncoder
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.PackSprites.Companion.customSprites
 import dev.openrune.cache.tools.tasks.impl.defs.PackConfig.Companion.mergeDefinitions
@@ -16,6 +15,7 @@ import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet.Companion.averageColorForPixels
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
+import dev.openrune.codec.TextureCodec
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.Unpooled
 import java.io.File
@@ -54,7 +54,7 @@ class PackTextures(private val textureDir : File) : CacheTask() {
                         val sprite = SpriteSet.decode(spriteID, Unpooled.wrappedBuffer(library.data(SPRITES, spriteID))).sprites.first()
                         def.averageRgb = averageColorForPixels(sprite.image)
                     }
-                    val encoder = TextureEncoder()
+                    val encoder = TextureCodec()
                     val writer = BufferWriter(4096)
                     with(encoder) { writer.encode(def) }
 
