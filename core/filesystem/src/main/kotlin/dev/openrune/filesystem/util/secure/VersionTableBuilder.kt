@@ -1,4 +1,4 @@
-package dev.openrune.cache.util.secure
+package dev.openrune.filesystem.util.secure
 
 class VersionTableBuilder(
     indexCount: Int

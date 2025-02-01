@@ -4,7 +4,7 @@ import com.displee.cache.CacheLibrary
 import com.google.gson.Gson
 import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.ITEM
-import dev.openrune.cache.filestore.buffer.BufferWriter
+import dev.openrune.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.data.ItemType
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.getFiles

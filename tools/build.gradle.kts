@@ -1,4 +1,5 @@
 dependencies {
+    implementation(project(":core:buffer"))
     implementation(project(":filestore"))
     implementation(project(":cache:osrs"))
     implementation("io.netty:netty-buffer:4.1.107.Final")

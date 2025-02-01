@@ -1,7 +1,7 @@
 package dev.openrune
 
 import dev.openrune.cache.*
-import dev.openrune.cache.filestore.Cache
+import dev.openrune.filesystem.Cache
 import dev.openrune.cache.filestore.definition.ConfigDefinitionDecoder
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.definition.data.*

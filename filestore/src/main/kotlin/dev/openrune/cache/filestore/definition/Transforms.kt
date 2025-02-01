@@ -1,7 +1,7 @@
 package dev.openrune.cache.filestore.definition
 
-import dev.openrune.cache.filestore.buffer.Reader
-import dev.openrune.cache.filestore.buffer.Writer
+import dev.openrune.buffer.Reader
+import dev.openrune.buffer.Writer
 
 interface Transforms {
     var varbit: Int

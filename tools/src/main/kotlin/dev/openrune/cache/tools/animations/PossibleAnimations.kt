@@ -2,7 +2,6 @@ package dev.openrune.cache.tools.animations
 
 import com.google.gson.Gson
 import dev.openrune.cache.CacheManager
-import dev.openrune.cache.filestore.Cache
 import kotlin.system.measureTimeMillis
 
 object PossibleAnimations {

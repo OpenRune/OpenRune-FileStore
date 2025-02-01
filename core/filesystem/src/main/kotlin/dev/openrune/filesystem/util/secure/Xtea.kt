@@ -1,6 +1,6 @@
 @file:Suppress("INTEGER_OVERFLOW")
 
-package dev.openrune.cache.util.secure
+package dev.openrune.filesystem.util.secure
 
 import java.nio.ByteBuffer
 

@@ -1,10 +1,10 @@
-package dev.openrune.cache.filestore.buffer
+package dev.openrune.buffer
 
 import java.nio.ByteBuffer
 
 class BufferReader(
     val buffer: ByteBuffer
-) : dev.openrune.cache.filestore.buffer.Reader {
+) : Reader {
 
     constructor(array: ByteArray) : this(buffer = ByteBuffer.wrap(array))
 
@@ -170,12 +170,12 @@ class BufferReader(
         return buffer.remaining()
     }
 
-    override fun startBitAccess(): dev.openrune.cache.filestore.buffer.Reader {
+    override fun startBitAccess(): Reader {
         bitIndex = buffer.position() * 8
         return this
     }
 
-    override fun stopBitAccess(): dev.openrune.cache.filestore.buffer.Reader {
+    override fun stopBitAccess(): Reader {
         buffer.position((bitIndex + 7) / 8)
         return this
     }
@@ -193,14 +193,14 @@ class BufferReader(
         bitIndex += bitCount
 
         while (bitCount > bitOffset) {
-            value += buffer.get(bytePos++).toInt() and dev.openrune.cache.filestore.buffer.BufferReader.Companion.BIT_MASKS[bitOffset] shl bitCount - bitOffset
+            value += buffer.get(bytePos++).toInt() and BIT_MASKS[bitOffset] shl bitCount - bitOffset
             bitCount -= bitOffset
             bitOffset = 8
         }
         value += if (bitCount == bitOffset) {
-            buffer.get(bytePos).toInt() and dev.openrune.cache.filestore.buffer.BufferReader.Companion.BIT_MASKS[bitOffset]
+            buffer.get(bytePos).toInt() and BIT_MASKS[bitOffset]
         } else {
-            buffer.get(bytePos).toInt() shr bitOffset - bitCount and dev.openrune.cache.filestore.buffer.BufferReader.Companion.BIT_MASKS[bitCount]
+            buffer.get(bytePos).toInt() shr bitOffset - bitCount and BIT_MASKS[bitCount]
         }
         return value
     }
@@ -212,8 +212,8 @@ class BufferReader(
         private val BIT_MASKS = IntArray(32)
 
         init {
-            for (i in dev.openrune.cache.filestore.buffer.BufferReader.Companion.BIT_MASKS.indices)
-                dev.openrune.cache.filestore.buffer.BufferReader.Companion.BIT_MASKS[i] = (1 shl i) - 1
+            for (i in BIT_MASKS.indices)
+                BIT_MASKS[i] = (1 shl i) - 1
         }
     }
 }

@@ -1,7 +1,7 @@
-package dev.openrune.cache.filestore
+package dev.openrune.filesystem
 
-import dev.openrune.cache.util.compress.DecompressionContext
-import dev.openrune.cache.util.secure.VersionTableBuilder
+import dev.openrune.filesystem.util.compress.DecompressionContext
+import dev.openrune.filesystem.util.secure.VersionTableBuilder
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import java.io.File

@@ -1,7 +1,7 @@
 package dev.openrune.cache.filestore.definition
 
-import dev.openrune.cache.filestore.buffer.Reader
-import dev.openrune.cache.filestore.buffer.Writer
+import dev.openrune.buffer.Reader
+import dev.openrune.buffer.Writer
 
 data class SoundData(
     var id: Int,

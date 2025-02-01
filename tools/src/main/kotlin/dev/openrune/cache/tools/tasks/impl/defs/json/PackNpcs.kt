@@ -5,7 +5,7 @@ import com.google.gson.Gson
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.NPC
-import dev.openrune.cache.filestore.buffer.BufferWriter
+import dev.openrune.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.data.NpcType
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.getFiles

@@ -5,7 +5,7 @@ import com.akuleshov7.ktoml.TomlInputConfig
 import com.displee.cache.CacheLibrary
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.*
-import dev.openrune.cache.filestore.buffer.BufferWriter
+import dev.openrune.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.cache.filestore.definition.DefinitionCodec
 import dev.openrune.cache.filestore.definition.data.*

@@ -14,3 +14,6 @@ tools/build/*
 /objects
 /models
 /test
+/core/buffer/build
+/core/filesystem/build
+/core/build

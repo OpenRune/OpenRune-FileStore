@@ -1,16 +1,16 @@
-package dev.openrune.cache.filestore
+package dev.openrune.filesystem
 
-import dev.openrune.cache.MAPS
+import dev.openrune.buffer.BufferReader
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
-import dev.openrune.cache.util.compress.DecompressionContext
-import dev.openrune.cache.util.secure.VersionTableBuilder
+import dev.openrune.filesystem.util.compress.DecompressionContext
+import dev.openrune.filesystem.util.secure.VersionTableBuilder
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.RandomAccessFile
 
 /**
  * [Cache] which efficiently stores information about its indexes, archives and files.
  */
-abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cache {
+abstract class ReadOnlyCache(indexCount: Int) : Cache {
     val indices: IntArray = IntArray(indexCount) { it }
     val archives: Array<IntArray?> = arrayOfNulls(indexCount)
     val fileCounts: Array<IntArray?> = arrayOfNulls(indexCount)
@@ -61,7 +61,7 @@ abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cac
             }
         }
 
-        val reader = dev.openrune.cache.filestore.buffer.BufferReader(decompressed)
+        val reader = BufferReader(decompressed)
         val rawArray = reader.array()
         var fileDataSizesOffset = decompressed.size
         val chunkSize: Int = rawArray[--fileDataSizesOffset].toInt() and 0xFF
@@ -116,7 +116,7 @@ abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cac
         }
         versionTable?.sector(indexId, archiveSector)
         val decompressed = context.decompress(archiveSector) ?: return -1
-        val reader = dev.openrune.cache.filestore.buffer.BufferReader(decompressed)
+        val reader = BufferReader(decompressed)
         val version = reader.readUnsignedByte()
         if (version < 5 || version > 7) {
             throw RuntimeException("Unknown version: $version")
@@ -203,6 +203,7 @@ abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cac
     }
 
     companion object {
+        private const val MAPS = 5
         private val logger = KotlinLogging.logger {}
         private const val NAME_FLAG = 0x1
         private const val WHIRLPOOL_FLAG = 0x2
@@ -215,7 +216,7 @@ abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cac
         private const val SECTOR_HEADER_SIZE_BIG = 10
         private const val SECTOR_DATA_SIZE_BIG = 510
 
-        private fun dev.openrune.cache.filestore.buffer.BufferReader.readSmart(version: Int) = if (version >= 7) readBigSmart() else readUnsignedShort()
+        private fun BufferReader.readSmart(version: Int) = if (version >= 7) readBigSmart() else readUnsignedShort()
 
         /**
          * Reads a section of a cache's archive
@@ -228,7 +229,7 @@ abstract class ReadOnlyCache(indexCount: Int) : dev.openrune.cache.filestore.Cac
             val sectorData = ByteArray(SECTOR_SIZE)
             raf.read(sectorData, 0, INDEX_SIZE)
             val bigSector = sectorId > 65535
-            val buffer = dev.openrune.cache.filestore.buffer.BufferReader(sectorData)
+            val buffer = BufferReader(sectorData)
             val sectorSize = buffer.readUnsignedMedium()
             var sectorPosition = buffer.readUnsignedMedium()
             if (sectorSize < 0 || sectorPosition <= 0 || sectorPosition > mainFile.length() / SECTOR_SIZE) {

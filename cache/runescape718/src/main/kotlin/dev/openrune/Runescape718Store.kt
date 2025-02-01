@@ -3,7 +3,7 @@ package dev.openrune
 import dev.openrune.Index.ITEMS
 import dev.openrune.Index.NPCS
 import dev.openrune.cache.CacheStore
-import dev.openrune.cache.filestore.Cache
+import dev.openrune.filesystem.Cache
 import dev.openrune.cache.filestore.definition.IndexedDefinitionDecoder
 import dev.openrune.cache.filestore.definition.data.*
 import dev.openrune.codec.ItemCodec718

@@ -1,10 +1,9 @@
-package dev.openrune.cache.filestore
+package dev.openrune.filesystem
 
-import dev.openrune.cache.util.secure.VersionTableBuilder
+import dev.openrune.filesystem.util.secure.VersionTableBuilder
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.RandomAccessFile
-import java.math.BigInteger
 import java.util.*
 
 interface CacheLoader {

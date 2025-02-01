@@ -1,7 +1,7 @@
 import dev.openrune.OsrsCacheProvider
 import dev.openrune.Runescape718Store
 import dev.openrune.cache.CacheManager
-import dev.openrune.cache.filestore.Cache
+import dev.openrune.filesystem.Cache
 import dev.openrune.cache.filestore.definition.data.SpriteSaveMode
 import dev.openrune.cache.filestore.definition.data.SpriteType
 import dev.openrune.cache.filestore.definition.data.TextureType

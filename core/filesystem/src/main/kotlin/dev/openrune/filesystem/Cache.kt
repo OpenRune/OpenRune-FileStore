@@ -1,4 +1,4 @@
-package dev.openrune.cache.filestore
+package dev.openrune.filesystem
 
 import java.nio.file.Path
 
@@ -41,8 +41,8 @@ interface Cache {
     fun close()
 
     companion object {
-        fun load(location : Path, live: Boolean): dev.openrune.cache.filestore.Cache {
-            val loader = if (live) dev.openrune.cache.filestore.MemoryCache else dev.openrune.cache.filestore.FileCache
+        fun load(location : Path, live: Boolean): Cache {
+            val loader = if (live) MemoryCache else FileCache
             return loader.load(location.toFile().absolutePath)
         }
     }

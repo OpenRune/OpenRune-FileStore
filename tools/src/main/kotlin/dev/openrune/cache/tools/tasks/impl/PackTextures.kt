@@ -5,7 +5,7 @@ import cc.ekblad.toml.tomlMapper
 import com.displee.cache.CacheLibrary
 import dev.openrune.cache.SPRITES
 import dev.openrune.cache.TEXTURES
-import dev.openrune.cache.filestore.buffer.BufferWriter
+import dev.openrune.buffer.BufferWriter
 import dev.openrune.cache.filestore.definition.data.TextureType
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.PackSprites.Companion.customSprites

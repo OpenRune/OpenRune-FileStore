@@ -1,4 +1,4 @@
-package dev.openrune.cache.util.compress
+package dev.openrune.filesystem.util.compress
 
 /**
  * A class representing the BZIP2 (de)compressor.

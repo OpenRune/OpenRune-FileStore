@@ -1,4 +1,4 @@
-package dev.openrune.cache.filestore.buffer
+package dev.openrune.buffer
 
 interface Reader {
 

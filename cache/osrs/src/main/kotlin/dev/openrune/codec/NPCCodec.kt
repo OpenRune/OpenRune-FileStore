@@ -2,8 +2,8 @@ package dev.openrune.codec
 
 import dev.openrune.cache.CacheManager
 import dev.openrune.cache.CacheManager.revisionIsOrAfter
-import dev.openrune.cache.filestore.buffer.Reader
-import dev.openrune.cache.filestore.buffer.Writer
+import dev.openrune.buffer.Reader
+import dev.openrune.buffer.Writer
 import dev.openrune.cache.filestore.definition.DefinitionCodec
 import dev.openrune.cache.filestore.definition.data.NpcType
 import io.github.oshai.kotlinlogging.KotlinLogging
