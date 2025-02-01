@@ -59,14 +59,14 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     }
 
     class AreaDecoder : ConfigDefinitionDecoder<AreaType>(AreaCodec(), AREA)
-    class DBRowDecoder : ConfigDefinitionDecoder<DBRowType>(dev.openrune.definition.codec.DBRowCodec(), DBROW)
+    class DBRowDecoder : ConfigDefinitionDecoder<DBRowType>(DBRowCodec(), DBROW)
     class DBTableDecoder : ConfigDefinitionDecoder<DBTableType>(DBTableCodec(), DBTABLE)
     class EnumDecoder : ConfigDefinitionDecoder<EnumType>(EnumCodec(), ENUM)
-    class HealthBarDecoder : ConfigDefinitionDecoder<HealthBarType>(dev.openrune.definition.codec.HealthBarCodec(), HEALTHBAR)
-    class HitSplatDecoder : ConfigDefinitionDecoder<HitSplatType>(dev.openrune.definition.codec.HitSplatCodec(), HITSPLAT)
+    class HealthBarDecoder : ConfigDefinitionDecoder<HealthBarType>(HealthBarCodec(), HEALTHBAR)
+    class HitSplatDecoder : ConfigDefinitionDecoder<HitSplatType>(HitSplatCodec(), HITSPLAT)
     class ItemDecoder : ConfigDefinitionDecoder<ItemType>(ItemCodec(), ITEM)
     class NPCDecoder : ConfigDefinitionDecoder<NpcType>(NPCCodec(CACHE_REVISION), NPC)
-    class ObjectDecoder : ConfigDefinitionDecoder<dev.openrune.definition.type.ObjectType>(ObjectCodec(CACHE_REVISION), OBJECT)
+    class ObjectDecoder : ConfigDefinitionDecoder<ObjectType>(ObjectCodec(CACHE_REVISION), OBJECT)
     class OverlayDecoder : ConfigDefinitionDecoder<OverlayType>(OverlayCodec(), OVERLAY)
     class ParamDecoder : ConfigDefinitionDecoder<ParamType>(ParamCodec(), PARAMS)
     class SequenceDecoder : ConfigDefinitionDecoder<SequenceType>(SequenceCodec(CACHE_REVISION), SEQUENCE)
@@ -76,6 +76,8 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     class VarDecoder : ConfigDefinitionDecoder<VarpType>(VarCodec(), VARPLAYER)
     class IdentityKitDecoder : ConfigDefinitionDecoder<IdentityKitType>(IdentityKitCodec(), IDENTKIT)
     class InventoryDecoder : ConfigDefinitionDecoder<InventoryType>(InventoryCodec(), INV)
+    class SpotAnimDecoder : ConfigDefinitionDecoder<SpotAnimType>(SpotAnimCodec(), SPOTANIM)
+    class VarClientDecoder : ConfigDefinitionDecoder<VarClientType>(VarClientCodec(), VARCLIENT)
 
     class TextureDecoder : DefinitionDecoder<TextureType>(TEXTURES, TextureCodec()) {
         override fun getArchive(id: Int) = 0

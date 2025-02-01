@@ -52,6 +52,7 @@ class IdentityKitCodec : DefinitionCodec<IdentityKitType> {
                 writeShort(definition.chatheadModels[i])
             }
         }
+        writeByte(0)
     }
 
     override fun createDefinition() = IdentityKitType()

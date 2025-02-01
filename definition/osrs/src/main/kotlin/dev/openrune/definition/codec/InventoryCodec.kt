@@ -18,6 +18,7 @@ class InventoryCodec : DefinitionCodec<InventoryType> {
             writeByte(2)
             writeShort(definition.size)
         }
+        writeByte(0)
     }
 
     override fun createDefinition() = InventoryType()
