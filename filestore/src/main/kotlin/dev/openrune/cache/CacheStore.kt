@@ -1,13 +1,13 @@
 package dev.openrune.cache
 
-import dev.openrune.cache.filestore.definition.data.*
+import dev.openrune.definition.type.*
 
 abstract class CacheStore() {
 
     open var cacheRevision = -1
 
     open val npcs: MutableMap<Int, NpcType> = mutableMapOf()
-    open val  objects: MutableMap<Int, ObjectType> = mutableMapOf()
+    open val  objects: MutableMap<Int, dev.openrune.definition.type.ObjectType> = mutableMapOf()
     open val  items: MutableMap<Int, ItemType> = mutableMapOf()
     open val  varbits: MutableMap<Int, VarBitType> = mutableMapOf()
     open val  varps: MutableMap<Int, VarpType> = mutableMapOf()

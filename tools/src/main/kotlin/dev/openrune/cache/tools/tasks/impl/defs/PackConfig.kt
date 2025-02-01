@@ -5,15 +5,15 @@ import com.akuleshov7.ktoml.TomlInputConfig
 import com.displee.cache.CacheLibrary
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.*
-import dev.openrune.cache.filestore.buffer.BufferWriter
-import dev.openrune.cache.filestore.definition.Definition
-import dev.openrune.cache.filestore.definition.DefinitionCodec
-import dev.openrune.cache.filestore.definition.data.*
+import dev.openrune.buffer.BufferWriter
+import dev.openrune.definition.Definition
+import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.type.*
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.capitalizeFirstLetter
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
-import dev.openrune.codec.*
+import dev.openrune.definition.codec.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.serialization.decodeFromString
 import java.io.File
@@ -43,9 +43,11 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
                 when(type) {
                     PackMode.ITEMS -> packDefinitions<ItemType>(it, ItemCodec(),library, OBJECT)
                     PackMode.NPCS -> packDefinitions<NpcType>(it, NPCCodec(CACHE_REVISION),library,NPC)
-                    PackMode.OBJECTS -> packDefinitions<ObjectType>(it, ObjectCodec(CACHE_REVISION),library, OBJECT)
-                    PackMode.HITSPLATS -> packDefinitions<HitSplatType>(it, HitSplatCodec(),library, HITSPLAT)
-                    PackMode.HEALTBAR -> packDefinitions<HealthBarType>(it, HealthBarCodec(),library, HEALTHBAR)
+                    PackMode.OBJECTS -> packDefinitions<dev.openrune.definition.type.ObjectType>(it, ObjectCodec(CACHE_REVISION),library, OBJECT)
+                    PackMode.HITSPLATS -> packDefinitions<HitSplatType>(it,
+                        dev.openrune.definition.codec.HitSplatCodec(),library, HITSPLAT)
+                    PackMode.HEALTBAR -> packDefinitions<HealthBarType>(it,
+                        dev.openrune.definition.codec.HealthBarCodec(),library, HEALTHBAR)
                     PackMode.SEQUENCE -> packDefinitions<SequenceType>(it, SequenceCodec(CACHE_REVISION),library, SEQUENCE)
                     PackMode.AREA -> packDefinitions<AreaType>(it, AreaCodec(),library, AREA)
                     else -> println("Not Supported")

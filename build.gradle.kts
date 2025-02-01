@@ -1,6 +1,5 @@
 plugins {
     kotlin("jvm") version "1.9.0"
-    `maven-publish`
 }
 
 allprojects {
@@ -25,18 +24,4 @@ allprojects {
         implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
         implementation("org.slf4j:slf4j-api:2.1.0-alpha1")
     }
-    plugins.withType<MavenPublishPlugin> {
-        configure<PublishingExtension> {
-            publications.withType<MavenPublication> {
-                groupId = "dev.openrune"
-                artifactId = if (project.name == "filestore") "filestore" else if (project.name == "tools") "filestore-tools" else "filestore-integration"
-                version = version
-            }
-        }
-    }
-}
-
-subprojects {
-    apply(plugin = "maven-publish")
-    apply(plugin = "org.jetbrains.kotlin.jvm")
 }

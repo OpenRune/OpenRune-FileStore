@@ -1,12 +1,12 @@
 package dev.openrune.cache
 
-import dev.openrune.cache.filestore.definition.Definition
-import dev.openrune.cache.filestore.definition.data.*
+import dev.openrune.definition.Definition
+import dev.openrune.definition.type.*
 
 object CacheManager {
 
     private val combinedNpcs = mutableMapOf<Int, NpcType>()
-    private val combinedObjects = mutableMapOf<Int, ObjectType>()
+    private val combinedObjects = mutableMapOf<Int, dev.openrune.definition.type.ObjectType>()
     private val combinedItems = mutableMapOf<Int, ItemType>()
     private val combinedVarbits = mutableMapOf<Int, VarBitType>()
     private val combinedVarps = mutableMapOf<Int, VarpType>()
@@ -64,7 +64,7 @@ object CacheManager {
     fun getStruct(id: Int) = combinedStructs[id]
 
     fun getNpcOrDefault(id: Int) = getOrDefault(combinedNpcs, id, NpcType(), "Npc")
-    fun getObjectOrDefault(id: Int) = getOrDefault(combinedObjects, id, ObjectType(), "Object")
+    fun getObjectOrDefault(id: Int) = getOrDefault(combinedObjects, id, dev.openrune.definition.type.ObjectType(), "Object")
     fun getItemOrDefault(id: Int) = getOrDefault(combinedItems, id, ItemType(), "Item")
     fun getVarbitOrDefault(id: Int) = getOrDefault(combinedVarbits, id, VarBitType(), "Varbit")
     fun getVarpOrDefault(id: Int) = getOrDefault(combinedVarps, id, VarpType(), "Varp")

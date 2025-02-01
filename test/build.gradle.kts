@@ -1,6 +1,8 @@
 dependencies {
+    implementation(project(":core:filesystem"))
     implementation(project(":filestore"))
-    implementation(project(":cache:runescape718"))
-    implementation(project(":cache:osrs"))
+    implementation(project(":definition"))
+    implementation(project(":filestore:r718-fs"))
+    implementation(project(":filestore:osrs-fs"))
     implementation(project(":tools"))
 }

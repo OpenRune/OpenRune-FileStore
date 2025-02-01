@@ -5,8 +5,8 @@ import cc.ekblad.toml.tomlMapper
 import com.displee.cache.CacheLibrary
 import dev.openrune.cache.SPRITES
 import dev.openrune.cache.TEXTURES
-import dev.openrune.cache.filestore.buffer.BufferWriter
-import dev.openrune.cache.filestore.definition.data.TextureType
+import dev.openrune.buffer.BufferWriter
+import dev.openrune.definition.type.TextureType
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.PackSprites.Companion.customSprites
 import dev.openrune.cache.tools.tasks.impl.defs.PackConfig.Companion.mergeDefinitions
@@ -14,7 +14,7 @@ import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet.Companion.averageColorForPixels
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
-import dev.openrune.codec.TextureCodec
+import dev.openrune.definition.codec.TextureCodec
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.Unpooled
 import java.io.File

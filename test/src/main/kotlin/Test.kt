@@ -1,11 +1,11 @@
 import dev.openrune.OsrsCacheProvider
 import dev.openrune.Runescape718Store
 import dev.openrune.cache.CacheManager
-import dev.openrune.cache.filestore.Cache
-import dev.openrune.cache.filestore.definition.data.SpriteSaveMode
-import dev.openrune.cache.filestore.definition.data.SpriteType
-import dev.openrune.cache.filestore.definition.data.TextureType
-import dev.openrune.codec.SpriteDecoder
+import dev.openrune.cache.filestore.definition.SpriteDecoder
+import dev.openrune.filesystem.Cache
+import dev.openrune.definition.type.SpriteSaveMode
+import dev.openrune.definition.type.SpriteType
+import dev.openrune.definition.type.TextureType
 import java.nio.file.Path
 
 fun main() {

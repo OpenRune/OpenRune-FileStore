@@ -5,12 +5,12 @@ import com.google.gson.Gson
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.OBJECT
-import dev.openrune.cache.filestore.buffer.BufferWriter
-import dev.openrune.cache.filestore.definition.data.ObjectType
+import dev.openrune.buffer.BufferWriter
+import dev.openrune.definition.type.ObjectType
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
-import dev.openrune.codec.ObjectCodec
+import dev.openrune.definition.codec.ObjectCodec
 import java.io.File
 
 @Deprecated(
@@ -25,7 +25,7 @@ class PackObjects(private val objectDir : File) : CacheTask() {
         val errors : MutableMap<String, String> = emptyMap<String, String>().toMutableMap()
         if (size != 0) {
             getFiles(objectDir,"json").forEach {
-                val def: ObjectType = Gson().fromJson(it.readText(), ObjectType::class.java)
+                val def: dev.openrune.definition.type.ObjectType = Gson().fromJson(it.readText(), dev.openrune.definition.type.ObjectType::class.java)
                 if (def.id == 0) {
                     errors[it.toString()] = "ID is 0 please set a id for the npc to pack"
                     return@forEach
