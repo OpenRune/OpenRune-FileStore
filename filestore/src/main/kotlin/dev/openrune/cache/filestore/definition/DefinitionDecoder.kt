@@ -35,7 +35,7 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int, private val cod
                     definitions[id] = definition
                 }
             } catch (e: BufferUnderflowException) {
-                println("Error reading definition $id")
+                println("Error reading definition ${index}: $id")
             }
         }
 

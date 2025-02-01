@@ -13,6 +13,14 @@ interface Definition {
         extra[key] = value
     }
 
+    fun Definition.getBooleanProperty(key: String): Boolean {
+        return key == "true"
+    }
+
+    fun Definition.getIntArray2DProperty(key: String): Array<IntArray?> {
+        return (extra[key] as? Array<IntArray?>) ?: emptyArray()
+    }
+
     fun Definition.getIntProperty(key: String): Int {
         return (extra[key] as? Int) ?: -1
     }
