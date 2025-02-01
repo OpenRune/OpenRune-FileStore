@@ -23,7 +23,6 @@ class EnumCodec : DefinitionCodec<EnumType> {
                     }
                 }
             }
-            else -> throw IllegalStateException("Unknown opcode: $opcode in EnumDef")
         }
     }
 
