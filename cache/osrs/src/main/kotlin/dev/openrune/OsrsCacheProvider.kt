@@ -4,8 +4,8 @@ import dev.openrune.cache.*
 import dev.openrune.filesystem.Cache
 import dev.openrune.cache.filestore.definition.ConfigDefinitionDecoder
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
-import dev.openrune.cache.filestore.definition.data.*
-import dev.openrune.codec.*
+import dev.openrune.definition.type.*
+import dev.openrune.definition.codec.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.BufferUnderflowException
 
@@ -22,7 +22,7 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     }
 
     override val npcs: MutableMap<Int, NpcType> = mutableMapOf()
-    override val objects: MutableMap<Int, ObjectType> = mutableMapOf()
+    override val objects: MutableMap<Int, dev.openrune.definition.type.ObjectType> = mutableMapOf()
     override val items: MutableMap<Int, ItemType> = mutableMapOf()
     override val varbits: MutableMap<Int, VarBitType> = mutableMapOf()
     override val varps: MutableMap<Int, VarpType> = mutableMapOf()
@@ -59,14 +59,14 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     }
 
     class AreaDecoder : ConfigDefinitionDecoder<AreaType>(AreaCodec(), AREA)
-    class DBRowDecoder : ConfigDefinitionDecoder<DBRowType>(DBRowCodec(), DBROW)
+    class DBRowDecoder : ConfigDefinitionDecoder<DBRowType>(dev.openrune.definition.codec.DBRowCodec(), DBROW)
     class DBTableDecoder : ConfigDefinitionDecoder<DBTableType>(DBTableCodec(), DBTABLE)
     class EnumDecoder : ConfigDefinitionDecoder<EnumType>(EnumCodec(), ENUM)
-    class HealthBarDecoder : ConfigDefinitionDecoder<HealthBarType>(HealthBarCodec(), HEALTHBAR)
-    class HitSplatDecoder : ConfigDefinitionDecoder<HitSplatType>(HitSplatCodec(), HITSPLAT)
+    class HealthBarDecoder : ConfigDefinitionDecoder<HealthBarType>(dev.openrune.definition.codec.HealthBarCodec(), HEALTHBAR)
+    class HitSplatDecoder : ConfigDefinitionDecoder<HitSplatType>(dev.openrune.definition.codec.HitSplatCodec(), HITSPLAT)
     class ItemDecoder : ConfigDefinitionDecoder<ItemType>(ItemCodec(), ITEM)
     class NPCDecoder : ConfigDefinitionDecoder<NpcType>(NPCCodec(CACHE_REVISION), NPC)
-    class ObjectDecoder : ConfigDefinitionDecoder<ObjectType>(ObjectCodec(CACHE_REVISION), OBJECT)
+    class ObjectDecoder : ConfigDefinitionDecoder<dev.openrune.definition.type.ObjectType>(ObjectCodec(CACHE_REVISION), OBJECT)
     class OverlayDecoder : ConfigDefinitionDecoder<OverlayType>(OverlayCodec(), OVERLAY)
     class ParamDecoder : ConfigDefinitionDecoder<ParamType>(ParamCodec(), PARAMS)
     class SequenceDecoder : ConfigDefinitionDecoder<SequenceType>(SequenceCodec(CACHE_REVISION), SEQUENCE)

@@ -17,3 +17,8 @@ tools/build/*
 /core/buffer/build
 /core/filesystem/build
 /core/build
+/definition/build
+/definition/osrs/build
+/definition/r718/build
+/filestore/r718/build
+/filestore/osrs/build

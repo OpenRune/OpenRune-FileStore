@@ -1,7 +1,7 @@
 package dev.openrune.cache.tools.tasks.impl
 
 import com.displee.cache.CacheLibrary
-import dev.openrune.RSCMHandler
+import dev.openrune.definition.RSCMHandler
 import dev.openrune.cache.MODELS
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.decompressGzipToBytes

@@ -5,9 +5,9 @@ import dev.openrune.Index.NPCS
 import dev.openrune.cache.CacheStore
 import dev.openrune.filesystem.Cache
 import dev.openrune.cache.filestore.definition.IndexedDefinitionDecoder
-import dev.openrune.cache.filestore.definition.data.*
-import dev.openrune.codec.ItemCodec718
-import dev.openrune.codec.NpcCodec718
+import dev.openrune.definition.type.*
+import dev.openrune.definition.codec.ItemCodec718
+import dev.openrune.definition.codec.NpcCodec718
 import java.nio.BufferUnderflowException
 
 class Runescape718Store(private val cache : Cache, override var cacheRevision : Int = -1) : CacheStore() {

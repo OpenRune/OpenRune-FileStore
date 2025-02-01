@@ -1,6 +1,6 @@
 package dev.openrune.cache.tools
 
-import dev.openrune.RSCMHandler
+import dev.openrune.definition.RSCMHandler
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.TaskType
 import java.io.File

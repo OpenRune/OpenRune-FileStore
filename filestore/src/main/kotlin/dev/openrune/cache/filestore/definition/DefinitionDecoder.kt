@@ -1,6 +1,8 @@
 package dev.openrune.cache.filestore.definition
 
 import dev.openrune.cache.SPRITES
+import dev.openrune.definition.Definition
+import dev.openrune.definition.DefinitionCodec
 import dev.openrune.filesystem.Cache
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.BufferUnderflowException

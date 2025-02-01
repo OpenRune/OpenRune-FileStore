@@ -1,5 +1,8 @@
 package dev.openrune.cache.filestore.definition
 
+import dev.openrune.definition.Definition
+import dev.openrune.definition.DefinitionCodec
+
 abstract class IndexedDefinitionDecoder<T : Definition>(
     index: Int,
     private val shift: Int,
