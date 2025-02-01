@@ -22,3 +22,6 @@ tools/build/*
 /definition/r718/build
 /filestore/r718/build
 /filestore/osrs/build
+/filestore/osrs-fs/build
+/filestore/r718-fs/build
+/cache/build

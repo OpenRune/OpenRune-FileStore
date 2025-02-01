@@ -28,3 +28,6 @@ interface DefinitionCodec<T : Definition> {
         return definition
     }
 }
+
+fun revisionIsOrAfter(cacheRevision : Int, rev: Int) = rev <= cacheRevision
+fun revisionIsOrBefore(cacheRevision : Int,rev: Int) = rev >= cacheRevision

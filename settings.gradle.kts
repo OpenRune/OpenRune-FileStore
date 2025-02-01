@@ -1,6 +1,7 @@
 rootProject.name = "filestore"
 
 include("core:buffer", "core:filesystem")
-include("filestore","tools","cache:osrs","cache:runescape718","cache:common","test")
-include("filestore:r718", "filestore:osrs")
-include("definition", "definition:osrs", "filestore:r718")
+include("definition", "definition:osrs", "definition:r718")
+include("filestore", "filestore:r718-fs", "filestore:osrs-fs")
+
+include("tools", "test")
