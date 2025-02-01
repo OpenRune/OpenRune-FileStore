@@ -8,8 +8,8 @@ data class IndexedSprite(
     var width: Int = 0,
     var height: Int = 0,
     var averageColor : Int = -1,
-    var deltaHeight: Int = 0,
-    var deltaWidth: Int = 0,
+    var subHeight: Int = 0,
+    var subWidth: Int = 0,
     var alpha: ByteArray? = null
 ) {
 
@@ -57,8 +57,8 @@ data class IndexedSprite(
         if (offsetY != other.offsetY) return false
         if (width != other.width) return false
         if (height != other.height) return false
-        if (deltaHeight != other.deltaHeight) return false
-        if (deltaWidth != other.deltaWidth) return false
+        if (subHeight != other.subHeight) return false
+        if (subWidth != other.subWidth) return false
         if (alpha != null) {
             if (other.alpha == null) return false
             if (!alpha.contentEquals(other.alpha)) return false
@@ -74,8 +74,8 @@ data class IndexedSprite(
         result = 31 * result + offsetY
         result = 31 * result + width
         result = 31 * result + height
-        result = 31 * result + deltaHeight
-        result = 31 * result + deltaWidth
+        result = 31 * result + subHeight
+        result = 31 * result + subWidth
         result = 31 * result + (alpha?.contentHashCode() ?: 0)
         result = 31 * result + raster.contentHashCode()
         result = 31 * result + palette.contentHashCode()

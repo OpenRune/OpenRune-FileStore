@@ -75,10 +75,6 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     class VarBitDecoder : ConfigDefinitionDecoder<VarBitType>(VarBitCodec(), VARBIT)
     class VarDecoder : ConfigDefinitionDecoder<VarpType>(VarCodec(), VARPLAYER)
 
-    class SpriteDecoder : DefinitionDecoder<SpriteType>(SPRITES, SpriteCodec()) {
-        override fun getFile(id: Int) = 0
-    }
-
     class TextureDecoder : DefinitionDecoder<TextureType>(TEXTURES, TextureCodec()) {
         override fun getArchive(id: Int) = 0
         override fun getFile(id: Int) = id

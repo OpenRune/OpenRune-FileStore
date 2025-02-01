@@ -2,6 +2,7 @@ filestore/build/*
 /build/*
 cache/runescape718/build/*
 cache/runescape718/repo/*
+cache/common/build/*
 cache/osrs/build/*
 cache/osrs/repo/*
 tools/build/*

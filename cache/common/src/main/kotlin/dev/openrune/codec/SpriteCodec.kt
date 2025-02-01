@@ -1,13 +1,16 @@
 package dev.openrune.codec
 
+import dev.openrune.cache.SPRITES
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.buffer.Writer
 import dev.openrune.cache.filestore.definition.DefinitionCodec
+import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.definition.data.SpriteType
 import dev.openrune.game.IndexedSprite
 
-private const val FLAG_VERTICAL = 0x01
-private const val FLAG_ALPHA = 0x02
+class SpriteDecoder : DefinitionDecoder<SpriteType>(SPRITES, SpriteCodec()) {
+    override fun getFile(id: Int) = 0
+}
 
 class SpriteCodec : DefinitionCodec<SpriteType> {
     override fun SpriteType.read(opcode: Int, buffer: Reader) {
@@ -35,8 +38,8 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
         }
         for (index in 0 until size) {
             val sprite = sprites[index]
-            sprite.deltaWidth = offsetX - sprite.width - sprite.offsetX
-            sprite.deltaHeight = offsetY - sprite.height - sprite.offsetY
+            sprite.subWidth = offsetX - sprite.width - sprite.offsetX
+            sprite.subHeight = offsetY - sprite.height - sprite.offsetY
         }
 
         buffer.position(buffer.array().size - 7 - size * 8 - (paletteSize - 1) * 3)

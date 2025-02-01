@@ -2,81 +2,160 @@ package dev.openrune.cache.filestore.definition.data
 
 import dev.openrune.cache.filestore.definition.Definition
 import dev.openrune.game.IndexedSprite
+import java.awt.Graphics2D
 import java.awt.image.BufferedImage
-import kotlin.math.ceil
+import java.io.File
+import java.nio.file.Path
+import javax.imageio.ImageIO
 
+enum class SpriteSaveMode {
+    /**
+     * Saves each sprite individually as a separate PNG file.
+     */
+    SINGLE_SPRITES,
+
+    /**
+     * Saves all sprites in a single sprite sheet image (one PNG file containing all sprites).
+     */
+    SPRITE_SHEET,
+
+    /**
+     * Saves each sprite as an individual PNG file but organizes them into directories based on their sprite id.
+     * This creates a folder for each sprite id and places individual sprite images inside it.
+     */
+    SPRITE_SHEET_INDIVIDUAL;
+}
 
 data class SpriteType(
     override var id: Int,
-    var sprites: Array<IndexedSprite>? = null,
+    var sprites: Array<IndexedSprite> = emptyArray(),
     override var inherit: Int = -1
 ) : Definition {
 
-    var spriteSheet : BufferedImage? = null
-
-    fun toSprite(subIndex: Int = -1): BufferedImage {
-        val spriteList = sprites ?: return BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB)
-
-        return if (spriteList.size == 1) {
-            spriteList.first().toBufferedImage()
+    /**
+     * Saves the sprite(s) to a specified path based on the provided settings.
+     *
+     * @param path The directory where the sprite(s) will be saved.
+     * @param saveAsSheet If true, saves sprites as a sprite sheet. Defaults to true.
+     * @param subIndex The index of the sprite to save if saving as a sprite sheet. Defaults to -1.
+     *                 If `saveAsSheet` is false, this is ignored.
+     * @return The sprite image (BufferedImage).
+     */
+    fun getSprite(saveAsSheet: Boolean = true, subIndex: Int = -1): BufferedImage {
+        return if (saveAsSheet) {
+            if (subIndex == -1) {
+                val (spriteSheet, _, _) = createSpriteSheet(this)
+                spriteSheet
+            } else {
+                val singleSprite = sprites[subIndex]
+                val spriteImage = singleSprite.toBufferedImage()
+                spriteImage
+            }
         } else {
-            when {
-                subIndex in spriteList.indices -> {
-                    return spriteList[subIndex].toBufferedImage()
-                }
-                else -> {
-                    spriteSheet = createSpriteSheet(spriteList,200)
-                    return spriteSheet!!
-                }
-            }
+            val spriteImage = sprites.first().toBufferedImage()
+            spriteImage
         }
     }
 
-    private fun createSpriteSheet(spriteList: Array<IndexedSprite>, sheetWidth: Int): BufferedImage {
-        // Determine the maximum width and height of all sprites
-        val maxSpriteWidth = spriteList.maxOf { it.width }
-        val maxSpriteHeight = spriteList.maxOf { it.height }
+    companion object {
 
-        // Calculate the number of columns that fit in the specified sheet width
-        var cols = sheetWidth / maxSpriteWidth
-        if (cols == 0) cols = 1 // Avoid division by zero
+        /**
+         * Dumps all the sprites to the specified location in the chosen format.
+         *
+         * @param sprites A map of sprite IDs to their corresponding SpriteType objects.
+         * @param saveLocation The directory where the sprites will be saved. Defaults to `./sprites/`.
+         * @param spriteSaveMode The method of saving sprites: individual PNG files, sprite sheets, or individual files inside directories.
+         */
+        @JvmStatic
+        fun dumpAllSprites(
+            sprites: MutableMap<Int, SpriteType>,
+            saveLocation: Path = Path.of("./sprites/"),
+            spriteSaveMode: SpriteSaveMode = SpriteSaveMode.SINGLE_SPRITES,
+            progressCallback: (Int, Int) -> Unit = { total, done -> }
+        ) {
+            val saveLocationDir = saveLocation.toFile()
+            if (!saveLocationDir.exists()) saveLocationDir.mkdirs()
 
-        // Calculate the number of rows needed based on the total number of sprites
-        val rows = ceil(spriteList.size.toDouble() / cols).toInt()
+            val totalSprites = sprites.values.sumOf { it.sprites.size }
+            var spritesDone = 0
 
-        // Create a new BufferedImage to hold the entire sprite sheet
-        val spriteSheet = BufferedImage(
-            cols * maxSpriteWidth, rows * maxSpriteHeight, BufferedImage.TYPE_INT_ARGB
-        )
-
-        // Get the graphics context for drawing
-        val g2d = spriteSheet.createGraphics()
-
-        // Iterate over the spriteList and draw each sprite at the appropriate position
-        var spriteIndex = 0
-        for (row in 0 until rows) {
-            for (col in 0 until cols) {
-                if (spriteIndex >= spriteList.size) break
-
-                val sprite = spriteList[spriteIndex]
-                val x = col * maxSpriteWidth
-                val y = row * maxSpriteHeight
-
-                // Center the sprite within its "cell" if it's smaller than the max dimensions
-                val offsetX = (maxSpriteWidth - sprite.width) / 2
-                val offsetY = (maxSpriteHeight - sprite.height) / 2
-
-                // Draw the sprite onto the sprite sheet, centered in its grid cell
-                g2d.drawImage(sprite.toBufferedImage(), x + offsetX, y + offsetY, null)
-
-                spriteIndex++
+            sprites.forEach { (id, spriteType) ->
+                if (spriteType.sprites.isNotEmpty()) {
+                    when (spriteSaveMode) {
+                        SpriteSaveMode.SINGLE_SPRITES -> saveSingleSprite(id, spriteType, saveLocation)
+                        SpriteSaveMode.SPRITE_SHEET -> saveSpriteSheet(id, spriteType, saveLocation)
+                        SpriteSaveMode.SPRITE_SHEET_INDIVIDUAL -> saveSpriteSheetIndividual(id, spriteType, saveLocation)
+                    }
+                    spritesDone += spriteType.sprites.size
+                    progressCallback(totalSprites, spritesDone)
+                }
             }
         }
 
-        // Dispose of the graphics context
-        g2d.dispose()
+        private fun saveSpriteSheetIndividual(id: Int, spriteType: SpriteType, saveLocation: Path) {
+            if (spriteType.sprites.size != 1) {
+                val saveDir = File(saveLocation.toFile(), "$id/").apply { mkdirs() }
+                spriteType.sprites.forEachIndexed { index, sprite ->
+                    val savePath = File(saveDir, "${index}.png")
+                    val individualSprite = BufferedImage(
+                        if (sprite.width > 0) sprite.width else 1,
+                        if (sprite.height > 0) sprite.height else 1,
+                        BufferedImage.TYPE_INT_ARGB
+                    )
+                    val graphics: Graphics2D = individualSprite.createGraphics()
+                    graphics.drawImage(sprite.toBufferedImage(), sprite.offsetX, sprite.offsetY, null)
+                    graphics.dispose()
+                    ImageIO.write(individualSprite, "png", savePath)
+                }
+            } else {
+                val savePath = File(saveLocation.toFile(), "${id}.png")
+                ImageIO.write(spriteType.sprites.first().toBufferedImage(), "png", savePath)
+            }
+        }
 
-        return spriteSheet
+        private fun saveSingleSprite(id: Int, spriteType: SpriteType, saveLocation: Path) {
+            spriteType.sprites.forEachIndexed { index, sprite ->
+                val savePath = File(saveLocation.toFile(), "${id}_${index}.png")
+                ImageIO.write(sprite.toBufferedImage(), "png", savePath)
+            }
+        }
+
+        private fun saveSpriteSheet(id: Int, spriteType: SpriteType, saveLocation: Path) {
+            val savePath = File(saveLocation.toFile(), "${id}.png")
+            val (spriteSheet, _, _) = createSpriteSheet(spriteType)
+            ImageIO.write(spriteSheet, "png", savePath)
+        }
+
+        private fun createSpriteSheet(spriteType: SpriteType): Triple<BufferedImage, Int, Int> {
+            if (spriteType.sprites.size == 1) {
+                val firstSprite = spriteType.sprites.first()
+                return Triple(firstSprite.toBufferedImage(), firstSprite.width, firstSprite.height)
+            }
+
+            val validSprites = spriteType.sprites.filter { it.width > 0 && it.height > 0 }
+            val spriteMaxWidth = validSprites.maxOfOrNull { it.width } ?: 1
+            val spriteMaxHeight = validSprites.maxOfOrNull { it.height } ?: 1
+
+            val columns = 11.coerceAtMost(spriteType.sprites.size)
+            val rows = (spriteType.sprites.size + columns - 1) / columns
+
+            val spriteSheetWidth = columns * spriteMaxWidth
+            val spriteSheetHeight = rows * spriteMaxHeight
+            val spriteSheet = BufferedImage(spriteSheetWidth, spriteSheetHeight, BufferedImage.TYPE_INT_ARGB)
+            val graphics: Graphics2D = spriteSheet.createGraphics()
+
+            spriteType.sprites.forEachIndexed { index, sprite ->
+                val row = index / columns
+                val col = index % columns
+                val x = col * spriteMaxWidth
+                val y = row * spriteMaxHeight
+                graphics.drawImage(sprite.toBufferedImage(), x + sprite.offsetX, y + sprite.offsetY, null)
+            }
+
+            graphics.dispose()
+            val croppedSheet = spriteSheet.getSubimage(0, 0, spriteSheetWidth, spriteSheetHeight)
+
+            return Triple(croppedSheet, spriteMaxWidth, spriteMaxHeight)
+        }
     }
-
 }

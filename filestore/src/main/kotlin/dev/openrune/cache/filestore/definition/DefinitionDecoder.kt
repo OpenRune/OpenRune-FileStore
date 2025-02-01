@@ -1,5 +1,6 @@
 package dev.openrune.cache.filestore.definition
 
+import dev.openrune.cache.SPRITES
 import dev.openrune.cache.filestore.Cache
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.BufferUnderflowException
@@ -21,7 +22,11 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int, private val cod
         val ids: IntArray = if (isRS2()) {
             IntArray(size(cache)) { it }
         } else {
-            cache.files(index, getArchive(0))
+            if (index == SPRITES) {
+                cache.archives(SPRITES)
+            } else {
+                cache.files(index, getArchive(0))
+            }
         }
 
         for (id in ids) {
