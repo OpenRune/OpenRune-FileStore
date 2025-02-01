@@ -9,7 +9,7 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int, private val cod
 
     open fun isRS2() : Boolean = false
 
-    fun size(cache: Cache): Int {
+    open fun size(cache: Cache): Int {
         return cache.lastArchiveId(index) * 256 + (cache.fileCount(index, cache.lastArchiveId(index)))
     }
 
