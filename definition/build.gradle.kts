@@ -2,9 +2,7 @@ plugins {
     kotlin("plugin.serialization") version "2.1.0-Beta1"
 }
 dependencies {
-    implementation(project(":definition"))
     implementation(project(":core:buffer"))
-    implementation(project(":core:filesystem"))
     implementation("com.akuleshov7:ktoml-core:0.5.1")
     implementation("com.akuleshov7:ktoml-file:0.5.1")
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.1.0-Beta1")

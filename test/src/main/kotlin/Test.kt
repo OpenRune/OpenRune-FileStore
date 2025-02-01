@@ -5,7 +5,7 @@ import dev.openrune.filesystem.Cache
 import dev.openrune.definition.type.SpriteSaveMode
 import dev.openrune.definition.type.SpriteType
 import dev.openrune.definition.type.TextureType
-import dev.openrune.definition.codec.SpriteDecoder
+import dev.openrune.SpriteDecoder
 import java.nio.file.Path
 
 fun main() {

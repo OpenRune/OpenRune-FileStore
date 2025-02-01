@@ -1,6 +1,7 @@
 dependencies {
     implementation(project(":core:buffer"))
     implementation(project(":filestore"))
+    implementation(project(":definition"))
     implementation(project(":cache:osrs"))
     implementation("io.netty:netty-buffer:4.1.107.Final")
     implementation("dev.openrune:js5server:1.0.6")

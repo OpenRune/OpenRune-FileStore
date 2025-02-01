@@ -1,16 +1,10 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.cache.SPRITES
 import dev.openrune.buffer.Reader
 import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
-import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.definition.type.SpriteType
 import dev.openrune.definition.game.IndexedSprite
-
-class SpriteDecoder : DefinitionDecoder<SpriteType>(SPRITES, SpriteCodec()) {
-    override fun getFile(id: Int) = 0
-}
 
 class SpriteCodec : DefinitionCodec<SpriteType> {
     override fun SpriteType.read(opcode: Int, buffer: Reader) {
