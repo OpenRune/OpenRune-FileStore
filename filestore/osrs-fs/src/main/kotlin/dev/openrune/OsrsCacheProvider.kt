@@ -74,6 +74,7 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     class UnderlayDecoder : ConfigDefinitionDecoder<UnderlayType>(UnderlayCodec(), UNDERLAY)
     class VarBitDecoder : ConfigDefinitionDecoder<VarBitType>(VarBitCodec(), VARBIT)
     class VarDecoder : ConfigDefinitionDecoder<VarpType>(VarCodec(), VARPLAYER)
+    class IdentityKitDecoder : ConfigDefinitionDecoder<IdentityKitType>(IdentityKitCodec(), IDENTKIT)
 
     class TextureDecoder : DefinitionDecoder<TextureType>(TEXTURES, TextureCodec()) {
         override fun getArchive(id: Int) = 0
