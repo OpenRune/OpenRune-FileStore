@@ -116,4 +116,9 @@ interface Reader {
      * @param bitCount number of bits to be written
      */
     fun readBits(bitCount: Int): Int
+
+    fun getByte(pos : Int) : Byte
+
+    fun writerIndex() : Int
+
 }

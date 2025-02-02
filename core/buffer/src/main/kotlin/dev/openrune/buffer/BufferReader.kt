@@ -205,6 +205,21 @@ class BufferReader(
         return value
     }
 
+    override fun getByte(pos: Int): Byte {
+        return buffer.get(pos)
+    }
+
+    override fun writerIndex(): Int {
+        return length
+    }
+
+    fun duplicate(): BufferReader {
+        val copy = ByteBuffer.allocate(buffer.remaining())
+        copy.put(buffer.duplicate().clear())
+        copy.flip()
+        return BufferReader(copy)
+    }
+
     companion object {
         /**
          * Bit masks for [readBits]
