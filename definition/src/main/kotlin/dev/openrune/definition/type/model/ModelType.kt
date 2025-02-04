@@ -1,12 +1,16 @@
 package dev.openrune.definition.type.model
 
 import dev.openrune.definition.Definition
+import dev.openrune.definition.game.render.model.FaceNormal
+import dev.openrune.definition.game.render.model.Model
+import dev.openrune.definition.game.render.model.VertexNormal
 import dev.openrune.definition.type.model.particles.EffectiveVertex
 import dev.openrune.definition.type.model.particles.EmissiveTriangle
 import dev.openrune.definition.type.model.particles.FaceBillboard
 import dev.openrune.definition.type.model.texture.*
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 enum class MeshDecodingOption {
 
@@ -85,6 +89,76 @@ data class ModelType(
     override var inherit: Int = -1
 ) : Definition {
 
+
+    var vertexNormals: Array<VertexNormal>? = null
+    var faceNormals: Array<FaceNormal>? = null
+
+    fun computeNormals() {
+        if (this.vertexNormals != null) {
+            return
+        }
+
+        this.vertexNormals = Array(this.vertexCount) { VertexNormal() }
+
+        for (i in 0 until this.triangleCount) {
+            val vertexA = this.triangleVertex1!![i]
+            val vertexB = this.triangleVertex2!![i]
+            val vertexC = this.triangleVertex3!![i]
+
+            val edgeABx = this.vertexPositionsX!![vertexB] - this.vertexPositionsX!![vertexA]
+            val edgeABy = this.vertexPositionsY!![vertexB] - this.vertexPositionsY!![vertexA]
+            val edgeABz = this.vertexPositionsZ!![vertexB] - this.vertexPositionsZ!![vertexA]
+
+            val edgeACx = this.vertexPositionsX!![vertexC] - this.vertexPositionsX!![vertexA]
+            val edgeACy = this.vertexPositionsY!![vertexC] - this.vertexPositionsY!![vertexA]
+            val edgeACz = this.vertexPositionsZ!![vertexC] - this.vertexPositionsZ!![vertexA]
+
+            var normalX = edgeABy * edgeACz - edgeACy * edgeABz
+            var normalY = edgeABz * edgeACx - edgeACz * edgeABx
+            var normalZ = edgeABx * edgeACy - edgeACx * edgeABy
+
+            while (normalX > 8192 || normalY > 8192 || normalZ > 8192 || normalX < -8192 || normalY < -8192 || normalZ < -8192) {
+                normalX = normalX shr 1
+                normalY = normalY shr 1
+                normalZ = normalZ shr 1
+            }
+
+            var length = kotlin.math.sqrt((normalX * normalX + normalY * normalY + normalZ * normalZ).toDouble()).toInt()
+            if (length <= 0) length = 1
+
+            normalX = normalX * 256 / length
+            normalY = normalY * 256 / length
+            normalZ = normalZ * 256 / length
+
+            val renderType = this.triangleRenderTypes?.get(i) ?: 0
+
+            if (renderType == 0) {
+                this.vertexNormals!![vertexA].apply {
+                    x += normalX
+                    y += normalY
+                    z += normalZ
+                    magnitude++
+                }
+                this.vertexNormals!![vertexB].apply {
+                    x += normalX
+                    y += normalY
+                    z += normalZ
+                    magnitude++
+                }
+                this.vertexNormals!![vertexC].apply {
+                    x += normalX
+                    y += normalY
+                    z += normalZ
+                    magnitude++
+                }
+            } else if (renderType == 1) {
+                if (this.faceNormals == null) {
+                    this.faceNormals = Array(this.triangleCount) { FaceNormal(0, 0, 0) }
+                }
+                this.faceNormals!![i] = FaceNormal(normalX, normalY, normalZ)
+            }
+        }
+    }
 
     fun version(): Int {
         return this.version
@@ -344,6 +418,26 @@ data class ModelType(
                     posX[i] = -to.x
                     posY[i] = -to.y
                     posZ[i] = -to.z
+                }
+            }
+        }
+    }
+
+    fun recolor(find: Short, replacements: Short) {
+        triangleColors?.let { colors ->
+            for (i in 0 until triangleCount) {
+                if (colors[i] == find) {
+                    colors[i] = replacements
+                }
+            }
+        }
+    }
+
+    fun retexture(find: Short, replacements: Short) {
+        triangleTextures?.let { textures ->
+            for (i in 0 until triangleCount) {
+                if (textures[i].toShort() == find) {
+                    textures[i] = replacements.toInt()
                 }
             }
         }
@@ -962,6 +1056,164 @@ data class ModelType(
     }
 
 
+    fun toModel(ambientLight: Int, contrastLevel: Int, xDirection: Int, yDirection: Int, zDirection: Int): Model {
+        computeNormals()
+
+        val directionMagnitude = sqrt((zDirection * zDirection + xDirection * xDirection + yDirection * yDirection).toDouble()).toInt()
+        val contrastAdjusted = directionMagnitude * contrastLevel shr 8
+
+        val illuminatedModel = Model()
+        illuminatedModel.faceColors1 = IntArray(triangleCount)
+        illuminatedModel.faceColors2 = IntArray(triangleCount)
+        illuminatedModel.faceColors3 = IntArray(triangleCount)
+
+        if (textureTriangleCount > 0 && textureCoordinates != null) {
+            val textureTriangleCountt = IntArray(textureTriangleCount)
+            var triangleIndex = 0
+
+            while (triangleIndex < triangleCount) {
+                if (textureCoordinates!![triangleIndex].toInt() != -1) {
+                    ++textureTriangleCountt[textureCoordinates!![triangleIndex].toInt() and 255]
+                }
+                ++triangleIndex
+            }
+
+            illuminatedModel.numTextureFaces = 0
+            triangleIndex = 0
+            while (triangleIndex < textureTriangleCount) {
+                if (textureTriangleCountt[triangleIndex] > 0 && textureRenderTypes!![triangleIndex].toInt() == 0) {
+                    ++illuminatedModel.numTextureFaces
+                }
+                ++triangleIndex
+            }
+
+            illuminatedModel.texIndices1 = IntArray(illuminatedModel.numTextureFaces)
+            illuminatedModel.texIndices2 = IntArray(illuminatedModel.numTextureFaces)
+            illuminatedModel.texIndices3 = IntArray(illuminatedModel.numTextureFaces)
+
+            triangleIndex = 0
+            for (i in 0 until textureTriangleCount) {
+                if (textureTriangleCountt[i] > 0 && textureRenderTypes!![i].toInt() == 0) {
+                    illuminatedModel.texIndices1[triangleIndex] = textureTriangleVertex1!![i].toInt() and '\uffff'.code
+                    illuminatedModel.texIndices2[triangleIndex] = textureTriangleVertex2!![i].toInt() and '\uffff'.code
+                    illuminatedModel.texIndices3[triangleIndex] = textureTriangleVertex3!![i].toInt() and '\uffff'.code
+                    textureTriangleCountt[i] = triangleIndex++
+                } else {
+                    textureTriangleCountt[i] = -1
+                }
+            }
+
+            illuminatedModel.textureCoords = ByteArray(triangleCount)
+            for (i in 0 until triangleCount) {
+                if (textureCoordinates!![i].toInt() != -1) {
+                    illuminatedModel.textureCoords!![i] = textureTriangleCountt[textureCoordinates!![i].toInt() and 255].toByte()
+                } else {
+                    illuminatedModel.textureCoords!![i] = -1
+                }
+            }
+        }
+
+        for (faceIdx in 0 until triangleCount) {
+            var renderType: Int = if (triangleRenderTypes == null) 0 else triangleRenderTypes!![faceIdx]
+            var alpha: Int = if (triangleAlphas == null) 0 else triangleAlphas!![faceIdx]
+            var textureId: Int = if (triangleTextures == null) -1 else triangleTextures!![faceIdx]
+
+            if (alpha == -2) {
+                renderType = 3
+            }
+
+            if (alpha == -1) {
+                renderType = 2
+            }
+
+            var vertexNormal: VertexNormal
+            var temp: Int
+            var faceNormal: FaceNormal
+
+            if (textureId == -1) {
+                if (renderType != 0) {
+                    if (renderType == 1) {
+                        faceNormal = faceNormals!![faceIdx]
+                        temp = (yDirection * faceNormal.y + zDirection * faceNormal.z + xDirection * faceNormal.x) / (contrastAdjusted / 2 + contrastAdjusted) + ambientLight
+                        illuminatedModel.faceColors1[faceIdx] = adjustColorBrightness(triangleColors!![faceIdx].toInt() and '\uffff'.code, temp)
+                        illuminatedModel.faceColors3[faceIdx] = -1
+                    } else if (renderType == 3) {
+                        illuminatedModel.faceColors1[faceIdx] = 128
+                        illuminatedModel.faceColors3[faceIdx] = -1
+                    } else {
+                        illuminatedModel.faceColors3[faceIdx] = -2
+                    }
+                } else {
+                    val color = triangleColors!![faceIdx].toInt() and '\uffff'.code
+                    vertexNormal = vertexNormals!![triangleVertex1!![faceIdx]]
+                    temp = (yDirection * vertexNormal.y + zDirection * vertexNormal.z + xDirection * vertexNormal.x) / (contrastAdjusted * vertexNormal.magnitude) + ambientLight
+                    illuminatedModel.faceColors1[faceIdx] = adjustColorBrightness(color, temp)
+
+                    vertexNormal = vertexNormals!![triangleVertex2!![faceIdx]]
+                    temp = (yDirection * vertexNormal.y + zDirection * vertexNormal.z + xDirection * vertexNormal.x) / (contrastAdjusted * vertexNormal.magnitude) + ambientLight
+                    illuminatedModel.faceColors2[faceIdx] = adjustColorBrightness(color, temp)
+
+                    vertexNormal = vertexNormals!![triangleVertex3!![faceIdx]]
+                    temp = (yDirection * vertexNormal.y + zDirection * vertexNormal.z + xDirection * vertexNormal.x) / (contrastAdjusted * vertexNormal.magnitude) + ambientLight
+                    illuminatedModel.faceColors3[faceIdx] = adjustColorBrightness(color, temp)
+                }
+            } else if (renderType != 0) {
+                if (renderType == 1) {
+                    faceNormal = faceNormals!![faceIdx]
+                    temp = (yDirection * faceNormal.y + zDirection * faceNormal.z + xDirection * faceNormal.x) / (contrastAdjusted / 2 + contrastAdjusted) + ambientLight
+                    illuminatedModel.faceColors1[faceIdx] = boundToRange(temp)
+                    illuminatedModel.faceColors3[faceIdx] = -1
+                } else {
+                    illuminatedModel.faceColors3[faceIdx] = -2
+                }
+            } else {
+                vertexNormal = vertexNormals!![triangleVertex1!![faceIdx]]
+                temp = (yDirection * vertexNormal.y + zDirection * vertexNormal.z + xDirection * vertexNormal.x) / (contrastAdjusted * vertexNormal.magnitude) + ambientLight
+                illuminatedModel.faceColors1[faceIdx] = boundToRange(temp)
+
+                vertexNormal = vertexNormals!![triangleVertex2!![faceIdx]]
+                temp = (yDirection * vertexNormal.y + zDirection * vertexNormal.z + xDirection * vertexNormal.x) / (contrastAdjusted * vertexNormal.magnitude) + ambientLight
+                illuminatedModel.faceColors2[faceIdx] = boundToRange(temp)
+
+                vertexNormal = vertexNormals!![triangleVertex3!![faceIdx]]
+                temp = (yDirection * vertexNormal.y + zDirection * vertexNormal.z + xDirection * vertexNormal.x) / (contrastAdjusted * vertexNormal.magnitude) + ambientLight
+                illuminatedModel.faceColors3[faceIdx] = boundToRange(temp)
+            }
+        }
+
+        illuminatedModel.vertexCount = vertexCount
+        illuminatedModel.verticesX = vertexPositionsX!!
+        illuminatedModel.verticesY = vertexPositionsY!!
+        illuminatedModel.verticesZ = vertexPositionsZ!!
+        illuminatedModel.triangleCount = triangleCount
+        illuminatedModel.triangleVertex1 = triangleVertex1!!
+        illuminatedModel.triangleVertex2 = triangleVertex2!!
+        illuminatedModel.triangleVertex3 = triangleVertex3!!
+        illuminatedModel.facePriorities = triangleRenderPriorities
+        illuminatedModel.triangleAlphas = triangleAlphas
+        illuminatedModel.faceTextures = triangleTextures
+
+        return illuminatedModel
+    }
+
+    fun adjustColorBrightness(var0: Int, var1: Int): Int {
+        var var1 = var1
+        var1 = ((var0 and 127) * var1) shr 7
+        var1 = boundToRange(var1)
+
+        return (var0 and 65408) + var1
+    }
+
+    fun boundToRange(var0: Int): Int {
+        var var0 = var0
+        if (var0 < 2) {
+            var0 = 2
+        } else if (var0 > 126) {
+            var0 = 126
+        }
+
+        return var0
+    }
 
     override fun toString(): String {
         return "Model(" +
