@@ -82,10 +82,10 @@ class ItemSpriteFactory(
 
         val graphics = Rasterizer3D(textures, sprites1).apply {
             setBrightness(JagexColor.BRIGHTNESS_MAX)
-            setRasterBuffer(spritePixels.pixels, 36, 32)
+            setRasterBuffer(spritePixels.pixels, itemSpriteFactory.size, itemSpriteFactory.size)
             reset()
             setRasterClipping()
-            setOffset(16, 16)
+            setOffset(if (itemSpriteFactory.autoScaleZoom) itemSpriteFactory.size / 2 else 16, if (itemSpriteFactory.autoScaleZoom) itemSpriteFactory.size / 2 else 16)
             isGouraudShadingLowRes = false
         }
 
@@ -104,7 +104,12 @@ class ItemSpriteFactory(
     }
 
     private fun calculateZoom(item: ItemType, border: Int, noted: Boolean): Int {
-        val zoom2d = if (itemSpriteFactory.zoom2d == -1) item.zoom2d else itemSpriteFactory.zoom2d
+        var zoom2d = if (itemSpriteFactory.zoom2d == -1) item.zoom2d else itemSpriteFactory.zoom2d
+        if (itemSpriteFactory.autoScaleZoom) {
+            if (itemSpriteFactory.size > 0) {
+                zoom2d = zoom2d * 32 / itemSpriteFactory.size
+            }
+        }
         var zoom = zoom2d
         zoom = when {
             noted -> (zoom * 1.5).toInt()
