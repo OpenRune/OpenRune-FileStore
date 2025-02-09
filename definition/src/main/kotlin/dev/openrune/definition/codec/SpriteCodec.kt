@@ -3,17 +3,15 @@ package dev.openrune.definition.codec
 import dev.openrune.buffer.*
 import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
-import dev.openrune.buffer.arrayRD
-import dev.openrune.buffer.positionRD
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.SpriteType
 import dev.openrune.definition.game.IndexedSprite
 
 class SpriteCodec : DefinitionCodec<SpriteType> {
     override fun SpriteType.read(opcode: Int, buffer: ByteBuf) {
-        buffer.positionRD(buffer.arrayRD().size - 2)
+        buffer.readerIndex(buffer.readableBytes() - 2)
         val size: Int = buffer.readShortRD()
-        buffer.positionRD(buffer.arrayRD().size - 7 - size * 8)
+        buffer.readerIndex(buffer.readableBytes() - 7 - size * 8)
 
         val offsetX: Int = buffer.readShortRD()
         val offsetY: Int = buffer.readShortRD()
@@ -39,7 +37,7 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
             sprite.subHeight = offsetY - sprite.height - sprite.offsetY
         }
 
-        buffer.positionRD(buffer.arrayRD().size - 7 - size * 8 - (paletteSize - 1) * 3)
+        buffer.readerIndex(buffer.readableBytes() - 7 - size * 8 - (paletteSize - 1) * 3)
         val palette = IntArray(paletteSize)
         for (index in 1 until paletteSize) {
             palette[index] = buffer.readUnsignedMediumRD()
@@ -51,7 +49,7 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
             sprites[index].palette = palette
         }
 
-        buffer.positionRD(0)
+        buffer.readerIndex(0)
         for (index in 0 until size) {
             val sprite = sprites[index]
             val area = sprite.width * sprite.height

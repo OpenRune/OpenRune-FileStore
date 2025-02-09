@@ -80,12 +80,3 @@ fun ByteBuf.readStringRD(): String {
     return sb.toString()
 }
 
-fun ByteBuf.positionRD(index: Int) {
-    readerIndex(index)
-}
-
-fun ByteBuf.arrayRD(): ByteArray {
-    val copy = ByteArray(readableBytes())
-    readBytes(copy)
-    return copy
-}
