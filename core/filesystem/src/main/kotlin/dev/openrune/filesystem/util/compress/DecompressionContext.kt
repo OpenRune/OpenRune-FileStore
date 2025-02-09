@@ -1,11 +1,14 @@
 package dev.openrune.filesystem.util.compress
 
-import dev.openrune.buffer.BufferReader
+import dev.openrune.filesystem.util.readByte
+import dev.openrune.filesystem.util.readInt
+import dev.openrune.filesystem.util.readUnsignedByte
 import dev.openrune.filesystem.util.secure.Xtea
 import io.github.oshai.kotlinlogging.KotlinLogging
 import lzma.sdk.lzma.Decoder
 import java.io.ByteArrayInputStream
 import java.io.OutputStream
+import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.zip.Inflater
 
@@ -21,7 +24,7 @@ internal class DecompressionContext {
         if (keys != null && (keys[0] != 0 || keys[1] != 0 || keys[2] != 0 || 0 != keys[3])) {
             Xtea.decipher(data, keys, 5)
         }
-        val buffer = BufferReader(data)
+        val buffer = ByteBuffer.wrap(data)
         val type = buffer.readUnsignedByte()
         val compressedSize = buffer.readInt() and 0xFFFFFF
         var decompressedSize = 0
@@ -31,7 +34,7 @@ internal class DecompressionContext {
         when (type) {
             NONE -> {
                 val decompressed = ByteArray(compressedSize)
-                buffer.readBytes(decompressed, 0, compressedSize)
+                buffer.get(decompressed, 0, compressedSize)
                 return decompressed
             }
             BZIP2 -> {

@@ -1,11 +1,14 @@
 package dev.openrune.filesystem
 
-import dev.openrune.buffer.BufferReader
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import dev.openrune.filesystem.util.compress.DecompressionContext
+import dev.openrune.filesystem.util.readByte
+import dev.openrune.filesystem.util.readInt
+import dev.openrune.filesystem.util.readUnsignedByte
 import dev.openrune.filesystem.util.secure.VersionTableBuilder
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.RandomAccessFile
+import java.nio.ByteBuffer
 
 /**
  * [Cache] which efficiently stores information about its indexes, archives and files.
@@ -61,7 +64,7 @@ abstract class ReadOnlyCache(indexCount: Int) : Cache {
             }
         }
 
-        val reader = BufferReader(decompressed)
+        val reader = ByteBuffer.wrap(decompressed)
         val rawArray = reader.array()
         var fileDataSizesOffset = decompressed.size
         val chunkSize: Int = rawArray[--fileDataSizesOffset].toInt() and 0xFF
@@ -116,7 +119,7 @@ abstract class ReadOnlyCache(indexCount: Int) : Cache {
         }
         versionTable?.sector(indexId, archiveSector)
         val decompressed = context.decompress(archiveSector) ?: return -1
-        val reader = BufferReader(decompressed)
+        val reader = ByteBuffer.wrap(decompressed)
         val version = reader.readUnsignedByte()
         if (version < 5 || version > 7) {
             throw RuntimeException("Unknown version: $version")
@@ -216,7 +219,23 @@ abstract class ReadOnlyCache(indexCount: Int) : Cache {
         private const val SECTOR_HEADER_SIZE_BIG = 10
         private const val SECTOR_DATA_SIZE_BIG = 510
 
-        private fun BufferReader.readSmart(version: Int) = if (version >= 7) readBigSmart() else readUnsignedShort()
+        private fun ByteBuffer.readSmart(version: Int) = if (version >= 7) readBigSmart() else readUnsignedShort()
+
+        private fun ByteBuffer.readUnsignedShort() = (readUnsignedByte() shl 8) or readUnsignedByte()
+
+        private fun ByteBuffer.readUnsignedMedium() = (readUnsignedByte() shl 16) or (readUnsignedByte() shl 8) or readUnsignedByte()
+
+        private fun ByteBuffer.readBigSmart(): Int {
+            val peek = readByte()
+            return if (peek < 0) {
+                ((peek shl 24) or (readUnsignedByte() shl 16) or (readUnsignedByte() shl 8) or readUnsignedByte()) and 0x7fffffff
+            } else {
+                val value = (peek shl 8) or readUnsignedByte()
+                if (value == 32767) -1 else value
+            }
+        }
+
+        private fun ByteBuffer.skip(amount: Int) = position(position() + amount)
 
         /**
          * Reads a section of a cache's archive
@@ -229,7 +248,7 @@ abstract class ReadOnlyCache(indexCount: Int) : Cache {
             val sectorData = ByteArray(SECTOR_SIZE)
             raf.read(sectorData, 0, INDEX_SIZE)
             val bigSector = sectorId > 65535
-            val buffer = BufferReader(sectorData)
+            val buffer = ByteBuffer.wrap(sectorData)
             val sectorSize = buffer.readUnsignedMedium()
             var sectorPosition = buffer.readUnsignedMedium()
             if (sectorSize < 0 || sectorPosition <= 0 || sectorPosition > mainFile.length() / SECTOR_SIZE) {
