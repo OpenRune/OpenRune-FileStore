@@ -1,124 +1,116 @@
 package dev.openrune.buffer
 
-interface Reader {
+import java.nio.ByteBuffer
 
-    /**
-     * Starting length of the packet
-     */
-    val length: Int
+class Reader(
+    val buffer: ByteBuffer
+) {
 
-    val remaining: Int
+    constructor(array: ByteArray) : this(buffer = ByteBuffer.wrap(array))
 
-    fun readBoolean() = readByte() == 1
+    val length: Int = buffer.remaining()
 
-    fun readBooleanAdd() = readByteAdd() == 1
+    fun readByte(): Int {
+        return buffer.get().toInt()
+    }
 
-    fun readBooleanInverse() = readByteInverse() == 1
+    fun readUnsignedByte(): Int {
+        return readByte() and 0xff
+    }
 
-    fun readBooleanSubtract() = readByteSubtract() == 1
+    fun readShort(): Int {
+        return (readByte() shl 8) or readUnsignedByte()
+    }
+
+    fun readShortSmart() : Int {
+        val peek = readUnsignedByte()
+        return if (peek < 128) peek - 64 else (peek shl 8 or readUnsignedByte()) - 49152
+    }
+
+    fun readUnsignedShort(): Int {
+        return (readUnsignedByte() shl 8) or readUnsignedByte()
+    }
+
+    fun readMedium(): Int {
+        return (readByte() shl 16) or (readByte() shl 8) or readUnsignedByte()
+    }
+
+    fun readUnsignedMedium(): Int {
+        return (readUnsignedByte() shl 16) or (readUnsignedByte() shl 8) or readUnsignedByte()
+    }
+
+    fun readInt(): Int {
+        return (readUnsignedByte() shl 24) or (readUnsignedByte() shl 16) or (readUnsignedByte() shl 8) or readUnsignedByte()
+    }
+
+    fun readSmart(): Int {
+        val peek = readUnsignedByte()
+        return if (peek < 128) {
+            peek and 0xFF
+        } else {
+            (peek shl 8 or readUnsignedByte()) - 32768
+        }
+    }
+
+    fun readBigSmart(): Int {
+        val peek = readByte()
+        return if (peek < 0) {
+            ((peek shl 24) or (readUnsignedByte() shl 16) or (readUnsignedByte() shl 8) or readUnsignedByte()) and 0x7fffffff
+        } else {
+            val value = (peek shl 8) or readUnsignedByte()
+            if (value == 32767) -1 else value
+        }
+    }
+
+    fun readLargeSmart(): Int {
+        var baseValue = 0
+        var lastValue = readSmart()
+        while (lastValue == 32767) {
+            lastValue = readSmart()
+            baseValue += 32767
+        }
+        return baseValue + lastValue
+    }
+
+    fun readString(): String {
+        val sb = StringBuilder()
+        var b: Int
+        while (buffer.hasRemaining()) {
+            b = readUnsignedByte()
+            if (b == 0) {
+                break
+            }
+            sb.append(b.toChar())
+        }
+        return sb.toString()
+    }
+
+    fun position(): Int {
+        return buffer.position()
+    }
+
+    fun position(index: Int) {
+        buffer.position(index)
+    }
+
+    fun array(): ByteArray {
+        return buffer.array()
+    }
 
     fun readUnsignedBoolean() = readUnsignedByte() == 1
 
-    fun readByte(): Int
+    fun getByte(pos: Int): Byte {
+        return buffer.get(pos)
+    }
 
-    fun readByteAdd(): Int
+    fun writerIndex(): Int {
+        return length
+    }
 
-    fun readByteInverse(): Int
-
-    fun readByteSubtract(): Int
-
-    fun readUnsignedByte(): Int
-
-    fun readUnsignedByteAdd(): Int
-
-    fun readShort(): Int
-
-    fun readShortAdd(): Int
-
-    fun readShortLittle(): Int
-
-    fun readShortAddLittle(): Int
-
-    fun readShortSmart(): Int
-
-    fun readUnsignedShort(): Int
-
-    fun readUnsignedShortLittle(): Int
-
-    fun readUnsignedShortAdd(): Int
-
-    fun readMedium(): Int
-
-    fun readUnsignedMedium(): Int
-
-    fun readInt(): Int
-
-    fun readIntInverseMiddle(): Int
-
-    fun readIntLittle(): Int
-
-    fun readUnsignedIntMiddle(): Int
-
-    fun readSmart(): Int
-
-    fun readBigSmart(): Int
-
-    fun readLargeSmart(): Int
-
-    fun readLong(): Long
-
-    fun readString(): String
-
-    /**
-     * Reads all bytes into [ByteArray]
-     * @param value The array to be written to.
-     */
-    fun readBytes(value: ByteArray)
-
-    /**
-     * Reads [length] number of bytes starting at [offset] to [array].
-     * @param array The [ByteArray] to be written to
-     * @param offset Destination index
-     * @param length Number of bytes to read
-     */
-    fun readBytes(array: ByteArray, offset: Int, length: Int = array.size)
-
-    /**
-     * Skips the [amount] bytes.
-     * @param amount Number of bytes to skip
-     */
-    fun skip(amount: Int)
-
-    fun position(): Int
-
-    fun array(): ByteArray
-
-    fun position(index: Int)
-
-    /**
-     * Returns the remaining number of readable bytes.
-     * @return [Int]
-     */
-    fun readableBytes(): Int
-
-    /**
-     * Enables individual decoded byte writing aka 'bit access'
-     */
-    fun startBitAccess(): Reader
-
-    /**
-     * Disables 'bit access' mode
-     */
-    fun stopBitAccess(): Reader
-
-    /**
-     * Writes a bit during 'bit access'
-     * @param bitCount number of bits to be written
-     */
-    fun readBits(bitCount: Int): Int
-
-    fun getByte(pos : Int) : Byte
-
-    fun writerIndex() : Int
-
+    fun duplicate(): Reader {
+        val copy = ByteBuffer.allocate(buffer.remaining())
+        copy.put(buffer.duplicate().clear())
+        copy.flip()
+        return Reader(copy)
+    }
 }

@@ -1,6 +1,6 @@
 package dev.openrune.cache.filestore.definition
 
-import dev.openrune.buffer.BufferReader
+import dev.openrune.buffer.Reader
 import dev.openrune.cache.MODELS
 import dev.openrune.definition.codec.ModelCodec
 import dev.openrune.definition.type.model.MeshDecodingOption
@@ -13,7 +13,7 @@ class ModelDecoder(val cache: Cache, private val options: List<MeshDecodingOptio
         val codec = ModelCodec(id,options)
         val data = cache.data(MODELS,id)
         if(data != null) {
-            return codec.read(BufferReader(data))
+            return codec.read(Reader(data))
         } else {
             println("Model not found: $id")
             return null

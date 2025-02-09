@@ -1,6 +1,5 @@
 package dev.openrune.definition
 
-import dev.openrune.buffer.BufferReader
 import dev.openrune.buffer.Reader
 import dev.openrune.buffer.Writer
 
@@ -22,7 +21,7 @@ interface DefinitionCodec<T : Definition> {
     fun createDefinition(): T
 
     fun loadData(id: Int, data: ByteArray): T {
-        val reader = BufferReader(data)
+        val reader = Reader(data)
         val definition = createDefinition()
         readLoop(definition, reader)
         return definition
