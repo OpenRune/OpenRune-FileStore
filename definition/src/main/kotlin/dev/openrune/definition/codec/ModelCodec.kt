@@ -2,6 +2,8 @@
 
 package dev.openrune.definition.codec
 
+import dev.openrune.buffer.readShortSmartRD
+import dev.openrune.buffer.readUnsignedByteRD
 import dev.openrune.definition.type.model.MeshDecodingOption
 import dev.openrune.definition.type.model.MeshType
 import dev.openrune.definition.type.model.ModelType
@@ -1149,15 +1151,15 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             val pflag = buf1.readUnsignedByte().toInt()
             var xOffset = 0
             if (pflag and X_POS_FLAG != 0) {
-                xOffset = buf2.readShortSmart()
+                xOffset = buf2.readShortSmartRD()
             }
             var yOffset = 0
             if (pflag and Y_POS_FLAG != 0) {
-                yOffset = buf3.readShortSmart()
+                yOffset = buf3.readShortSmartRD()
             }
             var zOffset = 0
             if (pflag and Z_POS_FLAG != 0) {
-                zOffset = buf4.readShortSmart()
+                zOffset = buf4.readShortSmartRD()
             }
             vertexPositionsX[index] = xOffset + lastXOffset
             vertexPositionsY[index] = yOffset + lastYOffset
@@ -1265,11 +1267,11 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         for (index in 0 until def.triangleCount) {
             when (buf2.readUnsignedByte().toInt()) {
                 1 -> {
-                    vertex1 = (buf1.readShortSmart() + offset).toShort().toInt()
+                    vertex1 = (buf1.readShortSmartRD() + offset).toShort().toInt()
                     offset = vertex1
-                    vertex2 = (buf1.readShortSmart() + offset).toShort().toInt()
+                    vertex2 = (buf1.readShortSmartRD() + offset).toShort().toInt()
                     offset = vertex2
-                    vertex3 = (buf1.readShortSmart() + offset).toShort().toInt()
+                    vertex3 = (buf1.readShortSmartRD() + offset).toShort().toInt()
                     offset = vertex3
                     triangleVertex1[index] = vertex1
                     triangleVertex2[index] = vertex2
@@ -1277,7 +1279,7 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
                 }
                 2 -> {
                     vertex2 = vertex3
-                    vertex3 = (buf1.readShortSmart() + offset).toShort().toInt()
+                    vertex3 = (buf1.readShortSmartRD() + offset).toShort().toInt()
                     triangleVertex1[index] = vertex1
                     offset = vertex3
                     triangleVertex2[index] = vertex2
@@ -1285,7 +1287,7 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
                 }
                 3 -> {
                     vertex1 = vertex3
-                    vertex3 = (buf1.readShortSmart() + offset).toShort().toInt()
+                    vertex3 = (buf1.readShortSmartRD() + offset).toShort().toInt()
                     triangleVertex1[index] = vertex1
                     offset = vertex3
                     triangleVertex2[index] = vertex2
@@ -1294,7 +1296,7 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
                 4 -> {
                     val pos1 = vertex1
                     vertex1 = vertex2
-                    vertex3 = (buf1.readShortSmart() + offset).toShort().toInt()
+                    vertex3 = (buf1.readShortSmartRD() + offset).toShort().toInt()
                     vertex2 = pos1
                     triangleVertex1[index] = vertex1
                     offset = vertex3
@@ -1360,14 +1362,5 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         if (!usesMaterials) {
             def.triangleTextures = null
         }
-    }
-
-    private fun ByteBuf._readUnsignedByte(): Int {
-        return readByte().toInt() and 0xff
-    }
-
-    private fun ByteBuf.readShortSmart(): Int {
-        val peek = _readUnsignedByte()
-        return if (peek < 128) peek - 64 else (peek shl 8 or _readUnsignedByte()) - 49152
     }
 }
