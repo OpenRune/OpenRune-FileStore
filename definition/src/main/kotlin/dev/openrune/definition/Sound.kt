@@ -5,6 +5,7 @@ import dev.openrune.buffer.Writer
 
 data class SoundData(
     var id: Int,
+    var unknown : Int,
     var loops: Int,
     var location: Int,
     var retain: Int,
@@ -15,6 +16,9 @@ data class SoundData(
             writer.writeMedium(payload)
         } else {
             writer.writeByte(id)
+            if (revisionIsOrAfter(revision, 226)) {
+                writer.writeByte(unknown)
+            }
             writer.writeByte(location)
             writer.writeByte(retain)
         }
@@ -29,6 +33,7 @@ interface Sound {
         val loops: Int
         val location: Int
         val retain: Int
+        var unknown : Int = 0
 
         if (!revisionIsOrAfter(revision, 220)) {
             val payload: Int = buffer.readMedium()
@@ -38,12 +43,15 @@ interface Sound {
             loops = payload shr 4 and 7
         } else {
             id = buffer.readUnsignedShort()
+            if (revisionIsOrAfter(revision, 226)) {
+                unknown = buffer.readUnsignedByte()
+            }
             loops = buffer.readUnsignedByte()
             location = buffer.readUnsignedByte()
             retain = buffer.readUnsignedByte()
         }
 
-        return if (id >= 1 && loops >= 1 && location >= 0 && retain >= 0) { SoundData(id, loops, location, retain) } else { null }
+        return if (id >= 1 && loops >= 1 && location >= 0 && retain >= 0) { SoundData(id, unknown, loops, location, retain) } else { null }
     }
 
 }
