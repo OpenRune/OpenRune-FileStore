@@ -15,6 +15,8 @@ object CacheManager {
     private val combinedHealthBars = mutableMapOf<Int, HealthBarType>()
     private val combinedHitsplats = mutableMapOf<Int, HitSplatType>()
     private val combinedStructs = mutableMapOf<Int, StructType>()
+    private val combinedDbrows = mutableMapOf<Int, DBRowType>()
+    private val combinedDbtables = mutableMapOf<Int, DBTableType>()
 
     @JvmStatic
     fun init(vararg dataSources : CacheStore) {
@@ -30,6 +32,8 @@ object CacheManager {
             combinedHealthBars.putAll(applyIdOffset(data.healthBars, data.healthBarOffset))
             combinedHitsplats.putAll(applyIdOffset(data.hitsplats, data.hitsplatOffset))
             combinedStructs.putAll(applyIdOffset(data.structs, data.structOffset))
+            combinedDbrows.putAll(applyIdOffset(data.dbrows, data.dbrowOffset))
+            combinedDbtables.putAll(applyIdOffset(data.dbtables, data.dbtableOffset))
         }
     }
 
@@ -62,6 +66,8 @@ object CacheManager {
     fun getHealthBar(id: Int) = combinedHealthBars[id]
     fun getHitsplat(id: Int) = combinedHitsplats[id]
     fun getStruct(id: Int) = combinedStructs[id]
+    fun getDbrow(id: Int) = combinedDbrows[id]
+    fun getDbtable(id: Int) = combinedDbtables[id]
 
     fun getNpcOrDefault(id: Int) = getOrDefault(combinedNpcs, id, NpcType(), "Npc")
     fun getObjectOrDefault(id: Int) = getOrDefault(combinedObjects, id, dev.openrune.definition.type.ObjectType(), "Object")
@@ -73,6 +79,8 @@ object CacheManager {
     fun getHealthBarOrDefault(id: Int) = getOrDefault(combinedHealthBars, id, HealthBarType(), "HealthBar")
     fun getHitsplatOrDefault(id: Int) = getOrDefault(combinedHitsplats, id, HitSplatType(), "Hitsplat")
     fun getStructOrDefault(id: Int) = getOrDefault(combinedStructs, id, StructType(), "Struct")
+    fun getDbrowOrDefault(id: Int) = getOrDefault(combinedDbrows, id, DBRowType(), "DBRow")
+    fun getDbtableOrDefault(id: Int) = getOrDefault(combinedDbtables, id, DBTableType(), "DBTable")
 
     // Size methods
     fun npcSize() = combinedNpcs.size

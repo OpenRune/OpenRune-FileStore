@@ -31,6 +31,8 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     override val healthBars: MutableMap<Int, HealthBarType> = mutableMapOf()
     override val hitsplats: MutableMap<Int, HitSplatType> = mutableMapOf()
     override val structs: MutableMap<Int, StructType> = mutableMapOf()
+    override val dbrows: MutableMap<Int, DBRowType> = mutableMapOf()
+    override val dbtables: MutableMap<Int, DBTableType> = mutableMapOf()
 
     override fun init() {
         try {
@@ -45,6 +47,8 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
             HealthBarDecoder().load(cache, healthBars)
             HitSplatDecoder().load(cache, hitsplats)
             StructDecoder().load(cache, structs)
+            DBRowDecoder().load(cache, dbrows)
+            DBTableDecoder().load(cache, dbtables)
         } catch (e: BufferUnderflowException) {
             logger.error(e) { "Error reading definitions" }
             throw e

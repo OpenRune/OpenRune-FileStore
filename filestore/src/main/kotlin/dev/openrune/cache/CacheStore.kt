@@ -16,6 +16,8 @@ abstract class CacheStore() {
     open val  healthBars: MutableMap<Int, HealthBarType> = mutableMapOf()
     open val  hitsplats: MutableMap<Int, HitSplatType> = mutableMapOf()
     open val  structs: MutableMap<Int, StructType> = mutableMapOf()
+    open val  dbrows: MutableMap<Int, DBRowType> = mutableMapOf()
+    open val  dbtables: MutableMap<Int, DBTableType> = mutableMapOf()
 
 
     open var npcOffset: Int = 0
@@ -28,6 +30,8 @@ abstract class CacheStore() {
     open var healthBarOffset: Int = 0
     open var hitsplatOffset: Int = 0
     open var structOffset: Int = 0
+    open var dbrowOffset: Int = 0
+    open var dbtableOffset: Int = 0
 
     abstract fun init()
 
