@@ -9,9 +9,9 @@ import dev.openrune.definition.game.IndexedSprite
 
 class SpriteCodec : DefinitionCodec<SpriteType> {
     override fun SpriteType.read(opcode: Int, buffer: ByteBuf) {
-        buffer.readerIndex(buffer.readableBytes() - 2)
+        buffer.readerIndex(buffer.writerIndex() - 2)
         val size: Int = buffer.readShortRD()
-        buffer.readerIndex(buffer.readableBytes() - 7 - size * 8)
+        buffer.readerIndex(buffer.writerIndex() - 7 - size * 8)
 
         val offsetX: Int = buffer.readShortRD()
         val offsetY: Int = buffer.readShortRD()
@@ -37,7 +37,7 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
             sprite.subHeight = offsetY - sprite.height - sprite.offsetY
         }
 
-        buffer.readerIndex(buffer.readableBytes() - 7 - size * 8 - (paletteSize - 1) * 3)
+        buffer.readerIndex(buffer.writerIndex() - 7 - size * 8 - (paletteSize - 1) * 3)
         val palette = IntArray(paletteSize)
         for (index in 1 until paletteSize) {
             palette[index] = buffer.readUnsignedMediumRD()
