@@ -3,11 +3,30 @@ package dev.openrune.definition.codec
 import dev.openrune.buffer.Reader
 import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
-import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.type.SequenceType
 import kotlin.math.ceil
 
 class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
+
+    private val frameSoundOpcode: Int
+    private val skeletalIdOpcode: Int
+    private val skeletalSoundOpcode: Int
+    private val skeletalRangeOpcode: Int
+
+    init {
+        if(revision < 226) {
+            frameSoundOpcode = 13
+            skeletalIdOpcode = 14
+            skeletalSoundOpcode = 15
+            skeletalRangeOpcode = 16
+        } else {
+            frameSoundOpcode = -1// removed in 226
+            skeletalIdOpcode = 13
+            skeletalSoundOpcode = 14
+            skeletalRangeOpcode = 15
+        }
+    }
+
     override fun SequenceType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
             1 -> {
@@ -64,7 +83,7 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
                 }
             }
 
-            13 -> {
+            frameSoundOpcode -> {
                 val count = buffer.readUnsignedByte()
                 soundEffects = MutableList(count) { null }
                 for (i in 0 until count) {
@@ -72,8 +91,8 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
                 }
             }
 
-            14 -> skeletalId = buffer.readInt()
-            15 -> {
+            skeletalIdOpcode -> skeletalId = buffer.readInt()
+            skeletalSoundOpcode -> {
                 val count = buffer.readUnsignedShort()
                 for (i in 0 until count) {
                     val index = buffer.readUnsignedShort()
@@ -82,7 +101,7 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
                 }
             }
 
-            16 -> {
+            skeletalRangeOpcode -> {
                 rangeBegin = buffer.readUnsignedShort()
                 rangeEnd = buffer.readUnsignedShort()
             }
@@ -178,8 +197,8 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
 
         }
 
-        if (definition.soundEffects.isNotEmpty()) {
-            writeByte(13)
+        if (definition.soundEffects.isNotEmpty() && revision < 226) {
+            writeByte(frameSoundOpcode)
             writeByte(definition.soundEffects.size)
             definition.soundEffects.forEach {
                 it!!.writeSound(this, revision)
@@ -187,12 +206,12 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
         }
 
         if (definition.skeletalId != -1) {
-            writeByte(14)
+            writeByte(skeletalIdOpcode)
             writeInt(definition.skeletalId)
         }
 
         if (definition.skeletalSounds.isNotEmpty()) {
-            writeByte(15)
+            writeByte(skeletalSoundOpcode)
             writeShort(definition.skeletalSounds.size)
             definition.skeletalSounds.forEach { (index, sound) ->
                 writeShort(index)
@@ -201,7 +220,7 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
         }
 
         if (definition.rangeBegin != 0 || definition.rangeEnd != 0) {
-            writeByte(16)
+            writeByte(skeletalRangeOpcode)
             writeShort(definition.rangeBegin)
             writeShort(definition.rangeEnd)
         }
