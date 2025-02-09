@@ -54,8 +54,12 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                     chatheadModels!![it] = buffer.readUnsignedShort()
                 }
             }
-
-            in 74..79 -> stats[opcode - 74] = buffer.readUnsignedShort()
+            74 -> attack = buffer.readUnsignedShort()
+            75 -> defence = buffer.readUnsignedShort()
+            76 -> strength = buffer.readUnsignedShort()
+            77 -> hitpoints = buffer.readUnsignedShort()
+            78 -> ranged = buffer.readUnsignedShort()
+            79 -> magic = buffer.readUnsignedShort()
             93 -> isMinimapVisible = false
             95 -> combatLevel = buffer.readUnsignedShort()
             97 -> widthScale = buffer.readUnsignedShort()
@@ -191,14 +195,30 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                 writeShort(definition.chatheadModels!![i])
             }
         }
-
-        for (i in 0 .. 5) {
-            if (definition.stats[i] != 1) {
-                writeByte(74 + i)
-                writeShort(definition.stats[i])
-            }
+        if(definition.attack != 1) {
+            writeByte(74)
+            writeShort(definition.attack)
         }
-
+        if(definition.defence != 1) {
+            writeByte(75)
+            writeShort(definition.defence)
+        }
+        if(definition.strength != 1) {
+            writeByte(76)
+            writeShort(definition.strength)
+        }
+        if(definition.hitpoints != 1) {
+            writeByte(77)
+            writeShort(definition.hitpoints)
+        }
+        if(definition.ranged != 1) {
+            writeByte(78)
+            writeShort(definition.ranged)
+        }
+        if(definition.magic != 1) {
+            writeByte(79)
+            writeShort(definition.magic)
+        }
         if (!definition.isMinimapVisible) {
             writeByte(93)
         }
