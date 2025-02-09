@@ -1,7 +1,6 @@
-package dev.openrune.buffer
+package dev.openrune.definition.util
 
 import io.netty.buffer.ByteBuf
-
 
 fun ByteBuf.readUnsignedBoolean() = readUnsignedByte().toInt() == 1
 

@@ -2,7 +2,7 @@
 
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.readShortSmart
+import dev.openrune.definition.util.readShortSmart
 import dev.openrune.definition.type.model.MeshDecodingOption
 import dev.openrune.definition.type.model.MeshType
 import dev.openrune.definition.type.model.ModelType

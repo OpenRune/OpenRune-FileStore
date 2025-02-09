@@ -1,7 +1,7 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.readSmart
-import dev.openrune.buffer.writeSmart
+import dev.openrune.definition.util.readSmart
+import dev.openrune.definition.util.writeSmart
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.util.Type

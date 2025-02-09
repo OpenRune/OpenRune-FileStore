@@ -1,7 +1,7 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.readBigSmart
-import dev.openrune.buffer.readString
+import dev.openrune.definition.util.readBigSmart
+import dev.openrune.definition.util.readString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.NpcType
 import io.netty.buffer.ByteBuf

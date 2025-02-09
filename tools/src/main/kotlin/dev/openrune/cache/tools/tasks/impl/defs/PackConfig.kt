@@ -5,7 +5,7 @@ import com.akuleshov7.ktoml.TomlInputConfig
 import com.displee.cache.CacheLibrary
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.*
-import dev.openrune.buffer.toArray
+import dev.openrune.definition.util.toArray
 import dev.openrune.definition.Definition
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.*

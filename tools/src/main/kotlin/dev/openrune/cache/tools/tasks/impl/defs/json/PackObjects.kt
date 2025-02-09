@@ -5,8 +5,7 @@ import com.google.gson.Gson
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.OBJECT
-import dev.openrune.buffer.toArray
-import dev.openrune.definition.type.ObjectType
+import dev.openrune.definition.util.toArray
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress

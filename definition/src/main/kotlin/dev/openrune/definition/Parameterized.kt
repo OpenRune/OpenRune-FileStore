@@ -1,9 +1,9 @@
 package dev.openrune.definition
 
-import dev.openrune.buffer.readString
-import dev.openrune.buffer.readUnsignedBoolean
-import dev.openrune.buffer.writeByte
-import dev.openrune.buffer.writeString
+import dev.openrune.definition.util.readString
+import dev.openrune.definition.util.readUnsignedBoolean
+import dev.openrune.definition.util.writeByte
+import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap
 

@@ -3,7 +3,7 @@ package dev.openrune.cache.tools.tasks.impl
 import cc.ekblad.toml.decode
 import cc.ekblad.toml.tomlMapper
 import com.displee.cache.CacheLibrary
-import dev.openrune.buffer.toArray
+import dev.openrune.definition.util.toArray
 import dev.openrune.cache.SPRITES
 import dev.openrune.cache.TEXTURES
 import dev.openrune.definition.type.TextureType

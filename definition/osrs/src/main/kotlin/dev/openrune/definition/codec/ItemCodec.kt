@@ -1,7 +1,7 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.readString
-import dev.openrune.buffer.writeString
+import dev.openrune.definition.util.readString
+import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.ItemType
 import io.github.oshai.kotlinlogging.KotlinLogging

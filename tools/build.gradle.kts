@@ -1,5 +1,4 @@
 dependencies {
-    implementation(project(":core:buffer"))
     implementation(project(":filestore"))
     implementation(project(":definition"))
     implementation(project(":definition:osrs"))
