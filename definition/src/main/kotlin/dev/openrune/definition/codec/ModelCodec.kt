@@ -2,7 +2,6 @@
 
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
 import dev.openrune.definition.type.model.MeshDecodingOption
 import dev.openrune.definition.type.model.MeshType
 import dev.openrune.definition.type.model.ModelType
@@ -26,10 +25,11 @@ import dev.openrune.definition.type.model.ModelType.Companion.VERSION_FLAG
 import dev.openrune.definition.type.model.particles.EffectiveVertex
 import dev.openrune.definition.type.model.particles.EmissiveTriangle
 import dev.openrune.definition.type.model.particles.FaceBillboard
+import io.netty.buffer.ByteBuf
 
 class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
 
-    fun read(buffer: Reader): ModelType {
+    fun read(buffer: ByteBuf): ModelType {
         val modelType = ModelType(id)
         val version = buffer.getByte(buffer.writerIndex() - 1).toInt()
         val extra = buffer.getByte(buffer.writerIndex() - 2).toInt()
@@ -42,14 +42,14 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         return modelType
     }
 
-    private fun decode1(data: Reader, def : ModelType) {
+    private fun decode1(data: ByteBuf, def : ModelType) {
         def.type = MeshType.Unversioned
         val buf1 = data.duplicate()
         val buf2 = data.duplicate()
         val buf3 = data.duplicate()
         val buf4 = data.duplicate()
         val buf5 = data.duplicate()
-        buf1.position(buf1.writerIndex() - 18)
+        buf1.readerIndex(buf1.writerIndex() - 18)
         val vertexCount = buf1.readUnsignedShort()
         val triangleCount = buf1.readUnsignedShort()
         val textureTriangleCount = buf1.readUnsignedByte().toInt()
@@ -117,11 +117,11 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             def
         )
 
-        buf1.position(vertexFlagsOffset)
-        buf2.position(vertexXOffsetOffset)
-        buf3.position(vertexYOffsetOffset)
-        buf4.position(vertexZOffsetOffset)
-        buf5.position(vertexSkinsOffset)
+        buf1.readerIndex(vertexFlagsOffset)
+        buf2.readerIndex(vertexXOffsetOffset)
+        buf3.readerIndex(vertexYOffsetOffset)
+        buf4.readerIndex(vertexZOffsetOffset)
+        buf5.readerIndex(vertexSkinsOffset)
         readVertexPositions(
             hasVertexSkins,
             hasSkeletalBones = false,
@@ -132,11 +132,11 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             buf5,
             def
         )
-        buf1.position(faceColorsOffset)
-        buf2.position(faceTypesOffset)
-        buf3.position(facePrioritiesOffset)
-        buf4.position(faceAlphasOffset)
-        buf5.position(faceSkinsOffset)
+        buf1.readerIndex(faceColorsOffset)
+        buf2.readerIndex(faceTypesOffset)
+        buf3.readerIndex(facePrioritiesOffset)
+        buf4.readerIndex(faceAlphasOffset)
+        buf5.readerIndex(faceSkinsOffset)
         val (usesFaceTypes, usesMaterials) = readUnversionedTriangleInfo(
             options.toTypedArray(),
             hasTextures,
@@ -150,14 +150,14 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             buf5,
             def
         )
-        buf1.position(faceIndicesOffset)
-        buf2.position(facesCompressTypeOffset)
+        buf1.readerIndex(faceIndicesOffset)
+        buf2.readerIndex(facesCompressTypeOffset)
         readTriangleVertices(
             buf1,
             buf2,
             def
         )
-        buf1.position(faceMappingsOffset)
+        buf1.readerIndex(faceMappingsOffset)
         readUnversionedTextureVertices(buf1,def)
         if (!options.contains(MeshDecodingOption.PreserveOriginalData)) {
             filterUnversionedTextures(
@@ -168,7 +168,7 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         }
     }
 
-    private fun decode2(data: Reader, def : ModelType) {
+    private fun decode2(data: ByteBuf, def : ModelType) {
         def.type = MeshType.Versioned
         val buf1 = data.duplicate()
         val buf2 = data.duplicate()
@@ -177,7 +177,7 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         val buf5 = data.duplicate()
         val buf6 = data.duplicate()
         val buf7 = data.duplicate()
-        buf1.position(buf1.writerIndex() - 23)
+        buf1.readerIndex(buf1.writerIndex() - 23)
         val vertexCount = buf1.readUnsignedShort()
         val triangleCount = buf1.readUnsignedShort()
         val textureTriangleCount = buf1.readUnsignedByte().toInt()
@@ -187,9 +187,9 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         val hasBillboards = footerFlags and BILLBOARDS_FLAG == BILLBOARDS_FLAG
         val hasVersion = footerFlags and VERSION_FLAG == VERSION_FLAG
         val version = if (hasVersion) {
-            buf1.position(buf1.position() - 7)
+            buf1.readerIndex(buf1.readerIndex() - 7)
             val version = buf1.readUnsignedByte().toInt()
-            buf1.position(buf1.position() + 6)
+            buf1.readerIndex(buf1.readerIndex() + 6)
             version
         } else {
             DEFAULT_VERSION
@@ -211,7 +211,7 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         if (textureTriangleCount > 0) {
             val textureRenderTypes = IntArray(textureTriangleCount)
             def.textureRenderTypes = textureRenderTypes
-            buf1.position(0)
+            buf1.readerIndex(0)
             for (index in 0 until textureTriangleCount) {
                 textureRenderTypes[index] = buf1.readByte().toInt()
                 val type = textureRenderTypes[index]
@@ -305,11 +305,11 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             def
         )
 
-        buf1.position(vertexFlagsOffset)
-        buf2.position(vertexXOffsetOffset)
-        buf3.position(vertexYOffsetOffset)
-        buf4.position(vertexZOffsetOffset)
-        buf5.position(vertexSkinsOffset)
+        buf1.readerIndex(vertexFlagsOffset)
+        buf2.readerIndex(vertexXOffsetOffset)
+        buf3.readerIndex(vertexYOffsetOffset)
+        buf4.readerIndex(vertexZOffsetOffset)
+        buf5.readerIndex(vertexSkinsOffset)
         readVertexPositions(
             hasVertexSkins,
             hasSkeletalBones = false,
@@ -321,13 +321,13 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             def
         )
 
-        buf1.position(faceColorsOffset)
-        buf2.position(faceTypesOffset)
-        buf3.position(facePrioritiesOffset)
-        buf4.position(faceAlphasOffset)
-        buf5.position(faceSkinsOffset)
-        buf6.position(faceMaterialsOffset)
-        buf7.position(faceTextureIndicesOffset)
+        buf1.readerIndex(faceColorsOffset)
+        buf2.readerIndex(faceTypesOffset)
+        buf3.readerIndex(facePrioritiesOffset)
+        buf4.readerIndex(faceAlphasOffset)
+        buf5.readerIndex(faceSkinsOffset)
+        buf6.readerIndex(faceMaterialsOffset)
+        buf7.readerIndex(faceTextureIndicesOffset)
         readVersionedTriangleInfo(
             hasTextures,
             modelPriority,
@@ -343,19 +343,19 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             buf7,
             def
         )
-        buf1.position(faceIndicesOffset)
-        buf2.position(faceCompressTypeOffset)
+        buf1.readerIndex(faceIndicesOffset)
+        buf2.readerIndex(faceCompressTypeOffset)
         readTriangleVertices(
             buf1,
             buf2,
             def
         )
-        buf1.position(simpleTexturesOffset)
-        buf2.position(complexTexturesOffset)
-        buf3.position(texturesScaleOffset)
-        buf4.position(texturesRotationOffset)
-        buf5.position(texturesDirectionOffset)
-        buf6.position(texturesTranslationOffset)
+        buf1.readerIndex(simpleTexturesOffset)
+        buf2.readerIndex(complexTexturesOffset)
+        buf3.readerIndex(texturesScaleOffset)
+        buf4.readerIndex(texturesRotationOffset)
+        buf5.readerIndex(texturesDirectionOffset)
+        buf6.readerIndex(texturesTranslationOffset)
         readVersionedTextures(
             buf1,
             buf2,
@@ -366,7 +366,7 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             def
         )
 
-        buf1.position(particlesOffset)
+        buf1.readerIndex(particlesOffset)
         if (hasParticleEffects) {
             decodeParticles(
                 buf1,
@@ -384,14 +384,14 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         }
     }
 
-    private fun decode3(data: Reader, def: ModelType) {
+    private fun decode3(data: ByteBuf, def: ModelType) {
         def.type = MeshType.UnversionedSkeletal
         val buf1 = data.duplicate()
         val buf2 = data.duplicate()
         val buf3 = data.duplicate()
         val buf4 = data.duplicate()
         val buf5 = data.duplicate()
-        buf1.position(buf1.writerIndex() - 23)
+        buf1.readerIndex(buf1.writerIndex() - 23)
         val vertexCount = buf1.readUnsignedShort()
         val triangleCount = buf1.readUnsignedShort()
         val textureTriangleCount = buf1.readUnsignedByte().toInt()
@@ -459,11 +459,11 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             def
         )
 
-        buf1.position(vertexFlagsOffset)
-        buf2.position(vertexXOffsetOffset)
-        buf3.position(vertexYOffsetOffset)
-        buf4.position(vertexZOffsetOffset)
-        buf5.position(vertexSkinsOffset)
+        buf1.readerIndex(vertexFlagsOffset)
+        buf2.readerIndex(vertexXOffsetOffset)
+        buf3.readerIndex(vertexYOffsetOffset)
+        buf4.readerIndex(vertexZOffsetOffset)
+        buf5.readerIndex(vertexSkinsOffset)
         readVertexPositions(
             hasVertexSkins,
             hasSkeletalBones = hasSkeletalBones == 1,
@@ -474,11 +474,11 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             buf5,
             def
         )
-        buf1.position(faceColorsOffset)
-        buf2.position(faceTypesOffset)
-        buf3.position(facePrioritiesOffset)
-        buf4.position(faceAlphasOffset)
-        buf5.position(faceSkinsOffset)
+        buf1.readerIndex(faceColorsOffset)
+        buf2.readerIndex(faceTypesOffset)
+        buf3.readerIndex(facePrioritiesOffset)
+        buf4.readerIndex(faceAlphasOffset)
+        buf5.readerIndex(faceSkinsOffset)
         val (usesFaceTypes, usesMaterials) = readUnversionedTriangleInfo(
             options.toTypedArray(),
             hasTextures,
@@ -492,14 +492,14 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             buf5,
             def
         )
-        buf1.position(faceIndicesOffset)
-        buf2.position(facesCompressTypeOffset)
+        buf1.readerIndex(faceIndicesOffset)
+        buf2.readerIndex(facesCompressTypeOffset)
         readTriangleVertices(
             buf1,
             buf2,
             def
         )
-        buf1.position(faceMappingsOffset)
+        buf1.readerIndex(faceMappingsOffset)
         readUnversionedTextureVertices(buf1,def)
         if (!options.contains(MeshDecodingOption.PreserveOriginalData)) {
             filterUnversionedTextures(
@@ -510,7 +510,7 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         }
     }
 
-    private fun decode4(data: Reader, def: ModelType) {
+    private fun decode4(data: ByteBuf, def: ModelType) {
         def.type = MeshType.VersionedSkeletal
         val buf1 = data.duplicate()
         val buf2 = data.duplicate()
@@ -519,7 +519,7 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         val buf5 = data.duplicate()
         val buf6 = data.duplicate()
         val buf7 = data.duplicate()
-        buf1.position(buf1.writerIndex() - 26)
+        buf1.readerIndex(buf1.writerIndex() - 26)
         val vertexCount = buf1.readUnsignedShort()
         val triangleCount = buf1.readUnsignedShort()
         val textureTriangleCount = buf1.readUnsignedByte().toInt()
@@ -529,9 +529,9 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         val hasBillboards = footerFlags and BILLBOARDS_FLAG == 4
         val hasVersion = footerFlags and VERSION_FLAG == 8
         val version = if (hasVersion) {
-            buf1.position(buf1.position() - 7)
+            buf1.readerIndex(buf1.readerIndex() - 7)
             val version = buf1.readUnsignedByte().toInt()
-            buf1.position(buf1.position() + 6)
+            buf1.readerIndex(buf1.readerIndex() + 6)
             version
         } else {
             DEFAULT_VERSION
@@ -555,7 +555,7 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         if (textureTriangleCount > 0) {
             val textureRenderTypes = IntArray(textureTriangleCount)
             def.textureRenderTypes = textureRenderTypes
-            buf1.position(0)
+            buf1.readerIndex(0)
             for (index in 0 until textureTriangleCount) {
                 textureRenderTypes[index] = buf1.readByte().toInt()
                 val type = textureRenderTypes[index]
@@ -647,11 +647,11 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             def
         )
 
-        buf1.position(vertexFlagsOffset)
-        buf2.position(vertexXOffsetOffset)
-        buf3.position(vertexYOffsetOffset)
-        buf4.position(vertexZOffsetOffset)
-        buf5.position(vertexSkinsOffset)
+        buf1.readerIndex(vertexFlagsOffset)
+        buf2.readerIndex(vertexXOffsetOffset)
+        buf3.readerIndex(vertexYOffsetOffset)
+        buf4.readerIndex(vertexZOffsetOffset)
+        buf5.readerIndex(vertexSkinsOffset)
         readVertexPositions(
             hasVertexSkins,
             hasSkeletalBones = hasSkeletalBones == 1,
@@ -663,13 +663,13 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             def
         )
 
-        buf1.position(faceColorsOffset)
-        buf2.position(faceTypesOffset)
-        buf3.position(facePrioritiesOffset)
-        buf4.position(faceAlphasOffset)
-        buf5.position(faceSkinsOffset)
-        buf6.position(faceMaterialsOffset)
-        buf7.position(faceTextureIndicesOffset)
+        buf1.readerIndex(faceColorsOffset)
+        buf2.readerIndex(faceTypesOffset)
+        buf3.readerIndex(facePrioritiesOffset)
+        buf4.readerIndex(faceAlphasOffset)
+        buf5.readerIndex(faceSkinsOffset)
+        buf6.readerIndex(faceMaterialsOffset)
+        buf7.readerIndex(faceTextureIndicesOffset)
         readVersionedTriangleInfo(
             hasTextures,
             modelPriority,
@@ -685,19 +685,19 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             buf7,
             def
         )
-        buf1.position(faceIndicesOffset)
-        buf2.position(faceCompressTypeOffset)
+        buf1.readerIndex(faceIndicesOffset)
+        buf2.readerIndex(faceCompressTypeOffset)
         readTriangleVertices(
             buf1,
             buf2,
             def
         )
-        buf1.position(simpleTexturesOffset)
-        buf2.position(complexTexturesOffset)
-        buf3.position(texturesScaleOffset)
-        buf4.position(texturesRotationOffset)
-        buf5.position(texturesDirectionOffset)
-        buf6.position(texturesTranslationOffset)
+        buf1.readerIndex(simpleTexturesOffset)
+        buf2.readerIndex(complexTexturesOffset)
+        buf3.readerIndex(texturesScaleOffset)
+        buf4.readerIndex(texturesRotationOffset)
+        buf5.readerIndex(texturesDirectionOffset)
+        buf6.readerIndex(texturesTranslationOffset)
         readVersionedTextures(
             buf1,
             buf2,
@@ -708,7 +708,7 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             def
         )
 
-        buf1.position(particlesOffset)
+        buf1.readerIndex(particlesOffset)
         if (hasParticleEffects) {
             decodeParticles(
                 buf1,
@@ -777,7 +777,7 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
     }
 
     private fun decodeBillboards(
-        buf1: Reader,
+        buf1: ByteBuf,
         def: ModelType
     ) {
         val count = buf1.readUnsignedByte().toInt()
@@ -794,7 +794,7 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
     }
 
     private fun decodeParticles(
-        buf1: Reader,
+        buf1: ByteBuf,
         modelPriority: Int,
         def: ModelType
     ) {
@@ -834,12 +834,12 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
     }
 
     private fun readVersionedTextures(
-        buf1: Reader,
-        buf2: Reader,
-        buf3: Reader,
-        buf4: Reader,
-        buf5: Reader,
-        buf6: Reader,
+        buf1: ByteBuf,
+        buf2: ByteBuf,
+        buf3: ByteBuf,
+        buf4: ByteBuf,
+        buf5: ByteBuf,
+        buf6: ByteBuf,
         def: ModelType
     ) {
         if (def.textureTriangleCount <= 0) return
@@ -948,13 +948,13 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         hasFaceAlphas: Int,
         hasFaceSkins: Int,
         hasFaceTypes: Boolean,
-        buf1: Reader,
-        buf2: Reader,
-        buf3: Reader,
-        buf4: Reader,
-        buf5: Reader,
-        buf6: Reader,
-        buf7: Reader,
+        buf1: ByteBuf,
+        buf2: ByteBuf,
+        buf3: ByteBuf,
+        buf4: ByteBuf,
+        buf5: ByteBuf,
+        buf6: ByteBuf,
+        buf7: ByteBuf,
         def: ModelType
     ) {
         if (def.triangleCount <= 0) return
@@ -1131,11 +1131,11 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
     private fun readVertexPositions(
         hasVertexSkins: Int,
         hasSkeletalBones: Boolean,
-        buf1: Reader,
-        buf2: Reader,
-        buf3: Reader,
-        buf4: Reader,
-        buf5: Reader,
+        buf1: ByteBuf,
+        buf2: ByteBuf,
+        buf3: ByteBuf,
+        buf4: ByteBuf,
+        buf5: ByteBuf,
         def: ModelType
     ) {
         if (def.vertexCount <= 0) return
@@ -1194,11 +1194,11 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         modelPriority: Int,
         hasFaceAlphas: Int,
         hasFaceSkins: Int,
-        buf1: Reader,
-        buf2: Reader,
-        buf3: Reader,
-        buf4: Reader,
-        buf5: Reader,
+        buf1: ByteBuf,
+        buf2: ByteBuf,
+        buf3: ByteBuf,
+        buf4: ByteBuf,
+        buf5: ByteBuf,
         def: ModelType
     ): Pair<Boolean, Boolean> {
         if (def.triangleCount <= 0) return Pair(first = false, second = false)
@@ -1250,8 +1250,8 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
     }
 
     private fun readTriangleVertices(
-        buf1: Reader,
-        buf2: Reader,
+        buf1: ByteBuf,
+        buf2: ByteBuf,
         def: ModelType
     ) {
         if (def.triangleCount <= 0) return
@@ -1306,7 +1306,7 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
     }
 
     private fun readUnversionedTextureVertices(
-        buf1: Reader,
+        buf1: ByteBuf,
         def: ModelType
     ) {
         if (def.textureTriangleCount <= 0) return
@@ -1362,4 +1362,12 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         }
     }
 
+    private fun ByteBuf._readUnsignedByte(): Int {
+        return readByte().toInt() and 0xff
+    }
+
+    private fun ByteBuf.readShortSmart(): Int {
+        val peek = _readUnsignedByte()
+        return if (peek < 128) peek - 64 else (peek shl 8 or _readUnsignedByte()) - 49152
+    }
 }

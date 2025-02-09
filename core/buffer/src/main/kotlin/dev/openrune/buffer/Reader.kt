@@ -1,18 +1,22 @@
 package dev.openrune.buffer
 
-import java.nio.ByteBuffer
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class Reader(
-    val buffer: ByteBuffer
-) {
+/**
+ * Created by Advo on 9/14/2024
+ */
+class Reader(private val buf: ByteBuf) {
+    constructor(buf: ByteArray) : this(Unpooled.wrappedBuffer(buf))
 
-    constructor(array: ByteArray) : this(buffer = ByteBuffer.wrap(array))
-
-    val length: Int = buffer.remaining()
+    val length: Int
+        get() = buf.readableBytes()
 
     fun readByte(): Int {
-        return buffer.get().toInt()
+        return buf.readByte().toInt()
     }
+
+    fun readUnsignedBoolean() = readUnsignedByte() == 1
 
     fun readUnsignedByte(): Int {
         return readByte() and 0xff
@@ -22,7 +26,7 @@ class Reader(
         return (readByte() shl 8) or readUnsignedByte()
     }
 
-    fun readShortSmart() : Int {
+    fun readShortSmart(): Int {
         val peek = readUnsignedByte()
         return if (peek < 128) peek - 64 else (peek shl 8 or readUnsignedByte()) - 49152
     }
@@ -75,7 +79,7 @@ class Reader(
     fun readString(): String {
         val sb = StringBuilder()
         var b: Int
-        while (buffer.hasRemaining()) {
+        while (buf.isReadable) {
             b = readUnsignedByte()
             if (b == 0) {
                 break
@@ -85,32 +89,14 @@ class Reader(
         return sb.toString()
     }
 
-    fun position(): Int {
-        return buffer.position()
-    }
-
     fun position(index: Int) {
-        buffer.position(index)
+        buf.readerIndex(index)
     }
 
     fun array(): ByteArray {
-        return buffer.array()
+        val copy = ByteArray(buf.readableBytes())
+        buf.readBytes(copy)
+        return copy
     }
 
-    fun readUnsignedBoolean() = readUnsignedByte() == 1
-
-    fun getByte(pos: Int): Byte {
-        return buffer.get(pos)
-    }
-
-    fun writerIndex(): Int {
-        return length
-    }
-
-    fun duplicate(): Reader {
-        val copy = ByteBuffer.allocate(buffer.remaining())
-        copy.put(buffer.duplicate().clear())
-        copy.flip()
-        return Reader(copy)
-    }
 }
