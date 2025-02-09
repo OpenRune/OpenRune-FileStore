@@ -1,11 +1,10 @@
 package dev.openrune.definition.codec
 
-import io.netty.buffer.ByteBuf
-import dev.openrune.buffer.Writer
 import dev.openrune.buffer.readBigSmart
 import dev.openrune.buffer.readString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.ItemType
+import io.netty.buffer.ByteBuf
 
 fun ItemType.getPrimaryCursorOpcode(): Int {
     return getIntProperty("primaryCursorOpcode")
@@ -168,7 +167,7 @@ class ItemCodec718 : DefinitionCodec<ItemType> {
         }
     }
 
-    override fun Writer.encode(definition: ItemType) {
+    override fun ByteBuf.encode(definition: ItemType) {
         TODO("Not yet implemented")
     }
 

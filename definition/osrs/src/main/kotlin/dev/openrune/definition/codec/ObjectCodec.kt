@@ -1,6 +1,7 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.*
+import dev.openrune.buffer.readString
+import dev.openrune.buffer.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.type.ObjectType
@@ -115,7 +116,7 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
         }
     }
 
-    override fun Writer.encode(definition: dev.openrune.definition.type.ObjectType) {
+    override fun ByteBuf.encode(definition: dev.openrune.definition.type.ObjectType) {
         if (definition.objectModels != null) {
             if (definition.objectTypes != null) {
                 writeByte(1)

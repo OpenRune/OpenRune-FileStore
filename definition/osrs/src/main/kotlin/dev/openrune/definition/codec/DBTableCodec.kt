@@ -1,12 +1,13 @@
 package dev.openrune.definition.codec
 
-import io.netty.buffer.ByteBuf
-import dev.openrune.buffer.Writer
 import dev.openrune.buffer.readSmart
 import dev.openrune.buffer.readString
+import dev.openrune.buffer.writeSmart
+import dev.openrune.buffer.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.DBTableType
 import dev.openrune.definition.util.Type
+import io.netty.buffer.ByteBuf
 
 class DBTableCodec : DefinitionCodec<DBTableType> {
     override fun DBTableType.read(opcode: Int, buffer: ByteBuf) {
@@ -37,7 +38,7 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
         }
     }
 
-    override fun Writer.encode(definition: DBTableType) {
+    override fun ByteBuf.encode(definition: DBTableType) {
         val types = definition.types
         val defaultValues: Array<Array<Any?>?>? = definition.defaultColumnValues
         if (types == null) {
@@ -69,7 +70,7 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
     override fun createDefinition() = DBTableType()
 }
 
-fun Writer.writeColumnFields(types: Array<Type>, values: Array<Any?>?) {
+fun ByteBuf.writeColumnFields(types: Array<Type>, values: Array<Any?>?) {
     val fieldCount = values!!.size / types.size
     writeSmart(fieldCount)
     for (fieldIndex in 0 until fieldCount) {

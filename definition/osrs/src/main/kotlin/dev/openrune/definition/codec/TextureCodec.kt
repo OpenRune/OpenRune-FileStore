@@ -1,9 +1,8 @@
 package dev.openrune.definition.codec
 
-import io.netty.buffer.ByteBuf
-import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.TextureType
+import io.netty.buffer.ByteBuf
 
 class TextureCodec : DefinitionCodec<TextureType> {
     override fun TextureType.read(opcode: Int, buffer: ByteBuf) {
@@ -41,7 +40,7 @@ class TextureCodec : DefinitionCodec<TextureType> {
         }
     }
 
-    override fun Writer.encode(definition: TextureType) {
+    override fun ByteBuf.encode(definition: TextureType) {
         writeShort(definition.averageRgb)
         writeByte(if(definition.isTransparent) 1 else 0)
         val fileCount = definition.fileIds.size

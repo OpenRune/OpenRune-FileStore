@@ -1,9 +1,8 @@
 package dev.openrune.definition.codec
 
-import io.netty.buffer.ByteBuf
-import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.UnderlayType
+import io.netty.buffer.ByteBuf
 
 class UnderlayCodec : DefinitionCodec<UnderlayType> {
     override fun UnderlayType.read(opcode: Int, buffer: ByteBuf) {
@@ -12,7 +11,7 @@ class UnderlayCodec : DefinitionCodec<UnderlayType> {
         }
     }
 
-    override fun Writer.encode(definition: UnderlayType) {
+    override fun ByteBuf.encode(definition: UnderlayType) {
         TODO("Not yet implemented")
     }
 

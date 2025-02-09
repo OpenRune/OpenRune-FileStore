@@ -1,10 +1,9 @@
 package dev.openrune.definition.codec
 
-import io.netty.buffer.ByteBuf
-import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
-import dev.openrune.definition.type.SpriteType
 import dev.openrune.definition.game.IndexedSprite
+import dev.openrune.definition.type.SpriteType
+import io.netty.buffer.ByteBuf
 
 class SpriteCodec : DefinitionCodec<SpriteType> {
     override fun SpriteType.read(opcode: Int, buffer: ByteBuf) {
@@ -102,7 +101,7 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
         this.sprites = sprites
     }
 
-    override fun Writer.encode(definition: SpriteType) {
+    override fun ByteBuf.encode(definition: SpriteType) {
         TODO("Not yet implemented")
     }
 

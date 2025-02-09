@@ -1,9 +1,8 @@
 package dev.openrune.definition.codec
 
-import io.netty.buffer.ByteBuf
-import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.HealthBarType
+import io.netty.buffer.ByteBuf
 
 class HealthBarCodec : DefinitionCodec<HealthBarType> {
     override fun HealthBarType.read(opcode: Int, buffer: ByteBuf) {
@@ -22,7 +21,7 @@ class HealthBarCodec : DefinitionCodec<HealthBarType> {
         }
     }
 
-    override fun Writer.encode(definition: HealthBarType) {
+    override fun ByteBuf.encode(definition: HealthBarType) {
         if (definition.int1 != 255) {
             writeByte(2)
             writeByte(definition.int1)

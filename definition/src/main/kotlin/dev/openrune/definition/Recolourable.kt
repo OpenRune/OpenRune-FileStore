@@ -1,7 +1,6 @@
 package dev.openrune.definition
 
 import io.netty.buffer.ByteBuf
-import dev.openrune.buffer.Writer
 
 interface Recolourable {
     var originalColours: MutableList<Int>?
@@ -29,12 +28,12 @@ interface Recolourable {
         }
     }
 
-    fun writeColoursTextures(writer: Writer) {
+    fun writeColoursTextures(writer: ByteBuf) {
         writeArray(writer, 40, originalColours, modifiedColours)
         writeArray(writer, 41, originalTextureColours, modifiedTextureColours)
     }
 
-    private fun writeArray(writer: Writer, opcode: Int, original: List<Int>?, modified: List<Int>?) {
+    private fun writeArray(writer: ByteBuf, opcode: Int, original: List<Int>?, modified: List<Int>?) {
         if (original != null && modified != null) {
             writer.writeByte(opcode)
             writer.writeByte(original.size)

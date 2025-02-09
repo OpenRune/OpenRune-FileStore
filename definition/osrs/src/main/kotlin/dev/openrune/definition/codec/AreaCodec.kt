@@ -1,11 +1,12 @@
 package dev.openrune.definition.codec
 
-import io.netty.buffer.ByteBuf
-import dev.openrune.buffer.Writer
 import dev.openrune.buffer.readLargeSmart
 import dev.openrune.buffer.readString
+import dev.openrune.buffer.writeSmart
+import dev.openrune.buffer.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.AreaType
+import io.netty.buffer.ByteBuf
 
 class AreaCodec : DefinitionCodec<AreaType> {
 
@@ -67,7 +68,7 @@ class AreaCodec : DefinitionCodec<AreaType> {
         }
     }
 
-    override fun Writer.encode(definition: AreaType) {
+    override fun ByteBuf.encode(definition: AreaType) {
 
         if (definition.sprite1 != -1) {
             writeByte(1)

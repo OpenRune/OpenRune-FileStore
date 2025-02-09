@@ -1,12 +1,12 @@
 package dev.openrune.definition.type
 
-import dev.openrune.definition.serialization.RscmString
 import dev.openrune.definition.Definition
 import dev.openrune.definition.Parameterized
 import dev.openrune.definition.Recolourable
 import dev.openrune.definition.Transforms
 import dev.openrune.definition.serialization.ListRscm
 import dev.openrune.definition.serialization.Rscm
+import dev.openrune.definition.serialization.RscmString
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 

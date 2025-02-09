@@ -1,11 +1,10 @@
 package dev.openrune.definition.codec
 
-import io.netty.buffer.ByteBuf
-import dev.openrune.buffer.Writer
 import dev.openrune.buffer.readBigSmart
 import dev.openrune.buffer.readString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.NpcType
+import io.netty.buffer.ByteBuf
 
 fun NpcType.getPrimaryShadowColour(): Int {
     return getIntProperty("primaryShadowColour")
@@ -302,7 +301,7 @@ class NpcCodec718 : DefinitionCodec<NpcType> {
         ByteArray(length) { buffer.readByte().toInt().toByte() }
     }
 
-    override fun Writer.encode(definition: NpcType) {
+    override fun ByteBuf.encode(definition: NpcType) {
         TODO("Not yet implemented")
     }
 

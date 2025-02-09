@@ -1,11 +1,11 @@
 package dev.openrune.definition.codec
 
-import io.netty.buffer.ByteBuf
-import dev.openrune.buffer.Writer
 import dev.openrune.buffer.readSmart
+import dev.openrune.buffer.writeSmart
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.util.Type
+import io.netty.buffer.ByteBuf
 
 class DBRowCodec : DefinitionCodec<DBRowType> {
     override fun DBRowType.read(opcode: Int, buffer: ByteBuf) {
@@ -31,7 +31,7 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
         }
     }
 
-    override fun Writer.encode(definition: DBRowType) {
+    override fun ByteBuf.encode(definition: DBRowType) {
         when {
             definition.columnTypes != null -> {
                 writeByte(3)
@@ -71,7 +71,7 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
         return value
     }
 
-    private fun Writer.writeVarInt(var1: Int) {
+    private fun ByteBuf.writeVarInt(var1: Int) {
         if (var1 and -128 != 0) {
             if (var1 and -16384 != 0) {
                 if (var1 and -2097152 != 0) {

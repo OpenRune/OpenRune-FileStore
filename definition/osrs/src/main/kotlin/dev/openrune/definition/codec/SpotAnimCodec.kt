@@ -1,9 +1,8 @@
 package dev.openrune.definition.codec
 
-import io.netty.buffer.ByteBuf
-import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.SpotAnimType
+import io.netty.buffer.ByteBuf
 
 class SpotAnimCodec : DefinitionCodec<SpotAnimType> {
     override fun SpotAnimType.read(opcode: Int, buffer: ByteBuf) {
@@ -20,7 +19,7 @@ class SpotAnimCodec : DefinitionCodec<SpotAnimType> {
         }
     }
 
-    override fun Writer.encode(definition: SpotAnimType) {
+    override fun ByteBuf.encode(definition: SpotAnimType) {
         if (definition.modelId != 0) {
             writeByte(1)
             writeShort(definition.modelId)

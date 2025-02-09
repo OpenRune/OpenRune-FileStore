@@ -1,6 +1,6 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.*
+import dev.openrune.buffer.readString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.EnumType
 import io.netty.buffer.ByteBuf
@@ -26,7 +26,7 @@ class EnumCodec : DefinitionCodec<EnumType> {
         }
     }
 
-    override fun Writer.encode(definition: EnumType) {
+    override fun ByteBuf.encode(definition: EnumType) {
         TODO("Not yet implemented")
     }
 

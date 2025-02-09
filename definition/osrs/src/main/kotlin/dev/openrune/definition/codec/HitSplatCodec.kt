@@ -1,6 +1,8 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.*
+import dev.openrune.buffer.readShortSmart
+import dev.openrune.buffer.readString
+import dev.openrune.buffer.writePrefixedString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.HitSplatType
 import io.netty.buffer.ByteBuf
@@ -26,7 +28,7 @@ class HitSplatCodec : DefinitionCodec<HitSplatType> {
         }
     }
 
-    override fun Writer.encode(definition: HitSplatType) {
+    override fun ByteBuf.encode(definition: HitSplatType) {
         if (definition.font != -1) {
             writeByte(1)
             writeShort(definition.font)

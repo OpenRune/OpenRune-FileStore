@@ -1,7 +1,6 @@
 package dev.openrune.definition
 
 import io.netty.buffer.ByteBuf
-import dev.openrune.buffer.Writer
 import io.netty.buffer.Unpooled
 
 interface DefinitionCodec<T : Definition> {
@@ -17,7 +16,7 @@ interface DefinitionCodec<T : Definition> {
     }
 
     fun T.read(opcode: Int, buffer: ByteBuf)
-    fun Writer.encode(definition: T)
+    fun ByteBuf.encode(definition: T)
 
     fun createDefinition(): T
 

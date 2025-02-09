@@ -1,6 +1,9 @@
 package dev.openrune.definition
 
-import dev.openrune.buffer.*
+import dev.openrune.buffer.readString
+import dev.openrune.buffer.readUnsignedBoolean
+import dev.openrune.buffer.writeByte
+import dev.openrune.buffer.writeString
 import io.netty.buffer.ByteBuf
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap
 
@@ -22,7 +25,7 @@ interface Parameterized {
         this.params = params
     }
 
-    fun writeParameters(writer: Writer) {
+    fun writeParameters(writer: ByteBuf) {
         params?.let { params ->
             writer.writeByte(249)
             writer.writeByte(params.size)

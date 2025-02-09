@@ -1,9 +1,8 @@
 package dev.openrune.definition.codec
 
-import io.netty.buffer.ByteBuf
-import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.IdentityKitType
+import io.netty.buffer.ByteBuf
 
 class IdentityKitCodec : DefinitionCodec<IdentityKitType> {
     override fun IdentityKitType.read(opcode: Int, buffer: ByteBuf) {
@@ -27,7 +26,7 @@ class IdentityKitCodec : DefinitionCodec<IdentityKitType> {
         }
     }
 
-    override fun Writer.encode(definition: IdentityKitType) {
+    override fun ByteBuf.encode(definition: IdentityKitType) {
         if(definition.bodyPartId != -1) {
             writeByte(1)
             writeByte(definition.bodyPartId)

@@ -1,6 +1,5 @@
 package dev.openrune.definition
 
-import dev.openrune.buffer.*
 import io.netty.buffer.ByteBuf
 
 data class SoundData(
@@ -10,7 +9,7 @@ data class SoundData(
     var location: Int,
     var retain: Int,
 ) {
-    fun writeSound(writer: Writer, revision : Int) {
+    fun writeSound(writer: ByteBuf, revision : Int) {
         if (!revisionIsOrAfter(revision, 220)) {
             val payload: Int = (location and 15) or (id shl 8) or (loops shl 4 and 7)
             writer.writeMedium(payload)

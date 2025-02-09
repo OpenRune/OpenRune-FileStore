@@ -1,6 +1,7 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.*
+import dev.openrune.buffer.readString
+import dev.openrune.buffer.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.ItemType
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -112,7 +113,7 @@ class ItemCodec : DefinitionCodec<ItemType> {
         }
     }
 
-    override fun Writer.encode(definition: ItemType) {
+    override fun ByteBuf.encode(definition: ItemType) {
         if (definition.inventoryModel != 0) {
             writeByte(1)
             writeShort(definition.inventoryModel)

@@ -1,9 +1,8 @@
 package dev.openrune.definition.codec
 
-import io.netty.buffer.ByteBuf
-import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.InventoryType
+import io.netty.buffer.ByteBuf
 
 class InventoryCodec : DefinitionCodec<InventoryType> {
     override fun InventoryType.read(opcode: Int, buffer: ByteBuf) {
@@ -12,7 +11,7 @@ class InventoryCodec : DefinitionCodec<InventoryType> {
         }
     }
 
-    override fun Writer.encode(definition: InventoryType) {
+    override fun ByteBuf.encode(definition: InventoryType) {
         if (definition.size != 0) {
             writeByte(2)
             writeShort(definition.size)

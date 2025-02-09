@@ -1,6 +1,5 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.*
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.SequenceType
 import io.netty.buffer.ByteBuf
@@ -116,7 +115,7 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
         }
     }
 
-    override fun Writer.encode(definition: SequenceType) {
+    override fun ByteBuf.encode(definition: SequenceType) {
 
         if (definition.frameIDs != null) {
             writeByte(1)

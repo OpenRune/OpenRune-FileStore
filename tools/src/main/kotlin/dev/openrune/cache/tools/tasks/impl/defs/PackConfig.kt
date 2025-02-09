@@ -5,7 +5,7 @@ import com.akuleshov7.ktoml.TomlInputConfig
 import com.displee.cache.CacheLibrary
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.*
-import dev.openrune.buffer.BufferWriter
+import dev.openrune.buffer.toArray
 import dev.openrune.definition.Definition
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.*
@@ -15,6 +15,7 @@ import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.codec.*
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.netty.buffer.Unpooled
 import kotlinx.serialization.decodeFromString
 import java.io.File
 import java.lang.reflect.Modifier
@@ -87,7 +88,7 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
             }
         }
 
-        val writer = BufferWriter(4096)
+        val writer = Unpooled.buffer(4096)
         with(codec) { writer.encode(def) }
 
         library.index(CONFIGS).archive(archive)?.add(defId, writer.toArray())

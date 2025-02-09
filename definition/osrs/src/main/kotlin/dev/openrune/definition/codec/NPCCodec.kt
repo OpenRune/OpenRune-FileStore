@@ -1,14 +1,14 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.*
-import io.netty.buffer.ByteBuf
-import dev.openrune.buffer.Writer
+import dev.openrune.buffer.readShortSmart
 import dev.openrune.buffer.readString
+import dev.openrune.buffer.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.revisionIsOrBefore
 import dev.openrune.definition.type.NpcType
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.netty.buffer.ByteBuf
 
 class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
     override fun NpcType.read(opcode: Int, buffer: ByteBuf) {
@@ -120,7 +120,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
         }
     }
 
-    override fun Writer.encode(definition: NpcType) {
+    override fun ByteBuf.encode(definition: NpcType) {
         if (definition.models != null && definition.models!!.isNotEmpty()) {
             writeByte(1)
             writeByte(definition.models!!.size)

@@ -1,9 +1,8 @@
 package dev.openrune.definition.codec
 
-import io.netty.buffer.ByteBuf
-import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.VarClientType
+import io.netty.buffer.ByteBuf
 
 class VarClientCodec : DefinitionCodec<VarClientType> {
     override fun VarClientType.read(opcode: Int, buffer: ByteBuf) {
@@ -12,7 +11,7 @@ class VarClientCodec : DefinitionCodec<VarClientType> {
         }
     }
 
-    override fun Writer.encode(definition: VarClientType) {
+    override fun ByteBuf.encode(definition: VarClientType) {
         if (definition.persist) {
             writeByte(2)
         }

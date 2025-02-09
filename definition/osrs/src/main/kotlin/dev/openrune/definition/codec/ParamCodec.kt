@@ -1,6 +1,7 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.*
+import dev.openrune.buffer.readString
+import dev.openrune.buffer.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.ParamType
 import dev.openrune.definition.util.Type
@@ -20,7 +21,7 @@ class ParamCodec : DefinitionCodec<ParamType> {
         }
     }
 
-    override fun Writer.encode(definition: ParamType) {
+    override fun ByteBuf.encode(definition: ParamType) {
         if(definition.type != null) {
             writeByte(1)
             writeByte(definition.type!!.ch.code)

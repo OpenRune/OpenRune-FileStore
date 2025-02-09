@@ -55,3 +55,37 @@ fun ByteBuf.readString(): String {
     return sb.toString()
 }
 
+//Writing
+
+fun ByteBuf.writeByte(value: Boolean) {
+    writeByte(if (value) 1 else 0)
+}
+
+fun ByteBuf.writeSmart(value: Int) {
+    if (value >= 128) {
+        writeShort(value + 32768)
+    } else {
+        writeByte(value)
+    }
+}
+
+fun ByteBuf.writeString(value: String?) {
+    if (value != null) {
+        for (char in value) {
+            writeByte(char.code)
+        }
+    }
+    writeByte(0)
+}
+
+fun ByteBuf.writePrefixedString(value: String) {
+    writeByte(0)
+    for (char in value) {
+        writeByte(char.code)
+    }
+    writeByte(0)
+}
+
+fun ByteBuf.toArray(): ByteArray {
+    return ByteArray(writerIndex()).also { this.getBytes(0, it) }
+}

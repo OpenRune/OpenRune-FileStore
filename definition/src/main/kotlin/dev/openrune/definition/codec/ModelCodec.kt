@@ -6,11 +6,6 @@ import dev.openrune.buffer.readShortSmart
 import dev.openrune.definition.type.model.MeshDecodingOption
 import dev.openrune.definition.type.model.MeshType
 import dev.openrune.definition.type.model.ModelType
-import dev.openrune.definition.type.model.ModelType.Companion.USES_FACE_TYPES_FLAG
-import dev.openrune.definition.type.model.ModelType.Companion.USES_MATERIALS_FLAG
-import dev.openrune.definition.type.model.ModelType.Companion.X_POS_FLAG
-import dev.openrune.definition.type.model.ModelType.Companion.Y_POS_FLAG
-import dev.openrune.definition.type.model.ModelType.Companion.Z_POS_FLAG
 import dev.openrune.definition.type.model.ModelType.Companion.BILLBOARDS_FLAG
 import dev.openrune.definition.type.model.ModelType.Companion.COMPLEX_TEXTURE_RANGE
 import dev.openrune.definition.type.model.ModelType.Companion.CUBE_TEXTURE
@@ -22,7 +17,12 @@ import dev.openrune.definition.type.model.ModelType.Companion.PARTICLES_FLAG
 import dev.openrune.definition.type.model.ModelType.Companion.SIMPLE_TEXTURE
 import dev.openrune.definition.type.model.ModelType.Companion.SPHERICAL_TEXTURE
 import dev.openrune.definition.type.model.ModelType.Companion.UNVERSIONED
+import dev.openrune.definition.type.model.ModelType.Companion.USES_FACE_TYPES_FLAG
+import dev.openrune.definition.type.model.ModelType.Companion.USES_MATERIALS_FLAG
 import dev.openrune.definition.type.model.ModelType.Companion.VERSION_FLAG
+import dev.openrune.definition.type.model.ModelType.Companion.X_POS_FLAG
+import dev.openrune.definition.type.model.ModelType.Companion.Y_POS_FLAG
+import dev.openrune.definition.type.model.ModelType.Companion.Z_POS_FLAG
 import dev.openrune.definition.type.model.particles.EffectiveVertex
 import dev.openrune.definition.type.model.particles.EmissiveTriangle
 import dev.openrune.definition.type.model.particles.FaceBillboard
