@@ -9,11 +9,11 @@ interface Transforms {
     var transforms: MutableList<Int>?
 
     fun readTransforms(buffer: ByteBuf, isLast: Boolean) {
-        varbit = buffer.readShortRD()
+        varbit = buffer.readShort().toInt()
         if (varbit == 65535) {
             varbit = -1
         }
-        varp = buffer.readShortRD()
+        varp = buffer.readShort().toInt()
         if (varp == 65535) {
             varp = -1
         }

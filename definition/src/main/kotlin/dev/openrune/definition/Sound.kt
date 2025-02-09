@@ -36,7 +36,7 @@ interface Sound {
         var unknown : Int = 0
 
         if (!revisionIsOrAfter(revision, 220)) {
-            val payload: Int = buffer.readMediumRD()
+            val payload: Int = buffer.readMedium()
             retain = 0
             location = payload and 15
             id = payload shr 8

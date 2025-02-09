@@ -1,6 +1,5 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.*
 import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
 import dev.openrune.buffer.readLargeSmart
@@ -15,8 +14,8 @@ class AreaCodec : DefinitionCodec<AreaType> {
             1 -> sprite1 = buffer.readLargeSmart()
             2 -> sprite2 = buffer.readLargeSmart()
             3 -> name = buffer.readString()
-            4 -> fontColor = buffer.readMediumRD()
-            5 -> buffer.readMediumRD()
+            4 -> fontColor = buffer.readMedium()
+            5 -> buffer.readMedium()
             6 -> textSize = buffer.readUnsignedByte().toInt()
             7 -> {
                 val size = buffer.readUnsignedByte().toInt()
@@ -35,7 +34,7 @@ class AreaCodec : DefinitionCodec<AreaType> {
                 val length: Int = buffer.readUnsignedByte().toInt()
                 field1933 = MutableList(length * 2) { 0 }
                 (0 until length * 2).forEach {
-                    field1933!![it] = buffer.readShortRD()
+                    field1933!![it] = buffer.readShort().toInt()
                 }
                 buffer.readInt()
                 val subLength: Int = buffer.readUnsignedByte().toInt()
@@ -55,10 +54,10 @@ class AreaCodec : DefinitionCodec<AreaType> {
             19 -> category = buffer.readUnsignedShort()
             21 -> buffer.readInt()
             22 -> buffer.readInt()
-            23 -> buffer.readMediumRD()
+            23 -> buffer.readMedium()
             24 -> {
-                buffer.readShortRD()
-                buffer.readShortRD()
+                buffer.readShort().toInt()
+                buffer.readShort().toInt()
             }
 
             25 -> buffer.readLargeSmart()

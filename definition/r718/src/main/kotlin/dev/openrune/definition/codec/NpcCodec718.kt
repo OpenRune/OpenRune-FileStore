@@ -1,6 +1,5 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.*
 import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
 import dev.openrune.buffer.readBigSmart
@@ -181,30 +180,30 @@ class NpcCodec718 : DefinitionCodec<NpcType> {
             }
 
             93 -> isMinimapVisible = false
-            95 -> combatLevel = buffer.readShortRD()
-            97 -> widthScale = buffer.readShortRD()
-            98 -> heightScale = buffer.readShortRD()
+            95 -> combatLevel = buffer.readShort().toInt()
+            97 -> widthScale = buffer.readShort().toInt()
+            98 -> heightScale = buffer.readShort().toInt()
             99 -> hasRenderPriority = true
             100 -> ambient = buffer.readByte().toInt()
             101 -> contrast = 5 * buffer.readByte().toInt()
             102 -> {
                 headIconArchiveIds = MutableList(0) { 0 }
-                headIconSpriteIndex = MutableList(buffer.readShortRD()) { 0 }
+                headIconSpriteIndex = MutableList(buffer.readShort().toInt()) { 0 }
             }
 
-            103 -> rotation = buffer.readShortRD()
+            103 -> rotation = buffer.readShort().toInt()
             106, 118 -> readTransforms(buffer, opcode == 118)
             107 -> isInteractable = false
             109 -> isInteractable = false
             111 -> setExtraProperty("animateIdle", false)
             113 -> {
-                setExtraProperty("primaryShadowColour", buffer.readShortRD().toShort())
-                setExtraProperty("secondaryShadowColour", buffer.readShortRD().toShort())
+                setExtraProperty("primaryShadowColour", buffer.readShort().toInt().toShort())
+                setExtraProperty("secondaryShadowColour", buffer.readShort().toInt().toShort())
             }
 
             114 -> {
-                setExtraProperty("primaryShadowModifier", buffer.readShortRD().toShort())
-                setExtraProperty("secondaryShadowModifier", buffer.readShortRD().toShort())
+                setExtraProperty("primaryShadowModifier", buffer.readShort().toInt().toShort())
+                setExtraProperty("secondaryShadowModifier", buffer.readShort().toInt().toShort())
             }
 
             119 -> setExtraProperty("walkMask", buffer.readByte().toInt().toByte())
@@ -223,24 +222,24 @@ class NpcCodec718 : DefinitionCodec<NpcType> {
             }
 
             122 -> setExtraProperty("hitbarSprite", buffer.readBigSmart())
-            123 -> height = buffer.readShortRD()
+            123 -> height = buffer.readShort().toInt()
             125 -> setExtraProperty("respawnDirection", buffer.readByte().toInt().toByte())
-            127 -> setExtraProperty("renderAnimations", buffer.readShortRD())
+            127 -> setExtraProperty("renderAnimations", buffer.readShort().toInt())
             128 -> buffer.readUnsignedByte().toInt()
             134 -> {
-                var idleSound = buffer.readShortRD()
+                var idleSound = buffer.readShort().toInt()
                 if (idleSound == 65535) {
                     idleSound = -1
                 }
-                var crawlSound = buffer.readShortRD()
+                var crawlSound = buffer.readShort().toInt()
                 if (crawlSound == 65535) {
                     crawlSound = -1
                 }
-                var walkSound = buffer.readShortRD()
+                var walkSound = buffer.readShort().toInt()
                 if (walkSound == 65535) {
                     walkSound = -1
                 }
-                var runSound = buffer.readShortRD()
+                var runSound = buffer.readShort().toInt()
                 if (runSound == 65535) {
                     runSound = -1
                 }
@@ -255,20 +254,20 @@ class NpcCodec718 : DefinitionCodec<NpcType> {
 
             135 -> {
                 setExtraProperty("primaryCursorOpcode", buffer.readUnsignedByte().toInt())
-                setExtraProperty("primaryCursor", buffer.readShortRD())
+                setExtraProperty("primaryCursor", buffer.readShort().toInt())
             }
 
             136 -> {
                 setExtraProperty("secondaryCursorOpcode", buffer.readUnsignedByte().toInt())
-                setExtraProperty("secondaryCursor", buffer.readShortRD())
+                setExtraProperty("secondaryCursor", buffer.readShort().toInt())
             }
 
-            137 -> setExtraProperty("attackCursor", buffer.readShortRD())
+            137 -> setExtraProperty("attackCursor", buffer.readShort().toInt())
             138 -> setExtraProperty("armyIcon", buffer.readBigSmart())
             139 -> setExtraProperty("spriteId", buffer.readBigSmart())
             140 -> setExtraProperty("ambientSoundVolume", buffer.readUnsignedByte().toInt())
             141 -> hasRenderPriority = true
-            142 -> setExtraProperty("mapFunction", buffer.readShortRD())
+            142 -> setExtraProperty("mapFunction", buffer.readShort().toInt())
             143 -> setExtraProperty("invisiblePriority", true)
             in 150..154 -> actions[opcode - 150] = buffer.readString()
             155 -> {
@@ -282,14 +281,14 @@ class NpcCodec718 : DefinitionCodec<NpcType> {
             159 -> setExtraProperty("mainOptionIndex", 0.toByte())
             160 -> {
                 val length = buffer.readUnsignedByte().toInt()
-                setExtraProperty("campaigns", IntArray(length) { buffer.readShortRD() })
+                setExtraProperty("campaigns", IntArray(length) { buffer.readShort().toInt() })
             }
 
             162 -> setExtraProperty("aBoolean2883", true)
             163 -> setExtraProperty("anInt2803", buffer.readUnsignedByte().toInt())
             164 -> {
-                setExtraProperty("anInt2844", buffer.readShortRD())
-                setExtraProperty("anInt2852", buffer.readShortRD())
+                setExtraProperty("anInt2844", buffer.readShort().toInt())
+                setExtraProperty("anInt2852", buffer.readShort().toInt())
             }
 
             165 -> setExtraProperty("anInt2831", buffer.readUnsignedByte().toInt())

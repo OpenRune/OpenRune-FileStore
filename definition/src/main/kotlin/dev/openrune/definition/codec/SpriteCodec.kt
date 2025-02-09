@@ -1,6 +1,5 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.*
 import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
@@ -10,26 +9,26 @@ import dev.openrune.definition.game.IndexedSprite
 class SpriteCodec : DefinitionCodec<SpriteType> {
     override fun SpriteType.read(opcode: Int, buffer: ByteBuf) {
         buffer.readerIndex(buffer.writerIndex() - 2)
-        val size: Int = buffer.readShortRD()
+        val size: Int = buffer.readShort().toInt()
         buffer.readerIndex(buffer.writerIndex() - 7 - size * 8)
 
-        val offsetX: Int = buffer.readShortRD()
-        val offsetY: Int = buffer.readShortRD()
+        val offsetX: Int = buffer.readShort().toInt()
+        val offsetY: Int = buffer.readShort().toInt()
 
         val paletteSize: Int = buffer.readUnsignedByte().toInt() + 1
 
         val sprites = Array(size) { IndexedSprite() }
         for (index in 0 until size) {
-            sprites[index].offsetX = buffer.readShortRD()
+            sprites[index].offsetX = buffer.readShort().toInt()
         }
         for (index in 0 until size) {
-            sprites[index].offsetY = buffer.readShortRD()
+            sprites[index].offsetY = buffer.readShort().toInt()
         }
         for (index in 0 until size) {
-            sprites[index].width = buffer.readShortRD()
+            sprites[index].width = buffer.readShort().toInt()
         }
         for (index in 0 until size) {
-            sprites[index].height = buffer.readShortRD()
+            sprites[index].height = buffer.readShort().toInt()
         }
         for (index in 0 until size) {
             val sprite = sprites[index]

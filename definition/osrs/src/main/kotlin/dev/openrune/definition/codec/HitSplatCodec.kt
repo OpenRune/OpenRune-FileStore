@@ -17,11 +17,11 @@ class HitSplatCodec : DefinitionCodec<HitSplatType> {
             7 -> offsetX = buffer.readUnsignedShort()
             8 -> amount = buffer.readString()
             9 -> duration = buffer.readUnsignedShort()
-            10 -> offsetY = buffer.readShortRD()
+            10 -> offsetY = buffer.readShort().toInt()
             11 -> fade = 0
             12 -> comparisonType = buffer.readUnsignedByte().toInt()
-            13 -> damageYOfset = buffer.readShortRD()
-            14 -> fade = buffer.readShortRD()
+            13 -> damageYOfset = buffer.readShort().toInt()
+            14 -> fade = buffer.readShort().toInt()
             17, 18 -> readTransforms(buffer, opcode == 18)
         }
     }

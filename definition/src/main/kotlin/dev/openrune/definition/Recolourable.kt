@@ -2,7 +2,6 @@ package dev.openrune.definition
 
 import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
-import dev.openrune.buffer.readShortRD
 
 interface Recolourable {
     var originalColours: MutableList<Int>?
@@ -15,8 +14,8 @@ interface Recolourable {
         originalColours = MutableList(length) { -1 }
         modifiedColours = MutableList(length) { -1 }
         for (count in 0 until length) {
-            originalColours!![count] = buffer.readShortRD().toShort().toInt()
-            modifiedColours!![count] = buffer.readShortRD().toShort().toInt()
+            originalColours!![count] = buffer.readShort().toInt().toShort().toInt()
+            modifiedColours!![count] = buffer.readShort().toInt().toShort().toInt()
         }
     }
 
@@ -25,8 +24,8 @@ interface Recolourable {
         originalTextureColours = MutableList(length) { -1 }
         modifiedTextureColours = MutableList(length) { -1 }
         for (count in 0 until length) {
-            originalTextureColours!![count] = buffer.readShortRD().toShort().toInt()
-            modifiedTextureColours!![count] = buffer.readShortRD().toShort().toInt()
+            originalTextureColours!![count] = buffer.readShort().toInt().toShort().toInt()
+            modifiedTextureColours!![count] = buffer.readShort().toInt().toShort().toInt()
         }
     }
 

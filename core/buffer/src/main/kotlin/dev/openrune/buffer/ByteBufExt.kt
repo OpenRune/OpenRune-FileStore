@@ -5,14 +5,6 @@ import io.netty.buffer.ByteBuf
 
 fun ByteBuf.readUnsignedBoolean() = readUnsignedByte().toInt() == 1
 
-fun ByteBuf.readShortRD(): Int {
-    return (readByte().toInt() shl 8) or readUnsignedByte().toInt()
-}
-
-fun ByteBuf.readMediumRD(): Int {
-    return (readByte().toInt() shl 16) or (readByte().toInt() shl 8) or readUnsignedByte().toInt()
-}
-
 // SMARTS
 fun ByteBuf.readShortSmart(): Int {
     val peek = readUnsignedByte().toInt()
