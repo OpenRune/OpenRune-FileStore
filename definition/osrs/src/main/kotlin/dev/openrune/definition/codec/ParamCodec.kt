@@ -4,14 +4,14 @@ import dev.openrune.buffer.Reader
 import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.ParamType
-import dev.openrune.definition.util.ScriptVarType
+import dev.openrune.definition.util.Type
 
 class ParamCodec : DefinitionCodec<ParamType> {
     override fun ParamType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
             1 -> {
                 val idx = buffer.readUnsignedByte()
-                type = ScriptVarType.forCharKey(idx.toChar())
+                type = Type.byChar(idx.toChar())
             }
 
             2 -> defaultInt = buffer.readInt()
@@ -23,7 +23,7 @@ class ParamCodec : DefinitionCodec<ParamType> {
     override fun Writer.encode(definition: ParamType) {
         if(definition.type != null) {
             writeByte(1)
-            writeByte(definition.type!!.keyChar.code)
+            writeByte(definition.type!!.ch.code)
         }
         if(definition.defaultInt != 0) {
             writeByte(3)

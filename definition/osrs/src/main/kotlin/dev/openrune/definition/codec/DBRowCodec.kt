@@ -4,19 +4,19 @@ import dev.openrune.buffer.Reader
 import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.DBRowType
-import dev.openrune.definition.util.ScriptVarType
+import dev.openrune.definition.util.Type
 
 class DBRowCodec : DefinitionCodec<DBRowType> {
     override fun DBRowType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
             3 -> {
                 val numColumns = buffer.readUnsignedByte()
-                val types = arrayOfNulls<Array<ScriptVarType>?>(numColumns)
+                val types = arrayOfNulls<Array<Type>?>(numColumns)
                 val columnValues = arrayOfNulls<Array<Any?>?>(numColumns)
                 var columnId = buffer.readUnsignedByte()
                 while (columnId != 255) {
                     val columnTypes = Array(buffer.readUnsignedByte()) {
-                        ScriptVarType.forId(buffer.readSmart())!!
+                        Type.byID(buffer.readSmart())
                     }
                     types[columnId] = columnTypes
                     columnValues[columnId] = decodeColumnFields(buffer, columnTypes)

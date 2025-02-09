@@ -4,21 +4,21 @@ import dev.openrune.buffer.Reader
 import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.DBTableType
-import dev.openrune.definition.util.ScriptVarType
+import dev.openrune.definition.util.Type
 
 class DBTableCodec : DefinitionCodec<DBTableType> {
     override fun DBTableType.read(opcode: Int, buffer: Reader) {
         when (opcode) {
             1 -> {
                 val numColumns = buffer.readUnsignedByte()
-                val types = arrayOfNulls<Array<ScriptVarType>>(numColumns)
+                val types = arrayOfNulls<Array<Type>>(numColumns)
                 var defaultValues: Array<Array<Any?>?>? = null
                 var setting = buffer.readUnsignedByte()
                 while (setting != 255) {
                     val columnId = setting and 0x7F
                     val hasDefault = setting and 0x80 != 0
                     val columnTypes = Array(buffer.readUnsignedByte()) {
-                        ScriptVarType.forId(buffer.readSmart())!!
+                        Type.byID(buffer.readSmart())!!
                     }
                     types[columnId] = columnTypes
                     if (hasDefault) {
@@ -67,14 +67,14 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
     override fun createDefinition() = DBTableType()
 }
 
-fun Writer.writeColumnFields(types: Array<ScriptVarType>, values: Array<Any?>?) {
+fun Writer.writeColumnFields(types: Array<Type>, values: Array<Any?>?) {
     val fieldCount = values!!.size / types.size
     writeSmart(fieldCount)
     for (fieldIndex in 0 until fieldCount) {
         for (typeIndex in types.indices) {
             val type = types[typeIndex]
             val valuesIndex = fieldIndex * types.size + typeIndex
-            if (type == ScriptVarType.STRING) {
+            if (type == Type.STRING) {
                 writeString(values[valuesIndex] as String?)
             } else {
                 writeInt((values[valuesIndex] as Int?)!!)
@@ -83,7 +83,7 @@ fun Writer.writeColumnFields(types: Array<ScriptVarType>, values: Array<Any?>?) 
     }
 }
 
-fun decodeColumnFields(buffer: Reader, types: Array<ScriptVarType>): Array<Any?> {
+fun decodeColumnFields(buffer: Reader, types: Array<Type>): Array<Any?> {
     val fieldCount = buffer.readSmart()
     val values = arrayOfNulls<Any>(fieldCount * types.size)
     for (fieldIndex in 0 until fieldCount) {
@@ -91,7 +91,7 @@ fun decodeColumnFields(buffer: Reader, types: Array<ScriptVarType>): Array<Any?>
             val type = types[typeIndex]
             val valuesIndex = fieldIndex * types.size + typeIndex
             values[valuesIndex] = when (type) {
-                ScriptVarType.STRING -> buffer.readString()
+                Type.STRING -> buffer.readString()
                 else -> buffer.readInt()
             }
         }
