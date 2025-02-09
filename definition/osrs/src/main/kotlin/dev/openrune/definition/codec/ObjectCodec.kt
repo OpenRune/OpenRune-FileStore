@@ -14,93 +14,100 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
     override fun dev.openrune.definition.type.ObjectType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
-                val length: Int = buffer.readUnsignedByteRD()
+                val length: Int = buffer.readUnsignedByte().toInt()
                 when {
                     length > 0 -> {
                         objectTypes = MutableList(length) { 0 }
                         objectModels = MutableList(length) { 0 }
 
                         (0 until length).forEach {
-                            objectModels!![it] = buffer.readUnsignedShortRD()
-                            objectTypes!![it] = buffer.readUnsignedByteRD()
+                            objectModels!![it] = buffer.readUnsignedShort()
+                            objectTypes!![it] = buffer.readUnsignedByte().toInt()
                         }
                     }
                 }
             }
-            2 -> name = buffer.readStringRD()
+
+            2 -> name = buffer.readString()
             5 -> {
-                val length: Int = buffer.readUnsignedByteRD()
+                val length: Int = buffer.readUnsignedByte().toInt()
                 when {
                     length > 0 -> {
                         objectTypes = null
                         objectModels = IntStream.range(0, length).map {
-                            buffer.readUnsignedShortRD()
+                            buffer.readUnsignedShort()
                         }.toList().toMutableList()
                     }
                 }
             }
-            14 -> sizeX = buffer.readUnsignedByteRD()
-            15 -> sizeY = buffer.readUnsignedByteRD()
+
+            14 -> sizeX = buffer.readUnsignedByte().toInt()
+            15 -> sizeY = buffer.readUnsignedByte().toInt()
             17 -> {
                 solid = 0
                 impenetrable = false
             }
+
             18 -> impenetrable = false
-            19 -> interactive = buffer.readUnsignedByteRD()
+            19 -> interactive = buffer.readUnsignedByte().toInt()
             21 -> clipType = 0
             22 -> nonFlatShading = true
             23 -> modelClipped = true
             24 -> {
-                animationId = buffer.readUnsignedShortRD()
+                animationId = buffer.readUnsignedShort()
                 if (animationId == 65535) {
                     animationId = -1
                 }
             }
+
             27 -> solid = 1
-            28 -> decorDisplacement = buffer.readUnsignedByteRD()
-            29 -> ambient = buffer.readByteRD()
-            39 -> contrast = buffer.readByteRD()
+            28 -> decorDisplacement = buffer.readUnsignedByte().toInt()
+            29 -> ambient = buffer.readByte().toInt()
+            39 -> contrast = buffer.readByte().toInt()
             in 30..34 -> {
-                actions[opcode - 30] = buffer.readStringRD()
+                actions[opcode - 30] = buffer.readString()
             }
+
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
-            61 -> category = buffer.readUnsignedShortRD()
+            61 -> category = buffer.readUnsignedShort()
             62 -> isRotated = true
             64 -> clipped = false
-            65 -> modelSizeX = buffer.readUnsignedShortRD()
-            66 -> modelSizeZ = buffer.readUnsignedShortRD()
-            67 -> modelSizeY = buffer.readUnsignedShortRD()
-            68 -> mapSceneID = buffer.readUnsignedShortRD()
-            69 -> clipMask = buffer.readByteRD()
-            70 -> offsetX = buffer.readUnsignedShortRD()
-            71 -> offsetZ = buffer.readUnsignedShortRD()
-            72 -> offsetY = buffer.readUnsignedShortRD()
+            65 -> modelSizeX = buffer.readUnsignedShort()
+            66 -> modelSizeZ = buffer.readUnsignedShort()
+            67 -> modelSizeY = buffer.readUnsignedShort()
+            68 -> mapSceneID = buffer.readUnsignedShort()
+            69 -> clipMask = buffer.readByte().toInt()
+            70 -> offsetX = buffer.readUnsignedShort()
+            71 -> offsetZ = buffer.readUnsignedShort()
+            72 -> offsetY = buffer.readUnsignedShort()
             73 -> obstructive = true
             74 -> isHollow = true
-            75 -> supportsItems = buffer.readUnsignedByteRD()
+            75 -> supportsItems = buffer.readUnsignedByte().toInt()
             77, 92 -> readTransforms(buffer, opcode == 92)
             78 -> {
-                ambientSoundId = buffer.readUnsignedShortRD()
-                soundDistance = buffer.readUnsignedByteRD()
+                ambientSoundId = buffer.readUnsignedShort()
+                soundDistance = buffer.readUnsignedByte().toInt()
                 if (revisionIsOrAfter(revision, 220)) {
-                    soundRetain = buffer.readUnsignedByteRD()
+                    soundRetain = buffer.readUnsignedByte().toInt()
                 }
             }
+
             79 -> {
-                soundMin = buffer.readUnsignedShortRD()
-                soundMax = buffer.readUnsignedShortRD()
-                soundDistance = buffer.readUnsignedByteRD()
+                soundMin = buffer.readUnsignedShort()
+                soundMax = buffer.readUnsignedShort()
+                soundDistance = buffer.readUnsignedByte().toInt()
                 if (revisionIsOrAfter(revision, 220)) {
-                    soundRetain = buffer.readUnsignedByteRD()
+                    soundRetain = buffer.readUnsignedByte().toInt()
                 }
-                val length: Int = buffer.readUnsignedByteRD()
+                val length: Int = buffer.readUnsignedByte().toInt()
                 ambientSoundIds = IntStream.range(0, length).map {
-                    buffer.readUnsignedShortRD()
+                    buffer.readUnsignedShort()
                 }.toList().toMutableList()
             }
-            81 -> clipType = (buffer.readUnsignedByteRD()) * 256
-            60,82 -> mapAreaId = buffer.readUnsignedShortRD()
+
+            81 -> clipType = (buffer.readUnsignedByte().toInt()) * 256
+            60, 82 -> mapAreaId = buffer.readUnsignedShort()
             89 -> randomizeAnimStart = true
             90 -> delayAnimationUpdate = true
             249 -> readParameters(buffer)

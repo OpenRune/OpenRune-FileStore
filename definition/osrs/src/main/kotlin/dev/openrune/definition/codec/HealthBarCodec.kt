@@ -2,25 +2,23 @@ package dev.openrune.definition.codec
 
 import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
-import dev.openrune.buffer.readUnsignedByteRD
-import dev.openrune.buffer.readUnsignedShortRD
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.HealthBarType
 
 class HealthBarCodec : DefinitionCodec<HealthBarType> {
     override fun HealthBarType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
-            1 -> buffer.readUnsignedShortRD()
-            2 -> int1 = buffer.readUnsignedByteRD()
-            3 -> int2 = buffer.readUnsignedByteRD()
+            1 -> buffer.readUnsignedShort()
+            2 -> int1 = buffer.readUnsignedByte().toInt()
+            3 -> int2 = buffer.readUnsignedByte().toInt()
             4 -> int3 = 0
-            5 -> int4 = buffer.readUnsignedShortRD()
-            6 -> buffer.readUnsignedByteRD()
-            7 -> frontSpriteId = buffer.readUnsignedShortRD()
-            8 -> backSpriteId = buffer.readUnsignedShortRD()
-            11 -> int3 = buffer.readUnsignedShortRD()
-            14 -> width = buffer.readUnsignedByteRD()
-            15 -> widthPadding = buffer.readUnsignedByteRD()
+            5 -> int4 = buffer.readUnsignedShort()
+            6 -> buffer.readUnsignedByte().toInt()
+            7 -> frontSpriteId = buffer.readUnsignedShort()
+            8 -> backSpriteId = buffer.readUnsignedShort()
+            11 -> int3 = buffer.readUnsignedShort()
+            14 -> width = buffer.readUnsignedByte().toInt()
+            15 -> widthPadding = buffer.readUnsignedByte().toInt()
         }
     }
 

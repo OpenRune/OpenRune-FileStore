@@ -42,13 +42,13 @@ interface Sound {
             id = payload shr 8
             loops = payload shr 4 and 7
         } else {
-            id = buffer.readUnsignedShortRD()
+            id = buffer.readUnsignedShort()
             if (revisionIsOrAfter(revision, 226)) {
-                unknown = buffer.readUnsignedByteRD()
+                unknown = buffer.readUnsignedByte().toInt()
             }
-            loops = buffer.readUnsignedByteRD()
-            location = buffer.readUnsignedByteRD()
-            retain = buffer.readUnsignedByteRD()
+            loops = buffer.readUnsignedByte().toInt()
+            location = buffer.readUnsignedByte().toInt()
+            retain = buffer.readUnsignedByte().toInt()
         }
 
         return if (id >= 1 && loops >= 1 && location >= 0 && retain >= 0) { SoundData(id, unknown, loops, location, retain) } else { null }

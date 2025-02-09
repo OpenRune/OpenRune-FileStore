@@ -2,14 +2,13 @@ package dev.openrune.definition
 
 import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
-import dev.openrune.buffer.readUnsignedByteRD
 import io.netty.buffer.Unpooled
 
 interface DefinitionCodec<T : Definition> {
 
     fun readLoop(definition: T, buffer: ByteBuf) {
         while (true) {
-            val opcode = buffer.readUnsignedByteRD()
+            val opcode = buffer.readUnsignedByte().toInt()
             if (opcode == 0) {
                 break
             }

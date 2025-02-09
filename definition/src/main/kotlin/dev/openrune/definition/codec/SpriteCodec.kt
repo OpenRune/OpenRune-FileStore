@@ -16,7 +16,7 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
         val offsetX: Int = buffer.readShortRD()
         val offsetY: Int = buffer.readShortRD()
 
-        val paletteSize: Int = buffer.readUnsignedByteRD() + 1
+        val paletteSize: Int = buffer.readUnsignedByte().toInt() + 1
 
         val sprites = Array(size) { IndexedSprite() }
         for (index in 0 until size) {
@@ -40,7 +40,7 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
         buffer.readerIndex(buffer.writerIndex() - 7 - size * 8 - (paletteSize - 1) * 3)
         val palette = IntArray(paletteSize)
         for (index in 1 until paletteSize) {
-            palette[index] = buffer.readUnsignedMediumRD()
+            palette[index] = buffer.readUnsignedMedium()
             if (palette[index] == 0) {
                 palette[index] = 1
             }
@@ -56,16 +56,16 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
 
             sprite.raster = ByteArray(area)
 
-            val setting: Int = buffer.readUnsignedByteRD()
+            val setting: Int = buffer.readUnsignedByte().toInt()
             if (setting and 0x2 == 0) {
                 if (setting and 0x1 == 0) {
                     for (pixel in 0 until area) {
-                        sprite.raster[pixel] = buffer.readByteRD().toByte()
+                        sprite.raster[pixel] = buffer.readByte().toInt().toByte()
                     }
                 } else {
                     for (x in 0 until sprite.width) {
                         for (y in 0 until sprite.height) {
-                            sprite.raster[x + y * sprite.width] = buffer.readByteRD().toByte()
+                            sprite.raster[x + y * sprite.width] = buffer.readByte().toInt().toByte()
                         }
                     }
                 }
@@ -74,22 +74,22 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
                 val alpha = ByteArray(area)
                 if (setting and 0x1 == 0) {
                     for (pixel in 0 until area) {
-                        sprite.raster[pixel] = buffer.readByteRD().toByte()
+                        sprite.raster[pixel] = buffer.readByte().toInt().toByte()
                     }
                     for (pixel in 0 until area) {
-                        alpha[pixel] = buffer.readByteRD().toByte()
+                        alpha[pixel] = buffer.readByte().toInt().toByte()
                         val p = alpha[pixel].toInt()
                         transparent = transparent or (p != -1)
                     }
                 } else {
                     for (x in 0 until sprite.width) {
                         for (y in 0 until sprite.height) {
-                            sprite.raster[x + y * sprite.width] = buffer.readByteRD().toByte()
+                            sprite.raster[x + y * sprite.width] = buffer.readByte().toInt().toByte()
                         }
                     }
                     for (x in 0 until sprite.width) {
                         for (y in 0 until sprite.height) {
-                            alpha[x + y * sprite.width] = buffer.readByteRD().toByte()
+                            alpha[x + y * sprite.width] = buffer.readByte().toInt().toByte()
                             val pixel = alpha[x + y * sprite.width].toInt()
                             transparent = transparent or (pixel != -1)
                         }

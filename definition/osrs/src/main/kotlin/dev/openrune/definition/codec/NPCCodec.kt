@@ -3,8 +3,7 @@ package dev.openrune.definition.codec
 import dev.openrune.buffer.*
 import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
-import dev.openrune.buffer.readStringRD
-import dev.openrune.buffer.readUnsignedShortRD
+import dev.openrune.buffer.readString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.revisionIsOrBefore
@@ -15,57 +14,61 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
     override fun NpcType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
-                val length = buffer.readUnsignedByteRD()
+                val length = buffer.readUnsignedByte().toInt()
                 models = MutableList(length) { 0 }
                 for (count in 0 until length) {
-                    models!![count] = buffer.readUnsignedShortRD()
+                    models!![count] = buffer.readUnsignedShort()
                     if (models!![count] == 65535) {
                         models!![count] = -1
                     }
                 }
             }
-            2 -> name = buffer.readStringRD()
-            12 -> size = buffer.readUnsignedByteRD()
-            13 -> standAnim = buffer.readUnsignedShortRD()
-            14 -> walkAnim = buffer.readUnsignedShortRD()
-            15 -> rotateLeftAnim = buffer.readUnsignedShortRD()
-            16 -> rotateRightAnim = buffer.readUnsignedShortRD()
+
+            2 -> name = buffer.readString()
+            12 -> size = buffer.readUnsignedByte().toInt()
+            13 -> standAnim = buffer.readUnsignedShort()
+            14 -> walkAnim = buffer.readUnsignedShort()
+            15 -> rotateLeftAnim = buffer.readUnsignedShort()
+            16 -> rotateRightAnim = buffer.readUnsignedShort()
             17 -> {
-                walkAnim = buffer.readUnsignedShortRD()
-                rotateBackAnim = buffer.readUnsignedShortRD()
-                walkLeftAnim = buffer.readUnsignedShortRD()
-                walkRightAnim = buffer.readUnsignedShortRD()
+                walkAnim = buffer.readUnsignedShort()
+                rotateBackAnim = buffer.readUnsignedShort()
+                walkLeftAnim = buffer.readUnsignedShort()
+                walkRightAnim = buffer.readUnsignedShort()
             }
-            18 -> category = buffer.readUnsignedShortRD()
+
+            18 -> category = buffer.readUnsignedShort()
             in 30..34 -> {
-                actions[opcode - 30] = buffer.readStringRD()
+                actions[opcode - 30] = buffer.readString()
                 if (actions[opcode - 30].equals("Hidden", true)) {
                     actions[opcode - 30] = null
                 }
             }
+
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
             60 -> {
-                val length: Int = buffer.readUnsignedByteRD()
+                val length: Int = buffer.readUnsignedByte().toInt()
                 chatheadModels = MutableList(length) { 0 }
                 (0 until length).forEach {
-                    chatheadModels!![it] = buffer.readUnsignedShortRD()
+                    chatheadModels!![it] = buffer.readUnsignedShort()
                 }
             }
-            in 74..79 -> stats[opcode - 74] = buffer.readUnsignedShortRD()
+
+            in 74..79 -> stats[opcode - 74] = buffer.readUnsignedShort()
             93 -> isMinimapVisible = false
-            95 -> combatLevel = buffer.readUnsignedShortRD()
-            97 -> widthScale = buffer.readUnsignedShortRD()
-            98 -> heightScale = buffer.readUnsignedShortRD()
+            95 -> combatLevel = buffer.readUnsignedShort()
+            97 -> widthScale = buffer.readUnsignedShort()
+            98 -> heightScale = buffer.readUnsignedShort()
             99 -> hasRenderPriority = true
-            100 -> ambient = buffer.readByteRD()
-            101 -> contrast = buffer.readByteRD()
+            100 -> ambient = buffer.readByte().toInt()
+            101 -> contrast = buffer.readByte().toInt()
             102 -> {
                 if (revisionIsOrBefore(revision, 210)) {
                     headIconArchiveIds = MutableList(0) { 0 }
-                    headIconSpriteIndex = MutableList(buffer.readUnsignedShortRD()) { 0 }
+                    headIconSpriteIndex = MutableList(buffer.readUnsignedShort()) { 0 }
                 } else {
-                    val bitfield = buffer.readUnsignedByteRD()
+                    val bitfield = buffer.readUnsignedByte().toInt()
                     var size = 0
 
                     var pos = bitfield
@@ -73,7 +76,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                         ++size
                         pos = pos shr 1
                     }
-                    headIconArchiveIds =  MutableList(size) { 0 }
+                    headIconArchiveIds = MutableList(size) { 0 }
                     headIconSpriteIndex = MutableList(size) { 0 }
 
                     for (i in 0 until size) {
@@ -81,34 +84,37 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                             headIconArchiveIds!![i] = -1
                             headIconSpriteIndex!![i] = -1
                         } else {
-                            headIconArchiveIds!![i] = buffer.readUnsignedShortRD()
-                            headIconSpriteIndex!![i] = buffer.readShortSmartRD() - 1
+                            headIconArchiveIds!![i] = buffer.readUnsignedShort()
+                            headIconSpriteIndex!![i] = buffer.readShortSmart() - 1
                         }
                     }
                 }
             }
+
             111 -> isFollower = true
-            103 -> rotation = buffer.readUnsignedShortRD()
+            103 -> rotation = buffer.readUnsignedShort()
             106, 118 -> readTransforms(buffer, opcode == 118)
             107 -> isInteractable = false
             109 -> isClickable = false
-            114 -> runSequence = buffer.readUnsignedShortRD()
+            114 -> runSequence = buffer.readUnsignedShort()
             115 -> {
-                runSequence = buffer.readUnsignedShortRD()
-                runBackSequence = buffer.readUnsignedShortRD()
-                runRightSequence = buffer.readUnsignedShortRD()
-                runLeftSequence = buffer.readUnsignedShortRD()
+                runSequence = buffer.readUnsignedShort()
+                runBackSequence = buffer.readUnsignedShort()
+                runRightSequence = buffer.readUnsignedShort()
+                runLeftSequence = buffer.readUnsignedShort()
             }
-            116 -> crawlSequence = buffer.readUnsignedShortRD()
+
+            116 -> crawlSequence = buffer.readUnsignedShort()
             117 -> {
-                crawlSequence = buffer.readUnsignedShortRD()
-                crawlBackSequence = buffer.readUnsignedShortRD()
-                crawlRightSequence = buffer.readUnsignedShortRD()
-                crawlLeftSequence = buffer.readUnsignedShortRD()
+                crawlSequence = buffer.readUnsignedShort()
+                crawlBackSequence = buffer.readUnsignedShort()
+                crawlRightSequence = buffer.readUnsignedShort()
+                crawlLeftSequence = buffer.readUnsignedShort()
             }
+
             122 -> lowPriorityFollowerOps = true
             123 -> isFollower = true
-            124 -> height = buffer.readUnsignedShortRD()
+            124 -> height = buffer.readUnsignedShort()
             249 -> readParameters(buffer)
             else -> dev.openrune.definition.codec.NPCCodec.logger.info { "Unable to decode Npcs [${opcode}]" }
         }

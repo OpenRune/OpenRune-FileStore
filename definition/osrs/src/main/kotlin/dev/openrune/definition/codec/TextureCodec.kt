@@ -1,46 +1,43 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.*
 import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
-import dev.openrune.buffer.readIntRD
-import dev.openrune.buffer.readUnsignedShortRD
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.TextureType
 
 class TextureCodec : DefinitionCodec<TextureType> {
     override fun TextureType.read(opcode: Int, buffer: ByteBuf) {
-        averageRgb = buffer.readUnsignedShortRD()
-        isTransparent = buffer.readUnsignedByteRD() == 1
-        val count: Int = buffer.readUnsignedByteRD()
+        averageRgb = buffer.readUnsignedShort()
+        isTransparent = buffer.readUnsignedByte().toInt() == 1
+        val count: Int = buffer.readUnsignedByte().toInt()
 
         if (count in 1..4) {
             fileIds = IntArray(count).toMutableList()
             for (index in 0 until count) {
-                fileIds[index] = buffer.readUnsignedShortRD()
+                fileIds[index] = buffer.readUnsignedShort()
             }
 
             if (count > 1) {
 
-                combineModes = IntArray(count -1).toMutableList()
+                combineModes = IntArray(count - 1).toMutableList()
                 for (index in 0 until count - 1) {
-                    combineModes[index] = buffer.readUnsignedShortRD()
+                    combineModes[index] = buffer.readUnsignedShort()
                 }
 
-                field2440 = IntArray(count -1).toMutableList()
+                field2440 = IntArray(count - 1).toMutableList()
                 for (index in 0 until count - 1) {
-                    field2440[index] = buffer.readUnsignedShortRD()
+                    field2440[index] = buffer.readUnsignedShort()
                 }
 
             }
 
             colourAdjustments = IntArray(count).toMutableList()
             for (index in 0 until count) {
-                colourAdjustments[index] = buffer.readIntRD()
+                colourAdjustments[index] = buffer.readInt()
             }
 
-            animationDirection = buffer.readUnsignedByteRD()
-            animationSpeed = buffer.readUnsignedByteRD()
+            animationDirection = buffer.readUnsignedByte().toInt()
+            animationSpeed = buffer.readUnsignedByte().toInt()
         }
     }
 

@@ -9,15 +9,15 @@ interface Parameterized {
     var params: Map<Int, Any>?
 
     fun readParameters(buffer: ByteBuf) {
-        val length = buffer.readUnsignedByteRD()
+        val length = buffer.readUnsignedByte().toInt()
         if (length == 0) {
             return
         }
         val params = Int2ObjectArrayMap<Any>()
         for (i in 0 until length) {
-            val string = buffer.readUnsignedBooleanRD()
-            val id = buffer.readUnsignedMediumRD()
-            params[id] = if (string) buffer.readStringRD() else buffer.readIntRD()
+            val string = buffer.readUnsignedBoolean()
+            val id = buffer.readUnsignedMedium()
+            params[id] = if (string) buffer.readString() else buffer.readInt()
         }
         this.params = params
     }

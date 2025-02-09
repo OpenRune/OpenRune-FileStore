@@ -3,8 +3,8 @@ package dev.openrune.definition.codec
 import dev.openrune.buffer.*
 import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
-import dev.openrune.buffer.readLargeSmartRD
-import dev.openrune.buffer.readStringRD
+import dev.openrune.buffer.readLargeSmart
+import dev.openrune.buffer.readString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.AreaType
 
@@ -12,14 +12,14 @@ class AreaCodec : DefinitionCodec<AreaType> {
 
     override fun AreaType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
-            1 -> sprite1 = buffer.readLargeSmartRD()
-            2 -> sprite2 = buffer.readLargeSmartRD()
-            3 -> name = buffer.readStringRD()
+            1 -> sprite1 = buffer.readLargeSmart()
+            2 -> sprite2 = buffer.readLargeSmart()
+            3 -> name = buffer.readString()
             4 -> fontColor = buffer.readMediumRD()
             5 -> buffer.readMediumRD()
-            6 -> textSize = buffer.readUnsignedByteRD()
+            6 -> textSize = buffer.readUnsignedByte().toInt()
             7 -> {
-                val size = buffer.readUnsignedByteRD()
+                val size = buffer.readUnsignedByte().toInt()
                 if ((size and 1) == 0) {
                     renderOnWorldMap = false
                 }
@@ -28,40 +28,43 @@ class AreaCodec : DefinitionCodec<AreaType> {
                     renderOnMinimap = true
                 }
             }
-            8 -> buffer.readUnsignedByteRD()
-            in 10..14 -> options[opcode - 10] = buffer.readStringRD()
+
+            8 -> buffer.readUnsignedByte().toInt()
+            in 10..14 -> options[opcode - 10] = buffer.readString()
             15 -> {
-                val length: Int = buffer.readUnsignedByteRD()
+                val length: Int = buffer.readUnsignedByte().toInt()
                 field1933 = MutableList(length * 2) { 0 }
                 (0 until length * 2).forEach {
                     field1933!![it] = buffer.readShortRD()
                 }
-                buffer.readIntRD()
-                val subLength: Int = buffer.readUnsignedByteRD()
+                buffer.readInt()
+                val subLength: Int = buffer.readUnsignedByte().toInt()
                 field1930 = MutableList(subLength) { 0 }
                 (0 until subLength).forEach {
-                    field1930[it] = buffer.readIntRD()
+                    field1930[it] = buffer.readInt()
                 }
                 field1948 = MutableList(length) { 0 }
                 (0 until length).forEach {
-                    field1948[it] = buffer.readByteRD()
+                    field1948[it] = buffer.readByte().toInt()
                 }
             }
-            16 -> buffer.readByteRD()
-            17 -> menuTargetName = buffer.readStringRD()
-            18 -> buffer.readLargeSmartRD()
-            19 -> category = buffer.readUnsignedShortRD()
-            21 -> buffer.readIntRD()
-            22 -> buffer.readIntRD()
+
+            16 -> buffer.readByte().toInt()
+            17 -> menuTargetName = buffer.readString()
+            18 -> buffer.readLargeSmart()
+            19 -> category = buffer.readUnsignedShort()
+            21 -> buffer.readInt()
+            22 -> buffer.readInt()
             23 -> buffer.readMediumRD()
             24 -> {
                 buffer.readShortRD()
                 buffer.readShortRD()
             }
-            25 -> buffer.readLargeSmartRD()
-            28 -> buffer.readByteRD()
-            29 -> horizontalAlignment = buffer.readUnsignedByteRD()
-            30 -> verticalAlignment = buffer.readUnsignedByteRD()
+
+            25 -> buffer.readLargeSmart()
+            28 -> buffer.readByte().toInt()
+            29 -> horizontalAlignment = buffer.readUnsignedByte().toInt()
+            30 -> verticalAlignment = buffer.readUnsignedByte().toInt()
         }
     }
 

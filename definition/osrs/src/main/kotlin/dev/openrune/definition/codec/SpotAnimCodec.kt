@@ -2,21 +2,19 @@ package dev.openrune.definition.codec
 
 import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
-import dev.openrune.buffer.readUnsignedByteRD
-import dev.openrune.buffer.readUnsignedShortRD
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.SpotAnimType
 
 class SpotAnimCodec : DefinitionCodec<SpotAnimType> {
     override fun SpotAnimType.read(opcode: Int, buffer: ByteBuf) {
-        when(opcode) {
-            1 -> modelId = buffer.readUnsignedShortRD()
-            2 -> animationId = buffer.readUnsignedShortRD()
-            4 -> resizeX = buffer.readUnsignedShortRD()
-            5 -> resizeY = buffer.readUnsignedShortRD()
-            6 -> rotation = buffer.readUnsignedShortRD()
-            7 -> ambient = buffer.readUnsignedByteRD()
-            8 -> contrast = buffer.readUnsignedByteRD()
+        when (opcode) {
+            1 -> modelId = buffer.readUnsignedShort()
+            2 -> animationId = buffer.readUnsignedShort()
+            4 -> resizeX = buffer.readUnsignedShort()
+            5 -> resizeY = buffer.readUnsignedShort()
+            6 -> rotation = buffer.readUnsignedShort()
+            7 -> ambient = buffer.readUnsignedByte().toInt()
+            8 -> contrast = buffer.readUnsignedByte().toInt()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
         }

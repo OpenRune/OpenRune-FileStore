@@ -3,7 +3,6 @@ package dev.openrune.definition
 import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
 import dev.openrune.buffer.readShortRD
-import dev.openrune.buffer.readUnsignedByteRD
 
 interface Recolourable {
     var originalColours: MutableList<Int>?
@@ -12,7 +11,7 @@ interface Recolourable {
     var modifiedTextureColours: MutableList<Int>?
 
     fun readColours(buffer: ByteBuf) {
-        val length = buffer.readUnsignedByteRD()
+        val length = buffer.readUnsignedByte().toInt()
         originalColours = MutableList(length) { -1 }
         modifiedColours = MutableList(length) { -1 }
         for (count in 0 until length) {
@@ -22,7 +21,7 @@ interface Recolourable {
     }
 
     fun readTextures(buffer: ByteBuf) {
-        val length = buffer.readUnsignedByteRD()
+        val length = buffer.readUnsignedByte().toInt()
         originalTextureColours = MutableList(length) { -1 }
         modifiedTextureColours = MutableList(length) { -1 }
         for (count in 0 until length) {

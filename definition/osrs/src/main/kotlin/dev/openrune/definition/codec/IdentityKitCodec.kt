@@ -2,29 +2,28 @@ package dev.openrune.definition.codec
 
 import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
-import dev.openrune.buffer.readUnsignedByteRD
-import dev.openrune.buffer.readUnsignedShortRD
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.IdentityKitType
 
 class IdentityKitCodec : DefinitionCodec<IdentityKitType> {
     override fun IdentityKitType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
-            1 -> bodyPartId = buffer.readUnsignedByteRD()
+            1 -> bodyPartId = buffer.readUnsignedByte().toInt()
             2 -> {
-                val length = buffer.readUnsignedByteRD()
+                val length = buffer.readUnsignedByte().toInt()
                 models = MutableList(length) { 0 }
                 for (count in 0 until length) {
-                    models!![count] = buffer.readUnsignedShortRD()
+                    models!![count] = buffer.readUnsignedShort()
                     if (models!![count] == 65535) {
                         models!![count] = -1
                     }
                 }
             }
+
             3 -> nonSelectable = true
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
-            in 60..70 -> chatheadModels[opcode - 60] = buffer.readUnsignedShortRD()
+            in 60..70 -> chatheadModels[opcode - 60] = buffer.readUnsignedShort()
         }
     }
 

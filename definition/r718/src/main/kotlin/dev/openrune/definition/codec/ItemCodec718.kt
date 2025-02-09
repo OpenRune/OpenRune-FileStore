@@ -3,8 +3,8 @@ package dev.openrune.definition.codec
 import dev.openrune.buffer.*
 import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
-import dev.openrune.buffer.readBigSmartRD
-import dev.openrune.buffer.readStringRD
+import dev.openrune.buffer.readBigSmart
+import dev.openrune.buffer.readString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.ItemType
 
@@ -75,37 +75,37 @@ fun ItemType.getNoteTemplateId(): Int {
 class ItemCodec718 : DefinitionCodec<ItemType> {
     override fun ItemType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
-            1 -> inventoryModel = buffer.readBigSmartRD()
-            2 -> name = buffer.readStringRD()
+            1 -> inventoryModel = buffer.readBigSmart()
+            2 -> name = buffer.readString()
             4 -> zoom2d = buffer.readShortRD()
             5 -> xan2d = buffer.readShortRD()
             6 -> yan2d = buffer.readShortRD()
             7 -> xOffset2d = buffer.readShortRD()
             8 -> yOffset2d = buffer.readShortRD()
             11 -> stacks = 1
-            12 -> cost = buffer.readIntRD()
-            13 -> equipSlot = buffer.readUnsignedByteRD()
-            14 -> appearanceOverride1 = buffer.readUnsignedByteRD()
+            12 -> cost = buffer.readInt()
+            13 -> equipSlot = buffer.readUnsignedByte().toInt()
+            14 -> appearanceOverride1 = buffer.readUnsignedByte().toInt()
             16 -> members = true
             18 -> setExtraProperty("multiStackSize", buffer.readShortRD())
-            23 -> maleModel0 = buffer.readBigSmartRD()
-            24 -> maleModel1 = buffer.readBigSmartRD()
-            25 -> femaleModel0 = buffer.readBigSmartRD()
-            26 -> femaleModel1 = buffer.readBigSmartRD()
-            in 30..34 -> options[opcode - 30] = buffer.readStringRD()
-            in 35..39 -> interfaceOptions[opcode - 35] = buffer.readStringRD()
+            23 -> maleModel0 = buffer.readBigSmart()
+            24 -> maleModel1 = buffer.readBigSmart()
+            25 -> femaleModel0 = buffer.readBigSmart()
+            26 -> femaleModel1 = buffer.readBigSmart()
+            in 30..34 -> options[opcode - 30] = buffer.readString()
+            in 35..39 -> interfaceOptions[opcode - 35] = buffer.readString()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
-            42 -> setExtraProperty("colourPalette",readColourPalette(buffer))
+            42 -> setExtraProperty("colourPalette", readColourPalette(buffer))
             65 -> isTradeable = true
-            78 -> maleModel2 = buffer.readBigSmartRD()
-            79 -> femaleModel2 = buffer.readBigSmartRD()
-            90 -> maleHeadModel0 = buffer.readBigSmartRD()
-            91 -> femaleHeadModel0 = buffer.readBigSmartRD()
-            92 -> maleHeadModel1 = buffer.readBigSmartRD()
-            93 -> femaleHeadModel1 = buffer.readBigSmartRD()
+            78 -> maleModel2 = buffer.readBigSmart()
+            79 -> femaleModel2 = buffer.readBigSmart()
+            90 -> maleHeadModel0 = buffer.readBigSmart()
+            91 -> femaleHeadModel0 = buffer.readBigSmart()
+            92 -> maleHeadModel1 = buffer.readBigSmart()
+            93 -> femaleHeadModel1 = buffer.readBigSmart()
             95 -> zan2d = buffer.readShortRD()
-            96 -> category = buffer.readUnsignedByteRD()
+            96 -> category = buffer.readUnsignedByte().toInt()
             97 -> noteLinkId = buffer.readShortRD()
             98 -> noteTemplateId = buffer.readShortRD()
             in 100..109 -> {
@@ -116,45 +116,53 @@ class ItemCodec718 : DefinitionCodec<ItemType> {
                 countObj!![opcode - 100] = buffer.readShortRD()
                 countCo!![opcode - 100] = buffer.readShortRD()
             }
+
             110 -> resizeX = buffer.readShortRD()
             111 -> resizeY = buffer.readShortRD()
             112 -> resizeZ = buffer.readShortRD()
-            113 -> ambient = buffer.readByteRD()
-            114 -> contrast = buffer.readByteRD() * 5
-            115 -> teamCape = buffer.readUnsignedByteRD()
+            113 -> ambient = buffer.readByte().toInt()
+            114 -> contrast = buffer.readByte().toInt() * 5
+            115 -> teamCape = buffer.readUnsignedByte().toInt()
             121 -> setExtraProperty("lendId", buffer.readShortRD())
             122 -> setExtraProperty("lendTemplateId", buffer.readShortRD())
             125 -> {
-                maleOffset = buffer.readByteRD() shl 2
-                setExtraProperty("maleWieldZ", buffer.readByteRD() shl 2)
-                setExtraProperty("maleWieldY", buffer.readByteRD() shl 2)
+                maleOffset = buffer.readByte().toInt() shl 2
+                setExtraProperty("maleWieldZ", buffer.readByte().toInt() shl 2)
+                setExtraProperty("maleWieldY", buffer.readByte().toInt() shl 2)
             }
+
             126 -> {
-                femaleOffset = buffer.readByteRD() shl 2
-                setExtraProperty("femaleWieldZ", buffer.readByteRD() shl 2)
-                setExtraProperty("femaleWieldY", buffer.readByteRD() shl 2)
+                femaleOffset = buffer.readByte().toInt() shl 2
+                setExtraProperty("femaleWieldZ", buffer.readByte().toInt() shl 2)
+                setExtraProperty("femaleWieldY", buffer.readByte().toInt() shl 2)
             }
+
             127 -> {
-                setExtraProperty("primaryCursorOpcode", buffer.readUnsignedByteRD())
+                setExtraProperty("primaryCursorOpcode", buffer.readUnsignedByte().toInt())
                 setExtraProperty("primaryCursor", buffer.readShortRD())
             }
+
             128 -> {
-                setExtraProperty("secondaryCursorOpcode", buffer.readUnsignedByteRD())
+                setExtraProperty("secondaryCursorOpcode", buffer.readUnsignedByte().toInt())
                 setExtraProperty("secondaryCursor", buffer.readShortRD())
             }
+
             129 -> {
-                setExtraProperty("primaryInterfaceCursorOpcode", buffer.readUnsignedByteRD())
+                setExtraProperty("primaryInterfaceCursorOpcode", buffer.readUnsignedByte().toInt())
                 setExtraProperty("primaryInterfaceCursor", buffer.readShortRD())
             }
+
             130 -> {
-                setExtraProperty("secondaryInterfaceCursorOpcode", buffer.readUnsignedByteRD())
+                setExtraProperty("secondaryInterfaceCursorOpcode", buffer.readUnsignedByte().toInt())
                 setExtraProperty("secondaryInterfaceCursor", buffer.readShortRD())
             }
+
             132 -> {
-                val length = buffer.readUnsignedByteRD()
+                val length = buffer.readUnsignedByte().toInt()
                 setExtraProperty("campaigns", IntArray(length) { buffer.readShortRD() })
             }
-            134 -> setExtraProperty("pickSizeShift", buffer.readUnsignedByteRD())
+
+            134 -> setExtraProperty("pickSizeShift", buffer.readUnsignedByte().toInt())
             139 -> unnotedId = buffer.readShortRD()
             140 -> notedId = buffer.readShortRD()
             249 -> readParameters(buffer)
@@ -166,8 +174,8 @@ class ItemCodec718 : DefinitionCodec<ItemType> {
     }
 
     private fun readColourPalette(buffer: ByteBuf) {
-        val length = buffer.readUnsignedByteRD()
-        ByteArray(length) { buffer.readByteRD().toByte() }
+        val length = buffer.readUnsignedByte().toInt()
+        ByteArray(length) { buffer.readByte().toInt().toByte() }
     }
 
     override fun createDefinition() = ItemType()

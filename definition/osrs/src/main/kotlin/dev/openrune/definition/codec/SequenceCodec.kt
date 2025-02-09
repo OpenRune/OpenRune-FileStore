@@ -30,87 +30,87 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
     override fun SequenceType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
-                val frameCount = buffer.readUnsignedShortRD()
+                val frameCount = buffer.readUnsignedShort()
                 var totalFrameLength = 0
                 frameIDs = MutableList(frameCount) { 0 }
                 frameDelays = MutableList(frameCount) { 0 }
 
                 for (i in 0 until frameCount) {
-                    frameDelays!![i] = buffer.readUnsignedShortRD()
+                    frameDelays!![i] = buffer.readUnsignedShort()
                     if (i < frameCount - 1 || frameDelays!![i] < 200) {
                         totalFrameLength += frameDelays!![i]
                     }
                 }
 
                 for (i in 0 until frameCount) {
-                    frameIDs!![i] = buffer.readUnsignedShortRD()
+                    frameIDs!![i] = buffer.readUnsignedShort()
                 }
 
                 for (i in 0 until frameCount) {
-                    frameIDs!![i] += buffer.readUnsignedShortRD() shl 16
+                    frameIDs!![i] += buffer.readUnsignedShort() shl 16
                 }
 
                 lengthInCycles = ceil((totalFrameLength * 20.0) / 600.0).toInt()
             }
 
-            2 -> frameStep = buffer.readUnsignedShortRD()
+            2 -> frameStep = buffer.readUnsignedShort()
             3 -> {
-                val count = buffer.readUnsignedByteRD()
+                val count = buffer.readUnsignedByte().toInt()
                 interleaveLeave = MutableList(count + 1) { 0 }
                 for (i in 0 until count) {
-                    interleaveLeave!![i] = buffer.readUnsignedByteRD()
+                    interleaveLeave!![i] = buffer.readUnsignedByte().toInt()
                 }
                 interleaveLeave!![count] = 0x98967f
             }
 
             4 -> stretches = true
-            5 -> forcedPriority = buffer.readUnsignedByteRD()
-            6 -> leftHandItem = buffer.readUnsignedShortRD()
-            7 -> rightHandItem = buffer.readUnsignedShortRD()
-            8 -> maxLoops = buffer.readUnsignedByteRD()
-            9 -> precedenceAnimating = buffer.readUnsignedByteRD()
-            10 -> priority = buffer.readUnsignedByteRD()
-            11 -> replyMode = buffer.readUnsignedByteRD()
+            5 -> forcedPriority = buffer.readUnsignedByte().toInt()
+            6 -> leftHandItem = buffer.readUnsignedShort()
+            7 -> rightHandItem = buffer.readUnsignedShort()
+            8 -> maxLoops = buffer.readUnsignedByte().toInt()
+            9 -> precedenceAnimating = buffer.readUnsignedByte().toInt()
+            10 -> priority = buffer.readUnsignedByte().toInt()
+            11 -> replyMode = buffer.readUnsignedByte().toInt()
             12 -> {
-                val count = buffer.readUnsignedByteRD()
+                val count = buffer.readUnsignedByte().toInt()
                 chatFrameIds = MutableList(count) { 0 }
                 for (i in 0 until count) {
-                    chatFrameIds!![i] = buffer.readUnsignedShortRD()
+                    chatFrameIds!![i] = buffer.readUnsignedShort()
                 }
 
                 for (i in 0 until count) {
-                    chatFrameIds!![i] += buffer.readUnsignedShortRD() shl 16
+                    chatFrameIds!![i] += buffer.readUnsignedShort() shl 16
                 }
             }
 
             frameSoundOpcode -> {
-                val count = buffer.readUnsignedByteRD()
+                val count = buffer.readUnsignedByte().toInt()
                 soundEffects = MutableList(count) { null }
                 for (i in 0 until count) {
                     soundEffects[i] = readSounds(buffer, revision)
                 }
             }
 
-            skeletalIdOpcode -> skeletalId = buffer.readIntRD()
+            skeletalIdOpcode -> skeletalId = buffer.readInt()
             skeletalSoundOpcode -> {
-                val count = buffer.readUnsignedShortRD()
+                val count = buffer.readUnsignedShort()
                 for (i in 0 until count) {
-                    val index = buffer.readUnsignedShortRD()
+                    val index = buffer.readUnsignedShort()
                     val sound = readSounds(buffer, revision)
                     skeletalSounds[index] = sound!!
                 }
             }
 
             skeletalRangeOpcode -> {
-                rangeBegin = buffer.readUnsignedShortRD()
-                rangeEnd = buffer.readUnsignedShortRD()
+                rangeBegin = buffer.readUnsignedShort()
+                rangeEnd = buffer.readUnsignedShort()
             }
 
             17 -> {
                 mask = MutableList(256) { false }
-                val count = buffer.readUnsignedByteRD()
+                val count = buffer.readUnsignedByte().toInt()
                 for (i in 0 until count) {
-                    mask!![buffer.readUnsignedByteRD()] = true
+                    mask!![buffer.readUnsignedByte().toInt()] = true
                 }
             }
         }

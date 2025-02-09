@@ -8,18 +8,18 @@ import io.netty.buffer.ByteBuf
 class EnumCodec : DefinitionCodec<EnumType> {
     override fun EnumType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
-            1 -> keyType = buffer.readUnsignedByteRD()
-            2 -> valueType = buffer.readUnsignedByteRD()
-            3 -> defaultString = buffer.readStringRD()
-            4 -> defaultInt = buffer.readIntRD()
+            1 -> keyType = buffer.readUnsignedByte().toInt()
+            2 -> valueType = buffer.readUnsignedByte().toInt()
+            3 -> defaultString = buffer.readString()
+            4 -> defaultInt = buffer.readInt()
             5, 6 -> {
-                val count = buffer.readUnsignedShortRD()
+                val count = buffer.readUnsignedShort()
                 for (i in 0 until count) {
-                    val key = buffer.readIntRD()
+                    val key = buffer.readInt()
                     if (opcode == 5) {
-                        values[key] = buffer.readStringRD()
+                        values[key] = buffer.readString()
                     } else {
-                        values[key] = buffer.readIntRD()
+                        values[key] = buffer.readInt()
                     }
                 }
             }

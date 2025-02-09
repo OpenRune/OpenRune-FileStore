@@ -3,7 +3,6 @@ package dev.openrune.definition.codec
 import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
 import dev.openrune.buffer.readShortRD
-import dev.openrune.buffer.readUnsignedByteRD
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.VarBitType
 
@@ -11,8 +10,8 @@ class VarBitCodec : DefinitionCodec<VarBitType> {
     override fun VarBitType.read(opcode: Int, buffer: ByteBuf) {
         if (opcode == 1) {
             varp = buffer.readShortRD()
-            startBit = buffer.readUnsignedByteRD()
-            endBit = buffer.readUnsignedByteRD()
+            startBit = buffer.readUnsignedByte().toInt()
+            endBit = buffer.readUnsignedByte().toInt()
         }
     }
 

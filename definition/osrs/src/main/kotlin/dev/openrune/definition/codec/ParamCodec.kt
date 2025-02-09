@@ -10,13 +10,13 @@ class ParamCodec : DefinitionCodec<ParamType> {
     override fun ParamType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
-                val idx = buffer.readUnsignedByteRD()
+                val idx = buffer.readUnsignedByte().toInt()
                 type = Type.byChar(idx.toChar())
             }
 
-            2 -> defaultInt = buffer.readIntRD()
+            2 -> defaultInt = buffer.readInt()
             4 -> isMembers = false
-            5 -> defaultString = buffer.readStringRD()
+            5 -> defaultString = buffer.readString()
         }
     }
 

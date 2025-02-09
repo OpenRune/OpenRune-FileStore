@@ -2,8 +2,7 @@ package dev.openrune.definition.codec
 
 import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
-import dev.openrune.buffer.readSmartRD
-import dev.openrune.buffer.readUnsignedByteRD
+import dev.openrune.buffer.readSmart
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.util.Type
@@ -12,17 +11,17 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
     override fun DBRowType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             3 -> {
-                val numColumns = buffer.readUnsignedByteRD()
+                val numColumns = buffer.readUnsignedByte().toInt()
                 val types = arrayOfNulls<Array<Type>?>(numColumns)
                 val columnValues = arrayOfNulls<Array<Any?>?>(numColumns)
-                var columnId = buffer.readUnsignedByteRD()
+                var columnId = buffer.readUnsignedByte().toInt()
                 while (columnId != 255) {
-                    val columnTypes = Array(buffer.readUnsignedByteRD()) {
-                        Type.byID(buffer.readSmartRD())
+                    val columnTypes = Array(buffer.readUnsignedByte().toInt()) {
+                        Type.byID(buffer.readSmart())
                     }
                     types[columnId] = columnTypes
                     columnValues[columnId] = decodeColumnFields(buffer, columnTypes)
-                    columnId = buffer.readUnsignedByteRD()
+                    columnId = buffer.readUnsignedByte().toInt()
                 }
                 columnTypes = types
                 this.columnValues = columnValues
@@ -65,7 +64,7 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
         var bits = 0
         var read: Int
         do {
-            read = readUnsignedByteRD()
+            read = readUnsignedByte().toInt()
             value = value or (read and 0x7F shl bits)
             bits += 7
         } while (read > 127)

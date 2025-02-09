@@ -19,15 +19,15 @@ interface Transforms {
         }
         var last = -1
         if (isLast) {
-            last = buffer.readUnsignedShortRD()
+            last = buffer.readUnsignedShort()
             if (last == 65535) {
                 last = -1
             }
         }
-        val length = buffer.readUnsignedByteRD()
+        val length = buffer.readUnsignedByte().toInt()
         transforms = MutableList(length + 2) { -1 }
         for (count in 0..length) {
-            transforms!![count] = buffer.readUnsignedShortRD()
+            transforms!![count] = buffer.readUnsignedShort()
             if (transforms!![count] == 65535) {
                 transforms!![count] = -1
             }
