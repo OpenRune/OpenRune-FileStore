@@ -1,18 +1,20 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
+import dev.openrune.definition.util.readShortSmart
+import dev.openrune.definition.util.readString
+import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.revisionIsOrBefore
 import dev.openrune.definition.type.NpcType
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.netty.buffer.ByteBuf
 
 class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
-    override fun NpcType.read(opcode: Int, buffer: Reader) {
+    override fun NpcType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
-                val length = buffer.readUnsignedByte()
+                val length = buffer.readUnsignedByte().toInt()
                 models = MutableList(length) { 0 }
                 for (count in 0 until length) {
                     models!![count] = buffer.readUnsignedShort()
@@ -21,8 +23,9 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                     }
                 }
             }
+
             2 -> name = buffer.readString()
-            12 -> size = buffer.readUnsignedByte()
+            12 -> size = buffer.readUnsignedByte().toInt()
             13 -> standAnim = buffer.readUnsignedShort()
             14 -> walkAnim = buffer.readUnsignedShort()
             15 -> rotateLeftAnim = buffer.readUnsignedShort()
@@ -33,6 +36,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                 walkLeftAnim = buffer.readUnsignedShort()
                 walkRightAnim = buffer.readUnsignedShort()
             }
+
             18 -> category = buffer.readUnsignedShort()
             in 30..34 -> {
                 actions[opcode - 30] = buffer.readString()
@@ -40,29 +44,31 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                     actions[opcode - 30] = null
                 }
             }
+
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
             60 -> {
-                val length: Int = buffer.readUnsignedByte()
+                val length: Int = buffer.readUnsignedByte().toInt()
                 chatheadModels = MutableList(length) { 0 }
                 (0 until length).forEach {
                     chatheadModels!![it] = buffer.readUnsignedShort()
                 }
             }
+
             in 74..79 -> stats[opcode - 74] = buffer.readUnsignedShort()
             93 -> isMinimapVisible = false
             95 -> combatLevel = buffer.readUnsignedShort()
             97 -> widthScale = buffer.readUnsignedShort()
             98 -> heightScale = buffer.readUnsignedShort()
             99 -> hasRenderPriority = true
-            100 -> ambient = buffer.readByte()
-            101 -> contrast = buffer.readByte()
+            100 -> ambient = buffer.readByte().toInt()
+            101 -> contrast = buffer.readByte().toInt()
             102 -> {
                 if (revisionIsOrBefore(revision, 210)) {
                     headIconArchiveIds = MutableList(0) { 0 }
                     headIconSpriteIndex = MutableList(buffer.readUnsignedShort()) { 0 }
                 } else {
-                    val bitfield = buffer.readUnsignedByte()
+                    val bitfield = buffer.readUnsignedByte().toInt()
                     var size = 0
 
                     var pos = bitfield
@@ -70,7 +76,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                         ++size
                         pos = pos shr 1
                     }
-                    headIconArchiveIds =  MutableList(size) { 0 }
+                    headIconArchiveIds = MutableList(size) { 0 }
                     headIconSpriteIndex = MutableList(size) { 0 }
 
                     for (i in 0 until size) {
@@ -84,6 +90,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                     }
                 }
             }
+
             111 -> isFollower = true
             103 -> rotation = buffer.readUnsignedShort()
             106, 118 -> readTransforms(buffer, opcode == 118)
@@ -96,6 +103,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                 runRightSequence = buffer.readUnsignedShort()
                 runLeftSequence = buffer.readUnsignedShort()
             }
+
             116 -> crawlSequence = buffer.readUnsignedShort()
             117 -> {
                 crawlSequence = buffer.readUnsignedShort()
@@ -103,6 +111,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                 crawlRightSequence = buffer.readUnsignedShort()
                 crawlLeftSequence = buffer.readUnsignedShort()
             }
+
             122 -> lowPriorityFollowerOps = true
             123 -> isFollower = true
             124 -> height = buffer.readUnsignedShort()
@@ -111,7 +120,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
         }
     }
 
-    override fun Writer.encode(definition: NpcType) {
+    override fun ByteBuf.encode(definition: NpcType) {
         if (definition.models != null && definition.models!!.isNotEmpty()) {
             writeByte(1)
             writeByte(definition.models!!.size)

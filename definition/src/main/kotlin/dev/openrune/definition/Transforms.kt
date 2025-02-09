@@ -1,19 +1,18 @@
 package dev.openrune.definition
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
+import io.netty.buffer.ByteBuf
 
 interface Transforms {
     var varbit: Int
     var varp: Int
     var transforms: MutableList<Int>?
 
-    fun readTransforms(buffer: Reader, isLast: Boolean) {
-        varbit = buffer.readShort()
+    fun readTransforms(buffer: ByteBuf, isLast: Boolean) {
+        varbit = buffer.readShort().toInt()
         if (varbit == 65535) {
             varbit = -1
         }
-        varp = buffer.readShort()
+        varp = buffer.readShort().toInt()
         if (varp == 65535) {
             varp = -1
         }
@@ -24,7 +23,7 @@ interface Transforms {
                 last = -1
             }
         }
-        val length = buffer.readUnsignedByte()
+        val length = buffer.readUnsignedByte().toInt()
         transforms = MutableList(length + 2) { -1 }
         for (count in 0..length) {
             transforms!![count] = buffer.readUnsignedShort()
@@ -35,7 +34,7 @@ interface Transforms {
         transforms!![length + 1] = last
     }
 
-    fun writeTransforms(writer: Writer, smaller: Int, larger: Int) {
+    fun writeTransforms(writer: ByteBuf, smaller: Int, larger: Int) {
         val configIds = transforms
         if (configIds != null && (varbit != -1 || varp != -1)) {
             val last = configIds.last()

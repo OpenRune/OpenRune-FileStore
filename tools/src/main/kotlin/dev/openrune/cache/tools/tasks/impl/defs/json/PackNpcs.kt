@@ -5,12 +5,13 @@ import com.google.gson.Gson
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.NPC
-import dev.openrune.buffer.BufferWriter
+import dev.openrune.definition.util.toArray
 import dev.openrune.definition.type.NpcType
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.codec.NPCCodec
+import io.netty.buffer.Unpooled
 import java.io.File
 
 @Deprecated(
@@ -32,7 +33,7 @@ class PackNpcs(private val npcDir : File) : CacheTask() {
                 }
 
                 val encoder = NPCCodec(CACHE_REVISION)
-                val writer = BufferWriter(4096)
+                val writer = Unpooled.buffer(4096)
                 with(encoder) { writer.encode(def) }
                 library.index(CONFIGS).archive(NPC)!!.add(def.id, writer.toArray())
 

@@ -1,15 +1,15 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
+import dev.openrune.definition.util.readString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.EnumType
+import io.netty.buffer.ByteBuf
 
 class EnumCodec : DefinitionCodec<EnumType> {
-    override fun EnumType.read(opcode: Int, buffer: Reader) {
+    override fun EnumType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
-            1 -> keyType = buffer.readUnsignedByte()
-            2 -> valueType = buffer.readUnsignedByte()
+            1 -> keyType = buffer.readUnsignedByte().toInt()
+            2 -> valueType = buffer.readUnsignedByte().toInt()
             3 -> defaultString = buffer.readString()
             4 -> defaultInt = buffer.readInt()
             5, 6 -> {
@@ -26,7 +26,7 @@ class EnumCodec : DefinitionCodec<EnumType> {
         }
     }
 
-    override fun Writer.encode(definition: EnumType) {
+    override fun ByteBuf.encode(definition: EnumType) {
         TODO("Not yet implemented")
     }
 

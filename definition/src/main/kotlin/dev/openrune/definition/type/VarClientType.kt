@@ -1,7 +1,6 @@
 package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
-import dev.openrune.definition.Recolourable
 import dev.openrune.definition.serialization.Rscm
 
 data class VarClientType(

@@ -1,26 +1,27 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
+import dev.openrune.definition.util.readSmart
+import dev.openrune.definition.util.writeSmart
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.util.Type
+import io.netty.buffer.ByteBuf
 
 class DBRowCodec : DefinitionCodec<DBRowType> {
-    override fun DBRowType.read(opcode: Int, buffer: Reader) {
+    override fun DBRowType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             3 -> {
-                val numColumns = buffer.readUnsignedByte()
+                val numColumns = buffer.readUnsignedByte().toInt()
                 val types = arrayOfNulls<Array<Type>?>(numColumns)
                 val columnValues = arrayOfNulls<Array<Any?>?>(numColumns)
-                var columnId = buffer.readUnsignedByte()
+                var columnId = buffer.readUnsignedByte().toInt()
                 while (columnId != 255) {
-                    val columnTypes = Array(buffer.readUnsignedByte()) {
+                    val columnTypes = Array(buffer.readUnsignedByte().toInt()) {
                         Type.byID(buffer.readSmart())
                     }
                     types[columnId] = columnTypes
                     columnValues[columnId] = decodeColumnFields(buffer, columnTypes)
-                    columnId = buffer.readUnsignedByte()
+                    columnId = buffer.readUnsignedByte().toInt()
                 }
                 columnTypes = types
                 this.columnValues = columnValues
@@ -30,7 +31,7 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
         }
     }
 
-    override fun Writer.encode(definition: DBRowType) {
+    override fun ByteBuf.encode(definition: DBRowType) {
         when {
             definition.columnTypes != null -> {
                 writeByte(3)
@@ -58,19 +59,19 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
 
     override fun createDefinition() = DBRowType()
 
-    private fun Reader.readVarInt2(): Int {
+    private fun ByteBuf.readVarInt2(): Int {
         var value = 0
         var bits = 0
         var read: Int
         do {
-            read = readUnsignedByte()
+            read = readUnsignedByte().toInt()
             value = value or (read and 0x7F shl bits)
             bits += 7
         } while (read > 127)
         return value
     }
 
-    private fun Writer.writeVarInt(var1: Int) {
+    private fun ByteBuf.writeVarInt(var1: Int) {
         if (var1 and -128 != 0) {
             if (var1 and -16384 != 0) {
                 if (var1 and -2097152 != 0) {

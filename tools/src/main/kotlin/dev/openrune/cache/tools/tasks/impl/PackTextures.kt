@@ -3,9 +3,9 @@ package dev.openrune.cache.tools.tasks.impl
 import cc.ekblad.toml.decode
 import cc.ekblad.toml.tomlMapper
 import com.displee.cache.CacheLibrary
+import dev.openrune.definition.util.toArray
 import dev.openrune.cache.SPRITES
 import dev.openrune.cache.TEXTURES
-import dev.openrune.buffer.BufferWriter
 import dev.openrune.definition.type.TextureType
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.PackSprites.Companion.customSprites
@@ -54,10 +54,10 @@ class PackTextures(private val textureDir : File) : CacheTask() {
                         def.averageRgb = averageColorForPixels(sprite.image)
                     }
                     val encoder = TextureCodec()
-                    val writer = BufferWriter(4096)
+                    val writer = Unpooled.buffer(4096)
                     with(encoder) { writer.encode(def) }
 
-                    library.put(TEXTURES,0,defId,writer.toArray())
+                    library.put(TEXTURES,0,defId, writer.toArray())
                     progress.step()
                 } else {
                     logger.info { "Unable to Pack Texture ID is -1 or no fileIds has been defined" }

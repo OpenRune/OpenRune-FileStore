@@ -1,28 +1,27 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.HealthBarType
+import io.netty.buffer.ByteBuf
 
 class HealthBarCodec : DefinitionCodec<HealthBarType> {
-    override fun HealthBarType.read(opcode: Int, buffer: Reader) {
+    override fun HealthBarType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> buffer.readUnsignedShort()
-            2 -> int1 = buffer.readUnsignedByte()
-            3 -> int2 = buffer.readUnsignedByte()
+            2 -> int1 = buffer.readUnsignedByte().toInt()
+            3 -> int2 = buffer.readUnsignedByte().toInt()
             4 -> int3 = 0
             5 -> int4 = buffer.readUnsignedShort()
-            6 -> buffer.readUnsignedByte()
+            6 -> buffer.readUnsignedByte().toInt()
             7 -> frontSpriteId = buffer.readUnsignedShort()
             8 -> backSpriteId = buffer.readUnsignedShort()
             11 -> int3 = buffer.readUnsignedShort()
-            14 -> width = buffer.readUnsignedByte()
-            15 -> widthPadding = buffer.readUnsignedByte()
+            14 -> width = buffer.readUnsignedByte().toInt()
+            15 -> widthPadding = buffer.readUnsignedByte().toInt()
         }
     }
 
-    override fun Writer.encode(definition: HealthBarType) {
+    override fun ByteBuf.encode(definition: HealthBarType) {
         if (definition.int1 != 255) {
             writeByte(2)
             writeByte(definition.int1)

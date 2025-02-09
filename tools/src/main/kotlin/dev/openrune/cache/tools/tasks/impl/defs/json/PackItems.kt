@@ -4,12 +4,13 @@ import com.displee.cache.CacheLibrary
 import com.google.gson.Gson
 import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.ITEM
-import dev.openrune.buffer.BufferWriter
+import dev.openrune.definition.util.toArray
 import dev.openrune.definition.type.ItemType
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.codec.ItemCodec
+import io.netty.buffer.Unpooled
 import java.io.File
 
 @Deprecated(
@@ -32,7 +33,7 @@ class PackItems(private val itemDir : File) : CacheTask() {
                 }
 
                 val encoder = ItemCodec()
-                val writer = BufferWriter(4096)
+                val writer = Unpooled.buffer(4096)
                 with(encoder) { writer.encode(def) }
                 library.index(CONFIGS).archive(ITEM)!!.add(def.id, writer.toArray())
 

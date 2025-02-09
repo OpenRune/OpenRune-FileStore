@@ -1,12 +1,14 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
+import dev.openrune.definition.util.readShortSmart
+import dev.openrune.definition.util.readString
+import dev.openrune.definition.util.writePrefixedString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.HitSplatType
+import io.netty.buffer.ByteBuf
 
 class HitSplatCodec : DefinitionCodec<HitSplatType> {
-    override fun HitSplatType.read(opcode: Int, buffer: Reader) {
+    override fun HitSplatType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> font = buffer.readShortSmart()
             2 -> textColour = buffer.readUnsignedMedium()
@@ -17,16 +19,16 @@ class HitSplatCodec : DefinitionCodec<HitSplatType> {
             7 -> offsetX = buffer.readUnsignedShort()
             8 -> amount = buffer.readString()
             9 -> duration = buffer.readUnsignedShort()
-            10 -> offsetY = buffer.readShort()
+            10 -> offsetY = buffer.readShort().toInt()
             11 -> fade = 0
-            12 -> comparisonType = buffer.readUnsignedByte()
-            13 -> damageYOfset = buffer.readShort()
-            14 -> fade = buffer.readShort()
+            12 -> comparisonType = buffer.readUnsignedByte().toInt()
+            13 -> damageYOfset = buffer.readShort().toInt()
+            14 -> fade = buffer.readShort().toInt()
             17, 18 -> readTransforms(buffer, opcode == 18)
         }
     }
 
-    override fun Writer.encode(definition: HitSplatType) {
+    override fun ByteBuf.encode(definition: HitSplatType) {
         if (definition.font != -1) {
             writeByte(1)
             writeShort(definition.font)

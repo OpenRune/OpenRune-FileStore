@@ -1,15 +1,18 @@
 package dev.openrune.definition
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
+import dev.openrune.definition.util.readString
+import dev.openrune.definition.util.readUnsignedBoolean
+import dev.openrune.definition.util.writeByte
+import dev.openrune.definition.util.writeString
+import io.netty.buffer.ByteBuf
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap
 
 interface Parameterized {
 
     var params: Map<Int, Any>?
 
-    fun readParameters(buffer: Reader) {
-        val length = buffer.readUnsignedByte()
+    fun readParameters(buffer: ByteBuf) {
+        val length = buffer.readUnsignedByte().toInt()
         if (length == 0) {
             return
         }
@@ -22,7 +25,7 @@ interface Parameterized {
         this.params = params
     }
 
-    fun writeParameters(writer: Writer) {
+    fun writeParameters(writer: ByteBuf) {
         params?.let { params ->
             writer.writeByte(249)
             writer.writeByte(params.size)

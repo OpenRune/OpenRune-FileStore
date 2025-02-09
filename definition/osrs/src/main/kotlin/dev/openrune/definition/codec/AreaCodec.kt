@@ -1,22 +1,25 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
+import dev.openrune.definition.util.readLargeSmart
+import dev.openrune.definition.util.readString
+import dev.openrune.definition.util.writeSmart
+import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.AreaType
+import io.netty.buffer.ByteBuf
 
 class AreaCodec : DefinitionCodec<AreaType> {
 
-    override fun AreaType.read(opcode: Int, buffer: Reader) {
+    override fun AreaType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> sprite1 = buffer.readLargeSmart()
             2 -> sprite2 = buffer.readLargeSmart()
             3 -> name = buffer.readString()
             4 -> fontColor = buffer.readMedium()
             5 -> buffer.readMedium()
-            6 -> textSize = buffer.readUnsignedByte()
+            6 -> textSize = buffer.readUnsignedByte().toInt()
             7 -> {
-                val size = buffer.readUnsignedByte()
+                val size = buffer.readUnsignedByte().toInt()
                 if ((size and 1) == 0) {
                     renderOnWorldMap = false
                 }
@@ -25,26 +28,28 @@ class AreaCodec : DefinitionCodec<AreaType> {
                     renderOnMinimap = true
                 }
             }
-            8 -> buffer.readUnsignedByte()
+
+            8 -> buffer.readUnsignedByte().toInt()
             in 10..14 -> options[opcode - 10] = buffer.readString()
             15 -> {
-                val length: Int = buffer.readUnsignedByte()
+                val length: Int = buffer.readUnsignedByte().toInt()
                 field1933 = MutableList(length * 2) { 0 }
                 (0 until length * 2).forEach {
-                    field1933!![it] = buffer.readShort()
+                    field1933!![it] = buffer.readShort().toInt()
                 }
                 buffer.readInt()
-                val subLength: Int = buffer.readUnsignedByte()
+                val subLength: Int = buffer.readUnsignedByte().toInt()
                 field1930 = MutableList(subLength) { 0 }
                 (0 until subLength).forEach {
                     field1930[it] = buffer.readInt()
                 }
                 field1948 = MutableList(length) { 0 }
                 (0 until length).forEach {
-                    field1948[it] = buffer.readByte()
+                    field1948[it] = buffer.readByte().toInt()
                 }
             }
-            16 -> buffer.readByte()
+
+            16 -> buffer.readByte().toInt()
             17 -> menuTargetName = buffer.readString()
             18 -> buffer.readLargeSmart()
             19 -> category = buffer.readUnsignedShort()
@@ -52,17 +57,18 @@ class AreaCodec : DefinitionCodec<AreaType> {
             22 -> buffer.readInt()
             23 -> buffer.readMedium()
             24 -> {
-                buffer.readShort()
-                buffer.readShort()
+                buffer.readShort().toInt()
+                buffer.readShort().toInt()
             }
+
             25 -> buffer.readLargeSmart()
-            28 -> buffer.readByte()
-            29 -> horizontalAlignment = buffer.readUnsignedByte()
-            30 -> verticalAlignment = buffer.readUnsignedByte()
+            28 -> buffer.readByte().toInt()
+            29 -> horizontalAlignment = buffer.readUnsignedByte().toInt()
+            30 -> verticalAlignment = buffer.readUnsignedByte().toInt()
         }
     }
 
-    override fun Writer.encode(definition: AreaType) {
+    override fun ByteBuf.encode(definition: AreaType) {
 
         if (definition.sprite1 != -1) {
             writeByte(1)

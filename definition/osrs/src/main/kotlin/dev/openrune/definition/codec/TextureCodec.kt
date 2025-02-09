@@ -1,15 +1,14 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.TextureType
+import io.netty.buffer.ByteBuf
 
 class TextureCodec : DefinitionCodec<TextureType> {
-    override fun TextureType.read(opcode: Int, buffer: Reader) {
+    override fun TextureType.read(opcode: Int, buffer: ByteBuf) {
         averageRgb = buffer.readUnsignedShort()
-        isTransparent = buffer.readUnsignedByte() == 1
-        val count: Int = buffer.readUnsignedByte()
+        isTransparent = buffer.readUnsignedByte().toInt() == 1
+        val count: Int = buffer.readUnsignedByte().toInt()
 
         if (count in 1..4) {
             fileIds = IntArray(count).toMutableList()
@@ -19,12 +18,12 @@ class TextureCodec : DefinitionCodec<TextureType> {
 
             if (count > 1) {
 
-                combineModes = IntArray(count -1).toMutableList()
+                combineModes = IntArray(count - 1).toMutableList()
                 for (index in 0 until count - 1) {
                     combineModes[index] = buffer.readUnsignedShort()
                 }
 
-                field2440 = IntArray(count -1).toMutableList()
+                field2440 = IntArray(count - 1).toMutableList()
                 for (index in 0 until count - 1) {
                     field2440[index] = buffer.readUnsignedShort()
                 }
@@ -36,12 +35,12 @@ class TextureCodec : DefinitionCodec<TextureType> {
                 colourAdjustments[index] = buffer.readInt()
             }
 
-            animationDirection = buffer.readUnsignedByte()
-            animationSpeed = buffer.readUnsignedByte()
+            animationDirection = buffer.readUnsignedByte().toInt()
+            animationSpeed = buffer.readUnsignedByte().toInt()
         }
     }
 
-    override fun Writer.encode(definition: TextureType) {
+    override fun ByteBuf.encode(definition: TextureType) {
         writeShort(definition.averageRgb)
         writeByte(if(definition.isTransparent) 1 else 0)
         val fileCount = definition.fileIds.size
@@ -70,7 +69,7 @@ class TextureCodec : DefinitionCodec<TextureType> {
 
     override fun createDefinition() = TextureType()
 
-    override fun readLoop(definition: TextureType, buffer: Reader) {
+    override fun readLoop(definition: TextureType, buffer: ByteBuf) {
         definition.read(-1, buffer)
     }
 }

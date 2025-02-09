@@ -1,20 +1,21 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
+import dev.openrune.definition.util.readString
+import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.type.ObjectType
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.netty.buffer.ByteBuf
 import java.util.stream.IntStream
 import kotlin.streams.toList
 
 class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
 
-    override fun dev.openrune.definition.type.ObjectType.read(opcode: Int, buffer: Reader) {
+    override fun dev.openrune.definition.type.ObjectType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
-                val length: Int = buffer.readUnsignedByte()
+                val length: Int = buffer.readUnsignedByte().toInt()
                 when {
                     length > 0 -> {
                         objectTypes = MutableList(length) { 0 }
@@ -22,14 +23,15 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
 
                         (0 until length).forEach {
                             objectModels!![it] = buffer.readUnsignedShort()
-                            objectTypes!![it] = buffer.readUnsignedByte()
+                            objectTypes!![it] = buffer.readUnsignedByte().toInt()
                         }
                     }
                 }
             }
+
             2 -> name = buffer.readString()
             5 -> {
-                val length: Int = buffer.readUnsignedByte()
+                val length: Int = buffer.readUnsignedByte().toInt()
                 when {
                     length > 0 -> {
                         objectTypes = null
@@ -39,14 +41,16 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
                     }
                 }
             }
-            14 -> sizeX = buffer.readUnsignedByte()
-            15 -> sizeY = buffer.readUnsignedByte()
+
+            14 -> sizeX = buffer.readUnsignedByte().toInt()
+            15 -> sizeY = buffer.readUnsignedByte().toInt()
             17 -> {
                 solid = 0
                 impenetrable = false
             }
+
             18 -> impenetrable = false
-            19 -> interactive = buffer.readUnsignedByte()
+            19 -> interactive = buffer.readUnsignedByte().toInt()
             21 -> clipType = 0
             22 -> nonFlatShading = true
             23 -> modelClipped = true
@@ -56,13 +60,15 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
                     animationId = -1
                 }
             }
+
             27 -> solid = 1
-            28 -> decorDisplacement = buffer.readUnsignedByte()
-            29 -> ambient = buffer.readByte()
-            39 -> contrast = buffer.readByte()
+            28 -> decorDisplacement = buffer.readUnsignedByte().toInt()
+            29 -> ambient = buffer.readByte().toInt()
+            39 -> contrast = buffer.readByte().toInt()
             in 30..34 -> {
                 actions[opcode - 30] = buffer.readString()
             }
+
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
             61 -> category = buffer.readUnsignedShort()
@@ -72,35 +78,37 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
             66 -> modelSizeZ = buffer.readUnsignedShort()
             67 -> modelSizeY = buffer.readUnsignedShort()
             68 -> mapSceneID = buffer.readUnsignedShort()
-            69 -> clipMask = buffer.readByte()
+            69 -> clipMask = buffer.readByte().toInt()
             70 -> offsetX = buffer.readUnsignedShort()
             71 -> offsetZ = buffer.readUnsignedShort()
             72 -> offsetY = buffer.readUnsignedShort()
             73 -> obstructive = true
             74 -> isHollow = true
-            75 -> supportsItems = buffer.readUnsignedByte()
+            75 -> supportsItems = buffer.readUnsignedByte().toInt()
             77, 92 -> readTransforms(buffer, opcode == 92)
             78 -> {
                 ambientSoundId = buffer.readUnsignedShort()
-                soundDistance = buffer.readUnsignedByte()
+                soundDistance = buffer.readUnsignedByte().toInt()
                 if (revisionIsOrAfter(revision, 220)) {
-                    soundRetain = buffer.readUnsignedByte()
+                    soundRetain = buffer.readUnsignedByte().toInt()
                 }
             }
+
             79 -> {
                 soundMin = buffer.readUnsignedShort()
                 soundMax = buffer.readUnsignedShort()
-                soundDistance = buffer.readUnsignedByte()
+                soundDistance = buffer.readUnsignedByte().toInt()
                 if (revisionIsOrAfter(revision, 220)) {
-                    soundRetain = buffer.readUnsignedByte()
+                    soundRetain = buffer.readUnsignedByte().toInt()
                 }
-                val length: Int = buffer.readUnsignedByte()
+                val length: Int = buffer.readUnsignedByte().toInt()
                 ambientSoundIds = IntStream.range(0, length).map {
                     buffer.readUnsignedShort()
                 }.toList().toMutableList()
             }
-            81 -> clipType = (buffer.readUnsignedByte()) * 256
-            60,82 -> mapAreaId = buffer.readUnsignedShort()
+
+            81 -> clipType = (buffer.readUnsignedByte().toInt()) * 256
+            60, 82 -> mapAreaId = buffer.readUnsignedShort()
             89 -> randomizeAnimStart = true
             90 -> delayAnimationUpdate = true
             249 -> readParameters(buffer)
@@ -108,7 +116,7 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
         }
     }
 
-    override fun Writer.encode(definition: dev.openrune.definition.type.ObjectType) {
+    override fun ByteBuf.encode(definition: dev.openrune.definition.type.ObjectType) {
         if (definition.objectModels != null) {
             if (definition.objectTypes != null) {
                 writeByte(1)

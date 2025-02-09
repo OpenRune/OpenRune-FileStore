@@ -1,7 +1,6 @@
 package dev.openrune.definition
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
+import io.netty.buffer.ByteBuf
 
 interface Recolourable {
     var originalColours: MutableList<Int>?
@@ -9,32 +8,32 @@ interface Recolourable {
     var originalTextureColours: MutableList<Int>?
     var modifiedTextureColours: MutableList<Int>?
 
-    fun readColours(buffer: Reader) {
-        val length = buffer.readUnsignedByte()
+    fun readColours(buffer: ByteBuf) {
+        val length = buffer.readUnsignedByte().toInt()
         originalColours = MutableList(length) { -1 }
         modifiedColours = MutableList(length) { -1 }
         for (count in 0 until length) {
-            originalColours!![count] = buffer.readShort().toShort().toInt()
-            modifiedColours!![count] = buffer.readShort().toShort().toInt()
+            originalColours!![count] = buffer.readShort().toInt().toShort().toInt()
+            modifiedColours!![count] = buffer.readShort().toInt().toShort().toInt()
         }
     }
 
-    fun readTextures(buffer: Reader) {
-        val length = buffer.readUnsignedByte()
+    fun readTextures(buffer: ByteBuf) {
+        val length = buffer.readUnsignedByte().toInt()
         originalTextureColours = MutableList(length) { -1 }
         modifiedTextureColours = MutableList(length) { -1 }
         for (count in 0 until length) {
-            originalTextureColours!![count] = buffer.readShort().toShort().toInt()
-            modifiedTextureColours!![count] = buffer.readShort().toShort().toInt()
+            originalTextureColours!![count] = buffer.readShort().toInt().toShort().toInt()
+            modifiedTextureColours!![count] = buffer.readShort().toInt().toShort().toInt()
         }
     }
 
-    fun writeColoursTextures(writer: Writer) {
+    fun writeColoursTextures(writer: ByteBuf) {
         writeArray(writer, 40, originalColours, modifiedColours)
         writeArray(writer, 41, originalTextureColours, modifiedTextureColours)
     }
 
-    private fun writeArray(writer: Writer, opcode: Int, original: List<Int>?, modified: List<Int>?) {
+    private fun writeArray(writer: ByteBuf, opcode: Int, original: List<Int>?, modified: List<Int>?) {
         if (original != null && modified != null) {
             writer.writeByte(opcode)
             writer.writeByte(original.size)

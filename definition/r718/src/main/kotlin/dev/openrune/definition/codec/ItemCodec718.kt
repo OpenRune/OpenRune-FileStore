@@ -1,9 +1,10 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
+import dev.openrune.definition.util.readBigSmart
+import dev.openrune.definition.util.readString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.ItemType
+import io.netty.buffer.ByteBuf
 
 fun ItemType.getPrimaryCursorOpcode(): Int {
     return getIntProperty("primaryCursorOpcode")
@@ -70,21 +71,21 @@ fun ItemType.getNoteTemplateId(): Int {
 }
 
 class ItemCodec718 : DefinitionCodec<ItemType> {
-    override fun ItemType.read(opcode: Int, buffer: Reader) {
+    override fun ItemType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> inventoryModel = buffer.readBigSmart()
             2 -> name = buffer.readString()
-            4 -> zoom2d = buffer.readShort()
-            5 -> xan2d = buffer.readShort()
-            6 -> yan2d = buffer.readShort()
-            7 -> xOffset2d = buffer.readShort()
-            8 -> yOffset2d = buffer.readShort()
+            4 -> zoom2d = buffer.readShort().toInt()
+            5 -> xan2d = buffer.readShort().toInt()
+            6 -> yan2d = buffer.readShort().toInt()
+            7 -> xOffset2d = buffer.readShort().toInt()
+            8 -> yOffset2d = buffer.readShort().toInt()
             11 -> stacks = 1
             12 -> cost = buffer.readInt()
-            13 -> equipSlot = buffer.readUnsignedByte()
-            14 -> appearanceOverride1 = buffer.readUnsignedByte()
+            13 -> equipSlot = buffer.readUnsignedByte().toInt()
+            14 -> appearanceOverride1 = buffer.readUnsignedByte().toInt()
             16 -> members = true
-            18 -> setExtraProperty("multiStackSize", buffer.readShort())
+            18 -> setExtraProperty("multiStackSize", buffer.readShort().toInt())
             23 -> maleModel0 = buffer.readBigSmart()
             24 -> maleModel1 = buffer.readBigSmart()
             25 -> femaleModel0 = buffer.readBigSmart()
@@ -93,7 +94,7 @@ class ItemCodec718 : DefinitionCodec<ItemType> {
             in 35..39 -> interfaceOptions[opcode - 35] = buffer.readString()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
-            42 -> setExtraProperty("colourPalette",readColourPalette(buffer))
+            42 -> setExtraProperty("colourPalette", readColourPalette(buffer))
             65 -> isTradeable = true
             78 -> maleModel2 = buffer.readBigSmart()
             79 -> femaleModel2 = buffer.readBigSmart()
@@ -101,70 +102,78 @@ class ItemCodec718 : DefinitionCodec<ItemType> {
             91 -> femaleHeadModel0 = buffer.readBigSmart()
             92 -> maleHeadModel1 = buffer.readBigSmart()
             93 -> femaleHeadModel1 = buffer.readBigSmart()
-            95 -> zan2d = buffer.readShort()
-            96 -> category = buffer.readUnsignedByte()
-            97 -> noteLinkId = buffer.readShort()
-            98 -> noteTemplateId = buffer.readShort()
+            95 -> zan2d = buffer.readShort().toInt()
+            96 -> category = buffer.readUnsignedByte().toInt()
+            97 -> noteLinkId = buffer.readShort().toInt()
+            98 -> noteTemplateId = buffer.readShort().toInt()
             in 100..109 -> {
                 if (countCo == null) {
                     countObj = MutableList(10) { 0 }
                     countCo = MutableList(10) { 0 }
                 }
-                countObj!![opcode - 100] = buffer.readShort()
-                countCo!![opcode - 100] = buffer.readShort()
+                countObj!![opcode - 100] = buffer.readShort().toInt()
+                countCo!![opcode - 100] = buffer.readShort().toInt()
             }
-            110 -> resizeX = buffer.readShort()
-            111 -> resizeY = buffer.readShort()
-            112 -> resizeZ = buffer.readShort()
-            113 -> ambient = buffer.readByte()
-            114 -> contrast = buffer.readByte() * 5
-            115 -> teamCape = buffer.readUnsignedByte()
-            121 -> setExtraProperty("lendId", buffer.readShort())
-            122 -> setExtraProperty("lendTemplateId", buffer.readShort())
+
+            110 -> resizeX = buffer.readShort().toInt()
+            111 -> resizeY = buffer.readShort().toInt()
+            112 -> resizeZ = buffer.readShort().toInt()
+            113 -> ambient = buffer.readByte().toInt()
+            114 -> contrast = buffer.readByte().toInt() * 5
+            115 -> teamCape = buffer.readUnsignedByte().toInt()
+            121 -> setExtraProperty("lendId", buffer.readShort().toInt())
+            122 -> setExtraProperty("lendTemplateId", buffer.readShort().toInt())
             125 -> {
-                maleOffset = buffer.readByte() shl 2
-                setExtraProperty("maleWieldZ", buffer.readByte() shl 2)
-                setExtraProperty("maleWieldY", buffer.readByte() shl 2)
+                maleOffset = buffer.readByte().toInt() shl 2
+                setExtraProperty("maleWieldZ", buffer.readByte().toInt() shl 2)
+                setExtraProperty("maleWieldY", buffer.readByte().toInt() shl 2)
             }
+
             126 -> {
-                femaleOffset = buffer.readByte() shl 2
-                setExtraProperty("femaleWieldZ", buffer.readByte() shl 2)
-                setExtraProperty("femaleWieldY", buffer.readByte() shl 2)
+                femaleOffset = buffer.readByte().toInt() shl 2
+                setExtraProperty("femaleWieldZ", buffer.readByte().toInt() shl 2)
+                setExtraProperty("femaleWieldY", buffer.readByte().toInt() shl 2)
             }
+
             127 -> {
-                setExtraProperty("primaryCursorOpcode", buffer.readUnsignedByte())
-                setExtraProperty("primaryCursor", buffer.readShort())
+                setExtraProperty("primaryCursorOpcode", buffer.readUnsignedByte().toInt())
+                setExtraProperty("primaryCursor", buffer.readShort().toInt())
             }
+
             128 -> {
-                setExtraProperty("secondaryCursorOpcode", buffer.readUnsignedByte())
-                setExtraProperty("secondaryCursor", buffer.readShort())
+                setExtraProperty("secondaryCursorOpcode", buffer.readUnsignedByte().toInt())
+                setExtraProperty("secondaryCursor", buffer.readShort().toInt())
             }
+
             129 -> {
-                setExtraProperty("primaryInterfaceCursorOpcode", buffer.readUnsignedByte())
-                setExtraProperty("primaryInterfaceCursor", buffer.readShort())
+                setExtraProperty("primaryInterfaceCursorOpcode", buffer.readUnsignedByte().toInt())
+                setExtraProperty("primaryInterfaceCursor", buffer.readShort().toInt())
             }
+
             130 -> {
-                setExtraProperty("secondaryInterfaceCursorOpcode", buffer.readUnsignedByte())
-                setExtraProperty("secondaryInterfaceCursor", buffer.readShort())
+                setExtraProperty("secondaryInterfaceCursorOpcode", buffer.readUnsignedByte().toInt())
+                setExtraProperty("secondaryInterfaceCursor", buffer.readShort().toInt())
             }
+
             132 -> {
-                val length = buffer.readUnsignedByte()
-                setExtraProperty("campaigns", IntArray(length) { buffer.readShort() })
+                val length = buffer.readUnsignedByte().toInt()
+                setExtraProperty("campaigns", IntArray(length) { buffer.readShort().toInt() })
             }
-            134 -> setExtraProperty("pickSizeShift", buffer.readUnsignedByte())
-            139 -> unnotedId = buffer.readShort()
-            140 -> notedId = buffer.readShort()
+
+            134 -> setExtraProperty("pickSizeShift", buffer.readUnsignedByte().toInt())
+            139 -> unnotedId = buffer.readShort().toInt()
+            140 -> notedId = buffer.readShort().toInt()
             249 -> readParameters(buffer)
         }
     }
 
-    override fun Writer.encode(definition: ItemType) {
+    override fun ByteBuf.encode(definition: ItemType) {
         TODO("Not yet implemented")
     }
 
-    private fun readColourPalette(buffer: Reader) {
-        val length = buffer.readUnsignedByte()
-        ByteArray(length) { buffer.readByte().toByte() }
+    private fun readColourPalette(buffer: ByteBuf) {
+        val length = buffer.readUnsignedByte().toInt()
+        ByteArray(length) { buffer.readByte().toInt().toByte() }
     }
 
     override fun createDefinition() = ItemType()

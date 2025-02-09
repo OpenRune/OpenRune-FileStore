@@ -1,9 +1,8 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.SequenceType
+import io.netty.buffer.ByteBuf
 import kotlin.math.ceil
 
 class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
@@ -27,7 +26,7 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
         }
     }
 
-    override fun SequenceType.read(opcode: Int, buffer: Reader) {
+    override fun SequenceType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
                 val frameCount = buffer.readUnsignedShort()
@@ -55,24 +54,24 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
 
             2 -> frameStep = buffer.readUnsignedShort()
             3 -> {
-                val count = buffer.readUnsignedByte()
+                val count = buffer.readUnsignedByte().toInt()
                 interleaveLeave = MutableList(count + 1) { 0 }
                 for (i in 0 until count) {
-                    interleaveLeave!![i] = buffer.readUnsignedByte()
+                    interleaveLeave!![i] = buffer.readUnsignedByte().toInt()
                 }
                 interleaveLeave!![count] = 0x98967f
             }
 
             4 -> stretches = true
-            5 -> forcedPriority = buffer.readUnsignedByte()
+            5 -> forcedPriority = buffer.readUnsignedByte().toInt()
             6 -> leftHandItem = buffer.readUnsignedShort()
             7 -> rightHandItem = buffer.readUnsignedShort()
-            8 -> maxLoops = buffer.readUnsignedByte()
-            9 -> precedenceAnimating = buffer.readUnsignedByte()
-            10 -> priority = buffer.readUnsignedByte()
-            11 -> replyMode = buffer.readUnsignedByte()
+            8 -> maxLoops = buffer.readUnsignedByte().toInt()
+            9 -> precedenceAnimating = buffer.readUnsignedByte().toInt()
+            10 -> priority = buffer.readUnsignedByte().toInt()
+            11 -> replyMode = buffer.readUnsignedByte().toInt()
             12 -> {
-                val count = buffer.readUnsignedByte()
+                val count = buffer.readUnsignedByte().toInt()
                 chatFrameIds = MutableList(count) { 0 }
                 for (i in 0 until count) {
                     chatFrameIds!![i] = buffer.readUnsignedShort()
@@ -84,7 +83,7 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
             }
 
             frameSoundOpcode -> {
-                val count = buffer.readUnsignedByte()
+                val count = buffer.readUnsignedByte().toInt()
                 soundEffects = MutableList(count) { null }
                 for (i in 0 until count) {
                     soundEffects[i] = readSounds(buffer, revision)
@@ -108,15 +107,15 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
 
             17 -> {
                 mask = MutableList(256) { false }
-                val count = buffer.readUnsignedByte()
+                val count = buffer.readUnsignedByte().toInt()
                 for (i in 0 until count) {
-                    mask!![buffer.readUnsignedByte()] = true
+                    mask!![buffer.readUnsignedByte().toInt()] = true
                 }
             }
         }
     }
 
-    override fun Writer.encode(definition: SequenceType) {
+    override fun ByteBuf.encode(definition: SequenceType) {
 
         if (definition.frameIDs != null) {
             writeByte(1)
