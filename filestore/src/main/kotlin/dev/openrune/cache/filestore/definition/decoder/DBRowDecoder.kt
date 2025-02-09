@@ -1,11 +1,9 @@
 package dev.openrune.cache.filestore.definition.decoder
 
-import dev.openrune.cache.AREA
 import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.DBROW
 import dev.openrune.cache.filestore.buffer.Reader
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
-import dev.openrune.cache.filestore.definition.data.AreaType
 import dev.openrune.cache.filestore.definition.data.DBRowType
 import dev.openrune.cache.util.ScriptVarType
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
@@ -24,20 +22,22 @@ class DBRowDecoder : DefinitionDecoder<DBRowType>(CONFIGS) {
                 val numColumns = buffer.readUnsignedByte()
                 val types = arrayOfNulls<Array<ScriptVarType>?>(numColumns)
                 val columnValues = arrayOfNulls<Array<Any?>?>(numColumns)
-                var columnId = buffer.readUnsignedByte()
-                while (columnId != 255) {
+                while (true) {
+                    var columnId = buffer.readUnsignedByte()
+                    if (columnId == 0xFF) break
+
                     val columnTypes = Array(buffer.readUnsignedByte()) {
                         ScriptVarType.forId(buffer.readSmart())!!
                     }
                     types[columnId] = columnTypes
                     columnValues[columnId] = decodeColumnFields(buffer, columnTypes)
-                    columnId = buffer.readUnsignedByte()
                 }
                 columnTypes = types
                 this.columnValues = columnValues
             }
 
             4 -> this.tableId = buffer.readVarInt2()
+            else -> error("Unknown opcode $opcode")
         }
     }
 }
