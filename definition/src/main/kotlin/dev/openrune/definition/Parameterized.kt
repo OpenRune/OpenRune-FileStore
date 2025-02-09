@@ -1,23 +1,23 @@
 package dev.openrune.definition
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
+import dev.openrune.buffer.*
+import io.netty.buffer.ByteBuf
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap
 
 interface Parameterized {
 
     var params: Map<Int, Any>?
 
-    fun readParameters(buffer: Reader) {
-        val length = buffer.readUnsignedByte()
+    fun readParameters(buffer: ByteBuf) {
+        val length = buffer.readUnsignedByteRD()
         if (length == 0) {
             return
         }
         val params = Int2ObjectArrayMap<Any>()
         for (i in 0 until length) {
-            val string = buffer.readUnsignedBoolean()
-            val id = buffer.readUnsignedMedium()
-            params[id] = if (string) buffer.readString() else buffer.readInt()
+            val string = buffer.readUnsignedBooleanRD()
+            val id = buffer.readUnsignedMediumRD()
+            params[id] = if (string) buffer.readStringRD() else buffer.readIntRD()
         }
         this.params = params
     }

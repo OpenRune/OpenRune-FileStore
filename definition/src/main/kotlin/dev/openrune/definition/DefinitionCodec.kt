@@ -1,13 +1,15 @@
 package dev.openrune.definition
 
-import dev.openrune.buffer.Reader
+import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
+import dev.openrune.buffer.readUnsignedByteRD
+import io.netty.buffer.Unpooled
 
 interface DefinitionCodec<T : Definition> {
 
-    fun readLoop(definition: T, buffer: Reader) {
+    fun readLoop(definition: T, buffer: ByteBuf) {
         while (true) {
-            val opcode = buffer.readUnsignedByte()
+            val opcode = buffer.readUnsignedByteRD()
             if (opcode == 0) {
                 break
             }
@@ -15,13 +17,13 @@ interface DefinitionCodec<T : Definition> {
         }
     }
 
-    fun T.read(opcode: Int, buffer: Reader)
+    fun T.read(opcode: Int, buffer: ByteBuf)
     fun Writer.encode(definition: T)
 
     fun createDefinition(): T
 
     fun loadData(id: Int, data: ByteArray): T {
-        val reader = Reader(data)
+        val reader = Unpooled.wrappedBuffer(data)
         val definition = createDefinition()
         readLoop(definition, reader)
         return definition

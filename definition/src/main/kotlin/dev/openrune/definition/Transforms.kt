@@ -1,33 +1,33 @@
 package dev.openrune.definition
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
+import dev.openrune.buffer.*
+import io.netty.buffer.ByteBuf
 
 interface Transforms {
     var varbit: Int
     var varp: Int
     var transforms: MutableList<Int>?
 
-    fun readTransforms(buffer: Reader, isLast: Boolean) {
-        varbit = buffer.readShort()
+    fun readTransforms(buffer: ByteBuf, isLast: Boolean) {
+        varbit = buffer.readShortRD()
         if (varbit == 65535) {
             varbit = -1
         }
-        varp = buffer.readShort()
+        varp = buffer.readShortRD()
         if (varp == 65535) {
             varp = -1
         }
         var last = -1
         if (isLast) {
-            last = buffer.readUnsignedShort()
+            last = buffer.readUnsignedShortRD()
             if (last == 65535) {
                 last = -1
             }
         }
-        val length = buffer.readUnsignedByte()
+        val length = buffer.readUnsignedByteRD()
         transforms = MutableList(length + 2) { -1 }
         for (count in 0..length) {
-            transforms!![count] = buffer.readUnsignedShort()
+            transforms!![count] = buffer.readUnsignedShortRD()
             if (transforms!![count] == 65535) {
                 transforms!![count] = -1
             }

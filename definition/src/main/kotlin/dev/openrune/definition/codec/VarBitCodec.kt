@@ -1,16 +1,18 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
+import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
+import dev.openrune.buffer.readShortRD
+import dev.openrune.buffer.readUnsignedByteRD
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.VarBitType
 
 class VarBitCodec : DefinitionCodec<VarBitType> {
-    override fun VarBitType.read(opcode: Int, buffer: Reader) {
+    override fun VarBitType.read(opcode: Int, buffer: ByteBuf) {
         if (opcode == 1) {
-            varp = buffer.readShort()
-            startBit = buffer.readUnsignedByte()
-            endBit = buffer.readUnsignedByte()
+            varp = buffer.readShortRD()
+            startBit = buffer.readUnsignedByteRD()
+            endBit = buffer.readUnsignedByteRD()
         }
     }
 

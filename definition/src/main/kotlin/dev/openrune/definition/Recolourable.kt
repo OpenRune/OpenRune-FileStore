@@ -1,7 +1,9 @@
 package dev.openrune.definition
 
-import dev.openrune.buffer.Reader
+import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
+import dev.openrune.buffer.readShortRD
+import dev.openrune.buffer.readUnsignedByteRD
 
 interface Recolourable {
     var originalColours: MutableList<Int>?
@@ -9,23 +11,23 @@ interface Recolourable {
     var originalTextureColours: MutableList<Int>?
     var modifiedTextureColours: MutableList<Int>?
 
-    fun readColours(buffer: Reader) {
-        val length = buffer.readUnsignedByte()
+    fun readColours(buffer: ByteBuf) {
+        val length = buffer.readUnsignedByteRD()
         originalColours = MutableList(length) { -1 }
         modifiedColours = MutableList(length) { -1 }
         for (count in 0 until length) {
-            originalColours!![count] = buffer.readShort().toShort().toInt()
-            modifiedColours!![count] = buffer.readShort().toShort().toInt()
+            originalColours!![count] = buffer.readShortRD().toShort().toInt()
+            modifiedColours!![count] = buffer.readShortRD().toShort().toInt()
         }
     }
 
-    fun readTextures(buffer: Reader) {
-        val length = buffer.readUnsignedByte()
+    fun readTextures(buffer: ByteBuf) {
+        val length = buffer.readUnsignedByteRD()
         originalTextureColours = MutableList(length) { -1 }
         modifiedTextureColours = MutableList(length) { -1 }
         for (count in 0 until length) {
-            originalTextureColours!![count] = buffer.readShort().toShort().toInt()
-            modifiedTextureColours!![count] = buffer.readShort().toShort().toInt()
+            originalTextureColours!![count] = buffer.readShortRD().toShort().toInt()
+            modifiedTextureColours!![count] = buffer.readShortRD().toShort().toInt()
         }
     }
 

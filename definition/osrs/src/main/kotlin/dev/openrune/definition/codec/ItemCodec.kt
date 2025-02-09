@@ -1,57 +1,57 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
+import dev.openrune.buffer.*
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.ItemType
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.netty.buffer.ByteBuf
 
 class ItemCodec : DefinitionCodec<ItemType> {
-    override fun ItemType.read(opcode: Int, buffer: Reader) {
+    override fun ItemType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
-            1 -> inventoryModel = buffer.readUnsignedShort()
-            2 -> name = buffer.readString()
-            3 -> examine = buffer.readString()
-            4 -> zoom2d = buffer.readUnsignedShort()
-            5 -> xan2d = buffer.readUnsignedShort()
-            6 -> yan2d = buffer.readUnsignedShort()
+            1 -> inventoryModel = buffer.readUnsignedShortRD()
+            2 -> name = buffer.readStringRD()
+            3 -> examine = buffer.readStringRD()
+            4 -> zoom2d = buffer.readUnsignedShortRD()
+            5 -> xan2d = buffer.readUnsignedShortRD()
+            6 -> yan2d = buffer.readUnsignedShortRD()
             7 -> {
-                xOffset2d = buffer.readUnsignedShort()
+                xOffset2d = buffer.readUnsignedShortRD()
                 if (xOffset2d > 32767)
                 {
                     xOffset2d -= 65536
                 }
             }
             8 -> {
-                yOffset2d = buffer.readUnsignedShort()
+                yOffset2d = buffer.readUnsignedShortRD()
                 if (yOffset2d > 32767)
                 {
                     yOffset2d -= 65536;
                 }
             }
             11 -> stacks = 1
-            12 -> cost = buffer.readInt()
-            13 -> equipSlot = buffer.readUnsignedByte()
-            14 -> appearanceOverride1 = buffer.readUnsignedByte()
+            12 -> cost = buffer.readIntRD()
+            13 -> equipSlot = buffer.readUnsignedByteRD()
+            14 -> appearanceOverride1 = buffer.readUnsignedByteRD()
             16 -> members = true
             23 -> {
-                maleModel0 = buffer.readUnsignedShort()
-                maleOffset = buffer.readUnsignedByte()
+                maleModel0 = buffer.readUnsignedShortRD()
+                maleOffset = buffer.readUnsignedByteRD()
             }
-            24 -> maleModel1 = buffer.readUnsignedShort()
+            24 -> maleModel1 = buffer.readUnsignedShortRD()
             25 -> {
-                femaleModel0 = buffer.readUnsignedShort()
-                femaleOffset = buffer.readUnsignedByte()
+                femaleModel0 = buffer.readUnsignedShortRD()
+                femaleOffset = buffer.readUnsignedByteRD()
             }
-            26 -> femaleModel1 = buffer.readUnsignedShort()
-            27 -> appearanceOverride2 = buffer.readByte()
-            in 30..34 -> options[opcode - 30] = buffer.readString()
-            in 35..39 -> interfaceOptions[opcode - 35] = buffer.readString()
+            26 -> femaleModel1 = buffer.readUnsignedShortRD()
+            27 -> appearanceOverride2 = buffer.readByteRD()
+            in 30..34 -> options[opcode - 30] = buffer.readStringRD()
+            in 35..39 -> interfaceOptions[opcode - 35] = buffer.readStringRD()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
-            42 -> dropOptionIndex = buffer.readByte()
+            42 -> dropOptionIndex = buffer.readByteRD()
             43 -> {
-                val opId = buffer.readUnsignedByte()
+                val opId = buffer.readUnsignedByteRD()
                 if (subops == null) {
                     subops = arrayOfNulls(5)
                 }
@@ -62,47 +62,47 @@ class ItemCodec : DefinitionCodec<ItemType> {
                 }
 
                 while (true) {
-                    val subopId = buffer.readUnsignedByte() - 1
+                    val subopId = buffer.readUnsignedByteRD() - 1
                     if (subopId == -1) {
                         break
                     }
 
-                    val op = buffer.readString()
+                    val op = buffer.readStringRD()
                     if (valid && subopId in 0..19) {
                         subops!![opId]?.set(subopId, op)
                     }
                 }
             }
             65 -> isTradeable = true
-            75 -> weight = buffer.readUnsignedShort().toDouble()
-            78 -> maleModel2 = buffer.readUnsignedShort()
-            79 -> femaleModel2 = buffer.readUnsignedShort()
-            90 -> maleHeadModel0 = buffer.readUnsignedShort()
-            91 -> femaleHeadModel0 = buffer.readUnsignedShort()
-            92 -> maleHeadModel1 = buffer.readUnsignedShort()
-            93 -> femaleHeadModel1 = buffer.readUnsignedShort()
-            94 -> category = buffer.readUnsignedShort()
-            95 -> zan2d = buffer.readUnsignedShort()
-            97 -> noteLinkId = buffer.readUnsignedShort()
-            98 -> noteTemplateId = buffer.readUnsignedShort()
+            75 -> weight = buffer.readUnsignedShortRD().toDouble()
+            78 -> maleModel2 = buffer.readUnsignedShortRD()
+            79 -> femaleModel2 = buffer.readUnsignedShortRD()
+            90 -> maleHeadModel0 = buffer.readUnsignedShortRD()
+            91 -> femaleHeadModel0 = buffer.readUnsignedShortRD()
+            92 -> maleHeadModel1 = buffer.readUnsignedShortRD()
+            93 -> femaleHeadModel1 = buffer.readUnsignedShortRD()
+            94 -> category = buffer.readUnsignedShortRD()
+            95 -> zan2d = buffer.readUnsignedShortRD()
+            97 -> noteLinkId = buffer.readUnsignedShortRD()
+            98 -> noteTemplateId = buffer.readUnsignedShortRD()
             in 100..109 -> {
                 if (countCo == null) {
                     countObj = MutableList(10) { 0 }
                     countCo = MutableList(10) { 0 }
                 }
-                countObj!![opcode - 100] = buffer.readUnsignedShort()
-                countCo!![opcode - 100] = buffer.readUnsignedShort()
+                countObj!![opcode - 100] = buffer.readUnsignedShortRD()
+                countCo!![opcode - 100] = buffer.readUnsignedShortRD()
             }
-            110 -> resizeX = buffer.readUnsignedShort()
-            111 -> resizeY = buffer.readUnsignedShort()
-            112 -> resizeZ = buffer.readUnsignedShort()
-            113 -> ambient = buffer.readByte()
-            114 -> contrast = buffer.readByte()
-            115 -> teamCape = buffer.readByte()
-            139 -> unnotedId = buffer.readUnsignedShort()
-            140 -> notedId = buffer.readUnsignedShort()
-            148 -> placeholderLink = buffer.readUnsignedShort()
-            149 -> placeholderTemplate = buffer.readUnsignedShort()
+            110 -> resizeX = buffer.readUnsignedShortRD()
+            111 -> resizeY = buffer.readUnsignedShortRD()
+            112 -> resizeZ = buffer.readUnsignedShortRD()
+            113 -> ambient = buffer.readByteRD()
+            114 -> contrast = buffer.readByteRD()
+            115 -> teamCape = buffer.readByteRD()
+            139 -> unnotedId = buffer.readUnsignedShortRD()
+            140 -> notedId = buffer.readUnsignedShortRD()
+            148 -> placeholderLink = buffer.readUnsignedShortRD()
+            149 -> placeholderTemplate = buffer.readUnsignedShortRD()
             249 -> readParameters(buffer)
             else -> dev.openrune.definition.codec.ItemCodec.logger.info { "Unable to decode Items [${opcode}]" }
         }

@@ -1,7 +1,10 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
+import dev.openrune.buffer.*
+import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
+import dev.openrune.buffer.readBigSmartRD
+import dev.openrune.buffer.readStringRD
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.NpcType
 
@@ -150,88 +153,88 @@ fun NpcType.getAnInt2862(): Int {
 }
 
 class NpcCodec718 : DefinitionCodec<NpcType> {
-    override fun NpcType.read(opcode: Int, buffer: Reader) {
+    override fun NpcType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
-                val length = buffer.readUnsignedByte()
+                val length = buffer.readUnsignedByteRD()
                 models = MutableList(length) { 0 }
                 for (count in 0 until length) {
-                    models!![count] = buffer.readBigSmart()
+                    models!![count] = buffer.readBigSmartRD()
                     if (models!![count] == 65535) {
                         models!![count] = -1
                     }
                 }
             }
-            2 -> name = buffer.readString()
-            12 -> size = buffer.readUnsignedByte()
-            in 30..34 -> actions[-30 + opcode] = buffer.readString()
+            2 -> name = buffer.readStringRD()
+            12 -> size = buffer.readUnsignedByteRD()
+            in 30..34 -> actions[-30 + opcode] = buffer.readStringRD()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
             42 -> readColourPalette(buffer)
             60 -> {
-                val length: Int = buffer.readUnsignedByte()
+                val length: Int = buffer.readUnsignedByteRD()
                 chatheadModels = MutableList(length) { 0 }
                 (0 until length).forEach {
-                    chatheadModels!![it] = buffer.readBigSmart()
+                    chatheadModels!![it] = buffer.readBigSmartRD()
                 }
             }
             93 -> isMinimapVisible = false
-            95 -> combatLevel = buffer.readShort()
-            97 -> widthScale = buffer.readShort()
-            98 -> heightScale = buffer.readShort()
+            95 -> combatLevel = buffer.readShortRD()
+            97 -> widthScale = buffer.readShortRD()
+            98 -> heightScale = buffer.readShortRD()
             99 -> hasRenderPriority = true
-            100 -> ambient = buffer.readByte()
-            101 -> contrast = 5 * buffer.readByte()
+            100 -> ambient = buffer.readByteRD()
+            101 -> contrast = 5 * buffer.readByteRD()
             102 -> {
                 headIconArchiveIds = MutableList(0) { 0 }
-                headIconSpriteIndex = MutableList(buffer.readShort()) { 0 }
+                headIconSpriteIndex = MutableList(buffer.readShortRD()) { 0 }
             }
-            103 -> rotation = buffer.readShort()
+            103 -> rotation = buffer.readShortRD()
             106, 118 -> readTransforms(buffer, opcode == 118)
             107 -> isInteractable = false
             109 -> isInteractable = false
             111 -> setExtraProperty("animateIdle", false)
             113 -> {
-                setExtraProperty("primaryShadowColour", buffer.readShort().toShort())
-                setExtraProperty("secondaryShadowColour", buffer.readShort().toShort())
+                setExtraProperty("primaryShadowColour", buffer.readShortRD().toShort())
+                setExtraProperty("secondaryShadowColour", buffer.readShortRD().toShort())
             }
             114 -> {
-                setExtraProperty("primaryShadowModifier", buffer.readShort().toShort())
-                setExtraProperty("secondaryShadowModifier", buffer.readShort().toShort())
+                setExtraProperty("primaryShadowModifier", buffer.readShortRD().toShort())
+                setExtraProperty("secondaryShadowModifier", buffer.readShortRD().toShort())
             }
-            119 -> setExtraProperty("walkMask", buffer.readByte().toByte())
+            119 -> setExtraProperty("walkMask", buffer.readByteRD().toByte())
             121 -> {
                 val translations : Array<IntArray?> = arrayOfNulls(models!!.size)
-                val length = buffer.readUnsignedByte()
+                val length = buffer.readUnsignedByteRD()
                 for (count in 0 until length) {
-                    val index = buffer.readUnsignedByte()
+                    val index = buffer.readUnsignedByteRD()
                     translations[index] = intArrayOf(
-                        buffer.readByte(),
-                        buffer.readByte(),
-                        buffer.readByte()
+                        buffer.readByteRD(),
+                        buffer.readByteRD(),
+                        buffer.readByteRD()
                     )
                 }
                 setExtraProperty("translations", translations)
             }
-            122 -> setExtraProperty("hitbarSprite", buffer.readBigSmart())
-            123 -> height = buffer.readShort()
-            125 -> setExtraProperty("respawnDirection", buffer.readByte().toByte())
-            127 -> setExtraProperty("renderAnimations", buffer.readShort())
-            128 -> buffer.readUnsignedByte()
+            122 -> setExtraProperty("hitbarSprite", buffer.readBigSmartRD())
+            123 -> height = buffer.readShortRD()
+            125 -> setExtraProperty("respawnDirection", buffer.readByteRD().toByte())
+            127 -> setExtraProperty("renderAnimations", buffer.readShortRD())
+            128 -> buffer.readUnsignedByteRD()
             134 -> {
-                var idleSound = buffer.readShort()
+                var idleSound = buffer.readShortRD()
                 if (idleSound == 65535) {
                     idleSound = -1
                 }
-                var crawlSound = buffer.readShort()
+                var crawlSound = buffer.readShortRD()
                 if (crawlSound == 65535) {
                     crawlSound = -1
                 }
-                var walkSound = buffer.readShort()
+                var walkSound = buffer.readShortRD()
                 if (walkSound == 65535) {
                     walkSound = -1
                 }
-                var runSound = buffer.readShort()
+                var runSound = buffer.readShortRD()
                 if (runSound == 65535) {
                     runSound = -1
                 }
@@ -240,52 +243,52 @@ class NpcCodec718 : DefinitionCodec<NpcType> {
                 setExtraProperty("crawlSound", crawlSound)
                 setExtraProperty("walkSound", walkSound)
                 setExtraProperty("runSound" ,runSound)
-                setExtraProperty("soundDistance", buffer.readUnsignedByte())
+                setExtraProperty("soundDistance", buffer.readUnsignedByteRD())
 
             }
             135 -> {
-                setExtraProperty("primaryCursorOpcode", buffer.readUnsignedByte())
-                setExtraProperty("primaryCursor", buffer.readShort())
+                setExtraProperty("primaryCursorOpcode", buffer.readUnsignedByteRD())
+                setExtraProperty("primaryCursor", buffer.readShortRD())
             }
             136 -> {
-                setExtraProperty("secondaryCursorOpcode", buffer.readUnsignedByte())
-                setExtraProperty("secondaryCursor", buffer.readShort())
+                setExtraProperty("secondaryCursorOpcode", buffer.readUnsignedByteRD())
+                setExtraProperty("secondaryCursor", buffer.readShortRD())
             }
-            137 -> setExtraProperty("attackCursor", buffer.readShort())
-            138 -> setExtraProperty("armyIcon", buffer.readBigSmart())
-            139 -> setExtraProperty("spriteId", buffer.readBigSmart())
-            140 -> setExtraProperty("ambientSoundVolume", buffer.readUnsignedByte())
+            137 -> setExtraProperty("attackCursor", buffer.readShortRD())
+            138 -> setExtraProperty("armyIcon", buffer.readBigSmartRD())
+            139 -> setExtraProperty("spriteId", buffer.readBigSmartRD())
+            140 -> setExtraProperty("ambientSoundVolume", buffer.readUnsignedByteRD())
             141 -> hasRenderPriority = true
-            142 -> setExtraProperty("mapFunction", buffer.readShort())
+            142 -> setExtraProperty("mapFunction", buffer.readShortRD())
             143 -> setExtraProperty("invisiblePriority", true)
-            in 150..154 -> actions[opcode - 150] = buffer.readString()
+            in 150..154 -> actions[opcode - 150] = buffer.readStringRD()
             155 -> {
-                setExtraProperty("hue", buffer.readByte().toByte())
-                setExtraProperty("saturation", buffer.readByte().toByte())
-                setExtraProperty("lightness", buffer.readByte().toByte())
-                setExtraProperty("opacity", buffer.readByte().toByte())
+                setExtraProperty("hue", buffer.readByteRD().toByte())
+                setExtraProperty("saturation", buffer.readByteRD().toByte())
+                setExtraProperty("lightness", buffer.readByteRD().toByte())
+                setExtraProperty("opacity", buffer.readByteRD().toByte())
             }
             158 -> setExtraProperty("mainOptionIndex", 1.toByte())
             159 -> setExtraProperty("mainOptionIndex", 0.toByte())
             160 -> {
-                val length = buffer.readUnsignedByte()
-                setExtraProperty("campaigns",IntArray(length) { buffer.readShort() })
+                val length = buffer.readUnsignedByteRD()
+                setExtraProperty("campaigns",IntArray(length) { buffer.readShortRD() })
             }
             162 -> setExtraProperty("aBoolean2883",true)
-            163 -> setExtraProperty("anInt2803",buffer.readUnsignedByte())
+            163 -> setExtraProperty("anInt2803",buffer.readUnsignedByteRD())
             164 -> {
-                setExtraProperty("anInt2844",buffer.readShort())
-                setExtraProperty("anInt2852",buffer.readShort())
+                setExtraProperty("anInt2844",buffer.readShortRD())
+                setExtraProperty("anInt2852",buffer.readShortRD())
             }
-            165 -> setExtraProperty("anInt2831",buffer.readUnsignedByte())
-            168 -> setExtraProperty("anInt2862",buffer.readUnsignedByte())
+            165 -> setExtraProperty("anInt2831",buffer.readUnsignedByteRD())
+            168 -> setExtraProperty("anInt2862",buffer.readUnsignedByteRD())
             249 -> readParameters(buffer)
         }
     }
 
-    private fun readColourPalette(buffer: Reader) {
-        val length = buffer.readUnsignedByte()
-        ByteArray(length) { buffer.readByte().toByte() }
+    private fun readColourPalette(buffer: ByteBuf) {
+        val length = buffer.readUnsignedByteRD()
+        ByteArray(length) { buffer.readByteRD().toByte() }
     }
 
     override fun Writer.encode(definition: NpcType) {

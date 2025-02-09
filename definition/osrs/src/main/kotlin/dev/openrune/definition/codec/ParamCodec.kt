@@ -1,22 +1,22 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
+import dev.openrune.buffer.*
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.ParamType
 import dev.openrune.definition.util.Type
+import io.netty.buffer.ByteBuf
 
 class ParamCodec : DefinitionCodec<ParamType> {
-    override fun ParamType.read(opcode: Int, buffer: Reader) {
+    override fun ParamType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
-                val idx = buffer.readUnsignedByte()
+                val idx = buffer.readUnsignedByteRD()
                 type = Type.byChar(idx.toChar())
             }
 
-            2 -> defaultInt = buffer.readInt()
+            2 -> defaultInt = buffer.readIntRD()
             4 -> isMembers = false
-            5 -> defaultString = buffer.readString()
+            5 -> defaultString = buffer.readStringRD()
         }
     }
 

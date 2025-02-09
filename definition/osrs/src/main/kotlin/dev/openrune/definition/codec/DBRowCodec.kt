@@ -1,26 +1,28 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
+import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
+import dev.openrune.buffer.readSmartRD
+import dev.openrune.buffer.readUnsignedByteRD
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.util.Type
 
 class DBRowCodec : DefinitionCodec<DBRowType> {
-    override fun DBRowType.read(opcode: Int, buffer: Reader) {
+    override fun DBRowType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             3 -> {
-                val numColumns = buffer.readUnsignedByte()
+                val numColumns = buffer.readUnsignedByteRD()
                 val types = arrayOfNulls<Array<Type>?>(numColumns)
                 val columnValues = arrayOfNulls<Array<Any?>?>(numColumns)
-                var columnId = buffer.readUnsignedByte()
+                var columnId = buffer.readUnsignedByteRD()
                 while (columnId != 255) {
-                    val columnTypes = Array(buffer.readUnsignedByte()) {
-                        Type.byID(buffer.readSmart())
+                    val columnTypes = Array(buffer.readUnsignedByteRD()) {
+                        Type.byID(buffer.readSmartRD())
                     }
                     types[columnId] = columnTypes
                     columnValues[columnId] = decodeColumnFields(buffer, columnTypes)
-                    columnId = buffer.readUnsignedByte()
+                    columnId = buffer.readUnsignedByteRD()
                 }
                 columnTypes = types
                 this.columnValues = columnValues
@@ -58,12 +60,12 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
 
     override fun createDefinition() = DBRowType()
 
-    private fun Reader.readVarInt2(): Int {
+    private fun ByteBuf.readVarInt2(): Int {
         var value = 0
         var bits = 0
         var read: Int
         do {
-            read = readUnsignedByte()
+            read = readUnsignedByteRD()
             value = value or (read and 0x7F shl bits)
             bits += 7
         } while (read > 127)

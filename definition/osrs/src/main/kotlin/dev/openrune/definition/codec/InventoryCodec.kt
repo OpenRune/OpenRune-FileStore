@@ -1,15 +1,15 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
+import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
+import dev.openrune.buffer.readUnsignedShortRD
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.InventoryType
-import dev.openrune.definition.type.VarpType
 
 class InventoryCodec : DefinitionCodec<InventoryType> {
-    override fun InventoryType.read(opcode: Int, buffer: Reader) {
+    override fun InventoryType.read(opcode: Int, buffer: ByteBuf) {
         if (opcode == 2) {
-            size = buffer.readUnsignedShort()
+            size = buffer.readUnsignedShortRD()
         }
     }
 

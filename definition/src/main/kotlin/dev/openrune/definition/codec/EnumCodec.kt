@@ -1,25 +1,25 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
+import dev.openrune.buffer.*
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.EnumType
+import io.netty.buffer.ByteBuf
 
 class EnumCodec : DefinitionCodec<EnumType> {
-    override fun EnumType.read(opcode: Int, buffer: Reader) {
+    override fun EnumType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
-            1 -> keyType = buffer.readUnsignedByte()
-            2 -> valueType = buffer.readUnsignedByte()
-            3 -> defaultString = buffer.readString()
-            4 -> defaultInt = buffer.readInt()
+            1 -> keyType = buffer.readUnsignedByteRD()
+            2 -> valueType = buffer.readUnsignedByteRD()
+            3 -> defaultString = buffer.readStringRD()
+            4 -> defaultInt = buffer.readIntRD()
             5, 6 -> {
-                val count = buffer.readUnsignedShort()
+                val count = buffer.readUnsignedShortRD()
                 for (i in 0 until count) {
-                    val key = buffer.readInt()
+                    val key = buffer.readIntRD()
                     if (opcode == 5) {
-                        values[key] = buffer.readString()
+                        values[key] = buffer.readStringRD()
                     } else {
-                        values[key] = buffer.readInt()
+                        values[key] = buffer.readIntRD()
                     }
                 }
             }

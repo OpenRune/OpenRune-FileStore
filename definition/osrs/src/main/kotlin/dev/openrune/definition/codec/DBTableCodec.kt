@@ -1,24 +1,27 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
+import dev.openrune.buffer.*
+import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
+import dev.openrune.buffer.readSmartRD
+import dev.openrune.buffer.readStringRD
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.DBTableType
 import dev.openrune.definition.util.Type
 
 class DBTableCodec : DefinitionCodec<DBTableType> {
-    override fun DBTableType.read(opcode: Int, buffer: Reader) {
+    override fun DBTableType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
-                val numColumns = buffer.readUnsignedByte()
+                val numColumns = buffer.readUnsignedByteRD()
                 val types = arrayOfNulls<Array<Type>>(numColumns)
                 var defaultValues: Array<Array<Any?>?>? = null
-                var setting = buffer.readUnsignedByte()
+                var setting = buffer.readUnsignedByteRD()
                 while (setting != 255) {
                     val columnId = setting and 0x7F
                     val hasDefault = setting and 0x80 != 0
-                    val columnTypes = Array(buffer.readUnsignedByte()) {
-                        Type.byID(buffer.readSmart())!!
+                    val columnTypes = Array(buffer.readUnsignedByteRD()) {
+                        Type.byID(buffer.readSmartRD())!!
                     }
                     types[columnId] = columnTypes
                     if (hasDefault) {
@@ -27,7 +30,7 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
                         }
                         defaultValues[columnId] = decodeColumnFields(buffer, columnTypes)
                     }
-                    setting = buffer.readUnsignedByte()
+                    setting = buffer.readUnsignedByteRD()
                 }
                 this.types = types
                 this.defaultColumnValues = defaultValues
@@ -83,16 +86,16 @@ fun Writer.writeColumnFields(types: Array<Type>, values: Array<Any?>?) {
     }
 }
 
-fun decodeColumnFields(buffer: Reader, types: Array<Type>): Array<Any?> {
-    val fieldCount = buffer.readSmart()
+fun decodeColumnFields(buffer: ByteBuf, types: Array<Type>): Array<Any?> {
+    val fieldCount = buffer.readSmartRD()
     val values = arrayOfNulls<Any>(fieldCount * types.size)
     for (fieldIndex in 0 until fieldCount) {
         for (typeIndex in types.indices) {
             val type = types[typeIndex]
             val valuesIndex = fieldIndex * types.size + typeIndex
             values[valuesIndex] = when (type) {
-                Type.STRING -> buffer.readString()
-                else -> buffer.readInt()
+                Type.STRING -> buffer.readStringRD()
+                else -> buffer.readIntRD()
             }
         }
     }

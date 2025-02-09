@@ -1,27 +1,27 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
-import dev.openrune.buffer.Writer
+import dev.openrune.buffer.*
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.HitSplatType
+import io.netty.buffer.ByteBuf
 
 class HitSplatCodec : DefinitionCodec<HitSplatType> {
-    override fun HitSplatType.read(opcode: Int, buffer: Reader) {
+    override fun HitSplatType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
-            1 -> font = buffer.readShortSmart()
-            2 -> textColour = buffer.readUnsignedMedium()
-            3 -> icon = buffer.readShortSmart()
-            4 -> left = buffer.readShortSmart()
-            5 -> middle = buffer.readShortSmart()
-            6 -> right = buffer.readShortSmart()
-            7 -> offsetX = buffer.readUnsignedShort()
-            8 -> amount = buffer.readString()
-            9 -> duration = buffer.readUnsignedShort()
-            10 -> offsetY = buffer.readShort()
+            1 -> font = buffer.readShortSmartRD()
+            2 -> textColour = buffer.readUnsignedMediumRD()
+            3 -> icon = buffer.readShortSmartRD()
+            4 -> left = buffer.readShortSmartRD()
+            5 -> middle = buffer.readShortSmartRD()
+            6 -> right = buffer.readShortSmartRD()
+            7 -> offsetX = buffer.readUnsignedShortRD()
+            8 -> amount = buffer.readStringRD()
+            9 -> duration = buffer.readUnsignedShortRD()
+            10 -> offsetY = buffer.readShortRD()
             11 -> fade = 0
-            12 -> comparisonType = buffer.readUnsignedByte()
-            13 -> damageYOfset = buffer.readShort()
-            14 -> fade = buffer.readShort()
+            12 -> comparisonType = buffer.readUnsignedByteRD()
+            13 -> damageYOfset = buffer.readShortRD()
+            14 -> fade = buffer.readShortRD()
             17, 18 -> readTransforms(buffer, opcode == 18)
         }
     }

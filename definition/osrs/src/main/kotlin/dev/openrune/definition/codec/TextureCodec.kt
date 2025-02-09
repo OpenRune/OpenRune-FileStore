@@ -1,43 +1,46 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
+import dev.openrune.buffer.*
+import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
+import dev.openrune.buffer.readIntRD
+import dev.openrune.buffer.readUnsignedShortRD
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.TextureType
 
 class TextureCodec : DefinitionCodec<TextureType> {
-    override fun TextureType.read(opcode: Int, buffer: Reader) {
-        averageRgb = buffer.readUnsignedShort()
-        isTransparent = buffer.readUnsignedByte() == 1
-        val count: Int = buffer.readUnsignedByte()
+    override fun TextureType.read(opcode: Int, buffer: ByteBuf) {
+        averageRgb = buffer.readUnsignedShortRD()
+        isTransparent = buffer.readUnsignedByteRD() == 1
+        val count: Int = buffer.readUnsignedByteRD()
 
         if (count in 1..4) {
             fileIds = IntArray(count).toMutableList()
             for (index in 0 until count) {
-                fileIds[index] = buffer.readUnsignedShort()
+                fileIds[index] = buffer.readUnsignedShortRD()
             }
 
             if (count > 1) {
 
                 combineModes = IntArray(count -1).toMutableList()
                 for (index in 0 until count - 1) {
-                    combineModes[index] = buffer.readUnsignedShort()
+                    combineModes[index] = buffer.readUnsignedShortRD()
                 }
 
                 field2440 = IntArray(count -1).toMutableList()
                 for (index in 0 until count - 1) {
-                    field2440[index] = buffer.readUnsignedShort()
+                    field2440[index] = buffer.readUnsignedShortRD()
                 }
 
             }
 
             colourAdjustments = IntArray(count).toMutableList()
             for (index in 0 until count) {
-                colourAdjustments[index] = buffer.readInt()
+                colourAdjustments[index] = buffer.readIntRD()
             }
 
-            animationDirection = buffer.readUnsignedByte()
-            animationSpeed = buffer.readUnsignedByte()
+            animationDirection = buffer.readUnsignedByteRD()
+            animationSpeed = buffer.readUnsignedByteRD()
         }
     }
 
@@ -70,7 +73,7 @@ class TextureCodec : DefinitionCodec<TextureType> {
 
     override fun createDefinition() = TextureType()
 
-    override fun readLoop(definition: TextureType, buffer: Reader) {
+    override fun readLoop(definition: TextureType, buffer: ByteBuf) {
         definition.read(-1, buffer)
     }
 }

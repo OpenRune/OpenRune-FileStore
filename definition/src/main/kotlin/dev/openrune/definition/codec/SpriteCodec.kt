@@ -1,34 +1,37 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.buffer.Reader
+import dev.openrune.buffer.*
+import io.netty.buffer.ByteBuf
 import dev.openrune.buffer.Writer
+import dev.openrune.buffer.arrayRD
+import dev.openrune.buffer.positionRD
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.SpriteType
 import dev.openrune.definition.game.IndexedSprite
 
 class SpriteCodec : DefinitionCodec<SpriteType> {
-    override fun SpriteType.read(opcode: Int, buffer: Reader) {
-        buffer.position(buffer.array().size - 2)
-        val size: Int = buffer.readShort()
-        buffer.position(buffer.array().size - 7 - size * 8)
+    override fun SpriteType.read(opcode: Int, buffer: ByteBuf) {
+        buffer.positionRD(buffer.arrayRD().size - 2)
+        val size: Int = buffer.readShortRD()
+        buffer.positionRD(buffer.arrayRD().size - 7 - size * 8)
 
-        val offsetX: Int = buffer.readShort()
-        val offsetY: Int = buffer.readShort()
+        val offsetX: Int = buffer.readShortRD()
+        val offsetY: Int = buffer.readShortRD()
 
-        val paletteSize: Int = buffer.readUnsignedByte() + 1
+        val paletteSize: Int = buffer.readUnsignedByteRD() + 1
 
         val sprites = Array(size) { IndexedSprite() }
         for (index in 0 until size) {
-            sprites[index].offsetX = buffer.readShort()
+            sprites[index].offsetX = buffer.readShortRD()
         }
         for (index in 0 until size) {
-            sprites[index].offsetY = buffer.readShort()
+            sprites[index].offsetY = buffer.readShortRD()
         }
         for (index in 0 until size) {
-            sprites[index].width = buffer.readShort()
+            sprites[index].width = buffer.readShortRD()
         }
         for (index in 0 until size) {
-            sprites[index].height = buffer.readShort()
+            sprites[index].height = buffer.readShortRD()
         }
         for (index in 0 until size) {
             val sprite = sprites[index]
@@ -36,10 +39,10 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
             sprite.subHeight = offsetY - sprite.height - sprite.offsetY
         }
 
-        buffer.position(buffer.array().size - 7 - size * 8 - (paletteSize - 1) * 3)
+        buffer.positionRD(buffer.arrayRD().size - 7 - size * 8 - (paletteSize - 1) * 3)
         val palette = IntArray(paletteSize)
         for (index in 1 until paletteSize) {
-            palette[index] = buffer.readUnsignedMedium()
+            palette[index] = buffer.readUnsignedMediumRD()
             if (palette[index] == 0) {
                 palette[index] = 1
             }
@@ -48,23 +51,23 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
             sprites[index].palette = palette
         }
 
-        buffer.position(0)
+        buffer.positionRD(0)
         for (index in 0 until size) {
             val sprite = sprites[index]
             val area = sprite.width * sprite.height
 
             sprite.raster = ByteArray(area)
 
-            val setting: Int = buffer.readUnsignedByte()
+            val setting: Int = buffer.readUnsignedByteRD()
             if (setting and 0x2 == 0) {
                 if (setting and 0x1 == 0) {
                     for (pixel in 0 until area) {
-                        sprite.raster[pixel] = buffer.readByte().toByte()
+                        sprite.raster[pixel] = buffer.readByteRD().toByte()
                     }
                 } else {
                     for (x in 0 until sprite.width) {
                         for (y in 0 until sprite.height) {
-                            sprite.raster[x + y * sprite.width] = buffer.readByte().toByte()
+                            sprite.raster[x + y * sprite.width] = buffer.readByteRD().toByte()
                         }
                     }
                 }
@@ -73,22 +76,22 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
                 val alpha = ByteArray(area)
                 if (setting and 0x1 == 0) {
                     for (pixel in 0 until area) {
-                        sprite.raster[pixel] = buffer.readByte().toByte()
+                        sprite.raster[pixel] = buffer.readByteRD().toByte()
                     }
                     for (pixel in 0 until area) {
-                        alpha[pixel] = buffer.readByte().toByte()
+                        alpha[pixel] = buffer.readByteRD().toByte()
                         val p = alpha[pixel].toInt()
                         transparent = transparent or (p != -1)
                     }
                 } else {
                     for (x in 0 until sprite.width) {
                         for (y in 0 until sprite.height) {
-                            sprite.raster[x + y * sprite.width] = buffer.readByte().toByte()
+                            sprite.raster[x + y * sprite.width] = buffer.readByteRD().toByte()
                         }
                     }
                     for (x in 0 until sprite.width) {
                         for (y in 0 until sprite.height) {
-                            alpha[x + y * sprite.width] = buffer.readByte().toByte()
+                            alpha[x + y * sprite.width] = buffer.readByteRD().toByte()
                             val pixel = alpha[x + y * sprite.width].toInt()
                             transparent = transparent or (pixel != -1)
                         }
@@ -108,7 +111,7 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
 
     override fun createDefinition() = SpriteType(0)
 
-    override fun readLoop(definition: SpriteType, buffer: Reader) {
+    override fun readLoop(definition: SpriteType, buffer: ByteBuf) {
         definition.read(-1, buffer)
     }
 }
