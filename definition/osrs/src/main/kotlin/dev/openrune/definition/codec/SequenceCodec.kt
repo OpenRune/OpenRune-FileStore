@@ -68,7 +68,7 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
                 val count = buffer.readUnsignedByte()
                 soundEffects = MutableList(count) { null }
                 for (i in 0 until count) {
-                    soundEffects[i] = readSounds(buffer, revisionIsOrAfter(revision,220))
+                    soundEffects[i] = readSounds(buffer, revision)
                 }
             }
 
@@ -77,7 +77,7 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
                 val count = buffer.readUnsignedShort()
                 for (i in 0 until count) {
                     val index = buffer.readUnsignedShort()
-                    val sound = readSounds(buffer, revisionIsOrAfter(revision,220))
+                    val sound = readSounds(buffer, revision)
                     skeletalSounds[index] = sound!!
                 }
             }
@@ -182,7 +182,7 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
             writeByte(13)
             writeByte(definition.soundEffects.size)
             definition.soundEffects.forEach {
-                it!!.writeSound(this, revisionIsOrAfter(revision,220))
+                it!!.writeSound(this, revision)
             }
         }
 
@@ -196,7 +196,7 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
             writeShort(definition.skeletalSounds.size)
             definition.skeletalSounds.forEach { (index, sound) ->
                 writeShort(index)
-                sound.writeSound(this, revisionIsOrAfter(revision,220))
+                sound.writeSound(this, revision)
             }
         }
 

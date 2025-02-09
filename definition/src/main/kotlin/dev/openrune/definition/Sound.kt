@@ -9,8 +9,8 @@ data class SoundData(
     var location: Int,
     var retain: Int,
 ) {
-    fun writeSound(writer: Writer, after220 : Boolean) {
-        if (!after220) {
+    fun writeSound(writer: Writer, revision : Int) {
+        if (!revisionIsOrAfter(revision, 220)) {
             val payload: Int = (location and 15) or (id shl 8) or (loops shl 4 and 7)
             writer.writeMedium(payload)
         } else {
@@ -24,17 +24,17 @@ data class SoundData(
 interface Sound {
 
 
-    fun readSounds(buffer: Reader, after220 : Boolean) : SoundData? {
+    fun readSounds(buffer: Reader, revision : Int) : SoundData? {
         val id: Int
         val loops: Int
         val location: Int
         val retain: Int
 
-        if (!after220) {
+        if (!revisionIsOrAfter(revision, 220)) {
             val payload: Int = buffer.readMedium()
             retain = 0
             location = payload and 15
-            id  = payload shr 8
+            id = payload shr 8
             loops = payload shr 4 and 7
         } else {
             id = buffer.readUnsignedShort()
