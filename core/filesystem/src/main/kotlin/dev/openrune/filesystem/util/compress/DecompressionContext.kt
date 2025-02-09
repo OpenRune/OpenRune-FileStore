@@ -5,9 +5,6 @@ import dev.openrune.filesystem.util.readInt
 import dev.openrune.filesystem.util.readUnsignedByte
 import dev.openrune.filesystem.util.secure.Xtea
 import io.github.oshai.kotlinlogging.KotlinLogging
-import lzma.sdk.lzma.Decoder
-import java.io.ByteArrayInputStream
-import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.zip.Inflater
@@ -18,7 +15,6 @@ import java.util.zip.Inflater
 internal class DecompressionContext {
     private val gzipInflater = Inflater(true)
     private val bzip2Compressor: BZIP2Compressor by lazy { BZIP2Compressor() }
-    private val lzmaDecoder: Decoder by lazy { Decoder() }
 
     fun decompress(data: ByteArray, keys: IntArray? = null): ByteArray? {
         if (keys != null && (keys[0] != 0 || keys[1] != 0 || keys[2] != 0 || 0 != keys[3])) {
@@ -64,50 +60,14 @@ internal class DecompressionContext {
                     gzipInflater.reset()
                 }
             }
-            LZMA -> {
-                val decompressed = ByteArray(decompressedSize)
-                decompress(data, buffer.position(), decompressed, decompressedSize)
-                return decompressed
-            }
         }
         return null
-    }
-
-    private fun decompress(compressed: ByteArray, offset: Int, decompressed: ByteArray, decompressedLength: Int) {
-        if (!lzmaDecoder.setDecoderProperties(compressed)) {
-            logger.error { "LZMA: Bad properties." }
-            return
-        }
-        val input = ByteArrayInputStream(compressed)
-        input.skip(offset.toLong())
-        val output = ByteArrayWrapperOutputStream(decompressed)
-        lzmaDecoder.code(input, output, decompressedLength.toLong())
-    }
-
-    private class ByteArrayWrapperOutputStream(private val byteArray: ByteArray) : OutputStream() {
-        private var position = 0
-
-        override fun write(b: Int) {
-            byteArray[position++] = b.toByte()
-        }
-
-        override fun write(b: ByteArray, off: Int, len: Int) {
-            System.arraycopy(b, off, byteArray, position, len)
-            position += len
-        }
-
-        override fun flush() {
-        }
-
-        override fun close() {
-        }
     }
 
     companion object {
         private const val NONE = 0
         private const val BZIP2 = 1
         private const val GZIP = 2
-        private const val LZMA = 3
         private val warned = AtomicBoolean()
         private val logger = KotlinLogging.logger {}
     }
