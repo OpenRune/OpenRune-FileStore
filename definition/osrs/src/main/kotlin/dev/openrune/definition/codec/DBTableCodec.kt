@@ -5,6 +5,7 @@ import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeSmart
 import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBTableType
 import dev.openrune.definition.util.Type
 import io.netty.buffer.ByteBuf
@@ -14,8 +15,7 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
         when (opcode) {
             1 -> {
                 val numColumns = buffer.readUnsignedByte().toInt()
-                val types = arrayOfNulls<Array<Type>>(numColumns)
-                var defaultValues: Array<Array<Any>?>? = null
+                initialize(numColumns)
                 var setting = buffer.readUnsignedByte().toInt()
                 while (setting != 255) {
                     val columnId = setting and 0x7F
@@ -23,46 +23,40 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
                     val columnTypes = Array(buffer.readUnsignedByte().toInt()) {
                         Type.byID(buffer.readSmart())
                     }
-                    types[columnId] = columnTypes
-                    if (hasDefault) {
-                        if (defaultValues == null) {
-                            defaultValues = arrayOfNulls<Array<Any>?>(types.size)
-                        }
-                        defaultValues[columnId] = decodeColumnFields(buffer, columnTypes)
-                    }
+                    val defaultValues = if (hasDefault) decodeColumnFields(buffer, columnTypes) else null
+                    columns[columnId] = DBColumnType(columnId, columnTypes, defaultValues)
+
                     setting = buffer.readUnsignedByte().toInt()
                 }
-                this.types = types
-                this.defaultColumnValues = defaultValues
             }
         }
     }
 
     override fun ByteBuf.encode(definition: DBTableType) {
-        val types = definition.types
-        val defaultValues: Array<Array<Any>?>? = definition.defaultColumnValues
-        if (types == null) {
+        if (definition.columns.isEmpty()) {
             writeByte(0)
             return
         }
         writeByte(1)
-        writeByte(types.size)
-        types.indices.forEach { i ->
-            val columnTypes = types[i] ?: return@forEach
-            val hasDefault = defaultValues != null && defaultValues[i] != null
-            var setting = i
+        writeByte(definition.columns.size)
+        definition.columns.forEach { column ->
+            if(column == null)
+                return@forEach
+            val hasDefault = column.values != null
+            var setting = column.id
             if (hasDefault) {
                 setting = setting or 0x80
             }
             writeByte(setting)
-            writeByte(columnTypes.size)
-            for (type in columnTypes) {
+            writeByte(column.types.size)
+            for (type in column.types) {
                 writeSmart(type.id)
             }
             if (hasDefault) {
-                writeColumnFields(columnTypes, defaultValues!![i])
+                writeColumnFields(column.types, column.values)
             }
         }
+
         writeByte(255)
         writeByte(0)
     }

@@ -3,6 +3,7 @@ package dev.openrune.definition.codec
 import dev.openrune.definition.util.readSmart
 import dev.openrune.definition.util.writeSmart
 import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.util.Type
 import io.netty.buffer.ByteBuf
@@ -12,19 +13,16 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
         when (opcode) {
             3 -> {
                 val numColumns = buffer.readUnsignedByte().toInt()
-                val types = arrayOfNulls<Array<Type>?>(numColumns)
-                val columnValues = arrayOfNulls<Array<Any>?>(numColumns)
+                initialize(numColumns)
                 var columnId = buffer.readUnsignedByte().toInt()
                 while (columnId != 255) {
                     val columnTypes = Array(buffer.readUnsignedByte().toInt()) {
                         Type.byID(buffer.readSmart())
                     }
-                    types[columnId] = columnTypes
-                    columnValues[columnId] = decodeColumnFields(buffer, columnTypes)
+                    val columnValues = decodeColumnFields(buffer, columnTypes)
+                    columns[columnId] = DBColumnType(columnId, columnTypes, columnValues)
                     columnId = buffer.readUnsignedByte().toInt()
                 }
-                columnTypes = types
-                this.columnValues = columnValues
             }
 
             4 -> this.tableId = buffer.readVarInt2()
@@ -33,19 +31,19 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
 
     override fun ByteBuf.encode(definition: DBRowType) {
         when {
-            definition.columnTypes != null -> {
+            definition.columns.isNotEmpty() -> {
                 writeByte(3)
-                val types = definition.columnTypes
-                val columnValues = definition.columnValues
-                writeByte(types!!.size)
-                types.indices.forEach { columnId ->
-                    val columnTypes = types[columnId] ?: return@forEach
-                    writeByte(columnId)
-                    writeByte(columnTypes.size)
-                    for (type in columnTypes) {
+                writeByte(definition.columns.size)
+                definition.columns.forEach { column ->
+                    if(column == null)
+                        return@forEach
+
+                    writeByte(column.id)
+                    writeByte(column.types.size)
+                    for (type in column.types) {
                         writeSmart(type.id)
                     }
-                    writeColumnFields(columnTypes, columnValues!![columnId])
+                    writeColumnFields(column.types, column.values)
                 }
                 writeByte(255)
             }
