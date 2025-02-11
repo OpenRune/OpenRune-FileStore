@@ -12,15 +12,15 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
     override fun DBRowType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             3 -> {
-                val numColumns = buffer.readUnsignedByte().toInt()
-                initialize(numColumns)
+                //this is the number of columns. Potentially in the future we can set the size of the map to this.
+                buffer.readUnsignedByte().toInt()
                 var columnId = buffer.readUnsignedByte().toInt()
                 while (columnId != 255) {
                     val columnTypes = Array(buffer.readUnsignedByte().toInt()) {
                         Type.byID(buffer.readSmart())
                     }
                     val columnValues = decodeColumnFields(buffer, columnTypes)
-                    columns[columnId] = DBColumnType(columnId, columnTypes, columnValues)
+                    columns[columnId] = DBColumnType(columnTypes, columnValues)
                     columnId = buffer.readUnsignedByte().toInt()
                 }
             }
@@ -30,23 +30,20 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
     }
 
     override fun ByteBuf.encode(definition: DBRowType) {
-        when {
-            definition.columns.isNotEmpty() -> {
-                writeByte(3)
-                writeByte(definition.columns.size)
-                definition.columns.forEach { column ->
-                    if(column == null)
-                        return@forEach
+        if (definition.columns.isNotEmpty()) {
+            writeByte(3)
+            writeByte(definition.columns.size)
+            definition.columns.entries.forEach { entry ->
+                val column = entry.value
 
-                    writeByte(column.id)
-                    writeByte(column.types.size)
-                    for (type in column.types) {
-                        writeSmart(type.id)
-                    }
-                    writeColumnFields(column.types, column.values)
+                writeByte(entry.key)
+                writeByte(column.types.size)
+                for (type in column.types) {
+                    writeSmart(type.id)
                 }
-                writeByte(255)
+                writeColumnFields(column.types, column.values)
             }
+            writeByte(255)
         }
         if (definition.tableId != -1) {
             writeByte(4)

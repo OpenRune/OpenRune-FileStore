@@ -14,8 +14,8 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
     override fun DBTableType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
-                val numColumns = buffer.readUnsignedByte().toInt()
-                initialize(numColumns)
+                //this is the number of columns. Potentially in the future we can set the size of the map to this.
+                buffer.readUnsignedByte().toInt()
                 var setting = buffer.readUnsignedByte().toInt()
                 while (setting != 255) {
                     val columnId = setting and 0x7F
@@ -24,7 +24,7 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
                         Type.byID(buffer.readSmart())
                     }
                     val defaultValues = if (hasDefault) decodeColumnFields(buffer, columnTypes) else null
-                    columns[columnId] = DBColumnType(columnId, columnTypes, defaultValues)
+                    columns[columnId] = DBColumnType(columnTypes, defaultValues)
 
                     setting = buffer.readUnsignedByte().toInt()
                 }
@@ -39,11 +39,10 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
         }
         writeByte(1)
         writeByte(definition.columns.size)
-        definition.columns.forEach { column ->
-            if(column == null)
-                return@forEach
+        definition.columns.entries.forEach { entry ->
+            val column = entry.value
             val hasDefault = column.values != null
-            var setting = column.id
+            var setting = entry.key
             if (hasDefault) {
                 setting = setting or 0x80
             }
