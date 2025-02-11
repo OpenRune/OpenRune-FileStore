@@ -13,7 +13,7 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
             3 -> {
                 val numColumns = buffer.readUnsignedByte().toInt()
                 val types = arrayOfNulls<Array<Type>?>(numColumns)
-                val columnValues = arrayOfNulls<Array<Any?>?>(numColumns)
+                val columnValues = arrayOfNulls<Array<Any>?>(numColumns)
                 var columnId = buffer.readUnsignedByte().toInt()
                 while (columnId != 255) {
                     val columnTypes = Array(buffer.readUnsignedByte().toInt()) {

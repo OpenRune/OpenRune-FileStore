@@ -15,18 +15,18 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
             1 -> {
                 val numColumns = buffer.readUnsignedByte().toInt()
                 val types = arrayOfNulls<Array<Type>>(numColumns)
-                var defaultValues: Array<Array<Any?>?>? = null
+                var defaultValues: Array<Array<Any>?>? = null
                 var setting = buffer.readUnsignedByte().toInt()
                 while (setting != 255) {
                     val columnId = setting and 0x7F
                     val hasDefault = setting and 0x80 != 0
                     val columnTypes = Array(buffer.readUnsignedByte().toInt()) {
-                        Type.byID(buffer.readSmart())!!
+                        Type.byID(buffer.readSmart())
                     }
                     types[columnId] = columnTypes
                     if (hasDefault) {
                         if (defaultValues == null) {
-                            defaultValues = arrayOfNulls<Array<Any?>?>(types.size)
+                            defaultValues = arrayOfNulls<Array<Any>?>(types.size)
                         }
                         defaultValues[columnId] = decodeColumnFields(buffer, columnTypes)
                     }
@@ -40,7 +40,7 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
 
     override fun ByteBuf.encode(definition: DBTableType) {
         val types = definition.types
-        val defaultValues: Array<Array<Any?>?>? = definition.defaultColumnValues
+        val defaultValues: Array<Array<Any>?>? = definition.defaultColumnValues
         if (types == null) {
             writeByte(0)
             return
@@ -70,7 +70,7 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
     override fun createDefinition() = DBTableType()
 }
 
-fun ByteBuf.writeColumnFields(types: Array<Type>, values: Array<Any?>?) {
+fun ByteBuf.writeColumnFields(types: Array<Type>, values: Array<Any>?) {
     val fieldCount = values!!.size / types.size
     writeSmart(fieldCount)
     for (fieldIndex in 0 until fieldCount) {
@@ -86,7 +86,7 @@ fun ByteBuf.writeColumnFields(types: Array<Type>, values: Array<Any?>?) {
     }
 }
 
-fun decodeColumnFields(buffer: ByteBuf, types: Array<Type>): Array<Any?> {
+fun decodeColumnFields(buffer: ByteBuf, types: Array<Type>): Array<Any> {
     val fieldCount = buffer.readSmart()
     val values = arrayOfNulls<Any>(fieldCount * types.size)
     for (fieldIndex in 0 until fieldCount) {
@@ -99,5 +99,5 @@ fun decodeColumnFields(buffer: ByteBuf, types: Array<Type>): Array<Any?> {
             }
         }
     }
-    return values
+    return values.requireNoNulls()
 }
