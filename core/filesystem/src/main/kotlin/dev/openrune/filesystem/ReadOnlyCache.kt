@@ -1,12 +1,12 @@
 package dev.openrune.filesystem
 
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import dev.openrune.filesystem.util.compress.DecompressionContext
 import dev.openrune.filesystem.util.readByte
 import dev.openrune.filesystem.util.readInt
 import dev.openrune.filesystem.util.readUnsignedByte
 import dev.openrune.filesystem.util.secure.VersionTableBuilder
 import io.github.oshai.kotlinlogging.KotlinLogging
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 
@@ -147,10 +147,16 @@ abstract class ReadOnlyCache(indexCount: Int) : Cache {
                 hashes[reader.readInt()] = archiveId
             }
         }
+        reader.skip(archiveCount * 4) // Crc
+        if (flags and HASH_FLAG != 0) {
+            reader.skip(archiveCount * 4)
+        }
         if (flags and WHIRLPOOL_FLAG != 0) {
             reader.skip(archiveCount * WHIRLPOOL_SIZE)
         }
-        reader.skip(archiveCount * 8) // Crc & revisions
+        if (flags and SIZE_FLAG != 0) {
+            reader.skip(archiveCount * 8) // Uncompressed/compressed size
+        }
         val archiveSizes = IntArray(highest + 1)
         for (i in 0 until archiveCount) {
             val id = archiveIds[i]
@@ -210,6 +216,8 @@ abstract class ReadOnlyCache(indexCount: Int) : Cache {
         private val logger = KotlinLogging.logger {}
         private const val NAME_FLAG = 0x1
         private const val WHIRLPOOL_FLAG = 0x2
+        private const val SIZE_FLAG: Int = 0x4
+        private const val HASH_FLAG: Int = 0x8
 
         const val INDEX_SIZE = 6
         const val WHIRLPOOL_SIZE = 64
