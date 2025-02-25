@@ -157,6 +157,7 @@ abstract class ReadOnlyCache(indexCount: Int) : Cache {
         if (flags and SIZE_FLAG != 0) {
             reader.skip(archiveCount * 8) // Uncompressed/compressed size
         }
+        reader.skip(archiveCount * 4) // Version
         val archiveSizes = IntArray(highest + 1)
         for (i in 0 until archiveCount) {
             val id = archiveIds[i]
