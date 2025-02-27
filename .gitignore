@@ -25,3 +25,4 @@ tools/build/*
 /filestore/osrs-fs/build
 /filestore/r718-fs/build
 /cache/build
+/filesystem/build
