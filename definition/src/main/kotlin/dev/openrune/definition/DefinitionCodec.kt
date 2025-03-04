@@ -23,6 +23,7 @@ interface DefinitionCodec<T : Definition> {
     fun loadData(id: Int, data: ByteArray): T {
         val reader = Unpooled.wrappedBuffer(data)
         val definition = createDefinition()
+        definition.id = id
         readLoop(definition, reader)
         return definition
     }
