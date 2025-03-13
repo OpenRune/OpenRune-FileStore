@@ -5,6 +5,8 @@ import com.akuleshov7.ktoml.Toml
 import com.akuleshov7.ktoml.TomlInputConfig
 import com.displee.cache.CacheLibrary
 import dev.openrune.cache.tools.CacheTool.Constants.library
+import dev.openrune.cache.tools.tasks.impl.defs.PackConfig
+import dev.openrune.cache.tools.tasks.impl.defs.PackConfig.Companion
 
 import dev.openrune.definition.Definition
 import dev.openrune.definition.DefinitionCodec
@@ -98,7 +100,7 @@ fun main() {
                 } else {
                     constructor.call(228) as DefinitionCodec<*>
                 }
-                packDefinitions(item, typeClass, codecInstance)
+                packDefinitions(item, typeClass, codecInstance, -1)
             }
         }
     }
@@ -110,12 +112,26 @@ private fun <T : Definition> packDefinitions(
     tomlContent: String,
     clazz: KClass<*>,
     codec: DefinitionCodec<T>,
+    archive: Int
 ) {
     val toml = Toml(TomlInputConfig(true))
-    val def = toml.decodeFromString(clazz.serializer(), tomlContent) as T
+    var def = toml.decodeFromString(clazz.serializer(), tomlContent) as T
 
     if (def.id == -1) {
         return
+    }
+
+    val defId = def.id
+
+    if (def.inherit != -1) {
+        val data = library.data(CONFIGS, archive, def.inherit)
+        if (data != null) {
+            val inheritedDef = codec.loadData(def.inherit, data)
+            def = mergeDefinitions(inheritedDef, def, codec)
+        } else {
+//            logger.warn { "No inherited definition found for ID ${def.inherit}" }
+            return
+        }
     }
 
     println(def)
@@ -123,6 +139,27 @@ private fun <T : Definition> packDefinitions(
     val writer = Unpooled.buffer(4096)
     with(codec) { writer.encode(def) }
     println(writer.writerIndex())
+}
+
+fun <T : Definition> mergeDefinitions(baseDef: T, inheritedDef: T, codec: DefinitionCodec<T>): T {
+    val ignoreFields = setOf("inherit")
+    val defaultDef = codec.createDefinition()
+
+    defaultDef::class.java.declaredFields.forEach { field ->
+        if (!Modifier.isStatic(field.modifiers) && !ignoreFields.contains(field.name)) {
+            field.isAccessible = true
+            val baseValue = field.get(baseDef)
+            val inheritedValue = field.get(inheritedDef)
+            val defaultValue = field.get(defaultDef)
+
+            // Only overwrite the base value if the inherited value is different from both the base and default values
+            if (inheritedValue != baseValue && inheritedValue != defaultValue) {
+                field.set(baseDef, inheritedValue)
+            }
+        }
+    }
+
+    return baseDef
 }
 
 fun findDefinitionCodecs(packageName: String): Map<String, Pair<KClass<*>, KClass<*>>> {
