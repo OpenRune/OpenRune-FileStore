@@ -1,5 +1,6 @@
 dependencies {
     implementation(project(":filestore"))
+    implementation(project(":filesystem"))
     implementation(project(":definition"))
     implementation(project(":definition:osrs"))
     implementation(project(":filestore:osrs-fs"))
