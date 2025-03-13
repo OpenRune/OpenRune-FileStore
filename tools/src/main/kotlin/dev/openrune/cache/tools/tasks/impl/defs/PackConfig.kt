@@ -2,7 +2,6 @@ package dev.openrune.cache.tools.tasks.impl.defs
 
 import com.akuleshov7.ktoml.Toml
 import com.akuleshov7.ktoml.TomlInputConfig
-import com.displee.cache.CacheLibrary
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.*
 import dev.openrune.definition.util.toArray
@@ -14,6 +13,7 @@ import dev.openrune.cache.util.capitalizeFirstLetter
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.codec.*
+import dev.openrune.filesystem.Cache
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.Unpooled
 import kotlinx.serialization.decodeFromString
@@ -35,22 +35,22 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
 
     val logger = KotlinLogging.logger {}
 
-    override fun init(library: CacheLibrary) {
+    override fun init(cache: Cache) {
         val size = getFiles(directory, "toml").size
         val progress = progress("Packing ${type.name.lowercase().capitalizeFirstLetter()}", size)
         if (size != 0) {
             getFiles(directory, "toml").forEach {
                 progress.extraMessage = it.name
                 when(type) {
-                    PackMode.ITEMS -> packDefinitions<ItemType>(it, ItemCodec(),library, OBJECT)
-                    PackMode.NPCS -> packDefinitions<NpcType>(it, NPCCodec(CACHE_REVISION),library,NPC)
-                    PackMode.OBJECTS -> packDefinitions<dev.openrune.definition.type.ObjectType>(it, ObjectCodec(CACHE_REVISION),library, OBJECT)
+                    PackMode.ITEMS -> packDefinitions<ItemType>(it, ItemCodec(),cache, OBJECT)
+                    PackMode.NPCS -> packDefinitions<NpcType>(it, NPCCodec(CACHE_REVISION),cache,NPC)
+                    PackMode.OBJECTS -> packDefinitions<dev.openrune.definition.type.ObjectType>(it, ObjectCodec(CACHE_REVISION),cache, OBJECT)
                     PackMode.HITSPLATS -> packDefinitions<HitSplatType>(it,
-                        dev.openrune.definition.codec.HitSplatCodec(),library, HITSPLAT)
+                        dev.openrune.definition.codec.HitSplatCodec(),cache, HITSPLAT)
                     PackMode.HEALTBAR -> packDefinitions<HealthBarType>(it,
-                        dev.openrune.definition.codec.HealthBarCodec(),library, HEALTHBAR)
-                    PackMode.SEQUENCE -> packDefinitions<SequenceType>(it, SequenceCodec(CACHE_REVISION),library, SEQUENCE)
-                    PackMode.AREA -> packDefinitions<AreaType>(it, AreaCodec(),library, AREA)
+                        dev.openrune.definition.codec.HealthBarCodec(),cache, HEALTHBAR)
+                    PackMode.SEQUENCE -> packDefinitions<SequenceType>(it, SequenceCodec(CACHE_REVISION),cache, SEQUENCE)
+                    PackMode.AREA -> packDefinitions<AreaType>(it, AreaCodec(),cache, AREA)
                     else -> println("Not Supported")
                 }
                 progress.step()
@@ -62,7 +62,7 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
     private inline fun <reified T : Definition> packDefinitions(
         file: File,
         codec: DefinitionCodec<T>,
-        library: CacheLibrary,
+        cache: Cache,
         archive: Int
     ) {
         val tomlContent = file.readText()
@@ -78,7 +78,7 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
         val defId = def.id
 
         if (def.inherit != -1) {
-            val data = library.data(CONFIGS, archive, def.inherit)
+            val data = cache.data(CONFIGS, archive, def.inherit, null)
             if (data != null) {
                 val inheritedDef = codec.loadData(def.inherit, data)
                 def = mergeDefinitions(inheritedDef, def)
@@ -91,7 +91,7 @@ class PackConfig(val type : PackMode, private val directory : File) : CacheTask(
         val writer = Unpooled.buffer(4096)
         with(codec) { writer.encode(def) }
 
-        library.index(CONFIGS).archive(archive)?.add(defId, writer.toArray())
+        cache.write(CONFIGS, archive, defId, writer.toArray())
     }
 
 

@@ -4,7 +4,7 @@ import com.displee.cache.CacheLibrary
 import dev.openrune.filesystem.Cache
 import io.github.oshai.kotlinlogging.KotlinLogging
 
-class CacheDelegate(private val library: CacheLibrary) : Cache {
+class CacheDelegate(val library: CacheLibrary) : Cache {
 
     constructor(directory: String) : this(timed(directory))
 

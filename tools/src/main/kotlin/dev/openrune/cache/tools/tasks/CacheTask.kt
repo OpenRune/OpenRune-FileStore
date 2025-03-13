@@ -1,9 +1,9 @@
 package dev.openrune.cache.tools.tasks
 
-import com.displee.cache.CacheLibrary
+import dev.openrune.filesystem.Cache
 
 abstract class CacheTask {
 
-    abstract fun init(library : CacheLibrary)
+    abstract fun init(cache : Cache)
 
 }

@@ -2,7 +2,6 @@ package dev.openrune.cache.tools.tasks.impl
 
 import cc.ekblad.toml.decode
 import cc.ekblad.toml.tomlMapper
-import com.displee.cache.CacheLibrary
 import dev.openrune.cache.SPRITES
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.sprites.Sprite
@@ -10,6 +9,7 @@ import dev.openrune.cache.tools.tasks.impl.sprites.SpriteManifest
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
+import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled
 import java.awt.image.BufferedImage
 import java.io.File
@@ -39,7 +39,7 @@ class PackSprites(
     }
     private var manifest: Map<String, SpriteManifest> = emptyMap()
 
-    override fun init(library: CacheLibrary) {
+    override fun init(cache: Cache) {
         val files = getFiles(spritesDirectory, "png")
         val alreadyPacked = mutableListOf<String>()
         val progress = progress("Packing OSRS Sprites", files.filter { it.extension == "png" }.size)
@@ -50,17 +50,17 @@ class PackSprites(
 
         files.forEach { spriteFile ->
             progress.extraMessage = spriteFile.name
-            processSpriteFile(spriteFile, alreadyPacked, library)
+            processSpriteFile(spriteFile, alreadyPacked, cache)
             progress.step()
         }
 
         customSprites.forEach { (id, spriteSet) ->
-            library.put(SPRITES, id, spriteSet.encode().array())
+            cache.write(SPRITES, id, 0, spriteSet.encode().array())
         }
         progress.close()
     }
 
-    private fun processSpriteFile(spriteFile: File, alreadyPacked: MutableList<String>, library: CacheLibrary) {
+    private fun processSpriteFile(spriteFile: File, alreadyPacked: MutableList<String>, cache: Cache) {
         val fileName = spriteFile.nameWithoutExtension.lowercase()
         manifest[fileName.lowercase()]?.let { data ->
             if (data.atlas != null) {
@@ -69,7 +69,7 @@ class PackSprites(
                 packNamedSprite(spriteFile, data)
             }
             alreadyPacked.add(spriteFile.name)
-        } ?: handleUnNamedSprite(spriteFile, library)
+        } ?: handleUnNamedSprite(spriteFile, cache)
     }
 
     private fun packFromAtlas(spriteFile: File, data: SpriteManifest) {
@@ -89,14 +89,14 @@ class PackSprites(
 
     }
 
-    private fun handleUnNamedSprite(spriteFile: File, library: CacheLibrary) {
+    private fun handleUnNamedSprite(spriteFile: File, cache: Cache) {
         if (spriteFile.name.matches(Regex("^[_0-9]+\\.png$"))) {
             val (group, index) = spriteFile.nameWithoutExtension.split("_").let {
                 it[0].toInt() to it.getOrElse(1) { "0" }.toInt()
             }
             var sprites = emptyList<Sprite>().toMutableList()
             if (index != 0) {
-                sprites = SpriteSet.decode(group, Unpooled.wrappedBuffer(library.data(SPRITES, group))).sprites
+                sprites = SpriteSet.decode(group, Unpooled.wrappedBuffer(cache.data(SPRITES, group))).sprites
                 sprites[index] = Sprite(0, 0, loadImage(spriteFile))
             } else {
                 sprites.add(Sprite(0, 0, loadImage(spriteFile)))
