@@ -4,6 +4,7 @@ import Tool
 import com.akuleshov7.ktoml.TomlInputConfig
 
 import dev.openrune.definition.Definition
+import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.RSCMHandler
 import dev.openrune.definition.type.ItemType
 import dev.openrune.definition.type.ObjectType
@@ -20,6 +21,7 @@ fun parseItemsToMap(types: List<String>, tomlContent: String): MutableMap<String
     val matches = sectionRegex.findAll(tomlContent)
     matches.forEach { match ->
         val sectionName = match.groupValues[1]
+        println(sectionName)
         val sectionContent = match.groupValues[2].trim()
         if (types.contains(sectionName)) {
             combinedMap.computeIfAbsent(sectionName) { mutableListOf() }.add(sectionContent)
@@ -84,11 +86,16 @@ fun main() {
         val codec: Pair<KClass<*>, KClass<*>>? = resultMap[typeName]
         codec?.let { (typeClass, codecClass) ->
             items.forEach { item ->
-                if (typeName == "item") {
-                    packDefinitions(item, ItemType::class)
+                val constructor = codecClass.constructors.first()
+                val params = constructor.parameters.size
+                val codecInstance =
+                if (params == 0) {
+                    constructor.call() as DefinitionCodec<*>
                 } else {
-                    packDefinitions(item, ObjectType::class)
+                    constructor.call(228) as DefinitionCodec<*>
                 }
+                val def = codecInstance.createDefinition()
+                println(def)
             }
         }
     }
