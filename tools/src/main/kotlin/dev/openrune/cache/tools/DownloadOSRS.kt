@@ -38,6 +38,20 @@ object DownloadOSRS {
 
     private const val CACHE_DOWNLOAD_LOCATION = "https://archive.openrs2.org/caches.json"
 
+    fun downloadCache(rev : Int, location : File, unzipCache : Boolean = true, downloadXteas : Boolean = true) {
+        val json = URL(CACHE_DOWNLOAD_LOCATION).readText()
+        val caches: Array<CacheInfo> = Gson().fromJson(json, Array<CacheInfo>::class.java)
+        val cacheInfo = if(rev == -1) getLatest(caches) else findRevision(rev,caches)
+
+        downloadCache(location,cacheInfo)
+        if (unzipCache) {
+            unZip()
+        }
+        if (downloadXteas) {
+            saveXteas(cacheInfo.id)
+        }
+    }
+
     fun init() {
 
         val time = measureTimeMillis {
@@ -48,7 +62,7 @@ object DownloadOSRS {
             val caches: Array<CacheInfo> = Gson().fromJson(json, Array<CacheInfo>::class.java)
             val cacheInfo = if(rev == -1) getLatest(caches) else findRevision(rev,caches)
 
-            downloadCache(cacheInfo)
+            downloadCache(cache = cacheInfo)
             unZip()
             saveXteas(cacheInfo.id)
             XteaLoader.load()
@@ -78,13 +92,13 @@ object DownloadOSRS {
         }
     }
 
-    private fun downloadCache(cache: CacheInfo) {
+    private fun downloadCache(output : File = File(FileUtil.getTemp(), "cache.zip"),cache: CacheInfo) {
         try {
             val url = URL("https://archive.openrs2.org/caches/${cache.id}/disk.zip")
             val httpConnection = url.openConnection() as HttpURLConnection
             val completeFileSize = cache.size
             val input: InputStream = httpConnection.inputStream
-            val out = FileOutputStream(File(FileUtil.getTemp(), "cache.zip"))
+            val out = FileOutputStream(output)
 
             val data = ByteArray(1024)
             var downloadedFileSize: Long = 0
@@ -105,12 +119,12 @@ object DownloadOSRS {
 
     }
 
-    private fun unZip() {
-        val path = File(FileUtil.getTemp(), "cache.zip")
+    fun unZip(path: File = File(FileUtil.getTemp(), "cache.zip"), output: String = FileUtil.getTemp().toString()) {
         val zipFile = ZipFile(path)
         try {
             logger.info { "Unzipping Cache please wait" }
-            zipFile.extractAll(FileUtil.getTemp().toString())
+            println("OUTPUT: ${output}")
+            zipFile.extractAll(output)
         } catch (e: ZipException) {
             logger.error { "Unable extract files from $path : $e" }
         }
