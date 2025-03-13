@@ -1,17 +1,21 @@
 package dev.openrune.cache
 
 import Tool
+import com.akuleshov7.ktoml.Toml
 import com.akuleshov7.ktoml.TomlInputConfig
+import com.displee.cache.CacheLibrary
+import dev.openrune.cache.tools.CacheTool.Constants.library
 
 import dev.openrune.definition.Definition
 import dev.openrune.definition.DefinitionCodec
-import dev.openrune.definition.RSCMHandler
-import dev.openrune.definition.type.ItemType
-import dev.openrune.definition.type.ObjectType
+import dev.openrune.definition.codec.*
+import dev.openrune.definition.type.*
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ScanResult
-import kotlinx.serialization.decodeFromString
-import java.io.File
+import io.netty.buffer.Unpooled
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.serializer
+import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
 
 
@@ -94,21 +98,31 @@ fun main() {
                 } else {
                     constructor.call(228) as DefinitionCodec<*>
                 }
-                val def = codecInstance.createDefinition()
-                println(def)
+                packDefinitions(item, typeClass, codecInstance)
             }
         }
     }
 
 }
 
-inline fun <reified T : Definition> packDefinitions(
+@OptIn(InternalSerializationApi::class)
+private fun <T : Definition> packDefinitions(
     tomlContent: String,
-    clazz: KClass<T>
+    clazz: KClass<*>,
+    codec: DefinitionCodec<T>,
 ) {
-    val toml = com.akuleshov7.ktoml.Toml(TomlInputConfig(true))
-    val def: T = toml.decodeFromString(tomlContent)
+    val toml = Toml(TomlInputConfig(true))
+    val def = toml.decodeFromString(clazz.serializer(), tomlContent) as T
+
+    if (def.id == -1) {
+        return
+    }
+
     println(def)
+
+    val writer = Unpooled.buffer(4096)
+    with(codec) { writer.encode(def) }
+    println(writer.writerIndex())
 }
 
 fun findDefinitionCodecs(packageName: String): Map<String, Pair<KClass<*>, KClass<*>>> {
