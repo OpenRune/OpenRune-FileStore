@@ -1,5 +1,6 @@
 package dev.openrune.definition.type
 
+import Tool
 import dev.openrune.definition.Definition
 import dev.openrune.definition.Parameterized
 import dev.openrune.definition.Recolourable
@@ -11,6 +12,7 @@ import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 @Serializable
+@Tool("object")
 data class ObjectType(
     override var id: Rscm = -1,
     var name: String = "null",

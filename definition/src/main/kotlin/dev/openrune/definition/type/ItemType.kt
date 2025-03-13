@@ -1,10 +1,15 @@
 package dev.openrune.definition.type
 
+import Tool
 import dev.openrune.definition.Definition
 import dev.openrune.definition.Parameterized
 import dev.openrune.definition.Recolourable
 import it.unimi.dsi.fastutil.bytes.Byte2ByteOpenHashMap
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
 
+@Serializable
+@Tool("item")
 data class ItemType(
     override var id: Int = -1,
     var name: String = "null",
@@ -13,7 +18,7 @@ data class ItemType(
     override var modifiedColours: MutableList<Int>? = null,
     override var originalTextureColours: MutableList<Int>? = null,
     override var modifiedTextureColours: MutableList<Int>? = null,
-    override var params: Map<Int, Any>? = null,
+    override var params: Map<Int, @Contextual Any>? = null,
     var resizeX: Int = 128,
     var resizeY: Int = 128,
     var resizeZ: Int = 128,
@@ -79,13 +84,6 @@ data class ItemType(
         options = listOf(option1,option2,option3,option4,option5).toMutableList()
         interfaceOptions = listOf(ioption1,ioption2,ioption3,ioption4,ioption5).toMutableList()
     }
-
-    lateinit var bonuses: IntArray
-    var attackSpeed = -1
-    var equipType = 0
-    var weaponType = -1
-    var renderAnimations: IntArray? = null
-    var skillReqs: Byte2ByteOpenHashMap? = null
 
     val stackable: Boolean
         get() = stacks == 1 || noteTemplateId > 0
