@@ -3,14 +3,10 @@ package dev.openrune.cache
 import Tool
 import com.akuleshov7.ktoml.Toml
 import com.akuleshov7.ktoml.TomlInputConfig
-import com.displee.cache.CacheLibrary
 import dev.openrune.cache.tools.CacheTool.Constants.library
-import dev.openrune.cache.tools.tasks.impl.defs.PackConfig
-import dev.openrune.cache.tools.tasks.impl.defs.PackConfig.Companion
 
 import dev.openrune.definition.Definition
 import dev.openrune.definition.DefinitionCodec
-import dev.openrune.definition.codec.*
 import dev.openrune.definition.type.*
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ScanResult
@@ -20,6 +16,10 @@ import kotlinx.serialization.serializer
 import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
 
+val Item = PackType(ITEM, ObjectType::class.java, "object")
+val Object = PackType(OBJECT, ItemType::class.java, "item")
+
+class PackType(val id: Int, private val clazz: Class<*>, private val name: String)
 
 fun parseItemsToMap(types: List<String>, tomlContent: String): MutableMap<String, MutableList<String>> {
     val combinedMap = mutableMapOf<String, MutableList<String>>()
@@ -187,3 +187,4 @@ fun findDefinitionCodecs(packageName: String): Map<String, Pair<KClass<*>, KClas
 
     return resultMap
 }
+
