@@ -4,7 +4,9 @@ import dev.openrune.definition.Definition
 import dev.openrune.definition.Parameterized
 import dev.openrune.definition.Recolourable
 import it.unimi.dsi.fastutil.bytes.Byte2ByteOpenHashMap
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class ItemType(
     override var id: Int = -1,
     var name: String = "null",
