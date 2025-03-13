@@ -22,7 +22,7 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     }
 
     override val npcs: MutableMap<Int, NpcType> = mutableMapOf()
-    override val objects: MutableMap<Int, dev.openrune.definition.type.ObjectType> = mutableMapOf()
+    override val objects: MutableMap<Int, ObjectType> = mutableMapOf()
     override val items: MutableMap<Int, ItemType> = mutableMapOf()
     override val varbits: MutableMap<Int, VarBitType> = mutableMapOf()
     override val varps: MutableMap<Int, VarpType> = mutableMapOf()
