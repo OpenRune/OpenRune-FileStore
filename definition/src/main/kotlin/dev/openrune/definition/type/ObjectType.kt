@@ -73,8 +73,6 @@ data class ObjectType(
     var option3: String? = null,
     var option4: String? = null,
     var option5: String? = null,
-    @Serializable(RscmString::class) override var inherit: Int = -1
-
 ) : Definition, Transforms, Recolourable, Parameterized {
     init {
         actions = listOf(option1,option2,option3,option4,option5).toMutableList()

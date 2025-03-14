@@ -27,8 +27,7 @@ data class SequenceType(
     var rangeEnd : Int = 0,
     var skeletalSounds: MutableMap<Int, SoundData> = emptyMap<Int, SoundData>().toMutableMap(),
     var mask: MutableList<Boolean>? = null,
-    //Custom
-    override var inherit: Int = -1
+
 ) : Definition, Sound {
     var lengthInCycles = 0
     val cycleLength: Int get() = lengthInCycles

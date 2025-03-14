@@ -17,5 +17,4 @@ data class SpotAnimType(
     var modelId: Int = 0,
     var ambient: Int = 0,
     var contrast: Int = 0,
-    override var inherit: Rscm = -1,
 ) : Definition, Recolourable

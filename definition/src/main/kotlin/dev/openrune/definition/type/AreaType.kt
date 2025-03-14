@@ -33,8 +33,7 @@ data class AreaType(
     var field1948: MutableList<Int> = emptyList<Int>().toMutableList(),
 
     var category: Int = 0,
-    //Custom
-    override var inherit: Int = -1,
+    
     var option1: String? = null,
     var option2: String? = null,
     var option3: String? = null,

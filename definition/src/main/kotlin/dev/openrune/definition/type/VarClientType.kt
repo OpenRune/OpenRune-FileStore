@@ -5,6 +5,5 @@ import dev.openrune.definition.serialization.Rscm
 
 data class VarClientType(
     override var id: Int = -1,
-    var persist: Boolean = false,
-    override var inherit: Rscm = -1,
+    var persist: Boolean = false
 ) : Definition

@@ -5,7 +5,7 @@ import dev.openrune.definition.Definition
 data class UnderlayType(
     override var id: Int = -1,
     var color: Int = 0,
-    override var inherit: Int = -1
+
 ) : Definition {
 
     var hue: Int = 0

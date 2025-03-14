@@ -9,6 +9,5 @@ data class ParamType(
     var isMembers: Boolean = true,
     var defaultInt: Int = 0,
     var defaultString: String? = null,
-    //Custom
-    override var inherit: Int = -1
+
 ) : Definition

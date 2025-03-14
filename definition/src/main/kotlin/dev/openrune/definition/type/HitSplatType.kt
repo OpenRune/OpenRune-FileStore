@@ -21,6 +21,5 @@ data class HitSplatType(
     override var varbit: Int = -1,
     override var varp: Int = -1,
     override var transforms: MutableList<Int>? = null,
-    //Custom
-    override var inherit: Int = -1
+
 ) : Definition, Transforms

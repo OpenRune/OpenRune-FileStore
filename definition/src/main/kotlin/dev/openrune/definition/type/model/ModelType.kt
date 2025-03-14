@@ -86,7 +86,7 @@ data class ModelType(
 
     var faceBillboards: Array<FaceBillboard>? = null,
 
-    override var inherit: Int = -1
+
 ) : Definition {
 
 

@@ -5,6 +5,7 @@ import com.akuleshov7.ktoml.TomlInputConfig
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.*
 import dev.openrune.cache.tools.CacheTool.Constants.library
+import dev.openrune.cache.tools.item.ItemSlotType
 import dev.openrune.definition.util.toArray
 import dev.openrune.definition.Definition
 import dev.openrune.definition.DefinitionCodec
@@ -12,6 +13,7 @@ import dev.openrune.definition.type.*
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
+import dev.openrune.definition.RSCMHandler
 import dev.openrune.definition.codec.*
 import dev.openrune.filesystem.Cache
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -35,11 +37,25 @@ class PackType(
 
 class PackConfig(private val directory : File) : CacheTask() {
 
+    fun MutableList<String?>.fromOptions(keyName: String, content: Map<String, Any?>) {
+        (1..5).forEachIndexed { index, i ->
+            content["${keyName}$i"]?.let { this[index] = it.toString().replace("\"", "") }
+        }
+    }
+
     init {
+
         packTypes.registerPackType(ITEM, ItemCodec::class, "item") { content, def: ItemType ->
-            (1..5).forEachIndexed { index, i ->
-                content["option$i"]?.let { def.options[index] = it.toString() }
-            }
+            content["equipmentType"]?.toString()?.replace("\"", "")?.takeIf { ItemSlotType.fetchTypes().contains(it) }?.let { type ->
+                ItemSlotType.fetchType(type)?.apply {
+                    def.equipSlot = slot
+                    def.appearanceOverride1 = override1
+                    def.appearanceOverride2 = override2
+                }
+            } ?: println("Unknown Slot: ${content["equipmentType"]}")
+
+            def.options.fromOptions("option", content)
+            def.interfaceOptions.fromOptions("ioption", content)
         }
 
         packTypes.registerPackType(OBJECT, ObjectCodec::class, "object")
@@ -97,12 +113,18 @@ class PackConfig(private val directory : File) : CacheTask() {
 
         val defId = def.id
 
-        if (def.inherit != -1) {
-            val inheritedDef = getInheritedDefinition(def, codec,archive, cache)
+        val inheritText = lines["inherit"].toString().replace("\"", "")
+
+        val inherit = inheritText.let {
+            it.toIntOrNull() ?: RSCMHandler.getMapping(it) ?: -1
+        }
+
+        if (inherit != -1) {
+            val inheritedDef = getInheritedDefinition(inherit, codec,archive, cache)
             inheritedDef?.let {
                 def = mergeDefinitions(it, def, codec)
             } ?: run {
-                logger.warn { "No inherited definition found for ID ${def.inherit}" }
+                logger.warn { "No inherited definition found for ID $inherit" }
                 return
             }
         }
@@ -114,21 +136,20 @@ class PackConfig(private val directory : File) : CacheTask() {
     }
 
     private fun <T : Definition> getInheritedDefinition(
-        def: T,
+        inherit : Int,
         codec: DefinitionCodec<T>,
         archive: Int,
         cache: Cache
     ): T? {
-        val data = cache.data(CONFIGS, archive, def.inherit)
-        return data?.let { codec.loadData(def.inherit, data) }
+        val data = cache.data(CONFIGS, archive, inherit)
+        return data?.let { codec.loadData(inherit, data) }
     }
 
     private fun <T : Definition> mergeDefinitions(baseDef: T, inheritedDef: T, codec: DefinitionCodec<T>): T {
-        val ignoreFields = setOf("inherit")
         val defaultDef = codec.createDefinition()
 
         defaultDef::class.java.declaredFields.forEach { field ->
-            if (!Modifier.isStatic(field.modifiers) && !ignoreFields.contains(field.name)) {
+            if (!Modifier.isStatic(field.modifiers)) {
                 field.isAccessible = true
                 val baseValue = field.get(baseDef)
                 val inheritedValue = field.get(inheritedDef)

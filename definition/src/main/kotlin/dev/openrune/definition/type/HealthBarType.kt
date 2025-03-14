@@ -12,6 +12,5 @@ data class HealthBarType(
     var backSpriteId: Int = -1,
     var width: Int = 30,
     var widthPadding: Int = 0,
-    //Custom
-    override var inherit: Int = -1
+
 ) : Definition

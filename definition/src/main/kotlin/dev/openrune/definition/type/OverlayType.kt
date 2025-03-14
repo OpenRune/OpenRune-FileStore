@@ -8,7 +8,7 @@ data class OverlayType(
     var secondaryRgbColor: Int = -1,
     var textureId: Int = -1,
     var hideUnderlay: Boolean = true,
-    override var inherit: Int = -1
+
 ) : Definition {
     var hue: Int = 0
     var saturation: Int = 0

@@ -63,8 +63,7 @@ data class NpcType(
     var ranged : Int = 1,
     var magic : Int = 1,
 
-    //Custom
-    override var inherit: Int = -1,
+    
     var option1: String? = null,
     var option2: String? = null,
     var option3: String? = null,
@@ -130,7 +129,6 @@ data class NpcType(
         if (crawlRightSequence != other.crawlRightSequence) return false
         if (crawlLeftSequence != other.crawlLeftSequence) return false
         if (params != other.params) return false
-        if (inherit != other.inherit) return false
         if (option1 != other.option1) return false
         if (option2 != other.option2) return false
         if (option3 != other.option3) return false
@@ -193,7 +191,6 @@ data class NpcType(
         result = 31 * result + crawlRightSequence
         result = 31 * result + crawlLeftSequence
         result = 31 * result + (params?.hashCode() ?: 0)
-        result = 31 * result + inherit
         result = 31 * result + (option1?.hashCode() ?: 0)
         result = 31 * result + (option2?.hashCode() ?: 0)
         result = 31 * result + (option3?.hashCode() ?: 0)

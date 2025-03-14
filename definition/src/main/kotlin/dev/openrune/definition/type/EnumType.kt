@@ -10,8 +10,7 @@ data class EnumType(
     var defaultInt : Int = 0,
     var defaultString : String = "",
     val values : Int2ObjectOpenHashMap<Any> = Int2ObjectOpenHashMap<Any>(),
-    //Custom
-    override var inherit: Int = -1
+
 ) : Definition {
 
     fun getSize() = values.size

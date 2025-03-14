@@ -6,7 +6,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 data class StructType(
     override var id: Int = -1,
-    override var inherit: Int = -1,
+
     override var params: Map<Int, Any>? = Int2ObjectOpenHashMap()
 ) : Definition, Parameterized {
 

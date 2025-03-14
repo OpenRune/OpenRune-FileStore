@@ -14,6 +14,5 @@ data class IdentityKitType(
     var bodyPartId : Int = -1,
     var models: ListRscm? = null,
     var chatheadModels : MutableList<Int> = mutableListOf(-1, -1, -1, -1, -1),
-    var nonSelectable : Boolean = false,
-    override var inherit: Rscm = -1
+    var nonSelectable : Boolean = false
 ) : Definition, Recolourable

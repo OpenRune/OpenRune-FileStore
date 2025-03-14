@@ -63,25 +63,8 @@ data class ItemType(
     var placeholderLink: Int = -1,
     var placeholderTemplate: Int = -1,
     var subops: Array<Array<String?>?>? = null,
-    //Custom
-    override var inherit: Int = -1,
-    var option1: String? = null,
-    var option2: String? = null,
-    var option3: String = "Take",
-    var option4: String? = null,
-    var option5: String? = null,
-    var ioption1: String? = null,
-    var ioption2: String? = null,
-    var ioption3: String? = null,
-    var ioption4: String? = null,
-    var ioption5: String = "Drop",
 
     ) : Definition, Recolourable, Parameterized {
-
-    init {
-        options = listOf(option1,option2,option3,option4,option5).toMutableList()
-        interfaceOptions = listOf(ioption1,ioption2,ioption3,ioption4,ioption5).toMutableList()
-    }
 
     val stackable: Boolean
         get() = stacks == 1 || noteTemplateId > 0

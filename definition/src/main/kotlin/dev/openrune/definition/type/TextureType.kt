@@ -16,7 +16,7 @@ data class TextureType(
     var averageRgb : Int = 0,
     var animationDirection : Int = 0,
     var animationSpeed : Int = 0,
-    override var inherit : Int = -1,
+    var inherit : Int = -1,
  ) : Definition {
 
     private var pixels: IntArray? = null
