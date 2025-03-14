@@ -65,19 +65,8 @@ data class ObjectType(
     override var varbit: Int = -1,
     override var varp: Int = -1,
     override var transforms: MutableList<Int>? = null,
-    override var params: Map<Int, @Contextual Any>? = null,
-
-    //Custom
-    var option1: String? = null,
-    var option2: String? = null,
-    var option3: String? = null,
-    var option4: String? = null,
-    var option5: String? = null,
+    override var params: Map<Int, @Contextual Any>? = null
 ) : Definition, Transforms, Recolourable, Parameterized {
-    init {
-        actions = listOf(option1,option2,option3,option4,option5).toMutableList()
-    }
-
 
     fun hasActions() = actions.any { it != null }
 

@@ -58,14 +58,20 @@ class PackConfig(private val directory : File) : CacheTask() {
             def.interfaceOptions.fromOptions("ioption", content)
         }
 
-        packTypes.registerPackType(OBJECT, ObjectCodec::class, "object")
+        packTypes.registerPackType(OBJECT, ObjectCodec::class, "object") { content, def: ObjectType ->
+            def.actions.fromOptions("option", content)
+        }
         packTypes.registerPackType(SPOTANIM, SpotAnimCodec::class, "graphics")
         packTypes.registerPackType(SEQUENCE, SequenceCodec::class, "animation")
         packTypes.registerPackType(STRUCT, SequenceCodec::class, "struct")
-        packTypes.registerPackType(NPC, NPCCodec::class, "npc")
+        packTypes.registerPackType(NPC, NPCCodec::class, "npc") { content, def: NpcType ->
+            def.actions.fromOptions("option", content)
+        }
         packTypes.registerPackType(ENUM, EnumCodec::class, "enum")
         packTypes.registerPackType(VARBIT, VarBitCodec::class, "varbit")
-        packTypes.registerPackType(AREA, AreaCodec::class, "area")
+        packTypes.registerPackType(AREA, AreaCodec::class, "area") { content, def: AreaType ->
+            def.options.fromOptions("option", content)
+        }
         packTypes.registerPackType(HEALTHBAR, HealthBarCodec::class, "helath")
         packTypes.registerPackType(HITSPLAT, HitSplatCodec::class, "hitsplat")
         packTypes.registerPackType(IDENTKIT, IdentityKitCodec::class, "idk")

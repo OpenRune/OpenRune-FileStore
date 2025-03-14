@@ -1,11 +1,12 @@
 package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
+import dev.openrune.definition.serialization.Rscm
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class OverlayType(
-    override var id: Int = -1,
+    override var id: Rscm = -1,
     var rgbColor: Int = 0,
     var secondaryRgbColor: Int = -1,
     var textureId: Int = -1,

@@ -18,3 +18,9 @@ sizeX = 2
 sizeY = 2
 option1 = "Teleport"
 objectModels = [63101]
+
+
+[[idk]]
+id = 7000
+models = ["models.modeltest1"]
+chatheadModels = ["models.modeltest2"]

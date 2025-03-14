@@ -1,11 +1,12 @@
 package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
+import dev.openrune.definition.serialization.Rscm
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class AreaType(
-    override var id: Int = -1,
+    override var id: Rscm = -1,
     var sprite1: Int = -1,
 
     var sprite2: Int = -1,
@@ -34,15 +35,5 @@ data class AreaType(
 
     var field1948: MutableList<Int> = emptyList<Int>().toMutableList(),
 
-    var category: Int = 0,
-    
-    var option1: String? = null,
-    var option2: String? = null,
-    var option3: String? = null,
-    var option4: String? = null,
-    var option5: String? = null,
-) : Definition {
-    init {
-        options = listOf(option1,option2,option3,option4,option5).toMutableList()
-    }
-}
+    var category: Int = 0
+) : Definition

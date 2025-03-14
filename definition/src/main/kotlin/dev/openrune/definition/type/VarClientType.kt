@@ -6,6 +6,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class VarClientType(
-    override var id: Int = -1,
+    override var id: Rscm = -1,
     var persist: Boolean = false
 ) : Definition

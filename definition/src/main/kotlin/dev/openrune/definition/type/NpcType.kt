@@ -61,20 +61,8 @@ data class NpcType(
     var strength : Int = 1,
     var hitpoints : Int = 1,
     var ranged : Int = 1,
-    var magic : Int = 1,
-
-    
-    var option1: String? = null,
-    var option2: String? = null,
-    var option3: String? = null,
-    var option4: String? = null,
-    var option5: String? = null,
-
+    var magic : Int = 1
     ) : Definition, Transforms, Recolourable, Parameterized {
-
-    init {
-        actions = listOf(option1,option2,option3,option4,option5).toMutableList()
-    }
 
     var examine : String = ""
 
@@ -129,11 +117,6 @@ data class NpcType(
         if (crawlRightSequence != other.crawlRightSequence) return false
         if (crawlLeftSequence != other.crawlLeftSequence) return false
         if (params != other.params) return false
-        if (option1 != other.option1) return false
-        if (option2 != other.option2) return false
-        if (option3 != other.option3) return false
-        if (option4 != other.option4) return false
-        if (option5 != other.option5) return false
         if (height != other.height) return false
         if (attack != other.attack) return false
         if (defence != other.defence) return false
@@ -191,11 +174,6 @@ data class NpcType(
         result = 31 * result + crawlRightSequence
         result = 31 * result + crawlLeftSequence
         result = 31 * result + (params?.hashCode() ?: 0)
-        result = 31 * result + (option1?.hashCode() ?: 0)
-        result = 31 * result + (option2?.hashCode() ?: 0)
-        result = 31 * result + (option3?.hashCode() ?: 0)
-        result = 31 * result + (option4?.hashCode() ?: 0)
-        result = 31 * result + (option5?.hashCode() ?: 0)
         result = 31 * result + height
         result = 31 * result + attack
         result = 31 * result + defence

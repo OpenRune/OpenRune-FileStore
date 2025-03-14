@@ -48,8 +48,6 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
                 for (i in 0 until frameCount) {
                     frameIDs!![i] += buffer.readUnsignedShort() shl 16
                 }
-
-                lengthInCycles = ceil((totalFrameLength * 20.0) / 600.0).toInt()
             }
 
             2 -> frameStep = buffer.readUnsignedShort()
