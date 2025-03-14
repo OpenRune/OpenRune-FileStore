@@ -1,7 +1,9 @@
 package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class AreaType(
     override var id: Int = -1,
     var sprite1: Int = -1,

@@ -1,7 +1,9 @@
 package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class HealthBarType(
     override var id: Int = -1,
     var int1: Int = 255,

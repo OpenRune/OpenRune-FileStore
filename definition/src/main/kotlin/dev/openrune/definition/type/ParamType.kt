@@ -2,7 +2,9 @@ package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
 import dev.openrune.definition.util.Type
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class ParamType(
     override var id: Int = -1,
     var type: Type? = null,

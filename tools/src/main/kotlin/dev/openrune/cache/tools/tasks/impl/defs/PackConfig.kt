@@ -59,6 +59,23 @@ class PackConfig(private val directory : File) : CacheTask() {
         }
 
         packTypes.registerPackType(OBJECT, ObjectCodec::class, "object")
+        packTypes.registerPackType(SPOTANIM, SpotAnimCodec::class, "graphics")
+        packTypes.registerPackType(SEQUENCE, SequenceCodec::class, "animation")
+        packTypes.registerPackType(STRUCT, SequenceCodec::class, "struct")
+        packTypes.registerPackType(NPC, NPCCodec::class, "npc")
+        packTypes.registerPackType(ENUM, EnumCodec::class, "enum")
+        packTypes.registerPackType(VARBIT, VarBitCodec::class, "varbit")
+        packTypes.registerPackType(AREA, AreaCodec::class, "area")
+        packTypes.registerPackType(HEALTHBAR, HealthBarCodec::class, "helath")
+        packTypes.registerPackType(HITSPLAT, HitSplatCodec::class, "hitsplat")
+        packTypes.registerPackType(IDENTKIT, IdentityKitCodec::class, "idk")
+        packTypes.registerPackType(INV, InventoryCodec::class, "inventory")
+        packTypes.registerPackType(OVERLAY, OverlayCodec::class, "overlay")
+        packTypes.registerPackType(UNDERLAY, OverlayCodec::class, "underlay")
+        packTypes.registerPackType(PARAMS, ParamCodec::class, "params")
+        packTypes.registerPackType(VARPLAYER, VarCodec::class, "varp")
+        packTypes.registerPackType(VARCLIENT, VarClientCodec::class, "varclient")
+
     }
 
 
@@ -129,6 +146,8 @@ class PackConfig(private val directory : File) : CacheTask() {
             }
         }
         packType.modify?.let { it(lines, def) }
+
+        println(def)
 
         val writer = Unpooled.buffer(4096)
         with(codec) { writer.encode(def) }

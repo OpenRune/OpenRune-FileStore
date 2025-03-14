@@ -2,7 +2,9 @@ package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
 import dev.openrune.definition.Transforms
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class HitSplatType(
     override var id: Int = -1,
     var font: Int = -1,

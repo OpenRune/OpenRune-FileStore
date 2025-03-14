@@ -3,7 +3,9 @@ package dev.openrune.definition.type
 import dev.openrune.definition.Definition
 import dev.openrune.definition.Recolourable
 import dev.openrune.definition.serialization.Rscm
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class SpotAnimType(
     override var id: Int = -1,
     override var originalColours: MutableList<Int>? = null,

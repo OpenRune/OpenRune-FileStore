@@ -4,7 +4,9 @@ import dev.openrune.definition.Definition
 import dev.openrune.definition.Recolourable
 import dev.openrune.definition.serialization.ListRscm
 import dev.openrune.definition.serialization.Rscm
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class IdentityKitType(
     override var id: Rscm = 0,
     override var originalColours: MutableList<Int>? = null,

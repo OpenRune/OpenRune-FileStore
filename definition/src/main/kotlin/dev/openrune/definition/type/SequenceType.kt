@@ -3,7 +3,9 @@ package dev.openrune.definition.type
 import dev.openrune.definition.Definition
 import dev.openrune.definition.Sound
 import dev.openrune.definition.SoundData
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class SequenceType(
     override var id: Int = -1,
     var frameIDs: MutableList<Int>? = null,

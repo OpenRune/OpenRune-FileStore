@@ -1,7 +1,9 @@
 package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class UnderlayType(
     override var id: Int = -1,
     var color: Int = 0,

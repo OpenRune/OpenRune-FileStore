@@ -1,7 +1,9 @@
 package dev.openrune.definition
 
 import io.netty.buffer.ByteBuf
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class SoundData(
     var id: Int,
     var unknown : Int,
