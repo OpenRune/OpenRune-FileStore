@@ -26,3 +26,4 @@ tools/build/*
 /filestore/r718-fs/build
 /cache/build
 /filesystem/build
+/displee/build
