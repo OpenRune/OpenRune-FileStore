@@ -58,7 +58,7 @@ class PackConfig(private val directory : File) : CacheTask() {
                             } else {
                                 constructor.call(CACHE_REVISION) as DefinitionCodec<*>
                             }
-                            packDefinitions(item, codec.typeClass, codecInstance, codec.archive)
+                            packDefinitions(item, codec.typeClass, codecInstance, cache, codec.archive)
                         }
                     }
                 }
@@ -74,6 +74,7 @@ class PackConfig(private val directory : File) : CacheTask() {
         tomlContent: String,
         clazz: KClass<*>,
         codec: DefinitionCodec<T>,
+        cache: Cache,
         archive: Int
     ) {
         val toml = Toml(TomlInputConfig(true))
@@ -87,7 +88,7 @@ class PackConfig(private val directory : File) : CacheTask() {
         val defId = def.id
 
         if (def.inherit != -1) {
-            val inheritedDef = getInheritedDefinition(def, codec,archive, library)
+            val inheritedDef = getInheritedDefinition(def, codec,archive, cache)
             inheritedDef?.let {
                 def = mergeDefinitions(it, def, codec)
             } ?: run {
@@ -105,9 +106,9 @@ class PackConfig(private val directory : File) : CacheTask() {
         def: T,
         codec: DefinitionCodec<T>,
         archive: Int,
-        library: CacheLibrary
+        cache: Cache
     ): T? {
-        val data = library.data(CONFIGS, archive, def.inherit)
+        val data = cache.data(CONFIGS, archive, def.inherit)
         return data?.let { codec.loadData(def.inherit, data) }
     }
 
