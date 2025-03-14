@@ -3,7 +3,7 @@ plugins {
     id("maven-publish")
 }
 
-val buildDirectory = "K:\\documents\\GitHub\\hosting\\"
+val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "K:\\documents\\GitHub\\hosting\\"
 val buildNumber = "2.0.2"
 
 subprojects {
