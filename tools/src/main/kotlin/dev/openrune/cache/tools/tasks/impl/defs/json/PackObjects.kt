@@ -1,6 +1,5 @@
 package dev.openrune.cache.tools.tasks.impl.defs.json
 
-import com.displee.cache.CacheLibrary
 import com.google.gson.Gson
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.CONFIGS
@@ -10,6 +9,7 @@ import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.codec.ObjectCodec
+import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled
 import java.io.File
 
@@ -19,7 +19,7 @@ import java.io.File
     level = DeprecationLevel.WARNING // This will generate a warning during compilation, prompting the developer to migrate
 )
 class PackObjects(private val objectDir : File) : CacheTask() {
-    override fun init(library: CacheLibrary) {
+    override fun init(cache: Cache) {
         val size = getFiles(objectDir,"json").size
         val progress = progress("Packing Objects", size)
         val errors : MutableMap<String, String> = emptyMap<String, String>().toMutableMap()
@@ -34,7 +34,7 @@ class PackObjects(private val objectDir : File) : CacheTask() {
                 val encoder = ObjectCodec(CACHE_REVISION)
                 val writer = Unpooled.buffer(4096)
                 with(encoder) { writer.encode(def) }
-                library.index(CONFIGS).archive(OBJECT)!!.add(def.id, writer.toArray())
+                cache.write(CONFIGS, OBJECT, def.id, writer.toArray())
 
                 progress.step()
             }

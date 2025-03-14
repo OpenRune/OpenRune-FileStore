@@ -2,7 +2,6 @@ package dev.openrune.cache.tools.tasks.impl.defs
 
 import com.akuleshov7.ktoml.Toml
 import com.akuleshov7.ktoml.TomlInputConfig
-import com.displee.cache.CacheLibrary
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.*
 import dev.openrune.cache.tools.CacheTool.Constants.library
@@ -15,6 +14,7 @@ import dev.openrune.cache.util.capitalizeFirstLetter
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.codec.*
+import dev.openrune.filesystem.Cache
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.Unpooled
 import kotlinx.serialization.InternalSerializationApi
@@ -39,13 +39,12 @@ class PackConfig(private val directory : File) : CacheTask() {
 
     val logger = KotlinLogging.logger {}
 
-    override fun init(library: CacheLibrary) {
+    override fun init(cache: Cache) {
         val size = getFiles(directory, "toml").size
         val progress = progress("Packing Configs", size)
         if (size != 0) {
             getFiles(directory, "toml").forEach {
                 progress.extraMessage = it.name
-
                 val defs = parseItemsToMap(packTypes.keys.toList(), it.readText())
 
                 defs.forEach { (typeName, items) ->

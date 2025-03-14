@@ -1,6 +1,7 @@
 package dev.openrune.cache.tools
 
 import com.displee.cache.CacheLibrary
+import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.tools.CacheTool.Constants.builder
 import dev.openrune.cache.tools.CacheTool.Constants.library
 import dev.openrune.cache.tools.tasks.TaskType
@@ -61,7 +62,7 @@ class CacheTool(configs: Builder) {
 
         library.let {
             builder.extraTasks.forEach { task ->
-                task.init(it)
+                task.init(CacheDelegate(it))
             }
 
             it.update()

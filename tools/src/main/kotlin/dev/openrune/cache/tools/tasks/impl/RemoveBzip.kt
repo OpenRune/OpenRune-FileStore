@@ -1,16 +1,19 @@
 package dev.openrune.cache.tools.tasks.impl
 
-import com.displee.cache.CacheLibrary
 import com.displee.compress.CompressionType
+import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.progress
+import dev.openrune.filesystem.Cache
 
 /*
  * Removes Bzip2 Compression and replaces it with Gzip.
  * This improves read performance.
  */
 class RemoveBzip : CacheTask() {
-    override fun init(library: CacheLibrary) {
+    override fun init(cache: Cache) {
+        val library = (cache as CacheDelegate).library
+
         val progress = progress("Removing Bzip compression, step:", 2)
         //for the first step loop through and flag the files.
         var indices = 0
