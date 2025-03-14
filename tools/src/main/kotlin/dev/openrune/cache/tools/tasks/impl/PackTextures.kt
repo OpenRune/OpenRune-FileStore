@@ -8,16 +8,18 @@ import dev.openrune.cache.TEXTURES
 import dev.openrune.definition.type.TextureType
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.PackSprites.Companion.customSprites
-import dev.openrune.cache.tools.tasks.impl.defs.PackConfig.Companion.mergeDefinitions
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet.Companion.averageColorForPixels
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
+import dev.openrune.definition.Definition
+import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.codec.TextureCodec
 import dev.openrune.filesystem.Cache
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.Unpooled
 import java.io.File
+import java.lang.reflect.Modifier
 
 class PackTextures(private val textureDir : File) : CacheTask() {
 
@@ -68,5 +70,26 @@ class PackTextures(private val textureDir : File) : CacheTask() {
 
         }
     }
+
+    inline fun <reified T : Definition> mergeDefinitions(baseDef: T, inheritedDef: T): T {
+        val ignoreFields = setOf("inherit")
+        val defaultDef = T::class.java.getDeclaredConstructor().newInstance()
+
+        T::class.java.declaredFields.forEach { field ->
+            if (!Modifier.isStatic(field.modifiers) && !ignoreFields.contains(field.name)) {
+                field.isAccessible = true
+                val baseValue = field.get(baseDef)
+                val inheritedValue = field.get(inheritedDef)
+                val defaultValue = field.get(defaultDef)
+
+                // Only overwrite the base value if the inherited value is different from both the base and default values
+                if (inheritedValue != baseValue && inheritedValue != defaultValue) {
+                    field.set(baseDef, inheritedValue)
+                }
+            }
+        }
+        return baseDef
+    }
+
 
 }

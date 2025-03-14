@@ -138,7 +138,7 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
             }
         }
 
-        if (definition.name != null) {
+        if (definition.name != "null") {
             writeByte(2)
             writeString(definition.name)
         }
