@@ -4,7 +4,7 @@ plugins {
 }
 
 val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "K:\\documents\\GitHub\\hosting\\"
-val buildNumber = "2.0.2"
+val buildNumber = "2.0.4"
 
 subprojects {
     apply(plugin = "kotlin")
@@ -82,6 +82,7 @@ val filestoreVersion = buildNumber
 val filestoreOsrsFsVersion = buildNumber
 val filestoreR718FsVersion = buildNumber
 val toolsVersion = buildNumber
+val displeeVersion = buildNumber
 
 val nettyBufferVersion = "4.2.0.RC2"
 
@@ -152,6 +153,12 @@ publishing {
                         tools.appendNode("artifactId", "tools")
                         tools.appendNode("version", toolsVersion)
                         tools.appendNode("scope", "compile")
+
+                        val displee = appendNode("dependency")
+                        displee.appendNode("groupId", "dev.or2")
+                        displee.appendNode("artifactId", "displee")
+                        displee.appendNode("version", toolsVersion)
+                        displee.appendNode("scope", "compile")
                     }
                 }
             }
