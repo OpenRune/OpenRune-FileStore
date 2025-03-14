@@ -7,7 +7,6 @@ import dev.openrune.cache.tools.tasks.TaskType
 import dev.openrune.cache.util.FileUtil
 import dev.openrune.cache.util.FileUtil.cacheLocation
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.jire.js5server.Js5Server
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -30,11 +29,6 @@ class CacheTool(configs: Builder) {
         if (builder.cacheLocation == DEFAULT_PATH) logger.info { "Using Default path of [${DEFAULT_PATH.absolutePath}]" }
 
         when(builder.type) {
-            TaskType.RUN_JS5 -> Js5Server.init(
-                builder.cacheLocation.absolutePath,
-                builder.js5Ports.toIntArray(), builder.revision,
-                builder.supportPrefetch
-            )
             TaskType.BUILD -> buildCache()
             TaskType.FRESH_INSTALL -> {
                 DownloadOSRS.init()
