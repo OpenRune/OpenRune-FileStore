@@ -10,7 +10,6 @@ import dev.openrune.definition.Definition
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.*
 import dev.openrune.cache.tools.tasks.CacheTask
-import dev.openrune.cache.util.capitalizeFirstLetter
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.codec.*
@@ -23,7 +22,12 @@ import java.io.File
 import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
 
-class PackType(val archive: Int, val codecClass: KClass<*>, val name: String) {
+class PackType(
+    val archive: Int,
+    val codecClass: KClass<*>,
+    val name: String,
+    val modify: ((Map<String, Any>, Any) -> Unit)? = null
+) {
     val typeClass: KClass<*> = codecClass.supertypes.firstOrNull()
         ?.arguments?.firstOrNull()?.type?.classifier as? KClass<*>
         ?: throw IllegalArgumentException("Type class not found for codec $codecClass")
@@ -32,8 +36,13 @@ class PackType(val archive: Int, val codecClass: KClass<*>, val name: String) {
 class PackConfig(private val directory : File) : CacheTask() {
 
     init {
-        packTypes.registerPackType(ITEM, ItemCodec::class, "item")
-        packTypes.registerPackType(OBJECT, ObjectCodec::class, "object")
+        packTypes.registerPackType(ITEM, ItemCodec::class, "item") { content, def: ItemType ->
+            (1..5).forEachIndexed { index, i ->
+                content["option$i"]?.let { def.options[index] = it.toString() }
+            }
+        }
+
+        packTypes.registerPackType<ObjectType>(OBJECT, ObjectCodec::class, "object")
     }
 
 
@@ -58,7 +67,7 @@ class PackConfig(private val directory : File) : CacheTask() {
                             } else {
                                 constructor.call(CACHE_REVISION) as DefinitionCodec<*>
                             }
-                            packDefinitions(item, codec.typeClass, codecInstance, cache, codec.archive)
+                            packDefinitions(item.section, item.lines, codec, codecInstance, cache)
                         }
                     }
                 }
@@ -72,13 +81,14 @@ class PackConfig(private val directory : File) : CacheTask() {
     @OptIn(InternalSerializationApi::class)
     private fun <T : Definition> packDefinitions(
         tomlContent: String,
-        clazz: KClass<*>,
+        lines : Map<String, Any>,
+        packType: PackType,
         codec: DefinitionCodec<T>,
-        cache: Cache,
-        archive: Int
+        cache: Cache
     ) {
         val toml = Toml(TomlInputConfig(true))
-        var def = toml.decodeFromString(clazz.serializer(), tomlContent) as T
+        var def = toml.decodeFromString(packType.typeClass.serializer(), tomlContent) as T
+        val archive = packType.archive
 
         if (def.id == -1) {
             dev.openrune.cache.util.logger.info { "Unable to pack as the ID is -1 or has not been defined" }
@@ -96,6 +106,7 @@ class PackConfig(private val directory : File) : CacheTask() {
                 return
             }
         }
+        packType.modify?.let { it(lines, def) }
 
         val writer = Unpooled.buffer(4096)
         with(codec) { writer.encode(def) }
@@ -132,32 +143,47 @@ class PackConfig(private val directory : File) : CacheTask() {
         return baseDef
     }
 
-    fun parseItemsToMap(types: List<String>, tomlContent: String): MutableMap<String, MutableList<String>> {
-        val combinedMap = mutableMapOf<String, MutableList<String>>()
+    data class Items(val section : String, val lines : Map<String, Any>)
+
+    fun parseItemsToMap(types: List<String>, tomlContent: String): MutableMap<String, MutableList<Items>> {
+        val combinedMap = mutableMapOf<String, MutableList<Items>>()
         val sectionRegex = """\[\[(\w+)\]\](.*?)(?=\[\[|\Z)""".toRegex(RegexOption.DOT_MATCHES_ALL)
         val matches = sectionRegex.findAll(tomlContent)
+        val values : MutableMap<String,Any> = emptyMap<String, Any>().toMutableMap()
         matches.forEach { match ->
             val sectionName = match.groupValues[1]
             val sectionContent = match.groupValues[2].trim()
+            val sectionMap = mutableMapOf<String, Any>()
+
+            val lines = sectionContent.split("\n").map { it.trim() }
+            lines.forEach { line ->
+                val split = line.split("=")
+                if (split.size == 2) {
+                    val key = split[0].trim()
+                    val value = split[1].trim()
+                    sectionMap[key] = value
+                }
+            }
+
             if (types.contains(sectionName)) {
-                combinedMap.computeIfAbsent(sectionName) { mutableListOf() }.add(sectionContent)
+                combinedMap.computeIfAbsent(sectionName) { mutableListOf() }.add(Items(sectionContent,sectionMap))
             }
         }
 
         return combinedMap
     }
 
-
-
     companion object {
         val packTypes = mutableMapOf<String, PackType>()
 
-        fun MutableMap<String, PackType>.registerPackType(id: Int, cclazz: KClass<*>, name: String) {
-            val packType = PackType(id, cclazz, name)
+        fun <T : Definition>MutableMap<String, PackType>.registerPackType(
+            id: Int, cclazz: KClass<*>,
+            name: String,
+            modify: ((Map<String, Any>, T) -> Unit)? = null
+        ) {
+            val packType = PackType(id, cclazz, name, modify as ((Map<String, Any>, Any) -> Unit)?)
             this[packType.name] = packType
         }
-
-
     }
 
 }
