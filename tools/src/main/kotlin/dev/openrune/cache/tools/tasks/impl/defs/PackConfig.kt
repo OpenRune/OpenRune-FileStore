@@ -42,7 +42,7 @@ class PackConfig(private val directory : File) : CacheTask() {
             }
         }
 
-        packTypes.registerPackType<ObjectType>(OBJECT, ObjectCodec::class, "object")
+        packTypes.registerPackType(OBJECT, ObjectCodec::class, "object")
     }
 
 
@@ -179,9 +179,17 @@ class PackConfig(private val directory : File) : CacheTask() {
         fun <T : Definition>MutableMap<String, PackType>.registerPackType(
             id: Int, cclazz: KClass<*>,
             name: String,
-            modify: ((Map<String, Any>, T) -> Unit)? = null
+            modify: ((Map<String, Any>, T) -> Unit)
         ) {
             val packType = PackType(id, cclazz, name, modify as ((Map<String, Any>, Any) -> Unit)?)
+            this[packType.name] = packType
+        }
+
+        fun MutableMap<String, PackType>.registerPackType(
+            id: Int, cclazz: KClass<*>,
+            name: String
+        ) {
+            val packType = PackType(id, cclazz, name, null)
             this[packType.name] = packType
         }
     }
