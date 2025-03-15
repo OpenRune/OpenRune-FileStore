@@ -4,13 +4,13 @@ import com.akuleshov7.ktoml.Toml
 import com.akuleshov7.ktoml.TomlInputConfig
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.*
-import dev.openrune.cache.tools.CacheTool.Constants.library
 import dev.openrune.cache.tools.item.ItemSlotType
 import dev.openrune.definition.util.toArray
 import dev.openrune.definition.Definition
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.*
 import dev.openrune.cache.tools.tasks.CacheTask
+import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.RSCMHandler
@@ -25,6 +25,7 @@ import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
 
 class PackType(
+    val index : Int,
     val archive: Int,
     val codecClass: KClass<*>,
     val name: String,
@@ -58,6 +59,7 @@ class PackConfig(private val directory : File) : CacheTask() {
             def.interfaceOptions.fromOptions("ioption", content)
         }
 
+        packTypes.registerPackType(index = TEXTURES, archive = 0, codec = TextureCodec::class, name = "texture")
         packTypes.registerPackType(OBJECT, ObjectCodec::class, "object") { content, def: ObjectType ->
             def.actions.fromOptions("option", content)
         }
@@ -72,7 +74,7 @@ class PackConfig(private val directory : File) : CacheTask() {
         packTypes.registerPackType(AREA, AreaCodec::class, "area") { content, def: AreaType ->
             def.options.fromOptions("option", content)
         }
-        packTypes.registerPackType(HEALTHBAR, HealthBarCodec::class, "helath")
+        packTypes.registerPackType(HEALTHBAR, HealthBarCodec::class, "health")
         packTypes.registerPackType(HITSPLAT, HitSplatCodec::class, "hitsplat")
         packTypes.registerPackType(IDENTKIT, IdentityKitCodec::class, "idk")
         packTypes.registerPackType(INV, InventoryCodec::class, "inventory")
@@ -127,10 +129,11 @@ class PackConfig(private val directory : File) : CacheTask() {
     ) {
         val toml = Toml(TomlInputConfig(true))
         var def = toml.decodeFromString(packType.typeClass.serializer(), tomlContent) as T
+        val index = packType.index
         val archive = packType.archive
 
         if (def.id == -1) {
-            dev.openrune.cache.util.logger.info { "Unable to pack as the ID is -1 or has not been defined" }
+            logger.info { "Unable to pack as the ID is -1 or has not been defined" }
             return
         }
 
@@ -143,7 +146,7 @@ class PackConfig(private val directory : File) : CacheTask() {
         }
 
         if (inherit != -1) {
-            val inheritedDef = getInheritedDefinition(inherit, codec,archive, cache)
+            val inheritedDef = getInheritedDefinition(inherit, codec,archive, index,cache)
             inheritedDef?.let {
                 def = mergeDefinitions(it, def, codec)
             } ?: run {
@@ -153,20 +156,32 @@ class PackConfig(private val directory : File) : CacheTask() {
         }
         packType.modify?.let { it(lines, def) }
 
-        println(def)
+        if (packType.index == TEXTURES) {
+            def = manageTexture(cache,def) as T
+        }
 
         val writer = Unpooled.buffer(4096)
         with(codec) { writer.encode(def) }
-        library.index(CONFIGS).archive(archive)?.add(defId, writer.toArray())
+        cache.write(index,archive,defId,writer.toArray())
+    }
+
+    private fun <T : Definition> manageTexture(cache: Cache, inheritedDef: T): TextureType {
+        val def = inheritedDef as TextureType
+        val spriteID = def.fileIds.firstOrNull() ?: return def.copy(averageRgb = 0)
+        val spriteBuff = cache.data(SPRITES, spriteID) ?: return def.copy(averageRgb = 0)
+        val sprite = SpriteSet.decode(spriteID, Unpooled.wrappedBuffer(spriteBuff))
+        val color = sprite.sprites.firstOrNull()?.averageColorForPixels() ?: 0
+        return def.copy(averageRgb = color)
     }
 
     private fun <T : Definition> getInheritedDefinition(
         inherit : Int,
         codec: DefinitionCodec<T>,
         archive: Int,
+        index : Int,
         cache: Cache
     ): T? {
-        val data = cache.data(CONFIGS, archive, inherit)
+        val data = cache.data(index, archive, inherit)
         return data?.let { codec.loadData(inherit, data) }
     }
 
@@ -195,7 +210,6 @@ class PackConfig(private val directory : File) : CacheTask() {
         val combinedMap = mutableMapOf<String, MutableList<Items>>()
         val sectionRegex = """\[\[(\w+)\]\](.*?)(?=\[\[|\Z)""".toRegex(RegexOption.DOT_MATCHES_ALL)
         val matches = sectionRegex.findAll(tomlContent)
-        val values : MutableMap<String,Any> = emptyMap<String, Any>().toMutableMap()
         matches.forEach { match ->
             val sectionName = match.groupValues[1]
             val sectionContent = match.groupValues[2].trim()
@@ -223,20 +237,27 @@ class PackConfig(private val directory : File) : CacheTask() {
         val packTypes = mutableMapOf<String, PackType>()
 
         fun <T : Definition>MutableMap<String, PackType>.registerPackType(
-            id: Int, cclazz: KClass<*>,
+            archive: Int, codec: KClass<*>,
             name: String,
+            index: Int = CONFIGS,
             modify: ((Map<String, Any>, T) -> Unit)
         ) {
-            val packType = PackType(id, cclazz, name, modify as ((Map<String, Any>, Any) -> Unit)?)
+            val packType = PackType(index,archive, codec, name, modify as ((Map<String, Any>, Any) -> Unit)?)
             this[packType.name] = packType
         }
 
         fun MutableMap<String, PackType>.registerPackType(
-            id: Int, cclazz: KClass<*>,
-            name: String
+            index: Int,
+            archive: Int,
+            codec: KClass<*>,
+            name: String,
         ) {
-            val packType = PackType(id, cclazz, name, null)
+            val packType = PackType(index,archive, codec, name, null)
             this[packType.name] = packType
+        }
+
+        fun MutableMap<String, PackType>.registerPackType(archive: Int, codec: KClass<*>, name: String) {
+            registerPackType(CONFIGS,archive, codec, name)
         }
     }
 

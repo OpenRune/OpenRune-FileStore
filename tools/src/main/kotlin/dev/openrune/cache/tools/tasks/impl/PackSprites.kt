@@ -124,7 +124,7 @@ class PackSprites(
 
     private fun addSpriteToSet(key: Int, sprite: Sprite, width: Int, height: Int, index: Int) {
         customSprites.getOrPut(key) {
-            SpriteSet(id = key, width = width, height = height, sprites = mutableListOf(),0)
+            SpriteSet(id = key, width = width, height = height, sprites = mutableListOf())
         }.sprites.add(index, sprite)
     }
 
