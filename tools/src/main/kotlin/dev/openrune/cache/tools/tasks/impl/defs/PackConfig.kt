@@ -21,6 +21,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.Unpooled
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.serializer
+import java.awt.image.ReplicateScaleFilter
 import java.io.File
 import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
@@ -37,7 +38,10 @@ class PackType(
         ?: throw IllegalArgumentException("Type class not found for codec $codecClass")
 }
 
-class PackConfig(private val directory : File) : CacheTask() {
+class PackConfig(
+    private val directory : File,
+    val tokenizedReplacement: Map<String,String> = emptyMap()
+) : CacheTask() {
 
     fun MutableList<String?>.fromOptions(keyName: String, content: Map<String, Any?>) {
         (1..5).forEachIndexed { index, i ->
@@ -99,7 +103,7 @@ class PackConfig(private val directory : File) : CacheTask() {
             getFiles(directory, "toml").forEach {
                 progress.extraMessage = it.name
 
-                val defs = parseTomlSectionToMap(CacheTool.Constants.builder.tokenizedReplacement,packTypes.keys.toList(), it.readText())
+                val defs = parseTomlSectionToMap(tokenizedReplacement.toMutableMap(),packTypes.keys.toList(), it.readText())
 
                 defs.forEach { (typeName, items) ->
                     val codec: PackType? = packTypes[typeName]

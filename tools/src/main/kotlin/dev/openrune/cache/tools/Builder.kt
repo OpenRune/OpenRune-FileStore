@@ -15,18 +15,21 @@ data class Builder(
     var extraTasks: Array<CacheTask> = emptyArray()
 ) {
 
-    val tokenizedReplacement : MutableMap<String,String> = emptyMap<String, String>().toMutableMap()
+    private var removeXteas : Boolean = true
+    private var removeBzip : Boolean = true
+
+    fun removeXteas()  = removeXteas
+    fun removeBzip()  = removeBzip
 
     fun extraTasks(vararg types: CacheTask) = apply { this.extraTasks = types.toMutableList().toTypedArray() }
+
+    fun removeXteas(removeXteas: Boolean) = apply { this.removeXteas = removeXteas }
+
+    fun removeBzip(removeBzip: Boolean) = apply { this.removeBzip = removeBzip }
 
     fun registerRSCM(mappingsDir: File) = apply {
         RSCMHandler.load(mappingsDir)
     }
-
-    fun registerTokenizedReplacement(values : Map<String,String>) = apply {
-        tokenizedReplacement.putAll(values)
-    }
-
 
     fun cacheLocation(cacheLocation: File) = apply { this.cacheLocation = cacheLocation }
 

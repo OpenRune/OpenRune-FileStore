@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":displee"))
     implementation("com.akuleshov7:ktoml-core:0.5.1")
     implementation("com.akuleshov7:ktoml-file:0.5.1")
+    implementation("org.slf4j:slf4j-simple:2.0.3")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.7.0")

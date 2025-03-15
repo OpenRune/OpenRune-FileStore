@@ -19,7 +19,6 @@ enum class GameType {
 interface DownloadListener {
     fun onProgress(progress: Int, max : Long, current : Long)
     fun onError(exception: Exception)
-    fun onComplete()
     fun onFinished()
 }
 
@@ -56,7 +55,7 @@ object OpenRS2 {
             directory.mkdirs()
         }
 
-        val file = directory.resolve("${target}-keys.json")
+        val file = directory.resolve("xteas.json")
         if (!file.exists()) {
             val url = URL("https://archive.openrs2.org/caches/runescape/${target}/keys.json")
             val connection = url.openConnection() as HttpURLConnection
@@ -67,11 +66,10 @@ object OpenRS2 {
                     val text = reader.readText()
                     file.writeText(text)
                 }
-                listener?.onFinished()
             } catch (e: IOException) {
                 listener?.onError(e)
             } finally {
-                listener?.onComplete()
+                listener?.onFinished()
                 connection.disconnect()
             }
         }
@@ -105,8 +103,6 @@ object OpenRS2 {
             outputStream.close()
             inputStream.close()
             urlConnection.disconnect()
-
-            listener?.onComplete()
         } catch (e: Exception) {
             listener?.onError(e)
         } finally {
