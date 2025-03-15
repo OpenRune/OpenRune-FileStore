@@ -2,7 +2,6 @@ package dev.openrune
 
 import dev.openrune.cache.CacheManager
 import dev.openrune.cache.tools.Builder
-import dev.openrune.cache.tools.DownloadOSRS
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.TaskType
 import dev.openrune.cache.tools.tasks.impl.defs.PackConfig
@@ -28,7 +27,7 @@ class ConfigTest {
             val zipLoc = File(cacheLocation,"cache.zip")
 
             if (!zipLoc.exists()) {
-                DownloadOSRS.downloadCache(REV,zipLoc, unzipCache = false,downloadXteas = false)
+                DownloadOSRS.downloadCache(REV,zipLoc)
             }
             val cacheLoc = File(cacheLocation,"cache")
             if (cacheLoc.deleteRecursively()) {
@@ -45,6 +44,7 @@ class ConfigTest {
             }
         }
     }
+
 
     @Test
     fun `test Merlin Rune Portal Object`() {
