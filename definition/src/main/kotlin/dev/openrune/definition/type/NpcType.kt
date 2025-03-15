@@ -54,7 +54,7 @@ data class NpcType(
     var crawlBackSequence : Int = -1,
     var crawlRightSequence : Int = -1,
     var crawlLeftSequence : Int = -1,
-    override var params: Map<Int, @Contextual Any>? = null,
+    override var params: MutableMap<Int, @Contextual Any>? = null,
     var height: Int = -1,
     var attack : Int = 1,
     var defence : Int = 1,

@@ -9,7 +9,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap
 
 interface Parameterized {
 
-    var params: Map<Int, Any>?
+    var params: MutableMap<Int, Any>?
 
     fun readParameters(buffer: ByteBuf) {
         val length = buffer.readUnsignedByte().toInt()

@@ -10,8 +10,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class StructType(
     override var id: Rscm = -1,
-
-    override var params: Map<Int, @Contextual Any>? = Int2ObjectOpenHashMap()
+    override var params: MutableMap<Int, @Contextual Any>? = Int2ObjectOpenHashMap()
 ) : Definition, Parameterized {
 
     fun getInt(key: Int): Int = params?.get(key) as? Int ?: -1
