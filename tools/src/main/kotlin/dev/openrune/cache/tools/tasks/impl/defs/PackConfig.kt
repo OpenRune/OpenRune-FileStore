@@ -47,14 +47,16 @@ class PackConfig(private val directory : File) : CacheTask() {
     init {
 
         packTypes.registerPackType(ITEM, ItemCodec::class, "item") { content, def: ItemType ->
-            content["equipmentType"]?.toString()?.replace("\"", "")?.takeIf { ItemSlotType.fetchTypes().contains(it) }?.let { type ->
-                ItemSlotType.fetchType(type)?.apply {
-                    def.equipSlot = slot
-                    def.appearanceOverride1 = override1
-                    def.appearanceOverride2 = override2
-                }
-            } ?: println("Unknown Slot: ${content["equipmentType"]}")
+            if (content["equipmentType"] != null) {
+                content["equipmentType"]?.toString()?.replace("\"", "")?.takeIf { ItemSlotType.fetchTypes().contains(it) }?.let { type ->
+                    ItemSlotType.fetchType(type)?.apply {
+                        def.equipSlot = slot
+                        def.appearanceOverride1 = override1
+                        def.appearanceOverride2 = override2
+                    }
+                } ?: println("Unknown Slot: ${content["equipmentType"]}")
 
+            }
             def.options.fromOptions("option", content)
             def.interfaceOptions.fromOptions("ioption", content)
         }
