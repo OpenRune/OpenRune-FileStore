@@ -17,7 +17,7 @@ data class Builder(
     var extraTasks: Array<CacheTask> = emptyArray()
 ) {
 
-    val tokenizedReplacement = emptyList<TokenizedReplacement>().toMutableList()
+    val tokenizedReplacement : MutableMap<String,String> = emptyMap<String, String>().toMutableMap()
 
     fun extraTasks(vararg types: CacheTask) = apply { this.extraTasks = types.toMutableList().toTypedArray() }
 
@@ -25,8 +25,8 @@ data class Builder(
         RSCMHandler.load(mappingsDir)
     }
 
-    fun registerTokenizedReplacement(vararg replacement: TokenizedReplacement) = apply {
-        tokenizedReplacement.addAll(replacement)
+    fun registerTokenizedReplacement(values : Map<String,String>) = apply {
+        tokenizedReplacement.putAll(values)
     }
 
 

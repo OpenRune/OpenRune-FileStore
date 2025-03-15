@@ -4,7 +4,6 @@ import com.akuleshov7.ktoml.Toml
 import com.akuleshov7.ktoml.TomlInputConfig
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.*
-import dev.openrune.cache.tools.Builder
 import dev.openrune.cache.tools.CacheTool
 import dev.openrune.cache.tools.item.ItemSlotType
 import dev.openrune.definition.util.toArray
@@ -99,12 +98,8 @@ class PackConfig(private val directory : File) : CacheTask() {
         if (size != 0) {
             getFiles(directory, "toml").forEach {
                 progress.extraMessage = it.name
-                var tomlContent = it.readText()
-                CacheTool.Constants.builder.tokenizedReplacement.forEach { (key, value) ->
-                    tomlContent = tomlContent.replace("%$key%", value)
-                }
 
-                val defs = parseItemsToMap(packTypes.keys.toList(), tomlContent)
+                val defs = parseTomlSectionToMap(CacheTool.Constants.builder.tokenizedReplacement,packTypes.keys.toList(), it.readText())
 
                 defs.forEach { (typeName, items) ->
                     val codec: PackType? = packTypes[typeName]
@@ -136,7 +131,7 @@ class PackConfig(private val directory : File) : CacheTask() {
         codec: DefinitionCodec<T>,
         cache: Cache
     ) {
-        val toml = Toml(TomlInputConfig(true))
+        val toml = Toml(TomlInputConfig(ignoreUnknownNames = true))
         var def = toml.decodeFromString(packType.typeClass.serializer(), tomlContent) as T
         val index = packType.index
         val archive = packType.archive
@@ -213,29 +208,40 @@ class PackConfig(private val directory : File) : CacheTask() {
         return baseDef
     }
 
-    data class Items(val section : String, val lines : Map<String, Any>)
+    data class TomlSection(var section: String, val lines: MutableMap<String, String>)
 
-    fun parseItemsToMap(types: List<String>, tomlContent: String): MutableMap<String, MutableList<Items>> {
-        val combinedMap = mutableMapOf<String, MutableList<Items>>()
+    private fun parseTomlSectionToMap(
+        tokenizedReplacement: MutableMap<String, String>,
+        types: List<String>,
+        tomlContent: String
+    ): MutableMap<String, MutableList<TomlSection>> {
+
+        val combinedMap = mutableMapOf<String, MutableList<TomlSection>>()
         val sectionRegex = """\[\[(\w+)\]\](.*?)(?=\[\[|\Z)""".toRegex(RegexOption.DOT_MATCHES_ALL)
-        val matches = sectionRegex.findAll(tomlContent)
-        matches.forEach { match ->
-            val sectionName = match.groupValues[1]
-            val sectionContent = match.groupValues[2].trim()
-            val sectionMap = mutableMapOf<String, Any>()
 
-            val lines = sectionContent.split("\n").map { it.trim() }
-            lines.forEach { line ->
-                val split = line.split("=")
-                if (split.size == 2) {
-                    val key = split[0].trim()
-                    val value = split[1].trim()
-                    sectionMap[key] = value
+        sectionRegex.findAll(tomlContent).forEach { match ->
+            val (sectionName, sectionContent) = match.destructured
+            val sectionMap = sectionContent.trim().lineSequence()
+                .mapNotNull { it.split("=").map(String::trim).takeIf { it.size == 2 } }
+                .associate { it[0] to it[1] }
+                .toMutableMap()
+
+            when (sectionName) {
+                in types -> combinedMap.getOrPut(sectionName) { mutableListOf() }.add(TomlSection(sectionContent, sectionMap))
+                "tokenizedReplacement" -> sectionMap.forEach { (key, value) ->
+                    tokenizedReplacement[key] = value.replace("\"", "")
                 }
             }
+        }
 
-            if (types.contains(sectionName)) {
-                combinedMap.computeIfAbsent(sectionName) { mutableListOf() }.add(Items(sectionContent,sectionMap))
+        combinedMap.values.flatten().forEach { item ->
+            item.lines.replaceAll { key, value ->
+                tokenizedReplacement.entries.fold(value) { acc, (placeholder, replacement) ->
+                    acc.replace("%$placeholder%", replacement)
+                }
+            }
+            item.section = tokenizedReplacement.entries.fold(item.section) { acc, (placeholder, replacement) ->
+                acc.replace("%$placeholder%", replacement)
             }
         }
 
@@ -271,5 +277,3 @@ class PackConfig(private val directory : File) : CacheTask() {
     }
 
 }
-
-
