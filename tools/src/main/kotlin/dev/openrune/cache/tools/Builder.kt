@@ -8,8 +8,6 @@ import java.nio.file.Path
 
 val DEFAULT_PATH = Path.of("data", "cache").toFile()
 
-data class TokenizedReplacement(val key : String, val value : String)
-
 data class Builder(
     var type: TaskType,
     var revision: Int,
