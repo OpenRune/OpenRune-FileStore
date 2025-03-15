@@ -4,6 +4,8 @@ import com.akuleshov7.ktoml.Toml
 import com.akuleshov7.ktoml.TomlInputConfig
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.*
+import dev.openrune.cache.tools.Builder
+import dev.openrune.cache.tools.CacheTool
 import dev.openrune.cache.tools.item.ItemSlotType
 import dev.openrune.definition.util.toArray
 import dev.openrune.definition.Definition
@@ -97,7 +99,12 @@ class PackConfig(private val directory : File) : CacheTask() {
         if (size != 0) {
             getFiles(directory, "toml").forEach {
                 progress.extraMessage = it.name
-                val defs = parseItemsToMap(packTypes.keys.toList(), it.readText())
+                var tomlContent = it.readText()
+                CacheTool.Constants.builder.tokenizedReplacement.forEach { (key, value) ->
+                    tomlContent = tomlContent.replace("%$key%", value)
+                }
+
+                val defs = parseItemsToMap(packTypes.keys.toList(), tomlContent)
 
                 defs.forEach { (typeName, items) ->
                     val codec: PackType? = packTypes[typeName]
