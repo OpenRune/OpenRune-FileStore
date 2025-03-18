@@ -1,19 +1,16 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.definition.util.readLargeSmart
-import dev.openrune.definition.util.readString
-import dev.openrune.definition.util.writeSmart
-import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.AreaType
+import dev.openrune.definition.util.*
 import io.netty.buffer.ByteBuf
 
 class AreaCodec : DefinitionCodec<AreaType> {
 
     override fun AreaType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
-            1 -> sprite1 = buffer.readLargeSmart()
-            2 -> sprite2 = buffer.readLargeSmart()
+            1 -> sprite1 = buffer.readNullableLargeSmart()
+            2 -> sprite2 = buffer.readNullableLargeSmart()
             3 -> name = buffer.readString()
             4 -> fontColor = buffer.readMedium()
             5 -> buffer.readMedium()
@@ -51,7 +48,7 @@ class AreaCodec : DefinitionCodec<AreaType> {
 
             16 -> buffer.readByte().toInt()
             17 -> menuTargetName = buffer.readString()
-            18 -> buffer.readLargeSmart()
+            18 -> buffer.readNullableLargeSmart()
             19 -> category = buffer.readUnsignedShort()
             21 -> buffer.readInt()
             22 -> buffer.readInt()
@@ -61,7 +58,7 @@ class AreaCodec : DefinitionCodec<AreaType> {
                 buffer.readShort().toInt()
             }
 
-            25 -> buffer.readLargeSmart()
+            25 -> buffer.readNullableLargeSmart()
             28 -> buffer.readByte().toInt()
             29 -> horizontalAlignment = buffer.readUnsignedByte().toInt()
             30 -> verticalAlignment = buffer.readUnsignedByte().toInt()

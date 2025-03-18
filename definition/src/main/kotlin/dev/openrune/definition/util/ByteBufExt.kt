@@ -30,14 +30,11 @@ fun ByteBuf.readBigSmart(): Int {
     }
 }
 
-fun ByteBuf.readLargeSmart(): Int {
-    var baseValue = 0
-    var lastValue = readSmart()
-    while (lastValue == 32767) {
-        lastValue = readSmart()
-        baseValue += 32767
-    }
-    return baseValue + lastValue
+fun ByteBuf.readNullableLargeSmart(): Int = if (getByte(readerIndex()) < 0) {
+    readInt() and Integer.MAX_VALUE
+} else {
+    val result = readUnsignedShort()
+    if (result == 32767) -1 else result
 }
 
 // 0 terminated string.
