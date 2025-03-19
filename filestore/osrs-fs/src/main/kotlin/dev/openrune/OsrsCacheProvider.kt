@@ -4,6 +4,7 @@ import dev.openrune.cache.*
 import dev.openrune.filesystem.Cache
 import dev.openrune.cache.filestore.definition.ConfigDefinitionDecoder
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
+import dev.openrune.cache.filestore.definition.DefinitionTransform
 import dev.openrune.definition.type.*
 import dev.openrune.definition.codec.*
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -71,7 +72,9 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     class ItemDecoder : ConfigDefinitionDecoder<ItemType>(ItemCodec(), ITEM)
     class NPCDecoder : ConfigDefinitionDecoder<NpcType>(NPCCodec(CACHE_REVISION), NPC)
     class ObjectDecoder : ConfigDefinitionDecoder<ObjectType>(ObjectCodec(CACHE_REVISION), OBJECT)
-    class OverlayDecoder : ConfigDefinitionDecoder<OverlayType>(OverlayCodec(), OVERLAY)
+
+    class OverlayDecoder : ConfigDefinitionDecoder<OverlayType>(OverlayCodec(), OVERLAY,
+        DefinitionTransform { id, definition -> definition.calculateHsl() })
     class ParamDecoder : ConfigDefinitionDecoder<ParamType>(ParamCodec(), PARAMS)
     class SequenceDecoder : ConfigDefinitionDecoder<SequenceType>(SequenceCodec(CACHE_REVISION), SEQUENCE)
     class StructDecoder : ConfigDefinitionDecoder<StructType>(StructCodec(), STRUCT)

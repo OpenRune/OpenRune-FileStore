@@ -7,7 +7,8 @@ import dev.openrune.definition.DefinitionCodec
 abstract class ConfigDefinitionDecoder<T : Definition>(
     codec: DefinitionCodec<T>,
     private val archive: Int,
-) : DefinitionDecoder<T>(CONFIGS, codec) {
+    transform: DefinitionTransform<T>? = null
+) : DefinitionDecoder<T>(CONFIGS, codec, transform) {
 
     override fun getArchive(id: Int) = archive
 

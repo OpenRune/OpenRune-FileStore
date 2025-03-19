@@ -12,7 +12,6 @@ class OverlayCodec : DefinitionCodec<OverlayType> {
             5 -> hideUnderlay = false
             7 -> secondaryRgb = buffer.readUnsignedMedium()
         }
-        calculateHsl()
     }
 
     override fun ByteBuf.encode(definition: OverlayType) {
