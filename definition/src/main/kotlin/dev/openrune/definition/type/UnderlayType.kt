@@ -14,7 +14,7 @@ data class UnderlayType(
     var saturation: Int = 0
     var lightness: Int = 0
     var hueMultiplier: Int = 0
-
+    var rawHue: Int = 0
     fun setHsl(rgbValue: Int) {
         val red = (rgbValue shr 16 and 255).toDouble() / 256.0
         val green = (rgbValue shr 8 and 255).toDouble() / 256.0
@@ -59,6 +59,7 @@ data class UnderlayType(
         }
 
         hueValue /= 6.0
+        this.rawHue = (256.0 * hueValue).toInt()
         this.saturation = (256.0 * saturationValue).toInt()
         this.lightness = (256.0 * lightnessValue).toInt()
         if (this.saturation < 0) {
