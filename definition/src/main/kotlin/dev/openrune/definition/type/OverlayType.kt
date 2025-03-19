@@ -7,78 +7,87 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class OverlayType(
     override var id: Rscm = -1,
-    var rgbColor: Int = 0,
-    var secondaryRgbColor: Int = -1,
-    var textureId: Int = -1,
-    var hideUnderlay: Boolean = true,
-
+    var primaryRgb: Int = 0,
+    var secondaryRgb: Int = -1,
+    var texture: Int = -1,
+    var hideUnderlay: Boolean = true
 ) : Definition {
+
     var hue: Int = 0
     var saturation: Int = 0
     var lightness: Int = 0
-    var otherHue: Int = 0
-    var otherSaturation: Int = 0
-    var otherLightness: Int = 0
+    var secondaryHue: Int = 0
+    var secondarySaturation: Int = 0
+    var secondaryLightness: Int = 0
 
     fun calculateHsl() {
-        if (secondaryRgbColor != -1) {
-            calculateHsl(secondaryRgbColor)
-            otherHue = hue
-            otherSaturation = saturation
-            otherLightness = lightness
+        if (this.secondaryRgb != -1) {
+            this.setHsl(this.secondaryRgb)
+            this.secondaryHue = this.hue
+            this.secondarySaturation = this.saturation
+            this.secondaryLightness = this.lightness
         }
-        calculateHsl(rgbColor)
+
+        this.setHsl(this.primaryRgb)
     }
 
-    private fun calculateHsl(var1: Int) {
-        val var2 = (var1 shr 16 and 255).toDouble() / 256.0
-        val var4 = (var1 shr 8 and 255).toDouble() / 256.0
-        val var6 = (var1 and 255).toDouble() / 256.0
-        var var8 = var2
-        if (var4 < var2) {
-            var8 = var4
+    fun setHsl(rgbValue: Int) {
+        val red = (rgbValue shr 16 and 255).toDouble() / 256.0
+        val green = (rgbValue shr 8 and 255).toDouble() / 256.0
+        val blue = (rgbValue and 255).toDouble() / 256.0
+        var minColorValue = red
+        if (green < red) {
+            minColorValue = green
         }
-        if (var6 < var8) {
-            var8 = var6
+
+        if (blue < minColorValue) {
+            minColorValue = blue
         }
-        var var10 = var2
-        if (var4 > var2) {
-            var10 = var4
+
+        var maxColorValue = red
+        if (green > red) {
+            maxColorValue = green
         }
-        if (var6 > var10) {
-            var10 = var6
+
+        if (blue > maxColorValue) {
+            maxColorValue = blue
         }
-        var var12 = 0.0
-        var var14 = 0.0
-        val var16 = (var8 + var10) / 2.0
-        if (var10 != var8) {
-            if (var16 < 0.5) {
-                var14 = (var10 - var8) / (var10 + var8)
+
+        var hueValue = 0.0
+        var saturationValue = 0.0
+        val lightnessValue = (minColorValue + maxColorValue) / 2.0
+        if (minColorValue != maxColorValue) {
+            if (lightnessValue < 0.5) {
+                saturationValue = (maxColorValue - minColorValue) / (minColorValue + maxColorValue)
             }
-            if (var16 >= 0.5) {
-                var14 = (var10 - var8) / (2.0 - var10 - var8)
+
+            if (lightnessValue >= 0.5) {
+                saturationValue = (maxColorValue - minColorValue) / (2.0 - maxColorValue - minColorValue)
             }
-            if (var2 == var10) {
-                var12 = (var4 - var6) / (var10 - var8)
-            } else if (var4 == var10) {
-                var12 = 2.0 + (var6 - var2) / (var10 - var8)
-            } else if (var10 == var6) {
-                var12 = 4.0 + (var2 - var4) / (var10 - var8)
+
+            if (red == maxColorValue) {
+                hueValue = (green - blue) / (maxColorValue - minColorValue)
+            } else if (maxColorValue == green) {
+                hueValue = 2.0 + (blue - red) / (maxColorValue - minColorValue)
+            } else if (blue == maxColorValue) {
+                hueValue = (red - green) / (maxColorValue - minColorValue) + 4.0
             }
         }
-        var12 /= 6.0
-        hue = (256.0 * var12).toInt()
-        saturation = (var14 * 256.0).toInt()
-        lightness = (var16 * 256.0).toInt()
-        if (saturation < 0) {
-            saturation = 0
-        } else if (saturation > 255) {
-            saturation = 255
+
+        hueValue /= 6.0
+        this.hue = (hueValue * 256.0).toInt()
+        this.saturation = (saturationValue * 256.0).toInt()
+        this.lightness = (lightnessValue * 256.0).toInt()
+        if (this.saturation < 0) {
+            this.saturation = 0
+        } else if (this.saturation > 255) {
+            this.saturation = 255
         }
-        if (lightness < 0) {
-            lightness = 0
-        } else if (lightness > 255) {
-            lightness = 255
+
+        if (this.lightness < 0) {
+            this.lightness = 0
+        } else if (this.lightness > 255) {
+            this.lightness = 255
         }
     }
 }

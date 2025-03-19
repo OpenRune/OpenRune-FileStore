@@ -7,8 +7,9 @@ import io.netty.buffer.ByteBuf
 class UnderlayCodec : DefinitionCodec<UnderlayType> {
     override fun UnderlayType.read(opcode: Int, buffer: ByteBuf) {
         if (opcode == 1) {
-            color = buffer.readMedium()
+            rgb = buffer.readUnsignedMedium()
         }
+        setHsl(rgb)
     }
 
     override fun ByteBuf.encode(definition: UnderlayType) {

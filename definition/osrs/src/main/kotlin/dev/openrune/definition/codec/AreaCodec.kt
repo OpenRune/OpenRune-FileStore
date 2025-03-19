@@ -12,8 +12,8 @@ class AreaCodec : DefinitionCodec<AreaType> {
             1 -> sprite1 = buffer.readNullableLargeSmart()
             2 -> sprite2 = buffer.readNullableLargeSmart()
             3 -> name = buffer.readString()
-            4 -> fontColor = buffer.readMedium()
-            5 -> buffer.readMedium()
+            4 -> fontColor = buffer.readUnsignedMedium()
+            5 -> buffer.readUnsignedMedium()
             6 -> textSize = buffer.readUnsignedByte().toInt()
             7 -> {
                 val size = buffer.readUnsignedByte().toInt()
@@ -52,7 +52,7 @@ class AreaCodec : DefinitionCodec<AreaType> {
             19 -> category = buffer.readUnsignedShort()
             21 -> buffer.readInt()
             22 -> buffer.readInt()
-            23 -> buffer.readMedium()
+            23 -> buffer.readUnsignedMedium()
             24 -> {
                 buffer.readShort().toInt()
                 buffer.readShort().toInt()

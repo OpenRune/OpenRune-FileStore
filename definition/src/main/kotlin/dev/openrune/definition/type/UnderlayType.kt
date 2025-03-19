@@ -7,74 +7,83 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UnderlayType(
     override var id: Rscm = -1,
-    var color: Int = 0,
-
+    var rgb: Int = 0
 ) : Definition {
 
     var hue: Int = 0
     var saturation: Int = 0
-    var lightness: Int = -1
+    var lightness: Int = 0
     var hueMultiplier: Int = 0
 
-    fun calculateHsl() {
-        val var1: Int = color
-        val var2 = (var1 shr 16 and 255).toDouble() / 256.0
-        val var4 = (var1 shr 8 and 255).toDouble() / 256.0
-        val var6 = (var1 and 255).toDouble() / 256.0
-        var var8 = var2
-        if (var4 < var2) {
-            var8 = var4
+    fun setHsl(rgbValue: Int) {
+        val red = (rgbValue shr 16 and 255).toDouble() / 256.0
+        val green = (rgbValue shr 8 and 255).toDouble() / 256.0
+        val blue = (rgbValue and 255).toDouble() / 256.0
+        var minColorValue = red
+        if (green < red) {
+            minColorValue = green
         }
-        if (var6 < var8) {
-            var8 = var6
+
+        if (blue < minColorValue) {
+            minColorValue = blue
         }
-        var var10 = var2
-        if (var4 > var2) {
-            var10 = var4
+
+        var maxColorValue = red
+        if (green > red) {
+            maxColorValue = green
         }
-        if (var6 > var10) {
-            var10 = var6
+
+        if (blue > maxColorValue) {
+            maxColorValue = blue
         }
-        var var12 = 0.0
-        var var14 = 0.0
-        val var16 = (var10 + var8) / 2.0
-        if (var8 != var10) {
-            if (var16 < 0.5) {
-                var14 = (var10 - var8) / (var8 + var10)
+
+        var hueValue = 0.0
+        var saturationValue = 0.0
+        val lightnessValue = (maxColorValue + minColorValue) / 2.0
+        if (minColorValue != maxColorValue) {
+            if (lightnessValue < 0.5) {
+                saturationValue = (maxColorValue - minColorValue) / (minColorValue + maxColorValue)
             }
-            if (var16 >= 0.5) {
-                var14 = (var10 - var8) / (2.0 - var10 - var8)
+
+            if (lightnessValue >= 0.5) {
+                saturationValue = (maxColorValue - minColorValue) / (2.0 - maxColorValue - minColorValue)
             }
-            if (var2 == var10) {
-                var12 = (var4 - var6) / (var10 - var8)
-            } else if (var10 == var4) {
-                var12 = 2.0 + (var6 - var2) / (var10 - var8)
-            } else if (var10 == var6) {
-                var12 = 4.0 + (var2 - var4) / (var10 - var8)
+
+            if (red == maxColorValue) {
+                hueValue = (green - blue) / (maxColorValue - minColorValue)
+            } else if (green == maxColorValue) {
+                hueValue = 2.0 + (blue - red) / (maxColorValue - minColorValue)
+            } else if (blue == maxColorValue) {
+                hueValue = 4.0 + (red - green) / (maxColorValue - minColorValue)
             }
         }
-        var12 /= 6.0
-        this.saturation = (var14 * 256.0).toInt()
-        lightness = (var16 * 256.0).toInt()
+
+        hueValue /= 6.0
+        this.saturation = (256.0 * saturationValue).toInt()
+        this.lightness = (256.0 * lightnessValue).toInt()
         if (this.saturation < 0) {
             this.saturation = 0
         } else if (this.saturation > 255) {
             this.saturation = 255
         }
-        if (lightness < 0) {
-            lightness = 0
-        } else if (lightness > 255) {
-            lightness = 255
+
+        if (this.lightness < 0) {
+            this.lightness = 0
+        } else if (this.lightness > 255) {
+            this.lightness = 255
         }
-        if (var16 > 0.5) {
-            hueMultiplier = (var14 * (1.0 - var16) * 512.0).toInt()
+
+        if (lightnessValue > 0.5) {
+            this.hueMultiplier = (512.0 * saturationValue * (1.0 - lightnessValue)).toInt()
         } else {
-            hueMultiplier = (var14 * var16 * 512.0).toInt()
+            this.hueMultiplier = (512.0 * lightnessValue * saturationValue).toInt()
         }
-        if (hueMultiplier < 1) {
-            hueMultiplier = 1
+
+        if (this.hueMultiplier < 1) {
+            this.hueMultiplier = 1
         }
-        hue = (hueMultiplier.toDouble() * var12).toInt()
+
+        this.hue = (hueMultiplier.toDouble() * hueValue).toInt()
     }
 
 
