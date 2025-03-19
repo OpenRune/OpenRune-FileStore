@@ -4,7 +4,7 @@ plugins {
 }
 
 val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "K:\\documents\\GitHub\\hosting\\"
-val buildNumber = "2.0.4"
+val buildNumber = "2.0.7"
 
 subprojects {
     apply(plugin = "kotlin")
@@ -30,11 +30,16 @@ subprojects {
         implementation("org.slf4j:slf4j-api:2.1.0-alpha1")
     }
 
+    val sourcesJar by tasks.registering(Jar::class) {
+        archiveClassifier.set("sources")
+        from(sourceSets.main.get().allSource)
+    }
+
     publishing {
         publications {
             create<MavenPublication>("mavenJava") {
                 from(components["java"])
-
+                artifact(sourcesJar.get())
                 artifactId = project.name
 
                 pom {
