@@ -24,7 +24,7 @@ interface DownloadListener {
 
 object OpenRS2 {
     private const val CACHE_DOWNLOAD_LOCATION = "https://archive.openrs2.org/caches.json"
-    private var allCaches: Array<CacheInfo> = emptyArray()
+    var allCaches: Array<CacheInfo> = emptyArray()
 
     private fun loadCaches() {
         if (allCaches.isEmpty()) {
