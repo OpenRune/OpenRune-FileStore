@@ -5,22 +5,6 @@ import kotlin.math.sqrt
 
 class Model : Renderable() {
 
-    private val isFaceClipped = BooleanArray(MAX_VERTICES)
-    private val viewportYCoordinates = IntArray(MAX_VERTICES)
-    private val viewportXCoordinates = IntArray(MAX_VERTICES)
-    private val viewportZCoordinates = IntArray(MAX_VERTICES)
-    private val localXCoordinates = IntArray(MAX_VERTICES)
-    private val localYCoordinates = IntArray(MAX_VERTICES)
-    private val localZCoordinates = IntArray(MAX_VERTICES)
-
-    private val distanceFaceCounts = IntArray(MAX_FACES)
-    private val facesByDistance = Array(MAX_FACES) { IntArray(512) }
-    private val priorityCounts = IntArray(12)
-    private val orderedFacesByPriority = Array(12) { IntArray(2000) }
-    private val eq10Distances = IntArray(2000)
-    private val eq11Distances = IntArray(2000)
-    private val lt10Distances = IntArray(12)
-
     var vertexCount = 0
     lateinit var verticesX: IntArray
     lateinit var verticesY: IntArray
@@ -54,8 +38,8 @@ class Model : Renderable() {
     companion object {
         private val sineTable = Rasterizer3D.SINE
         private val cosineTable = Rasterizer3D.COSINE
-        private const val MAX_VERTICES = 6500
-        private const val MAX_FACES = 6000
+        const val MAX_VERTICES = 6500
+        const val MAX_FACES = 6000
         private const val BOUNDS_TYPE_CYLINDER = 1
         private const val BOUNDS_TYPE_PROJECTED = 2
     }
@@ -87,6 +71,7 @@ class Model : Renderable() {
 
     fun projectAndDraw(
         graphics: Rasterizer3D,
+        context: ModelContext,
         yzRotation: Int,
         xzRotation: Int,
         xyRotation: Int,
@@ -95,7 +80,7 @@ class Model : Renderable() {
         yOffset: Int,
         zOffset: Int
     ) {
-        distanceFaceCounts[0] = -1
+        context.distanceFaceCounts[0] = -1
 
         if (this.boundsType != BOUNDS_TYPE_PROJECTED && this.boundsType != BOUNDS_TYPE_CYLINDER) {
             this.boundsType = BOUNDS_TYPE_PROJECTED
@@ -154,24 +139,24 @@ class Model : Renderable() {
             val tmp = y * cosX - z * sinX shr 16
             z = y * sinX + z * cosX shr 16
 
-            viewportZCoordinates[i] = z - zRelatedVariable
-            viewportYCoordinates[i] = x * graphics.zoom / z + graphics.centerX
-            viewportXCoordinates[i] = tmp * graphics.zoom / z + graphics.centerY
+            context.viewportZCoordinates[i] = z - zRelatedVariable
+            context.viewportYCoordinates[i] = x * graphics.zoom / z + graphics.centerX
+            context.viewportXCoordinates[i] = tmp * graphics.zoom / z + graphics.centerY
 
             if (faceTextures != null) {
-                localXCoordinates[i] = x
-                localYCoordinates[i] = tmp
-                localZCoordinates[i] = z
+                context.localXCoordinates[i] = x
+                context.localYCoordinates[i] = tmp
+                context.localZCoordinates[i] = z
             }
         }
 
-        draw(graphics)
+        draw(graphics, context)
     }
 
-    private fun draw(graphics: Rasterizer3D) {
+    private fun draw(graphics: Rasterizer3D, context: ModelContext) {
         if (this.diameter < 6000) {
             for (i in 0 until this.diameter) {
-                distanceFaceCounts[i] = 0
+                context.distanceFaceCounts[i] = 0
             }
 
             for (i in 0 until this.triangleCount) {
@@ -179,19 +164,19 @@ class Model : Renderable() {
                     val idx1 = triangleVertex1[i]
                     val idx2 = triangleVertex2[i]
                     val idx3 = triangleVertex3[i]
-                    val y1 = viewportYCoordinates[idx1]
-                    val y2 = viewportYCoordinates[idx2]
-                    val y3 = viewportYCoordinates[idx3]
+                    val y1 = context.viewportYCoordinates[idx1]
+                    val y2 = context.viewportYCoordinates[idx2]
+                    val y3 = context.viewportYCoordinates[idx3]
 
-                    if ((y1 - y2) * (viewportXCoordinates[idx3] - viewportXCoordinates[idx2]) - (y3 - y2) * (viewportXCoordinates[idx1] - viewportXCoordinates[idx2]) > 0) {
+                    if ((y1 - y2) * (context.viewportXCoordinates[idx3] - context.viewportXCoordinates[idx2]) - (y3 - y2) * (context.viewportXCoordinates[idx1] - context.viewportXCoordinates[idx2]) > 0) {
                         if (y1 in 0..graphics.clippingOffsetX && y2 in 0..graphics.clippingOffsetX && y3 in 0..graphics.clippingOffsetX) {
-                            isFaceClipped[i] = false
+                            context.isFaceClipped[i] = false
                         } else {
-                            isFaceClipped[i] = true
+                            context.isFaceClipped[i] = true
                         }
 
-                        val avgZ = (viewportZCoordinates[idx1] + viewportZCoordinates[idx2] + viewportZCoordinates[idx3]) / 3 + this.radius
-                        facesByDistance[avgZ][distanceFaceCounts[avgZ]++] = i
+                        val avgZ = (context.viewportZCoordinates[idx1] + context.viewportZCoordinates[idx2] + context.viewportZCoordinates[idx3]) / 3 + this.radius
+                        context.facesByDistance[avgZ][context.distanceFaceCounts[avgZ]++] = i
                     }
                 }
             }
@@ -199,13 +184,13 @@ class Model : Renderable() {
             if (facePriorities == null) {
                 var distanceIndex = this.diameter - 1
                 while (distanceIndex >= 0) {
-                    val faceCount = distanceFaceCounts[distanceIndex]
+                    val faceCount = context.distanceFaceCounts[distanceIndex]
                     if (faceCount > 0) {
-                        val facePriority = facesByDistance[distanceIndex]
+                        val facePriority = context.facesByDistance[distanceIndex]
 
                         var j = 0
                         while (j < faceCount) {
-                            renderFace(graphics, facePriority[j])
+                            renderFace(graphics, context, facePriority[j])
                             ++j
                         }
                     }
@@ -214,56 +199,56 @@ class Model : Renderable() {
             } else {
                 var distanceIndex = 0
                 while (distanceIndex < 12) {
-                    priorityCounts[distanceIndex] = 0
-                    lt10Distances[distanceIndex] = 0
+                    context.priorityCounts[distanceIndex] = 0
+                    context.lt10Distances[distanceIndex] = 0
                     ++distanceIndex
                 }
 
                 distanceIndex = this.diameter - 1
                 while (distanceIndex >= 0) {
-                    val faceCount = distanceFaceCounts[distanceIndex]
+                    val faceCount = context.distanceFaceCounts[distanceIndex]
                     if (faceCount > 0) {
-                        val facePriority = facesByDistance[distanceIndex]
+                        val facePriority = context.facesByDistance[distanceIndex]
 
                         var faceIndexInPriority = 0
                         while (faceIndexInPriority < faceCount) {
                             val faceIndex = facePriority[faceIndexInPriority]
                             val priority = facePriorities!![faceIndex]
-                            val priorityIndex = priorityCounts[priority]++
-                            orderedFacesByPriority[priority][priorityIndex] = faceIndex
+                            val priorityIndex = context.priorityCounts[priority]++
+                            context.orderedFacesByPriority[priority][priorityIndex] = faceIndex
                             if (priority < 10) {
-                                lt10Distances[priority] += distanceIndex
+                                context.lt10Distances[priority] += distanceIndex
                             } else if (priority == 10) {
-                                eq10Distances[priorityIndex] = distanceIndex
+                                context.eq10Distances[priorityIndex] = distanceIndex
                             } else {
-                                eq11Distances[priorityIndex] = distanceIndex
+                                context.eq11Distances[priorityIndex] = distanceIndex
                             }
                             ++faceIndexInPriority
                         }
                     }
                     --distanceIndex
                 }
-                processFacePriorities(graphics)
+                processFacePriorities(graphics, context)
             }
         }
     }
 
-    private fun processFacePriorities(graphics: Rasterizer3D) {
+    private fun processFacePriorities(graphics: Rasterizer3D, context: ModelContext) {
         for (priority in 0 until 10) {
             var priorityIndex = 0
-            while (priorityIndex < priorityCounts[priority]) {
-                renderFace(graphics, orderedFacesByPriority[priority][priorityIndex])
+            while (priorityIndex < context.priorityCounts[priority]) {
+                renderFace(graphics, context, context.orderedFacesByPriority[priority][priorityIndex])
                 ++priorityIndex
             }
         }
     }
 
-    private fun renderFace(graphics: Rasterizer3D, face: Int) {
+    private fun renderFace(graphics: Rasterizer3D, context: ModelContext, face: Int) {
         val v1 = triangleVertex1[face]
         val v2 = triangleVertex2[face]
         val v3 = triangleVertex3[face]
 
-        graphics.isRasterClippingEnabled = isFaceClipped[face]
+        graphics.isRasterClippingEnabled = context.isFaceClipped[face]
         graphics.alpha = triangleAlphas?.get(face)?.and(255) ?: 0
 
         if (faceTextures != null && faceTextures!![face] != -1) {
@@ -274,35 +259,35 @@ class Model : Renderable() {
 
             if (faceColors3[face] == -1) {
                 graphics.rasterTextureAffine(
-                    viewportXCoordinates[v1], viewportXCoordinates[v2], viewportXCoordinates[v3],
-                    viewportYCoordinates[v1], viewportYCoordinates[v2], viewportYCoordinates[v3],
+                    context.viewportXCoordinates[v1], context.viewportXCoordinates[v2], context.viewportXCoordinates[v3],
+                    context.viewportYCoordinates[v1], context.viewportYCoordinates[v2], context.viewportYCoordinates[v3],
                     faceColors1[face], faceColors1[face], faceColors1[face],
-                    localXCoordinates[textureIndices[0]], localXCoordinates[textureIndices[1]], localXCoordinates[textureIndices[2]],
-                    localYCoordinates[textureIndices[0]], localYCoordinates[textureIndices[1]], localYCoordinates[textureIndices[2]],
-                    localZCoordinates[textureIndices[0]], localZCoordinates[textureIndices[1]], localZCoordinates[textureIndices[2]],
+                    context.localXCoordinates[textureIndices[0]], context.localXCoordinates[textureIndices[1]], context.localXCoordinates[textureIndices[2]],
+                    context.localYCoordinates[textureIndices[0]], context.localYCoordinates[textureIndices[1]], context.localYCoordinates[textureIndices[2]],
+                    context.localZCoordinates[textureIndices[0]], context.localZCoordinates[textureIndices[1]], context.localZCoordinates[textureIndices[2]],
                     faceTextures!![face]
                 )
             } else {
                 graphics.rasterTextureAffine(
-                    viewportXCoordinates[v1], viewportXCoordinates[v2], viewportXCoordinates[v3],
-                    viewportYCoordinates[v1], viewportYCoordinates[v2], viewportYCoordinates[v3],
+                    context.viewportXCoordinates[v1], context.viewportXCoordinates[v2], context.viewportXCoordinates[v3],
+                    context.viewportYCoordinates[v1], context.viewportYCoordinates[v2], context.viewportYCoordinates[v3],
                     faceColors1[face], faceColors2[face], faceColors3[face],
-                    localXCoordinates[textureIndices[0]], localXCoordinates[textureIndices[1]], localXCoordinates[textureIndices[2]],
-                    localYCoordinates[textureIndices[0]], localYCoordinates[textureIndices[1]], localYCoordinates[textureIndices[2]],
-                    localZCoordinates[textureIndices[0]], localZCoordinates[textureIndices[1]], localZCoordinates[textureIndices[2]],
+                    context.localXCoordinates[textureIndices[0]], context.localXCoordinates[textureIndices[1]], context.localXCoordinates[textureIndices[2]],
+                    context.localYCoordinates[textureIndices[0]], context.localYCoordinates[textureIndices[1]], context.localYCoordinates[textureIndices[2]],
+                    context.localZCoordinates[textureIndices[0]], context.localZCoordinates[textureIndices[1]], context.localZCoordinates[textureIndices[2]],
                     faceTextures!![face]
                 )
             }
         } else if (faceColors3[face] == -1) {
             graphics.rasterFlat(
-                viewportXCoordinates[v1], viewportXCoordinates[v2], viewportXCoordinates[v3],
-                viewportYCoordinates[v1], viewportYCoordinates[v2], viewportYCoordinates[v3],
+                context.viewportXCoordinates[v1], context.viewportXCoordinates[v2], context.viewportXCoordinates[v3],
+                context.viewportYCoordinates[v1], context.viewportYCoordinates[v2], context.viewportYCoordinates[v3],
                 graphics.colorPalette[faceColors1[face]]
             )
         } else {
             graphics.rasterGouraud(
-                viewportXCoordinates[v1], viewportXCoordinates[v2], viewportXCoordinates[v3],
-                viewportYCoordinates[v1], viewportYCoordinates[v2], viewportYCoordinates[v3],
+                context.viewportXCoordinates[v1], context.viewportXCoordinates[v2], context.viewportXCoordinates[v3],
+                context.viewportYCoordinates[v1], context.viewportYCoordinates[v2], context.viewportYCoordinates[v3],
                 faceColors1[face], faceColors2[face], faceColors3[face]
             )
         }

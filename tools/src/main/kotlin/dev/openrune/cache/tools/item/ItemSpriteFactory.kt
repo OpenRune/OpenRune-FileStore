@@ -5,6 +5,7 @@ import dev.openrune.definition.game.*
 import dev.openrune.definition.game.render.draw.Rasterizer3D
 import dev.openrune.definition.game.render.draw.SpritePixels
 import dev.openrune.definition.game.render.model.Model
+import dev.openrune.definition.game.render.model.ModelContext
 import dev.openrune.definition.game.render.util.JagexColor
 import dev.openrune.definition.type.ItemType
 import dev.openrune.definition.type.SpriteType
@@ -93,7 +94,7 @@ class ItemSpriteFactory(
 
         val zoom = calculateZoom(item, border, noted)
 
-        drawItemModel(itemModel, item, graphics, zoom)
+        drawItemModel(itemModel, item, graphics, ModelContext(), zoom)
 
         applyBordersAndShadows(spritePixels, border, shadowColor)
 
@@ -119,7 +120,7 @@ class ItemSpriteFactory(
         return zoom
     }
 
-    private fun drawItemModel(itemModel: Model, item: ItemType, graphics: Rasterizer3D, zoom: Int) {
+    private fun drawItemModel(itemModel: Model, item: ItemType, graphics: Rasterizer3D, context: ModelContext, zoom: Int) {
 
         val yan2d = if (itemSpriteFactory.yan2d == -1) item.yan2d else itemSpriteFactory.yan2d
         val zan2d = if (itemSpriteFactory.zan2d == -1) item.zan2d else itemSpriteFactory.zan2d
@@ -133,6 +134,7 @@ class ItemSpriteFactory(
         itemModel.calculateBoundsCylinder()
         itemModel.projectAndDraw(
             graphics,
+            context,
             0,
             yan2d,
             zan2d,
