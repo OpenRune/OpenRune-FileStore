@@ -53,6 +53,10 @@ class CacheDelegate(val library: CacheLibrary) : Cache {
         library.put(index, archive, file, data, xteas)
     }
 
+    override fun write(index: Int, archive: Int, data: ByteArray, xteas: IntArray?) {
+        library.put(index, archive, data, xteas)
+    }
+
     override fun write(index: Int, archive: String, data: ByteArray, xteas: IntArray?) {
         library.put(index, archive, data, xteas)
     }

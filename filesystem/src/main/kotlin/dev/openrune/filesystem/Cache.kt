@@ -34,6 +34,8 @@ interface Cache {
 
     fun write(index: Int, archive: Int, file: Int, data: ByteArray, xteas: IntArray? = null)
 
+    fun write(index: Int, archive: Int, data: ByteArray, xteas: IntArray? = null)
+
     fun write(index: Int, archive: String, data: ByteArray, xteas: IntArray? = null)
 
     fun update(): Boolean

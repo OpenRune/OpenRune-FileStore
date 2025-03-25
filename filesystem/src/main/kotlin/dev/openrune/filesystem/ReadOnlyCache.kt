@@ -201,6 +201,10 @@ abstract class ReadOnlyCache(indexCount: Int) : Cache {
         throw UnsupportedOperationException("Read only cache.")
     }
 
+    override fun write(index: Int, archive: Int, data: ByteArray, xteas: IntArray?) {
+        throw UnsupportedOperationException("Read only cache.")
+    }
+
     override fun write(index: Int, archive: String, data: ByteArray, xteas: IntArray?) {
         throw UnsupportedOperationException("Read only cache.")
     }
