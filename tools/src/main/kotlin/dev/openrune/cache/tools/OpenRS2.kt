@@ -24,7 +24,7 @@ interface DownloadListener {
 
 object OpenRS2 {
     private const val CACHE_DOWNLOAD_LOCATION = "https://archive.openrs2.org/caches.json"
-    private var allCaches: Array<CacheInfo> = emptyArray()
+    var allCaches: Array<CacheInfo> = emptyArray()
 
     private fun loadCaches() {
         if (allCaches.isEmpty()) {
@@ -115,6 +115,7 @@ object OpenRS2 {
             .filter { it.game.contains(game.formatName()) }
             .filter { it.builds.isNotEmpty() }
             .filter { it.timestamp != null }
+            .filter { it.environment == "live" }
             .maxByOrNull { it.timestamp.stringToTimestamp().toEchochUTC() }
             ?: error("Unable to find Latest Revision")
 
@@ -123,6 +124,7 @@ object OpenRS2 {
             .filter { it.game.contains(game.formatName()) }
             .filter { it.builds.isNotEmpty() && it.builds[0].major == rev }
             .filter { it.timestamp != null }
+            .filter { it.environment == "live" }
             .maxByOrNull { it.timestamp.stringToTimestamp().toEchochUTC() }
             ?: error("Unable to find Revision: $rev")
 }
