@@ -16,6 +16,7 @@ import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.RSCMHandler
 import dev.openrune.definition.codec.*
+import dev.openrune.definition.util.Type
 import dev.openrune.filesystem.Cache
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.Unpooled
@@ -76,7 +77,37 @@ class PackConfig(
         packTypes.registerPackType(NPC, NPCCodec::class, "npc") { content, def: NpcType ->
             def.actions.fromOptions("option", content)
         }
-        packTypes.registerPackType(ENUM, EnumCodec::class, "enum")
+
+        packTypes.registerPackType(ENUM, EnumCodec::class, "enum") { content, def: EnumType ->
+            val filteredMap = content.filterKeys { key ->
+                key.toIntOrNull() != null
+            }.mapKeys { (key, _) -> key.toInt() }
+
+            content["keytype"]?.let {
+                def.valueType = Type.valueOf(it.toString().replace("\"", "").uppercase())
+            }
+
+            content["valuetype"]?.let {
+                def.valueType = Type.valueOf(it.toString().replace("\"", "").uppercase())
+            }
+
+            content["clear"]?.takeIf { it == "true" }?.let {
+                def.values.clear()
+            }
+
+            content["default"]?.let {
+                val value = it.toString().replace("\"", "")
+                if (value.matches(Regex("^[0-9]+$"))) {
+                    def.defaultInt = value.toInt()
+                } else {
+                    def.defaultString = value
+                }
+            }
+
+            filteredMap.forEach { (key, value) ->
+                def.values[key] = value
+            }
+        }
         packTypes.registerPackType(VARBIT, VarBitCodec::class, "varbit")
         packTypes.registerPackType(AREA, AreaCodec::class, "area") { content, def: AreaType ->
             def.options.fromOptions("option", content)
@@ -221,23 +252,34 @@ class PackConfig(
     ): MutableMap<String, MutableList<TomlSection>> {
 
         val combinedMap = mutableMapOf<String, MutableList<TomlSection>>()
-        val sectionRegex = """\[\[(\w+)\]\](.*?)(?=\[\[|\Z)""".toRegex(RegexOption.DOT_MATCHES_ALL)
+        val sectionRegex = """\[\[([\w.]+)\]\](.*?)(?=\[\[|\Z)""".toRegex(RegexOption.DOT_MATCHES_ALL)
 
         sectionRegex.findAll(tomlContent).forEach { match ->
-            val (sectionName, sectionContent) = match.destructured
+            val (fullSectionName, sectionContent) = match.destructured
+            val sectionParts = fullSectionName.split(".") // Handle sub-tables
+
             val sectionMap = sectionContent.trim().lineSequence()
                 .mapNotNull { it.split("=").map(String::trim).takeIf { it.size == 2 } }
-                .associate { it[0] to it[1] }
+                .associate { it[0] to it[1].removeSurrounding("\"") }
                 .toMutableMap()
 
-            when (sectionName) {
-                in types -> combinedMap.getOrPut(sectionName) { mutableListOf() }.add(TomlSection(sectionContent, sectionMap))
-                "tokenizedReplacement" -> sectionMap.forEach { (key, value) ->
-                    tokenizedReplacement[key] = value.replace("\"", "")
+            val topLevelSection = sectionParts.first()
+            val subTableName = sectionParts.drop(1).joinToString(".") // Capture sub-table name if present
+
+            when (topLevelSection) {
+                in types -> {
+                    val sectionObject = TomlSection(sectionContent, sectionMap)
+                    combinedMap.getOrPut(fullSectionName) { mutableListOf() }.add(sectionObject)
+                }
+                "tokenizedReplacement" -> {
+                    sectionMap.forEach { (key, value) ->
+                        tokenizedReplacement[key] = value
+                    }
                 }
             }
         }
 
+        // Apply token replacements
         combinedMap.values.flatten().forEach { item ->
             item.lines.replaceAll { key, value ->
                 tokenizedReplacement.entries.fold(value) { acc, (placeholder, replacement) ->

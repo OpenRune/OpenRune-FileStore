@@ -1,7 +1,11 @@
 package dev.openrune.definition.util
 
+import dev.openrune.definition.serialization.TypeSerializer
+import kotlinx.serialization.Serializable
+
 private const val NO_KEY = 0.toChar()
 
+@Serializable(with = TypeSerializer::class)
 enum class Type {
     INT(0, 'i', BaseVarType.INTEGER),
     BOOLEAN(1, '1', BaseVarType.INTEGER),
