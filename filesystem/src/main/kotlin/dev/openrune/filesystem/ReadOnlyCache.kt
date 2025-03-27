@@ -6,19 +6,21 @@ import dev.openrune.filesystem.util.readInt
 import dev.openrune.filesystem.util.readUnsignedByte
 import dev.openrune.filesystem.util.secure.VersionTableBuilder
 import io.github.oshai.kotlinlogging.KotlinLogging
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 
 /**
  * [Cache] which efficiently stores information about its indexes, archives and files.
  */
-abstract class ReadOnlyCache(indexCount: Int) : Cache {
+abstract class ReadOnlyCache(
+    indexCount: Int,
+    mapFactory: () -> MutableMap<Int, Int>
+) : Cache {
     val indices: IntArray = IntArray(indexCount) { it }
     val archives: Array<IntArray?> = arrayOfNulls(indexCount)
     val fileCounts: Array<IntArray?> = arrayOfNulls(indexCount)
     val files: Array<Array<IntArray?>?> = arrayOfNulls(indexCount)
-    private val hashes: MutableMap<Int, Int> = Int2IntOpenHashMap(16384)
+    private val hashes: MutableMap<Int, Int> = mapFactory()
 
     override lateinit var versionTable: ByteArray
 

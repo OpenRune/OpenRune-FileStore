@@ -14,8 +14,9 @@ class FileCache(
     private val index255: RandomAccessFile,
     private val indexes: Array<RandomAccessFile?>,
     indexCount: Int,
-    val xteas: Map<Int, IntArray>?
-) : ReadOnlyCache(indexCount) {
+    val xteas: Map<Int, IntArray>?,
+    mapFactory: () -> MutableMap<Int, Int>
+) : ReadOnlyCache(indexCount, mapFactory) {
 
     private val dataCache = object : LinkedHashMap<Int, Array<ByteArray?>>(16, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Int, Array<ByteArray?>>): Boolean {
@@ -76,7 +77,8 @@ class FileCache(
             indexCount: Int,
             versionTable: VersionTableBuilder?,
             xteas: Map<Int, IntArray>?,
-            threadUsage: Double
+            threadUsage: Double,
+            mapFactory: () -> MutableMap<Int, Int>
         ): Cache {
             val length = mainFile.length()
             val context = DecompressionContext()
@@ -84,7 +86,7 @@ class FileCache(
                 val file = File(path, "$CACHE_FILE_NAME.idx$indexId")
                 if (file.exists()) RandomAccessFile(file, "r") else null
             }
-            val cache = FileCache(main, index255, indices, indexCount, xteas)
+            val cache = FileCache(main, index255, indices, indexCount, xteas, mapFactory)
             for (indexId in 0 until indexCount) {
                 cache.archiveData(context, main, length, index255, indexId, versionTable)
             }
