@@ -3,7 +3,6 @@ package dev.openrune.definition.type
 import dev.openrune.definition.Definition
 import dev.openrune.definition.serialization.Rscm
 import dev.openrune.definition.util.Type
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
@@ -15,7 +14,7 @@ data class EnumType(
     var defaultInt : Int = 0,
     var defaultString : String = "",
     @Contextual
-    val values : Int2ObjectOpenHashMap<@Contextual Any> = Int2ObjectOpenHashMap<Any>(),
+    val values: MutableMap<Int, @Contextual Any> = HashMap(),
 
     ) : Definition {
 

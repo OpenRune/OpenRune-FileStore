@@ -5,7 +5,6 @@ import dev.openrune.definition.util.readUnsignedBoolean
 import dev.openrune.definition.util.writeByte
 import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
-import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap
 
 interface Parameterized {
 
@@ -16,7 +15,7 @@ interface Parameterized {
         if (length == 0) {
             return
         }
-        val params = Int2ObjectArrayMap<Any>()
+        val params: MutableMap<Int, Any> = mutableMapOf()
         for (i in 0 until length) {
             val string = buffer.readUnsignedBoolean()
             val id = buffer.readUnsignedMedium()

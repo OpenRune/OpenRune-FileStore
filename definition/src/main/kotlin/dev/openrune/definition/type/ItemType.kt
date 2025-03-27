@@ -4,7 +4,6 @@ import dev.openrune.definition.Definition
 import dev.openrune.definition.Parameterized
 import dev.openrune.definition.Recolourable
 import dev.openrune.definition.serialization.Rscm
-import it.unimi.dsi.fastutil.bytes.Byte2ByteOpenHashMap
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 

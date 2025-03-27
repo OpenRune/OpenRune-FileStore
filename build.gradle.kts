@@ -25,7 +25,6 @@ subprojects {
 
     dependencies {
         implementation(kotlin("stdlib-jdk8"))
-        implementation("it.unimi.dsi:fastutil:8.5.13")
         implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
         implementation("org.slf4j:slf4j-api:2.1.0-alpha1")
     }
