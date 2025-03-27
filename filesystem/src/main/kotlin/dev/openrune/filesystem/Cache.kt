@@ -2,6 +2,8 @@ package dev.openrune.filesystem
 
 import java.nio.file.Path
 
+internal typealias MapFactory = () -> MutableMap<Int, Int>
+
 interface Cache {
 
     val versionTable: ByteArray

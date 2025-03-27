@@ -17,7 +17,10 @@ import java.io.RandomAccessFile
  * reading dynamic map regions in MapDefinitions.
  * It is however very useful for integration tests to speed world resetting.
  */
-class MemoryCache(indexCount: Int) : ReadOnlyCache(indexCount) {
+class MemoryCache(
+    indexCount: Int,
+    mapFactory: MapFactory
+) : ReadOnlyCache(indexCount, mapFactory) {
 
     val data: Array<Array<Array<ByteArray?>?>?> = arrayOfNulls(indexCount)
     val sectors: Array<Array<ByteArray?>?> = arrayOfNulls(indexCount)
@@ -54,9 +57,10 @@ class MemoryCache(indexCount: Int) : ReadOnlyCache(indexCount) {
             indexCount: Int,
             versionTable: VersionTableBuilder?,
             xteas: Map<Int, IntArray>?,
-            threadUsage: Double
+            threadUsage: Double,
+            mapFactory: MapFactory
         ): Cache {
-            val cache = MemoryCache(indexCount)
+            val cache = MemoryCache(indexCount, mapFactory)
             val processors = (Runtime.getRuntime().availableProcessors() * threadUsage).toInt().coerceAtLeast(1)
             newFixedThreadPoolContext(processors, "cache-loader").use { dispatcher ->
                 runBlocking(dispatcher) {
