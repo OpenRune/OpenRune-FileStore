@@ -15,7 +15,7 @@ class FileCache(
     private val indexes: Array<RandomAccessFile?>,
     indexCount: Int,
     val xteas: Map<Int, IntArray>?,
-    mapFactory: () -> MutableMap<Int, Int>
+    mapFactory: MapFactory
 ) : ReadOnlyCache(indexCount, mapFactory) {
 
     private val dataCache = object : LinkedHashMap<Int, Array<ByteArray?>>(16, 0.75f, true) {
@@ -78,7 +78,7 @@ class FileCache(
             versionTable: VersionTableBuilder?,
             xteas: Map<Int, IntArray>?,
             threadUsage: Double,
-            mapFactory: () -> MutableMap<Int, Int>
+            mapFactory: MapFactory
         ): Cache {
             val length = mainFile.length()
             val context = DecompressionContext()

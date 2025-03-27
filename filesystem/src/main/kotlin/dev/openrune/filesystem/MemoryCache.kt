@@ -19,7 +19,7 @@ import java.io.RandomAccessFile
  */
 class MemoryCache(
     indexCount: Int,
-    mapFactory: () -> MutableMap<Int, Int>
+    mapFactory: MapFactory
 ) : ReadOnlyCache(indexCount, mapFactory) {
 
     val data: Array<Array<Array<ByteArray?>?>?> = arrayOfNulls(indexCount)
@@ -58,7 +58,7 @@ class MemoryCache(
             versionTable: VersionTableBuilder?,
             xteas: Map<Int, IntArray>?,
             threadUsage: Double,
-            mapFactory: () -> MutableMap<Int, Int>
+            mapFactory: MapFactory
         ): Cache {
             val cache = MemoryCache(indexCount, mapFactory)
             val processors = (Runtime.getRuntime().availableProcessors() * threadUsage).toInt().coerceAtLeast(1)

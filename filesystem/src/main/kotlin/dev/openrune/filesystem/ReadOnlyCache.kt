@@ -14,7 +14,7 @@ import java.nio.ByteBuffer
  */
 abstract class ReadOnlyCache(
     indexCount: Int,
-    mapFactory: () -> MutableMap<Int, Int>
+    mapFactory: MapFactory
 ) : Cache {
     val indices: IntArray = IntArray(indexCount) { it }
     val archives: Array<IntArray?> = arrayOfNulls(indexCount)

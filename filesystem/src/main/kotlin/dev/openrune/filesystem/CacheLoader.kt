@@ -11,7 +11,7 @@ interface CacheLoader {
     fun load(
         properties: Properties,
         xteas: Map<Int, IntArray>? = null,
-        mapFactory: () -> MutableMap<Int, Int> = ::createNameMap
+        mapFactory: MapFactory = ::createNameMap
     ): Cache {
         val cachePath = properties.getProperty("cachePath")
         val threadUsage = properties.getProperty("threadUsage", "1.0").toDouble()
@@ -22,7 +22,7 @@ interface CacheLoader {
         path: String,
         xteas: Map<Int, IntArray>? = null,
         threadUsage: Double = 1.0,
-        mapFactory: () -> MutableMap<Int, Int> = ::createNameMap
+        mapFactory: MapFactory = ::createNameMap
     ): Cache {
         val mainFile = File(path, "${FileCache.CACHE_FILE_NAME}.dat2")
         if (!mainFile.exists()) {
@@ -49,7 +49,7 @@ interface CacheLoader {
         versionTable: VersionTableBuilder? = null,
         xteas: Map<Int, IntArray>? = null,
         threadUsage: Double = 1.0,
-        mapFactory: () -> MutableMap<Int, Int> = ::createNameMap
+        mapFactory: MapFactory = ::createNameMap
     ): Cache
 
     private fun createNameMap(): MutableMap<Int, Int> {
