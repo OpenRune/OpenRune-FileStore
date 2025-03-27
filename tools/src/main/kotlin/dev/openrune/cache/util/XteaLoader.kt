@@ -19,7 +19,7 @@ object XteaLoader {
     public val xteas: MutableMap<Int, Xtea> = mutableMapOf()
     private val xteasList: MutableMap<Int, IntArray> = mutableMapOf()
 
-    fun load(xteaLocation: File = File(FileUtil.getTemp(), "xteas.json")) {
+    fun load(xteaLocation: File) {
         val data: Array<Xtea> = Gson().fromJson(xteaLocation.readText(), Array<Xtea>::class.java)
         data.forEach {
             xteas[it.mapsquare] = it

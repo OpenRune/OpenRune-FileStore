@@ -1,6 +1,5 @@
 package dev.openrune.cache.tools.tasks.impl
 
-import com.displee.cache.CacheLibrary
 import com.google.gson.GsonBuilder
 import dev.openrune.cache.MAPS
 import dev.openrune.cache.util.XteaLoader
@@ -9,6 +8,7 @@ import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.decompressGzipToBytes
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
+import dev.openrune.filesystem.Cache
 import java.io.File
 import java.nio.file.Files
 import kotlin.random.Random
@@ -20,7 +20,7 @@ enum class XteaType {
 }
 
 class PackMaps(private val mapsDirectory: File, private val xteaLocation: File = File("xteas.json"), private val xteaType: XteaType = XteaType.NO_KEYS) : CacheTask() {
-    override fun init(library: CacheLibrary) {
+    override fun init(cache: Cache) {
         val encodeXteas = xteaType != XteaType.NO_KEYS
 
         if (encodeXteas && !xteaLocation.exists()) {
@@ -66,7 +66,7 @@ class PackMaps(private val mapsDirectory: File, private val xteaLocation: File =
                             XteaLoader.xteas[regionId]!!.key = keys
                         }
 
-                        packMap(library,loc[0].toInt(), loc[1].toInt(), tileData, objData,keys)
+                        packMap(cache,loc[0].toInt(), loc[1].toInt(), tileData, objData,keys)
                     } else {
                         println("MISSING MAP FILE: $objectFile")
                     }
@@ -85,12 +85,12 @@ class PackMaps(private val mapsDirectory: File, private val xteaLocation: File =
         }
     }
 
-    fun packMap(library: CacheLibrary, regionX : Int, regionY : Int, tileData : ByteArray, objData : ByteArray, keys : IntArray?) {
+    fun packMap(cache: Cache, regionX : Int, regionY : Int, tileData : ByteArray, objData : ByteArray, keys : IntArray?) {
         val mapArchiveName = "m" + regionX + "_" + regionY
         val landArchiveName = "l" + regionX + "_" + regionY
 
-        library.put(MAPS, mapArchiveName, tileData)
-        library.put(MAPS, landArchiveName, objData,keys)
+        cache.write(MAPS, mapArchiveName, tileData)
+        cache.write(MAPS, landArchiveName, objData,keys)
     }
 
     fun generateRandomIntArray(): IntArray {

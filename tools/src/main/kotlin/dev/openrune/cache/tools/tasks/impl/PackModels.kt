@@ -1,12 +1,12 @@
 package dev.openrune.cache.tools.tasks.impl
 
-import com.displee.cache.CacheLibrary
-import dev.openrune.RSCMHandler
+import dev.openrune.definition.RSCMHandler
 import dev.openrune.cache.MODELS
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.decompressGzipToBytes
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
+import dev.openrune.filesystem.Cache
 import java.io.File
 import java.nio.file.Files
 
@@ -15,7 +15,7 @@ class PackModels(
     private val modelDirectory: File,
     private val rscmMappingPrefix: String = "models."
 ) : CacheTask() {
-    override fun init(library: CacheLibrary) {
+    override fun init(cache: Cache) {
         val modelFiles = getFiles(modelDirectory, "gz", "dat")
         val modelSize = modelFiles.size
         val progressModels = progress("Packing Models", modelSize)
@@ -36,7 +36,7 @@ class PackModels(
                 }
 
                 if (id != null) {
-                    library.put(MODELS, id, buffer)
+                    cache.write(MODELS, id, 0, buffer)
                 } else {
                     println("Unable to pack model")
                 }
@@ -44,7 +44,6 @@ class PackModels(
                 progressModels.step()
             }
 
-            library.index(7).update()
             progressModels.close()
         }
     }

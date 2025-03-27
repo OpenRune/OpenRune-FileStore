@@ -1,0 +1,26 @@
+[[item]]
+id = 31671
+inherit = 995
+name = "Blood Money"
+option2 = "HEREE"
+
+[[object]]
+id = "objects.pank"
+inherit = 69
+name = "Custom Pank"
+
+[[object]]
+id = 60005
+name = "Merlin Rune Portal"
+animationId = 2212
+description = "Adventures can use this to loot items, exchange points and invest for rewards."
+sizeX = 2
+sizeY = 2
+option1 = "Teleport"
+objectModels = [63101]
+
+
+[[idk]]
+id = 7000
+models = ["models.modeltest1"]
+chatheadModels = ["models.modeltest2"]
