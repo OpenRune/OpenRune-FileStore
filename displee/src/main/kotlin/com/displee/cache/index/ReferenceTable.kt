@@ -40,7 +40,7 @@ open class ReferenceTable(protected val origin: CacheLibrary, val id: Int) : Com
 
         val readFun: () -> (Int) = if (version >= 7) {
             {
-                buffer.readBigSmart()
+                buffer.readG2or4s()
             }
         } else {
             {
@@ -424,6 +424,14 @@ open class ReferenceTable(protected val origin: CacheLibrary, val id: Int) : Com
         const val FLAG_WHIRLPOOL = 0x2
         const val FLAG_LENGTHS = 0x4
         const val FLAG_CHECKSUMS = 0x8
+
+        private fun InputBuffer.readG2or4s(): Int {
+            return if (get(offset) < 0)
+                readInt() and Int.MAX_VALUE;
+            else
+                readUnsignedShort()
+        }
+
     }
 
 }
