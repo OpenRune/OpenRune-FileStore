@@ -83,9 +83,9 @@ class Rasterizer3D(
         var3: Int,
         var4: Int,
         var5: Int,
-        var6: Int,
-        var7: Int,
-        var8: Int
+        r: Int,
+        g: Int,
+        b: Int
     ) {
         var var0 = vertex0X
         var var1 = vertex0Y
@@ -93,15 +93,15 @@ class Rasterizer3D(
         var var3 = var3
         var var4 = var4
         var var5 = var5
-        var var6 = var6
-        var var7 = var7
-        var var8 = var8
+        var r = r
+        var g = g
+        var b = b
         val var9 = var4 - var3
         val var10 = var1 - var0
         val var11 = var5 - var3
         val var12 = var2 - var0
-        val var13 = var7 - var6
-        val var14 = var8 - var6
+        val gsr = g - r
+        val bsr = b - r
         val var15 = if (var2 != var1) {
             (var5 - var4 shl 14) / (var2 - var1)
         } else {
@@ -120,8 +120,8 @@ class Rasterizer3D(
 
         val var18 = var9 * var12 - var11 * var10
         if (var18 != 0) {
-            val var19 = (var13 * var12 - var14 * var10 shl 8) / var18
-            val var20 = (var14 * var9 - var13 * var11 shl 8) / var18
+            val var19 = (gsr * var12 - bsr * var10 shl 8) / var18
+            val var20 = (bsr * var9 - gsr * var11 shl 8) / var18
             if (var0 <= var1 && var0 <= var2) {
                 if (var0 < clippingHeight) {
                     if (var1 > clippingHeight) {
@@ -132,14 +132,14 @@ class Rasterizer3D(
                         var2 = clippingHeight
                     }
 
-                    var6 = var19 + ((var6 shl 8) - var3 * var19)
+                    r = var19 + ((r shl 8) - var3 * var19)
                     if (var1 < var2) {
                         var3 = var3 shl 14
                         var5 = var3
                         if (var0 < 0) {
                             var5 -= var0 * var17
                             var3 -= var0 * var16
-                            var6 -= var0 * var20
+                            r -= var0 * var20
                             var0 = 0
                         }
 
@@ -163,18 +163,18 @@ class Rasterizer3D(
                                             return
                                         }
 
-                                        drawTriangleScanline(graphicsPixels, var0, 0, 0, var5 shr 14, var4 shr 14, var6, var19)
+                                        drawTriangleScanline(graphicsPixels, var0, 0, 0, var5 shr 14, var4 shr 14, r, var19)
                                         var5 += var17
                                         var4 += var15
-                                        var6 += var20
+                                        r += var20
                                         var0 += graphicsPixelsWidth
                                     }
                                 }
 
-                                drawTriangleScanline(graphicsPixels, var0, 0, 0, var5 shr 14, var3 shr 14, var6, var19)
+                                drawTriangleScanline(graphicsPixels, var0, 0, 0, var5 shr 14, var3 shr 14, r, var19)
                                 var5 += var17
                                 var3 += var16
-                                var6 += var20
+                                r += var20
                                 var0 += graphicsPixelsWidth
                             }
                         } else {
@@ -191,18 +191,18 @@ class Rasterizer3D(
                                             return
                                         }
 
-                                        drawTriangleScanline(graphicsPixels, var0, 0, 0, var4 shr 14, var5 shr 14, var6, var19)
+                                        drawTriangleScanline(graphicsPixels, var0, 0, 0, var4 shr 14, var5 shr 14, r, var19)
                                         var5 += var17
                                         var4 += var15
-                                        var6 += var20
+                                        r += var20
                                         var0 += graphicsPixelsWidth
                                     }
                                 }
 
-                                drawTriangleScanline(graphicsPixels, var0, 0, 0, var3 shr 14, var5 shr 14, var6, var19)
+                                drawTriangleScanline(graphicsPixels, var0, 0, 0, var3 shr 14, var5 shr 14, r, var19)
                                 var5 += var17
                                 var3 += var16
-                                var6 += var20
+                                r += var20
                                 var0 += graphicsPixelsWidth
                             }
                         }
@@ -212,7 +212,7 @@ class Rasterizer3D(
                         if (var0 < 0) {
                             var4 -= var0 * var17
                             var3 -= var0 * var16
-                            var6 -= var0 * var20
+                            r -= var0 * var20
                             var0 = 0
                         }
 
@@ -236,18 +236,18 @@ class Rasterizer3D(
                                             return
                                         }
 
-                                        drawTriangleScanline(graphicsPixels, var0, 0, 0, var5 shr 14, var3 shr 14, var6, var19)
+                                        drawTriangleScanline(graphicsPixels, var0, 0, 0, var5 shr 14, var3 shr 14, r, var19)
                                         var5 += var15
                                         var3 += var16
-                                        var6 += var20
+                                        r += var20
                                         var0 += graphicsPixelsWidth
                                     }
                                 }
 
-                                drawTriangleScanline(graphicsPixels, var0, 0, 0, var4 shr 14, var3 shr 14, var6, var19)
+                                drawTriangleScanline(graphicsPixels, var0, 0, 0, var4 shr 14, var3 shr 14, r, var19)
                                 var4 += var17
                                 var3 += var16
-                                var6 += var20
+                                r += var20
                                 var0 += graphicsPixelsWidth
                             }
                         } else {
@@ -264,18 +264,18 @@ class Rasterizer3D(
                                             return
                                         }
 
-                                        drawTriangleScanline(graphicsPixels, var0, 0, 0, var3 shr 14, var5 shr 14, var6, var19)
+                                        drawTriangleScanline(graphicsPixels, var0, 0, 0, var3 shr 14, var5 shr 14, r, var19)
                                         var5 += var15
                                         var3 += var16
-                                        var6 += var20
+                                        r += var20
                                         var0 += graphicsPixelsWidth
                                     }
                                 }
 
-                                drawTriangleScanline(graphicsPixels, var0, 0, 0, var3 shr 14, var4 shr 14, var6, var19)
+                                drawTriangleScanline(graphicsPixels, var0, 0, 0, var3 shr 14, var4 shr 14, r, var19)
                                 var4 += var17
                                 var3 += var16
-                                var6 += var20
+                                r += var20
                                 var0 += graphicsPixelsWidth
                             }
                         }
@@ -291,14 +291,14 @@ class Rasterizer3D(
                         var0 = clippingHeight
                     }
 
-                    var7 = var19 + ((var7 shl 8) - var19 * var4)
+                    g = var19 + ((g shl 8) - var19 * var4)
                     if (var2 < var0) {
                         var4 = var4 shl 14
                         var3 = var4
                         if (var1 < 0) {
                             var3 -= var16 * var1
                             var4 -= var15 * var1
-                            var7 -= var20 * var1
+                            g -= var20 * var1
                             var1 = 0
                         }
 
@@ -322,18 +322,18 @@ class Rasterizer3D(
                                             return
                                         }
 
-                                        drawTriangleScanline(graphicsPixels, var1, 0, 0, var3 shr 14, var5 shr 14, var7, var19)
+                                        drawTriangleScanline(graphicsPixels, var1, 0, 0, var3 shr 14, var5 shr 14, g, var19)
                                         var3 += var16
                                         var5 += var17
-                                        var7 += var20
+                                        g += var20
                                         var1 += graphicsPixelsWidth
                                     }
                                 }
 
-                                drawTriangleScanline(graphicsPixels, var1, 0, 0, var3 shr 14, var4 shr 14, var7, var19)
+                                drawTriangleScanline(graphicsPixels, var1, 0, 0, var3 shr 14, var4 shr 14, g, var19)
                                 var3 += var16
                                 var4 += var15
-                                var7 += var20
+                                g += var20
                                 var1 += graphicsPixelsWidth
                             }
                         } else {
@@ -350,18 +350,18 @@ class Rasterizer3D(
                                             return
                                         }
 
-                                        drawTriangleScanline(graphicsPixels, var1, 0, 0, var5 shr 14, var3 shr 14, var7, var19)
+                                        drawTriangleScanline(graphicsPixels, var1, 0, 0, var5 shr 14, var3 shr 14, g, var19)
                                         var3 += var16
                                         var5 += var17
-                                        var7 += var20
+                                        g += var20
                                         var1 += graphicsPixelsWidth
                                     }
                                 }
 
-                                drawTriangleScanline(graphicsPixels, var1, 0, 0, var4 shr 14, var3 shr 14, var7, var19)
+                                drawTriangleScanline(graphicsPixels, var1, 0, 0, var4 shr 14, var3 shr 14, g, var19)
                                 var3 += var16
                                 var4 += var15
-                                var7 += var20
+                                g += var20
                                 var1 += graphicsPixelsWidth
                             }
                         }
@@ -371,7 +371,7 @@ class Rasterizer3D(
                         if (var1 < 0) {
                             var5 -= var16 * var1
                             var4 -= var15 * var1
-                            var7 -= var20 * var1
+                            g -= var20 * var1
                             var1 = 0
                         }
 
@@ -395,18 +395,18 @@ class Rasterizer3D(
                                             return
                                         }
 
-                                        drawTriangleScanline(graphicsPixels, var1, 0, 0, var3 shr 14, var4 shr 14, var7, var19)
+                                        drawTriangleScanline(graphicsPixels, var1, 0, 0, var3 shr 14, var4 shr 14, g, var19)
                                         var3 += var17
                                         var4 += var15
-                                        var7 += var20
+                                        g += var20
                                         var1 += graphicsPixelsWidth
                                     }
                                 }
 
-                                drawTriangleScanline(graphicsPixels, var1, 0, 0, var5 shr 14, var4 shr 14, var7, var19)
+                                drawTriangleScanline(graphicsPixels, var1, 0, 0, var5 shr 14, var4 shr 14, g, var19)
                                 var5 += var16
                                 var4 += var15
-                                var7 += var20
+                                g += var20
                                 var1 += graphicsPixelsWidth
                             }
                         } else {
@@ -423,18 +423,18 @@ class Rasterizer3D(
                                             return
                                         }
 
-                                        drawTriangleScanline(graphicsPixels, var1, 0, 0, var4 shr 14, var3 shr 14, var7, var19)
+                                        drawTriangleScanline(graphicsPixels, var1, 0, 0, var4 shr 14, var3 shr 14, g, var19)
                                         var3 += var17
                                         var4 += var15
-                                        var7 += var20
+                                        g += var20
                                         var1 += graphicsPixelsWidth
                                     }
                                 }
 
-                                drawTriangleScanline(graphicsPixels, var1, 0, 0, var4 shr 14, var5 shr 14, var7, var19)
+                                drawTriangleScanline(graphicsPixels, var1, 0, 0, var4 shr 14, var5 shr 14, g, var19)
                                 var5 += var16
                                 var4 += var15
-                                var7 += var20
+                                g += var20
                                 var1 += graphicsPixelsWidth
                             }
                         }
@@ -449,14 +449,14 @@ class Rasterizer3D(
                     var1 = clippingHeight
                 }
 
-                var8 = var19 + ((var8 shl 8) - var5 * var19)
+                b = var19 + ((b shl 8) - var5 * var19)
                 if (var0 < var1) {
                     var5 = var5 shl 14
                     var4 = var5
                     if (var2 < 0) {
                         var4 -= var15 * var2
                         var5 -= var17 * var2
-                        var8 -= var20 * var2
+                        b -= var20 * var2
                         var2 = 0
                     }
 
@@ -480,18 +480,18 @@ class Rasterizer3D(
                                         return
                                     }
 
-                                    drawTriangleScanline(graphicsPixels, var2, 0, 0, var4 shr 14, var3 shr 14, var8, var19)
+                                    drawTriangleScanline(graphicsPixels, var2, 0, 0, var4 shr 14, var3 shr 14, b, var19)
                                     var4 += var15
                                     var3 += var16
-                                    var8 += var20
+                                    b += var20
                                     var2 += graphicsPixelsWidth
                                 }
                             }
 
-                            drawTriangleScanline(graphicsPixels, var2, 0, 0, var4 shr 14, var5 shr 14, var8, var19)
+                            drawTriangleScanline(graphicsPixels, var2, 0, 0, var4 shr 14, var5 shr 14, b, var19)
                             var4 += var15
                             var5 += var17
-                            var8 += var20
+                            b += var20
                             var2 += graphicsPixelsWidth
                         }
                     } else {
@@ -508,18 +508,18 @@ class Rasterizer3D(
                                         return
                                     }
 
-                                    drawTriangleScanline(graphicsPixels, var2, 0, 0, var3 shr 14, var4 shr 14, var8, var19)
+                                    drawTriangleScanline(graphicsPixels, var2, 0, 0, var3 shr 14, var4 shr 14, b, var19)
                                     var4 += var15
                                     var3 += var16
-                                    var8 += var20
+                                    b += var20
                                     var2 += graphicsPixelsWidth
                                 }
                             }
 
-                            drawTriangleScanline(graphicsPixels, var2, 0, 0, var5 shr 14, var4 shr 14, var8, var19)
+                            drawTriangleScanline(graphicsPixels, var2, 0, 0, var5 shr 14, var4 shr 14, b, var19)
                             var4 += var15
                             var5 += var17
-                            var8 += var20
+                            b += var20
                             var2 += graphicsPixelsWidth
                         }
                     }
@@ -529,7 +529,7 @@ class Rasterizer3D(
                     if (var2 < 0) {
                         var3 -= var15 * var2
                         var5 -= var17 * var2
-                        var8 -= var20 * var2
+                        b -= var20 * var2
                         var2 = 0
                     }
 
@@ -553,18 +553,18 @@ class Rasterizer3D(
                                         return
                                     }
 
-                                    drawTriangleScanline(graphicsPixels, var2, 0, 0, var4 shr 14, var5 shr 14, var8, var19)
+                                    drawTriangleScanline(graphicsPixels, var2, 0, 0, var4 shr 14, var5 shr 14, b, var19)
                                     var4 += var16
                                     var5 += var17
-                                    var8 += var20
+                                    b += var20
                                     var2 += graphicsPixelsWidth
                                 }
                             }
 
-                            drawTriangleScanline(graphicsPixels, var2, 0, 0, var3 shr 14, var5 shr 14, var8, var19)
+                            drawTriangleScanline(graphicsPixels, var2, 0, 0, var3 shr 14, var5 shr 14, b, var19)
                             var3 += var15
                             var5 += var17
-                            var8 += var20
+                            b += var20
                             var2 += graphicsPixelsWidth
                         }
                     } else {
@@ -581,18 +581,18 @@ class Rasterizer3D(
                                         return
                                     }
 
-                                    drawTriangleScanline(graphicsPixels, var2, 0, 0, var5 shr 14, var4 shr 14, var8, var19)
+                                    drawTriangleScanline(graphicsPixels, var2, 0, 0, var5 shr 14, var4 shr 14, b, var19)
                                     var4 += var16
                                     var5 += var17
-                                    var8 += var20
+                                    b += var20
                                     var2 += graphicsPixelsWidth
                                 }
                             }
 
-                            drawTriangleScanline(graphicsPixels, var2, 0, 0, var5 shr 14, var3 shr 14, var8, var19)
+                            drawTriangleScanline(graphicsPixels, var2, 0, 0, var5 shr 14, var3 shr 14, b, var19)
                             var3 += var15
                             var5 += var17
-                            var8 += var20
+                            b += var20
                             var2 += graphicsPixelsWidth
                         }
                     }

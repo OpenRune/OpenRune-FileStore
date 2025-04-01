@@ -694,7 +694,7 @@ data class ModelType(
         }
     }
 
-    private fun append(models: Collection<ModelType>) {
+    fun append(models: Collection<ModelType>) {
         vertexCount = 0
         triangleCount = 0
         renderPriority = 0
@@ -1196,12 +1196,12 @@ data class ModelType(
         return illuminatedModel
     }
 
-    fun adjustColorBrightness(var0: Int, var1: Int): Int {
+    fun adjustColorBrightness(colour: Int, var1: Int): Int {
         var var1 = var1
-        var1 = ((var0 and 127) * var1) shr 7
+        var1 = ((colour and 127) * var1) shr 7
         var1 = boundToRange(var1)
 
-        return (var0 and 65408) + var1
+        return (colour and 65408) + var1
     }
 
     fun boundToRange(var0: Int): Int {
