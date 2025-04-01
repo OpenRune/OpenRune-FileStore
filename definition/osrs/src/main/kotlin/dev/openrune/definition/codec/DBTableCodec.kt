@@ -79,6 +79,22 @@ fun ByteBuf.writeColumnFields(types: Array<Type>, values: Array<Any>?) {
     }
 }
 
+fun ByteBuf.writeColumnFields(types: Array<Type>, intValues: Map<Int, Int>, stringValues: Map<Int, String>) {
+    val fieldCount = (intValues.size + stringValues.size) / types.size
+    writeSmart(fieldCount)
+    for (fieldIndex in 0 until fieldCount) {
+        for (typeIndex in types.indices) {
+            val type = types[typeIndex]
+            val valuesIndex = fieldIndex * types.size + typeIndex
+            if (type == Type.STRING) {
+                writeString(stringValues[valuesIndex])
+            } else {
+                writeInt(intValues[valuesIndex]!!)
+            }
+        }
+    }
+}
+
 fun decodeColumnFields(buffer: ByteBuf, types: Array<Type>): Array<Any> {
     val fieldCount = buffer.readSmart()
     val values = arrayOfNulls<Any>(fieldCount * types.size)
