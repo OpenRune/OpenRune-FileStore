@@ -124,6 +124,7 @@ object OpenRS2 {
             .filter { it.game.contains(game.formatName()) }
             .filter { it.builds.isNotEmpty() && it.builds[0].major == rev }
             .filter { it.timestamp != null }
+            .filter { it.size != 0.toLong() }
             .filter { it.environment == "live" }
             .maxByOrNull { it.timestamp.stringToTimestamp().toEchochUTC() }
             ?: error("Unable to find Revision: $rev")
