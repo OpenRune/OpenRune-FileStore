@@ -1,6 +1,8 @@
 package dev.openrune.definition.util
 
 import io.netty.buffer.ByteBuf
+import io.netty.util.ByteProcessor
+import java.nio.charset.Charset
 
 fun ByteBuf.readUnsignedBoolean() = readUnsignedByte().toInt() == 1
 
@@ -51,6 +53,19 @@ fun ByteBuf.readString(): String {
     return sb.toString()
 }
 
+public fun ByteBuf.readStringCP(charset: Charset = Cp1252Charset): String {
+    val start = readerIndex()
+
+    val end = forEachByte(ByteProcessor.FIND_NUL)
+    require(end != -1) {
+        "Unterminated string"
+    }
+
+    val s = toString(start, end - start, charset)
+    readerIndex(end + 1)
+    return s
+}
+
 //Writing
 
 fun ByteBuf.writeByte(value: Boolean) {
@@ -74,6 +89,12 @@ fun ByteBuf.writeString(value: String?) {
     writeByte(0)
 }
 
+public fun ByteBuf.writeStringCP(s: CharSequence, charset: Charset = Cp1252Charset): ByteBuf {
+    writeCharSequence(s, charset)
+    writeByte(0)
+    return this
+}
+
 fun ByteBuf.writePrefixedString(value: String) {
     writeByte(0)
     for (char in value) {
@@ -84,4 +105,27 @@ fun ByteBuf.writePrefixedString(value: String) {
 
 fun ByteBuf.toArray(): ByteArray {
     return ByteArray(writerIndex()).also { this.getBytes(0, it) }
+}
+
+private const val HALF_UBYTE = 0x80
+
+fun ByteBuf.writeNullableLargeSmartCorrect(value: Int?): ByteBuf = when {
+    value == null -> {
+        writeShort(0x7FFF)
+    }
+    value < Short.MAX_VALUE -> {
+        writeShort(value)
+    }
+    else -> {
+        writeInt(value)
+        val writtenValue = getByte(writerIndex() - 4)
+        setByte(writerIndex() - 4, writtenValue + HALF_UBYTE)
+    }
+}
+
+public fun ByteBuf.readNullableLargeSmartCorrect(): Int? = if (getByte(readerIndex()) < 0) {
+    readInt() and Integer.MAX_VALUE
+} else {
+    val result = readUnsignedShort()
+    if (result == 32767) null else result
 }
