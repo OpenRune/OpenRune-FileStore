@@ -185,6 +185,8 @@ abstract class ReadOnlyCache(
 
     override fun indices() = indices
 
+    override fun exists(id: Int) = indices.getOrNull(id) != null
+
     override fun archives(index: Int) = archives.getOrNull(index) ?: IntArray(0)
 
     override fun archiveCount(index: Int) = archives.size
@@ -208,6 +210,20 @@ abstract class ReadOnlyCache(
     }
 
     override fun write(index: Int, archive: String, data: ByteArray, xteas: IntArray?) {
+        throw UnsupportedOperationException("Read only cache.")
+    }
+
+    override fun createIndex(
+        compressionType: Compression,
+        version: Int,
+        revision: Int,
+        named: Boolean,
+        whirlpool: Boolean,
+        lengths: Boolean,
+        checksums: Boolean,
+        writeReferenceTable: Boolean,
+        id: Int
+    ) {
         throw UnsupportedOperationException("Read only cache.")
     }
 

@@ -10,6 +10,20 @@ interface Cache {
 
     fun indexCount(): Int
 
+    fun exists(id : Int): Boolean
+
+    fun createIndex(
+        compressionType: Compression = Compression.GZIP,
+        version: Int = 6,
+        revision: Int = 0,
+        named: Boolean = false,
+        whirlpool: Boolean = false,
+        lengths: Boolean = false,
+        checksums: Boolean = false,
+        writeReferenceTable: Boolean = true,
+        id: Int = if (indices().isEmpty()) 0 else indexCount() + 1
+    )
+
     fun indices(): IntArray
 
     fun sector(index: Int, archive: Int): ByteArray?

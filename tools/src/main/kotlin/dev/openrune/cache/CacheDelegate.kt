@@ -1,7 +1,9 @@
 package dev.openrune.cache
 
 import com.displee.cache.CacheLibrary
+import com.displee.compress.CompressionType
 import dev.openrune.filesystem.Cache
+import dev.openrune.filesystem.Compression
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 class CacheDelegate(val library: CacheLibrary) : Cache {
@@ -11,6 +13,8 @@ class CacheDelegate(val library: CacheLibrary) : Cache {
     override val versionTable: ByteArray = library.generateUkeys()
 
     override fun indexCount() = library.indices().size
+
+    override fun exists(id : Int): Boolean = library.exists(id)
 
     override fun indices() = library.indices().map { it.id }.toIntArray()
 
@@ -48,6 +52,30 @@ class CacheDelegate(val library: CacheLibrary) : Cache {
     override fun data(index: Int, archive: Int, file: Int, xtea: IntArray?) = library.data(index, archive, file, xtea)
 
     override fun data(index: Int, name: String, xtea: IntArray?) = library.data(index, name, xtea)
+
+    override fun createIndex(
+        compressionType: Compression,
+        version: Int,
+        revision: Int,
+        named: Boolean,
+        whirlpool: Boolean,
+        lengths: Boolean,
+        checksums: Boolean,
+        writeReferenceTable: Boolean,
+        id: Int
+    ) {
+        library.createIndex(
+            CompressionType.valueOf(compressionType.name),
+            version,
+            revision,
+            named,
+            whirlpool,
+            lengths,
+            checksums,
+            writeReferenceTable,
+            id
+        )
+    }
 
     override fun write(index: Int, archive: Int, file: Int, data: ByteArray, xteas: IntArray?) {
         library.put(index, archive, file, data, xteas)
