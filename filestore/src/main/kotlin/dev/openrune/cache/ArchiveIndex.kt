@@ -22,3 +22,7 @@ const val WORLDMAP_GEOGRAPHY = 18
 const val WORLDMAP = 19
 const val WORLDMAP_GROUND = 20
 const val DBTABLEINDEX = 21
+const val ANIMAYAS = 22
+const val INTERFACES2 = 23
+const val GAMEVALS = 24
+const val MODELSRT7 = 25

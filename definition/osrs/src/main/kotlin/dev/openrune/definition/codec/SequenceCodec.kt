@@ -2,6 +2,8 @@ package dev.openrune.definition.codec
 
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.SequenceType
+import dev.openrune.definition.util.readString
+import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
 import kotlin.math.ceil
 
@@ -110,6 +112,7 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
                     mask!![buffer.readUnsignedByte().toInt()] = true
                 }
             }
+            18 -> debugName = buffer.readString()
         }
     }
 
@@ -232,6 +235,11 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
                 }
             }
 
+        }
+
+        if (definition.debugName.isNotEmpty()) {
+            writeByte(18)
+            writeString(definition.debugName)
         }
 
         writeByte(0)

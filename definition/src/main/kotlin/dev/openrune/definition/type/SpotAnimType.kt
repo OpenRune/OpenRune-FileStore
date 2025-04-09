@@ -19,4 +19,5 @@ data class SpotAnimType(
     var modelId: Int = 0,
     var ambient: Int = 0,
     var contrast: Int = 0,
+    var debugName : String = ""
 ) : Definition, Recolourable

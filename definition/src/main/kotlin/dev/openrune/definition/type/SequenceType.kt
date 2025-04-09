@@ -30,6 +30,7 @@ data class SequenceType(
     var rangeEnd : Int = 0,
     var skeletalSounds: MutableMap<Int, SoundData> = emptyMap<Int, SoundData>().toMutableMap(),
     var mask: MutableList<Boolean>? = null,
+    var debugName : String = ""
 
 ) : Definition, Sound {
     var lengthInCycles = 0

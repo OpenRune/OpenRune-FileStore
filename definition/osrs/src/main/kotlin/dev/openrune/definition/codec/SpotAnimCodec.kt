@@ -2,6 +2,8 @@ package dev.openrune.definition.codec
 
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.SpotAnimType
+import dev.openrune.definition.util.readString
+import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
 
 class SpotAnimCodec : DefinitionCodec<SpotAnimType> {
@@ -14,6 +16,7 @@ class SpotAnimCodec : DefinitionCodec<SpotAnimType> {
             6 -> rotation = buffer.readUnsignedShort()
             7 -> ambient = buffer.readUnsignedByte().toInt()
             8 -> contrast = buffer.readUnsignedByte().toInt()
+            9 -> debugName = buffer.readString()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
         }
@@ -47,6 +50,10 @@ class SpotAnimCodec : DefinitionCodec<SpotAnimType> {
         if (definition.contrast != 0) {
             writeByte(8)
             writeByte(definition.contrast)
+        }
+        if (definition.debugName.isNotEmpty()) {
+            writeByte(9)
+            writeString(definition.debugName)
         }
         definition.writeColoursTextures(this)
 
