@@ -26,7 +26,7 @@ object OpenRS2 {
     private const val CACHE_DOWNLOAD_LOCATION = "https://archive.openrs2.org/caches.json"
     var allCaches: Array<CacheInfo> = emptyArray()
 
-    private fun loadCaches() {
+    fun loadCaches() {
         if (allCaches.isEmpty()) {
             val json = URL(CACHE_DOWNLOAD_LOCATION).readText()
             allCaches = Gson().fromJson(json, Array<CacheInfo>::class.java)
@@ -110,7 +110,7 @@ object OpenRS2 {
         }
     }
 
-    private fun getLatest(caches: Array<CacheInfo>, game: GameType = GameType.OLDSCHOOL) =
+    fun getLatest(caches: Array<CacheInfo>, game: GameType = GameType.OLDSCHOOL) =
         caches
             .filter { it.game.contains(game.formatName()) }
             .filter { it.builds.isNotEmpty() }
@@ -119,7 +119,7 @@ object OpenRS2 {
             .maxByOrNull { it.timestamp.stringToTimestamp().toEchochUTC() }
             ?: error("Unable to find Latest Revision")
 
-    private fun findRevision(rev: Int, game: GameType = GameType.OLDSCHOOL) =
+    fun findRevision(rev: Int, game: GameType = GameType.OLDSCHOOL) =
         allCaches
             .filter { it.game.contains(game.formatName()) }
             .filter { it.builds.isNotEmpty() && it.builds[0].major == rev }
