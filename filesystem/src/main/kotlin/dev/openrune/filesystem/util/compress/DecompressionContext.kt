@@ -22,10 +22,10 @@ internal class DecompressionContext {
         }
         val buffer = ByteBuffer.wrap(data)
         val type = buffer.readUnsignedByte()
-        val compressedSize = buffer.readInt() and 0xFFFFFF
+        val compressedSize = buffer.readInt()
         var decompressedSize = 0
         if (type != 0) {
-            decompressedSize = buffer.readInt() and 0xFFFFFF
+            decompressedSize = buffer.readInt()
         }
         when (type) {
             NONE -> {
