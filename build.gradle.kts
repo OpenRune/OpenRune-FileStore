@@ -4,7 +4,7 @@ plugins {
 }
 
 val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "K:\\documents\\GitHub\\hosting\\"
-val buildNumber = "2.0.12"
+val buildNumber = "2.0.13"
 
 subprojects {
     apply(plugin = "kotlin")
