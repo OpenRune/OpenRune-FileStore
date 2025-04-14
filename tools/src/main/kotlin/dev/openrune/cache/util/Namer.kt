@@ -8,11 +8,14 @@ class Namer {
     val used = mutableSetOf<String>()
 
     fun name(name: String?, id: String, language: Language = Language.JAVA, writeToJava: Boolean = true): String? {
-        if (name == null) return null
-
+        var fname = name
+        if (fname == null) return null
+        if (fname.isBlank()) {
+            fname = "UNKNOWN"
+        }
         val sanitizedName = when (language) {
-            Language.RSCM -> if (writeToJava) sanitizeRSCM(name) else name
-            else -> sanitize(name)
+            Language.RSCM -> if (writeToJava) sanitizeRSCM(fname) else fname
+            else -> sanitize(fname)
         } ?: return null
 
         if (language != Language.RSCM) {
@@ -31,6 +34,7 @@ class Namer {
     companion object {
 
         fun sanitizeRSCM(value: String): String {
+
             if (value.matches(Regex("[A-Z_][A-Z0-9_]*"))) {
                 return value
             }

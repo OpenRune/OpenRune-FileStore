@@ -12,6 +12,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.Unpooled
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.Path
 
 enum class Language(val ext: String) {
     KOTLIN(".kt"),
@@ -28,6 +29,7 @@ data class GameValSettings(
 
 data class TypeExportSettings(
     val packageName: String = "",
+    val ignoreNullObjects : Boolean = false,
     val overrideNames: List<TypeNameOverride> = emptyList(),
     var useGameVal: GameValSettings? = null
 ) {
@@ -169,8 +171,6 @@ class TypeDumper(
     private fun writeGameVals() {
         val gameValData = mutableMapOf<Int, StringBuilder>()
 
-
-
         for (group in cache.archives(GAMEVALS)) {
             val builder = StringBuilder()
             cache.files(GAMEVALS,group).forEach { file ->
@@ -293,7 +293,13 @@ class TypeDumper(
             if (tokens.size == 2) {
                 val (key, id) = tokens
                 val name = namer.name(key, id, language, writeToJava)
-                write(builder, fieldName(name, id))
+                if (exportSettings.ignoreNullObjects && group == LOCTYPES) {
+                    if (CacheManager.getObject(id.toInt())?.name != "null") {
+                        write(builder, fieldName(name, id))
+                    }
+                } else {
+                    write(builder, fieldName(name, id))
+                }
             }
         }
 
