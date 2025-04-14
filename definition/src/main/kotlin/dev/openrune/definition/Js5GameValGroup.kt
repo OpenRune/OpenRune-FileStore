@@ -1,34 +1,26 @@
 package dev.openrune.definition
 
-object Js5GameValGroup {
-    const val OBJTYPES = 0
-    const val NPCTYPES = 1
-    const val INVTYPES = 2
-    const val VARPTYPES = 3
-    const val VARBITTYPES = 4
-    const val LOCTYPES = 6
-    const val SEQTYPES = 7
-    const val SPOTTYPES = 8
-    const val ROWTYPES = 9
-    const val TABLETYPES = 10
-    const val SOUNDTYPES = 11
-    const val SPRITETYPES = 12
-    const val IFTYPES = 13
+enum class Js5GameValGroup(val id: Int, val groupName: String) {
+    OBJTYPES(0, "items"),
+    NPCTYPES(1, "npcs"),
+    INVTYPES(2, "inv"),
+    VARPTYPES(3, "varp"),
+    VARBITTYPES(4, "varbits"),
+    LOCTYPES(6, "objects"),
+    SEQTYPES(7, "sequences"),
+    SPOTTYPES(8, "spotanims"),
+    ROWTYPES(9, "rowtypes"),
+    TABLETYPES(10, "tables"),
+    SOUNDTYPES(11, "sounds"),
+    SPRITETYPES(12, "sprites"),
+    IFTYPES(13, "components");
 
-    fun toString(type: Int): String = when (type) {
-        OBJTYPES -> "objtypes"
-        NPCTYPES -> "npctypes"
-        INVTYPES -> "invtypes"
-        VARPTYPES -> "varptypes"
-        VARBITTYPES -> "varbittypes"
-        LOCTYPES -> "loctypes"
-        SEQTYPES -> "seqtypes"
-        SPOTTYPES -> "spottypes"
-        ROWTYPES -> "rowtypes"
-        TABLETYPES -> "tabletypes"
-        SOUNDTYPES -> "soundtypes"
-        SPRITETYPES -> "spritetypes"
-        IFTYPES -> "iftypes"
-        else -> error("Unknown group type: $type")
+    companion object {
+        private val idMap = values().associateBy { it.id }
+
+        fun fromId(id: Int): Js5GameValGroup =
+            idMap[id] ?: error("Unknown group type: $id")
     }
+
+    override fun toString(): String = groupName
 }

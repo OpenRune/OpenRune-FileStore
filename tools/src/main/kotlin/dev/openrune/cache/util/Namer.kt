@@ -1,57 +1,105 @@
 package dev.openrune.cache.util
 
+import dev.openrune.cache.tools.Language
 import java.util.*
 
 class Namer {
-    private val used: MutableSet<String> = HashSet()
 
-    fun name(name: String?, id: Int): String? {
-        var name = name
-        name = sanitize(name)
+    val used = mutableSetOf<String>()
 
-        if (name == null) {
-            return null
+    fun name(name: String?, id: String, language: Language = Language.JAVA, writeToJava: Boolean = true): String? {
+        if (name == null) return null
+
+        val sanitizedName = when (language) {
+            Language.RSCM -> if (writeToJava) sanitizeRSCM(name) else name
+            else -> sanitize(name)
+        } ?: return null
+
+        if (language != Language.RSCM) {
+            var uniqueName = sanitizedName
+            if (used.contains(uniqueName)) {
+                uniqueName += "_$id"
+            }
+            used.add(uniqueName)
+            return uniqueName
         }
 
-        if (used.contains(name)) {
-            name = name + "_" + id
-            assert(!used.contains(name))
-        }
-
-        used.add(name)
-
-        return name
+        return sanitizedName
     }
 
+
     companion object {
-        private fun sanitize(`in`: String?): String? {
-            val s = removeTags(`in`)
-                .uppercase(Locale.getDefault())
-                .replace(' ', '_')
-                .replace("[^a-zA-Z0-9_]".toRegex(), "")
-            if (s.isEmpty()) {
-                return null
+
+        fun sanitizeRSCM(value: String): String {
+            if (value.matches(Regex("[A-Z_][A-Z0-9_]*"))) {
+                return value
             }
-            return if (Character.isDigit(s[0])) {
-                "_$s"
-            } else {
-                s
+
+            var formatted = value
+                .uppercase()
+                .replace(Regex("[^A-Z0-9_]"), "_")
+                .replace(Regex("_+"), "_")
+                .trim('_')
+
+            // If it starts with a digit after formatting, prepend an underscore
+            if (formatted.firstOrNull()?.isDigit() == true) {
+                formatted = "_$formatted"
             }
+
+            return formatted
         }
 
-        fun removeTags(str: String?): String {
-            val builder = StringBuilder(str!!.length)
+        fun formatForClassName(value: String): String {
+            var value1 = value
+            if (value.isBlank()) {
+                value1 = "UNKOWN"
+            }
+            val prefix = Regex("^_\\d*").find(value1)?.value.orEmpty()
+
+            // Remove the prefix from the original to process the rest
+            val remainder = value1.removePrefix(prefix)
+
+            // Split by underscores or non-alphanumeric characters
+            val words = remainder
+                .lowercase()
+                .split(Regex("[^a-zA-Z0-9]+"))
+                .filter { it.isNotBlank() }
+
+
+            val capitalized = words.joinToString("") { it.replaceFirstChar(Char::uppercaseChar) }
+
+            var formatted = prefix + capitalized
+
+
+            if (formatted.firstOrNull()?.isDigit() == true) {
+                formatted = "_$formatted"
+            }
+
+            return formatted
+        }
+
+        private fun sanitize(input: String?): String? {
+            if (input == null) return null
+
+            val sanitized = removeTags(input)
+                .uppercase(Locale.getDefault())
+                .replace(' ', '_')
+                .replace("[^A-Z0-9_]".toRegex(), "")
+
+            if (sanitized.isEmpty()) return null
+
+            return if (sanitized.first().isDigit()) "_$sanitized" else sanitized
+        }
+
+        fun removeTags(str: String): String {
+            val builder = StringBuilder(str.length)
             var inTag = false
 
-            for (i in 0 until str.length) {
-                val currentChar = str[i]
-
-                if (currentChar == '<') {
-                    inTag = true
-                } else if (currentChar == '>') {
-                    inTag = false
-                } else if (!inTag) {
-                    builder.append(currentChar)
+            for (char in str) {
+                when (char) {
+                    '<' -> inTag = true
+                    '>' -> inTag = false
+                    else -> if (!inTag) builder.append(char)
                 }
             }
 
