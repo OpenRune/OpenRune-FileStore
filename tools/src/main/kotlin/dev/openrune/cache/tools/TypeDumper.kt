@@ -2,7 +2,6 @@ package dev.openrune.cache.tools
 
 import dev.openrune.OsrsCacheProvider
 import dev.openrune.cache.*
-import dev.openrune.cache.tools.TypeExportSettings.Companion.items
 import dev.openrune.cache.util.Namer
 import dev.openrune.cache.util.Namer.Companion.formatForClassName
 import dev.openrune.definition.Js5GameValGroup
@@ -10,11 +9,9 @@ import dev.openrune.definition.Js5GameValGroup.*
 import dev.openrune.definition.util.readString
 import dev.openrune.filesystem.Cache
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.Path
 
 enum class Language(val ext: String) {
     KOTLIN(".kt"),
@@ -71,9 +68,10 @@ class TypeDumper(
         Js5GameValGroup.entries.forEach { names[it.id] = it.groupName }
         exportSettings.overrideNames.forEach { names[it.valType.id] = it.name }
 
-
-        exportSettings.useGameVal = null
-
+        if (exportSettings.useGameVal != null && rev < 230) {
+            println("Unable to use gameVal for this cache, using lite mode.")
+            exportSettings.useGameVal = null
+        }
 
         this.outputPath = outputPath
         this.language = language
@@ -318,6 +316,7 @@ class TypeDumper(
             TABLETYPES -> {
                 data.readUnsignedByte()
                 val tableName = data.readString()
+                if (tableName.isEmpty()) return
                 var columnId = 0
                 while (data.readUnsignedByte().toInt() != 0) {
                     val columnName = data.readString()
@@ -327,6 +326,7 @@ class TypeDumper(
             }
             IFTYPES -> {
                 var interfaceName = data.readString().takeIf { it.isNotEmpty() } ?: "_"
+                if (interfaceName.isEmpty()) return
                 var componentId = 0
                 while (data.readUnsignedByte().toInt() != 0xFF) {
                     val componentName = data.readString().takeIf { it.isNotEmpty() } ?: "_"
@@ -338,6 +338,7 @@ class TypeDumper(
                 val arr = ByteArray(data.readableBytes())
                 data.readBytes(arr)
                 val name = String(arr)
+                if (name.isEmpty()) return
                 builder.appendLine("$name:$id")
             }
         }

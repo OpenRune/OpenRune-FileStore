@@ -14,6 +14,7 @@ import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
+import dev.openrune.definition.Js5GameValGroup
 import dev.openrune.definition.RSCMHandler
 import dev.openrune.definition.codec.*
 import dev.openrune.definition.util.Type
@@ -22,16 +23,16 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.Unpooled
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.serializer
-import java.awt.image.ReplicateScaleFilter
 import java.io.File
 import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
 
 class PackType(
-    val index : Int,
+    val index: Int,
     val archive: Int,
     val codecClass: KClass<*>,
     val name: String,
+    val gameValGroup: Js5GameValGroup? = null,
     val modify: ((Map<String, Any>, Any) -> Unit)? = null
 ) {
     val typeClass: KClass<*> = codecClass.supertypes.firstOrNull()
@@ -52,7 +53,7 @@ class PackConfig(
 
     init {
 
-        packTypes.registerPackType(ITEM, ItemCodec::class, "item") { content, def: ItemType ->
+        packTypes.registerPackType(ITEM, ItemCodec::class, "item",Js5GameValGroup.OBJTYPES) { content, def: ItemType ->
             if (content["equipmentType"] != null) {
                 content["equipmentType"]?.toString()?.replace("\"", "")?.takeIf { ItemSlotType.fetchTypes().contains(it) }?.let { type ->
                     ItemSlotType.fetchType(type)?.apply {
@@ -68,13 +69,13 @@ class PackConfig(
         }
 
         packTypes.registerPackType(index = TEXTURES, archive = 0, codec = TextureCodec::class, name = "texture")
-        packTypes.registerPackType(OBJECT, ObjectCodec::class, "object") { content, def: ObjectType ->
+        packTypes.registerPackType(OBJECT, ObjectCodec::class, "object",Js5GameValGroup.LOCTYPES) { content, def: ObjectType ->
             def.actions.fromOptions("option", content)
         }
-        packTypes.registerPackType(SPOTANIM, SpotAnimCodec::class, "graphics")
-        packTypes.registerPackType(SEQUENCE, SequenceCodec::class, "animation")
+        packTypes.registerPackType(SPOTANIM, SpotAnimCodec::class, "graphics", Js5GameValGroup.SPOTTYPES)
+        packTypes.registerPackType(SEQUENCE, SequenceCodec::class, "animation", Js5GameValGroup.SEQTYPES)
         packTypes.registerPackType(STRUCT, SequenceCodec::class, "struct")
-        packTypes.registerPackType(NPC, NPCCodec::class, "npc") { content, def: NpcType ->
+        packTypes.registerPackType(NPC, NPCCodec::class, "npc",Js5GameValGroup.NPCTYPES) { content, def: NpcType ->
             def.actions.fromOptions("option", content)
         }
 
@@ -108,18 +109,18 @@ class PackConfig(
                 def.values[key] = value
             }
         }
-        packTypes.registerPackType(VARBIT, VarBitCodec::class, "varbit")
+        packTypes.registerPackType(VARBIT, VarBitCodec::class, "varbit",Js5GameValGroup.VARBITTYPES)
         packTypes.registerPackType(AREA, AreaCodec::class, "area") { content, def: AreaType ->
             def.options.fromOptions("option", content)
         }
         packTypes.registerPackType(HEALTHBAR, HealthBarCodec::class, "health")
         packTypes.registerPackType(HITSPLAT, HitSplatCodec::class, "hitsplat")
         packTypes.registerPackType(IDENTKIT, IdentityKitCodec::class, "idk")
-        packTypes.registerPackType(INV, InventoryCodec::class, "inventory")
+        packTypes.registerPackType(INV, InventoryCodec::class, "inventory",Js5GameValGroup.INVTYPES)
         packTypes.registerPackType(OVERLAY, OverlayCodec::class, "overlay")
         packTypes.registerPackType(UNDERLAY, OverlayCodec::class, "underlay")
         packTypes.registerPackType(PARAMS, ParamCodec::class, "params")
-        packTypes.registerPackType(VARPLAYER, VarCodec::class, "varp")
+        packTypes.registerPackType(VARPLAYER, VarCodec::class, "varp",Js5GameValGroup.VARPTYPES)
         packTypes.registerPackType(VARCLIENT, VarClientCodec::class, "varclient")
 
     }
@@ -197,6 +198,21 @@ class PackConfig(
 
         if (packType.index == TEXTURES) {
             def = manageTexture(cache,def) as T
+        }
+
+        if (packType.gameValGroup != null) {
+            val matchingName = RSCMHandler.mappings.entries.firstOrNull { it.value == defId }?.key
+
+            val name = matchingName?.substringAfter(".") ?: when (packType.gameValGroup) {
+                Js5GameValGroup.OBJTYPES -> (def as ItemType).name
+                Js5GameValGroup.NPCTYPES -> (def as NpcType).name
+                Js5GameValGroup.LOCTYPES -> (def as ObjectType).name
+                else -> null
+            }
+
+            if (!name.isNullOrBlank() && name != "null") {
+                CacheTool.addGameValMapping(packType.gameValGroup, name, defId)
+            }
         }
 
         val writer = Unpooled.buffer(4096)
@@ -300,10 +316,11 @@ class PackConfig(
         fun <T : Definition>MutableMap<String, PackType>.registerPackType(
             archive: Int, codec: KClass<*>,
             name: String,
+            gameValGroup: Js5GameValGroup? = null,
             index: Int = CONFIGS,
             modify: ((Map<String, Any>, T) -> Unit)
         ) {
-            val packType = PackType(index,archive, codec, name, modify as ((Map<String, Any>, Any) -> Unit)?)
+            val packType = PackType(index,archive, codec, name, gameValGroup,modify as ((Map<String, Any>, Any) -> Unit)?)
             this[packType.name] = packType
         }
 
@@ -312,13 +329,14 @@ class PackConfig(
             archive: Int,
             codec: KClass<*>,
             name: String,
+            gameValGroup: Js5GameValGroup? = null
         ) {
-            val packType = PackType(index,archive, codec, name, null)
+            val packType = PackType(index,archive, codec, name, gameValGroup)
             this[packType.name] = packType
         }
 
-        fun MutableMap<String, PackType>.registerPackType(archive: Int, codec: KClass<*>, name: String) {
-            registerPackType(CONFIGS,archive, codec, name)
+        fun MutableMap<String, PackType>.registerPackType(archive: Int, codec: KClass<*>, name: String, gameValGroup: Js5GameValGroup? = null) {
+            registerPackType(CONFIGS,archive, codec, name,gameValGroup)
         }
     }
 
