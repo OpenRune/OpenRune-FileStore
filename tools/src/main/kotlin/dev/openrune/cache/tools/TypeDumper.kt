@@ -12,7 +12,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.Unpooled
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.Path
 
 enum class Language(val ext: String) {
     KOTLIN(".kt"),
@@ -44,7 +43,7 @@ data class TypeExportSettings(
         fun spotAnimations(name: String) = TypeNameOverride(SPOTTYPES, name)
         fun rows(name: String) = TypeNameOverride(ROWTYPES, name)
         fun tables(name: String) = TypeNameOverride(TABLETYPES, name)
-        fun sounds(name: String) = TypeNameOverride(SOUNDTYPES, name)
+        fun jingles(name: String) = TypeNameOverride(JINGLETYOES, name)
         fun sprites(name: String) = TypeNameOverride(SPRITETYPES, name)
         fun iftypes(name: String) = TypeNameOverride(IFTYPES, name)
     }
