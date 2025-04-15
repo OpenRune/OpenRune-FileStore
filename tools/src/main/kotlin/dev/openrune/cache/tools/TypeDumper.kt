@@ -95,6 +95,7 @@ class TypeDumper(
 
     private fun writeItems() {
         val (builder, path) = generateWriter(LOCTYPES)
+        namer.used.clear()
         CacheManager.getItems().filterNot { it.value.isPlaceholder }.forEach { (index, item) ->
             val rawName = if (item.noteTemplateId > 0) "${item.name}_NOTES" else item.name
             if (rawName.isNotBlank()) {
@@ -107,6 +108,7 @@ class TypeDumper(
 
     private fun writeNpcs() {
         val (builder, path) = generateWriter(NPCTYPES)
+        namer.used.clear()
         CacheManager.getNpcs().forEach { (index, npc) ->
             val rawName = npc.name.replace("?", "")
             val name = if (rawName.isNotEmpty()) namer.name(npc.name, index.toString()) else "NULL_$index"
@@ -117,6 +119,7 @@ class TypeDumper(
 
     private fun writeObjs() {
         val (builder, path) = generateWriter(OBJTYPES)
+        namer.used.clear()
         CacheManager.getObjects().forEach { (index, obj) ->
             val rawName = obj.name.replace("?", "") ?: "null"
             if (rawName.isNotEmpty() && rawName != "null") {
@@ -182,7 +185,7 @@ class TypeDumper(
 
         Js5GameValGroup.entries.forEach { group ->
             val data = gameValData[group.id]
-
+            namer.used.clear()
             when (group) {
                 IFTYPES -> writeInterfacesAndComponents(group,data, writeToJava)
                 else -> writeGeneralGroupData(group, data, writeToJava)
@@ -286,7 +289,6 @@ class TypeDumper(
 
     private fun writeGeneralGroupData(group: Js5GameValGroup, data: StringBuilder?, writeToJava: Boolean) {
         val (builder, path) = generateWriter(group)
-
         data?.lines()?.forEach { line ->
             val tokens = line.split(":")
             if (tokens.size == 2) {
