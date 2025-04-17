@@ -1,12 +1,11 @@
 package dev.openrune.cache
 
-import dev.openrune.definition.Definition
 import dev.openrune.definition.type.*
 
 object CacheManager {
 
     private val combinedNpcs = mutableMapOf<Int, NpcType>()
-    private val combinedObjects = mutableMapOf<Int, dev.openrune.definition.type.ObjectType>()
+    private val combinedObjects = mutableMapOf<Int, ObjectType>()
     private val combinedItems = mutableMapOf<Int, ItemType>()
     private val combinedVarbits = mutableMapOf<Int, VarBitType>()
     private val combinedVarps = mutableMapOf<Int, VarpType>()
@@ -22,35 +21,22 @@ object CacheManager {
     fun init(vararg dataSources : CacheStore) {
         for (data in dataSources) {
             data.init()
-            combinedNpcs.putAll(applyIdOffset(data.npcs, data.npcOffset))
-            combinedObjects.putAll(applyIdOffset(data.objects, data.objectOffset))
-            combinedItems.putAll(applyIdOffset(data.items, data.itemOffset))
-            combinedVarbits.putAll(applyIdOffset(data.varbits, data.varbitOffset))
-            combinedVarps.putAll(applyIdOffset(data.varps, data.varpOffset))
-            combinedAnims.putAll(applyIdOffset(data.anims, data.animOffset))
-            combinedEnums.putAll(applyIdOffset(data.enums, data.enumOffset))
-            combinedHealthBars.putAll(applyIdOffset(data.healthBars, data.healthBarOffset))
-            combinedHitsplats.putAll(applyIdOffset(data.hitsplats, data.hitsplatOffset))
-            combinedStructs.putAll(applyIdOffset(data.structs, data.structOffset))
-            combinedDbrows.putAll(applyIdOffset(data.dbrows, data.dbrowOffset))
-            combinedDbtables.putAll(applyIdOffset(data.dbtables, data.dbtableOffset))
+            combinedNpcs.putAll(data.npcs.mapKeys { it.key + data.npcOffset })
+            combinedObjects.putAll(data.objects.mapKeys { it.key + data.objectOffset })
+            combinedItems.putAll(data.items.mapKeys { it.key + data.itemOffset })
+            combinedVarbits.putAll(data.varbits.mapKeys { it.key + data.varbitOffset })
+            combinedVarps.putAll(data.varps.mapKeys { it.key + data.varpOffset })
+            combinedAnims.putAll(data.anims.mapKeys { it.key + data.animOffset })
+            combinedEnums.putAll(data.enums.mapKeys { it.key + data.enumOffset })
+            combinedHealthBars.putAll(data.healthBars.mapKeys { it.key + data.healthBarOffset })
+            combinedHitsplats.putAll(data.hitsplats.mapKeys { it.key + data.hitsplatOffset })
+            combinedStructs.putAll(data.structs.mapKeys { it.key + data.structOffset })
+            combinedDbrows.putAll(data.dbrows.mapKeys { it.key + data.dbrowOffset })
+            combinedDbtables.putAll(data.dbtables.mapKeys { it.key + data.dbtableOffset })
         }
     }
 
-
-    private fun <T : Definition> applyIdOffset(definitions: MutableMap<Int, T>, offset: Int): MutableMap<Int, T> {
-        return if (offset != 0) {
-            definitions.mapKeys { (key, definition) ->
-                val newKey = key + offset
-                definition.id = newKey
-                newKey
-            }.toMutableMap()
-        } else {
-            definitions.toMutableMap()
-        }
-    }
-
-    private inline fun <T> getOrDefault(map: Map<Int, T>, id: Int, default: T, typeName: String): T {
+    private fun <T> getOrDefault(map: Map<Int, T>, id: Int, default: T, typeName: String): T {
         return map.getOrDefault(id, default).also {
             if (id == -1) println("$typeName with id $id is missing.")
         }
@@ -70,7 +56,7 @@ object CacheManager {
     fun getDbtable(id: Int) = combinedDbtables[id]
 
     fun getNpcOrDefault(id: Int) = getOrDefault(combinedNpcs, id, NpcType(), "Npc")
-    fun getObjectOrDefault(id: Int) = getOrDefault(combinedObjects, id, dev.openrune.definition.type.ObjectType(), "Object")
+    fun getObjectOrDefault(id: Int) = getOrDefault(combinedObjects, id, ObjectType(), "Object")
     fun getItemOrDefault(id: Int) = getOrDefault(combinedItems, id, ItemType(), "Item")
     fun getVarbitOrDefault(id: Int) = getOrDefault(combinedVarbits, id, VarBitType(), "Varbit")
     fun getVarpOrDefault(id: Int) = getOrDefault(combinedVarps, id, VarpType(), "Varp")
