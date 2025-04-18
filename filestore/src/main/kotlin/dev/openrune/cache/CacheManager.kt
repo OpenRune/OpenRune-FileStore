@@ -1,6 +1,17 @@
 package dev.openrune.cache
 
+import dev.openrune.definition.Definition
 import dev.openrune.definition.type.*
+
+fun <T : Definition> MutableMap<Int, T>.withOffset(offset: Int): MutableMap<Int, T> {
+    if (offset == 0) return this.toMutableMap()
+
+    return this.mapKeys { (key, def) ->
+        val newId = key + offset
+        def.id = newId
+        newId
+    }.toMutableMap()
+}
 
 object CacheManager {
 
@@ -21,18 +32,18 @@ object CacheManager {
     fun init(vararg dataSources : CacheStore) {
         for (data in dataSources) {
             data.init()
-            combinedNpcs.putAll(data.npcs.mapKeys { it.key + data.npcOffset })
-            combinedObjects.putAll(data.objects.mapKeys { it.key + data.objectOffset })
-            combinedItems.putAll(data.items.mapKeys { it.key + data.itemOffset })
-            combinedVarbits.putAll(data.varbits.mapKeys { it.key + data.varbitOffset })
-            combinedVarps.putAll(data.varps.mapKeys { it.key + data.varpOffset })
-            combinedAnims.putAll(data.anims.mapKeys { it.key + data.animOffset })
-            combinedEnums.putAll(data.enums.mapKeys { it.key + data.enumOffset })
-            combinedHealthBars.putAll(data.healthBars.mapKeys { it.key + data.healthBarOffset })
-            combinedHitsplats.putAll(data.hitsplats.mapKeys { it.key + data.hitsplatOffset })
-            combinedStructs.putAll(data.structs.mapKeys { it.key + data.structOffset })
-            combinedDbrows.putAll(data.dbrows.mapKeys { it.key + data.dbrowOffset })
-            combinedDbtables.putAll(data.dbtables.mapKeys { it.key + data.dbtableOffset })
+            combinedNpcs.putAll(data.npcs.withOffset(data.npcOffset))
+            combinedObjects.putAll(data.objects.withOffset(data.objectOffset))
+            combinedItems.putAll(data.items.withOffset(data.itemOffset))
+            combinedVarbits.putAll(data.varbits.withOffset(data.varbitOffset))
+            combinedVarps.putAll(data.varps.withOffset(data.varpOffset))
+            combinedAnims.putAll(data.anims.withOffset(data.animOffset))
+            combinedEnums.putAll(data.enums.withOffset(data.enumOffset))
+            combinedHealthBars.putAll(data.healthBars.withOffset(data.healthBarOffset))
+            combinedHitsplats.putAll(data.hitsplats.withOffset(data.hitsplatOffset))
+            combinedStructs.putAll(data.structs.withOffset(data.structOffset))
+            combinedDbrows.putAll(data.dbrows.withOffset(data.dbrowOffset))
+            combinedDbtables.putAll(data.dbtables.withOffset(data.dbtableOffset))
         }
     }
 
