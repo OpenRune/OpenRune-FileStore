@@ -11,6 +11,30 @@ data class DBTable(
     val rows: List<DBRow>
 )
 
+fun DBTable.toDbTableType(): DBTableType {
+    val dbTable = DBTableType(this.tableId)
+    dbTable.columns.putAll(this.columns)
+    return dbTable
+}
+
+fun DBTable.toDbRowTypes(): List<DBRowType> {
+    val dbRows = mutableListOf<DBRowType>()
+    this.rows.forEach { (id, tableColumns) ->
+        val row = DBRowType(id)
+        row.tableId = this.tableId
+        for ((columnId, values) in tableColumns) {
+            val columnDef = this.columns[columnId]
+            checkNotNull(columnDef) { "Invalid column $columnId" }
+            row.columns[columnId] = DBColumnType(
+                types = columnDef.types,
+                values = values
+            )
+        }
+        dbRows.add(row)
+    }
+    return dbRows
+}
+
 data class DBRow(
     val rowId: Int,
     val columns: Map<Int, Array<Any>>
