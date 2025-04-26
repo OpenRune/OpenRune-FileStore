@@ -74,7 +74,15 @@ class PackConfig(
         }
         packTypes.registerPackType(SPOTANIM, SpotAnimCodec::class, "graphics", Js5GameValGroup.SPOTTYPES)
         packTypes.registerPackType(SEQUENCE, SequenceCodec::class, "animation", Js5GameValGroup.SEQTYPES)
-        packTypes.registerPackType(STRUCT, SequenceCodec::class, "struct")
+        packTypes.registerPackType(STRUCT, StructCodec::class, "struct") { content, def: StructType ->
+            val filteredMap = content.filterKeys { key ->
+                key.toIntOrNull() != null
+            }.mapKeys { (key, _) -> key.toInt() }
+
+            filteredMap.forEach { (key, value) ->
+                def.params?.set(key, value)
+            }
+        }
         packTypes.registerPackType(NPC, NPCCodec::class, "npc",Js5GameValGroup.NPCTYPES) { content, def: NpcType ->
             def.actions.fromOptions("option", content)
         }
