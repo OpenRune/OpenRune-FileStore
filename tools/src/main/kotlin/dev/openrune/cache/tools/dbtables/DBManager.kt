@@ -89,8 +89,13 @@ class DBManager(private val store: CacheLibrary) {
             val library = CacheLibrary("C:\\Users\\Advo\\Downloads\\cache-oldschool-live-en-b227-2024-12-10-12-15-06-openrs2#1984\\cache")
             val manager = DBManager(library)
             manager.load()
-            val table = manager.getTableWithRows(0)
+            val table = manager.getTable(0)!!
+            val rows = manager.rows.values.mapNotNull { row ->
+                if (row.tableId != table.id) return@mapNotNull null
+                row
+            }
             //TODO: do stuff with table/serialize it
+            println(generateDsl(table, rows))
         }
     }
 }
