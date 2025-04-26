@@ -86,7 +86,11 @@ class DBManager(private val store: CacheLibrary) {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-
+            val library = CacheLibrary("C:\\Users\\Advo\\Downloads\\cache-oldschool-live-en-b227-2024-12-10-12-15-06-openrs2#1984\\cache")
+            val manager = DBManager(library)
+            manager.load()
+            val table = manager.getTableWithRows(0)
+            //TODO: do stuff with table/serialize it
         }
     }
 }
