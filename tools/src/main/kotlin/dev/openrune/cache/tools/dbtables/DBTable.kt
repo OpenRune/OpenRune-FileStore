@@ -35,6 +35,42 @@ fun DBTable.toDbRowTypes(): List<DBRowType> {
     return dbRows
 }
 
+data class FullDBRow(
+    val rowId: Int,
+    val columns: Map<Int, Array<Any>>
+)
+
+fun DBTable.toFullRows(): List<FullDBRow> {
+    val result = mutableListOf<FullDBRow>()
+
+    for (row in this.rows) {
+        val fullColumns = mutableMapOf<Int, Array<Any>>()
+
+        for ((colId, columnDef) in this.columns) {
+            val value = row.columns[colId]
+            if (value != null) {
+                fullColumns[colId] = value
+            } else {
+                val default = columnDef.values
+                if (default != null) {
+                    fullColumns[colId] = default
+                } else {
+                    // If no value and no default, fill with empty array
+                    fullColumns[colId] = emptyArray()
+                }
+            }
+        }
+
+        result.add(FullDBRow(row.rowId, fullColumns))
+    }
+
+    return result
+}
+
+inline fun <reified T> DBTable.toDatabaseTable(constructor: (FullDBRow) -> T): List<T> {
+    return this.toFullRows().map(constructor)
+}
+
 data class DBRow(
     val rowId: Int,
     val columns: Map<Int, Array<Any>>
