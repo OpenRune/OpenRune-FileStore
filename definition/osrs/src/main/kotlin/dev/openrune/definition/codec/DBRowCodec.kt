@@ -66,19 +66,13 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
         return value
     }
 
-    private fun ByteBuf.writeVarInt(var1: Int) {
-        if (var1 and -128 != 0) {
-            if (var1 and -16384 != 0) {
-                if (var1 and -2097152 != 0) {
-                    if (var1 and -268435456 != 0) {
-                        writeByte(var1 ushr 28 or 128)
-                    }
-                    writeByte(var1 ushr 21 or 128)
-                }
-                writeByte(var1 ushr 14 or 128)
-            }
-            writeByte(var1 ushr 7 or 128)
+    fun ByteBuf.writeVarInt(value: Int): ByteBuf {
+        var v = value
+        while ((v and 0xFFFFFF80.toInt()) != 0) {
+            writeByte((v and 0x7F) or 0x80)
+            v = v ushr 7
         }
-        writeByte(var1 and 127)
+        writeByte(v and 0x7F)
+        return this
     }
 }
