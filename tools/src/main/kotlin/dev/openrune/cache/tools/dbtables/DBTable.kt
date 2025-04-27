@@ -76,6 +76,10 @@ data class DBRow(
     val columns: Map<Int, Array<Any>>
 )
 
+fun dbTable(name : String,tableId: Int, block: DBTableBuilder.() -> Unit): DBTable {
+    return DBTableBuilder(name,tableId).apply(block).build()
+}
+
 fun dbTable(tableId: Int, block: DBTableBuilder.() -> Unit): DBTable {
     return DBTableBuilder(tableId).apply(block).build()
 }

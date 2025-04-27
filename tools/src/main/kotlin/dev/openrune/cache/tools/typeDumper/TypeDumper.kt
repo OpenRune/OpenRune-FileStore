@@ -1,7 +1,9 @@
-package dev.openrune.cache.tools
+package dev.openrune.cache.tools.typeDumper
 
 import dev.openrune.OsrsCacheProvider
 import dev.openrune.cache.*
+import dev.openrune.cache.tools.typeDumper.impl.IfTypes
+import dev.openrune.cache.tools.typeDumper.impl.TablesAndRows
 import dev.openrune.cache.util.Namer
 import dev.openrune.cache.util.Namer.Companion.formatForClassName
 import dev.openrune.definition.Js5GameValGroup
@@ -10,6 +12,7 @@ import dev.openrune.definition.util.readString
 import dev.openrune.filesystem.Cache
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.Unpooled
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -24,6 +27,7 @@ data class TypeNameOverride(val valType: Js5GameValGroup, val name: String)
 data class GameValSettings(
     val usePackedComponents: Boolean = true,
     val combineInterfaceAndComponents: Boolean = false,
+    val combineTablesAndRows: Boolean = false,
 )
 
 data class TypeExportSettings(
@@ -49,14 +53,29 @@ data class TypeExportSettings(
     }
 }
 
+fun main() {
+    val typeDumper = TypeDumper(
+        Cache.load(Path.of("E:\\RSPS\\Illerai\\Cadarn-Server\\data\\cache"),true),
+        230,
+
+        TypeExportSettings(
+            packageName = "com.cadarn.plugin.defsnew",
+            ignoreNullObjects = true,
+            useGameVal = GameValSettings(combineInterfaceAndComponents = true, usePackedComponents = true, combineTablesAndRows = false)
+        )
+    )
+
+    typeDumper.dump(Language.RSCM,  File("E:\\RSPS\\OpenRune\\OpenRune-FileStore\\RSCM").toPath())
+}
+
 class TypeDumper(
     private val cache: Cache,
     private val rev: Int,
-    private val exportSettings: TypeExportSettings = TypeExportSettings()
+    val exportSettings: TypeExportSettings = TypeExportSettings()
 ) {
     private val logger = KotlinLogging.logger {}
     private val namer = Namer()
-    private lateinit var language: Language
+    lateinit var language: Language
     private var names: MutableMap<Int, String> = mutableMapOf()
     private lateinit var outputPath: Path
 
@@ -121,7 +140,7 @@ class TypeDumper(
         val (builder, path) = generateWriter(OBJTYPES)
         namer.used.clear()
         CacheManager.getObjects().forEach { (index, obj) ->
-            val rawName = obj.name.replace("?", "") ?: "null"
+            val rawName = obj.name.replace("?", "")
             if (rawName.isNotEmpty() && rawName != "null") {
                 val name = namer.name(obj.name, index.toString())
                 write(builder, fieldName(name, index.toString()))
@@ -130,13 +149,13 @@ class TypeDumper(
         endWriter(builder, path)
     }
 
-    private fun fieldName(name: String?, index: String): String = when (language) {
+    fun fieldName(name: String?, index: String): String = when (language) {
         Language.KOTLIN -> "const val ${name?.uppercase()} = $index"
         Language.RSCM -> "${name}:${index}"
         else -> "public static final int ${name?.uppercase()} = $index;"
     }
 
-    private fun generateWriter(type: Js5GameValGroup = LOCTYPES, override : String = ""): Pair<StringBuilder, Path> {
+    fun generateWriter(type: Js5GameValGroup = LOCTYPES, override : String = ""): Pair<StringBuilder, Path> {
         val builder = StringBuilder()
         var fileName = if (names.contains(type.id)) names[type.id] ?: type.groupName else type.groupName
 
@@ -157,12 +176,12 @@ class TypeDumper(
         return builder to filePath
     }
 
-    private fun write(builder: StringBuilder, text: String) {
+    fun write(builder: StringBuilder, text: String) {
         if (language == Language.RSCM) builder.appendLine(text.lowercase())
         else builder.appendLine("    $text")
     }
 
-    private fun endWriter(builder: StringBuilder, path: Path) {
+    fun endWriter(builder: StringBuilder, path: Path) {
         if (language != Language.RSCM) {
             builder.appendLine("    /* Auto-generated file using ${this::class.java} */")
             builder.appendLine("}")
@@ -184,111 +203,28 @@ class TypeDumper(
         val writeToJava = language != Language.RSCM
 
         Js5GameValGroup.entries.forEach { group ->
-            val data = gameValData[group.id]
+            val data = gameValData[group.id] ?: return@forEach
             namer.used.clear()
+
             when (group) {
-                IFTYPES -> writeInterfacesAndComponents(group,data, writeToJava)
-                else -> writeGeneralGroupData(group, data, writeToJava)
+                IFTYPES -> IfTypes(this,writeToJava).writeInterfacesAndComponents(group,data)
+                TABLETYPES -> {
+                    val rows = gameValData[ROWTYPES.id]
+                        ?.lineSequence()
+                        ?.filter { ':' in it }
+                        ?.map { it.split(":").let { (key, value) -> key to value.toInt() } }
+                        ?.toMap()
+                        ?: emptyMap()
+
+                    TablesAndRows(this, writeToJava).writeTablesAndRows(group, data, rows)
+                }
+                else -> if (group != ROWTYPES) writeGeneralGroupData(group, data, writeToJava)
             }
         }
     }
 
-    private fun writeInterfacesAndComponents(group : Js5GameValGroup,data: StringBuilder?, writeToJava: Boolean) {
-        val writtenInterfaces = mutableSetOf<String>()
-
-        if (exportSettings.useGameVal!!.combineInterfaceAndComponents) {
-            val (components, pathComponents) = generateWriter(group)
-
-            data?.lines()?.forEach { line ->
-                val tokens = line.split("-")
-                if (tokens.size == 4) {
-                    val (interfaceName, interfaceID, _, _) = tokens
-                    if (!writtenInterfaces.contains(interfaceName)) {
-                        writeComponentData(interfaceName, interfaceID, components, writeToJava)
-                        writtenInterfaces.add(interfaceName)
-                    }
-                }
-            }
-
-            if (language == Language.RSCM) {
-                data?.lines()?.forEach { line ->
-                    val tokens = line.split("-")
-                    if (tokens.size == 4) {
-                        val (interfaceName, interfaceID, componentName, componentID) = tokens
-                        val finalComponentID = getPackedComponentID(interfaceID, componentID)
-                        val componentKey = namer.name("$interfaceName.$componentName", finalComponentID, language, writeToJava)
-                        write(components, fieldName(componentKey, finalComponentID))
-                    }
-                }
-            } else {
-                writeGroupedComponents(data, components, writeToJava)
-            }
-
-            endWriter(components, pathComponents)
-        } else {
-            val (interfaces, pathInterfaces) = generateWriter(override = "interfaces")
-            val (components, pathComponents) = generateWriter(group)
-
-            data?.lines()?.forEach { line ->
-                val tokens = line.split("-")
-                if (tokens.size == 4) {
-                    val (interfaceName, interfaceID, componentName, componentID) = tokens
-                    if (!writtenInterfaces.contains(interfaceName)) {
-                        writeComponentData(interfaceName, interfaceID, interfaces, writeToJava)
-                        writtenInterfaces.add(interfaceName)
-                    }
-
-                    val finalComponentID = getPackedComponentID(interfaceID, componentID)
-                    val splitter = if (language == Language.RSCM ) "." else "_"
-                    val componentKey = namer.name("${interfaceName}${splitter}${componentName}", finalComponentID, language, writeToJava)
-                    write(components, fieldName(componentKey, finalComponentID))
-                }
-            }
-
-            endWriter(interfaces, pathInterfaces)
-            endWriter(components, pathComponents)
-        }
-    }
-
-    private fun writeComponentData(interfaceName: String, interfaceID: String, components: StringBuilder, writeToJava: Boolean) {
-        val interfaceKey = namer.name(interfaceName, interfaceID, language, writeToJava)!!
-        write(components, fieldName(interfaceKey, interfaceID))
-    }
-
-    private fun writeGroupedComponents(data: StringBuilder?, components: StringBuilder, writeToJava: Boolean) {
-        val groupedComponents = mutableMapOf<String, MutableList<Pair<String, String>>>()
-
-        data?.lines()?.forEach { line ->
-            val tokens = line.split("-")
-            if (tokens.size == 4) {
-                val (interfaceName, interfaceID, componentName, componentID) = tokens
-                groupedComponents.computeIfAbsent("${interfaceName}:${interfaceID}") { mutableListOf() }.add(componentName to componentID)
-            }
-        }
-
-        components.appendLine()
-        groupedComponents.forEach { (interfaceName, componentsList) ->
-            val parts = interfaceName.split(":")
-            if (parts.size == 2) {
-                val classBuilder = StringBuilder()
-                val classNameDec = if (language == Language.JAVA) "public static final class" else "object"
-                classBuilder.append("$classNameDec ${formatForClassName(parts[0])} {")
-                classBuilder.appendLine()
-
-                namer.used.clear()
-                componentsList.forEach { (componentName, componentID) ->
-                    val finalComponentID = getPackedComponentID(parts[1], componentID)
-                    val componentKey = namer.name(componentName, finalComponentID, language, writeToJava)
-                    write(classBuilder, "\t${fieldName(componentKey, finalComponentID)}")
-                }
-                classBuilder.appendLine("\t}")
-                write(components, classBuilder.toString())
-            }
-        }
-    }
-
-    private fun writeGeneralGroupData(group: Js5GameValGroup, data: StringBuilder?, writeToJava: Boolean) {
-        val (builder, path) = generateWriter(group)
+    fun writeGeneralGroupData(group: Js5GameValGroup, data: StringBuilder?, writeToJava: Boolean, nameOverride : String = "") {
+        val (builder, path) = generateWriter(group,nameOverride)
         data?.lines()?.forEach { line ->
             val tokens = line.split(":")
             if (tokens.size == 2) {
@@ -305,16 +241,6 @@ class TypeDumper(
         }
 
         endWriter(builder, path)
-    }
-
-    private fun getPackedComponentID(interfaceID: String, componentID: String): String {
-        return exportSettings.useGameVal!!.usePackedComponents.let {
-            if (it) pack(interfaceID.toInt(), componentID) else componentID
-        }.toString()
-    }
-
-    private fun pack(interfaceId: Int, componentId: String): Int {
-        return (interfaceId and 0xFFFF) shl 16 or (componentId.toInt() and 0xFFFF)
     }
 
     private fun unpackGameVal(type: Int, id: Int, bytes: ByteArray?, builder: StringBuilder) {

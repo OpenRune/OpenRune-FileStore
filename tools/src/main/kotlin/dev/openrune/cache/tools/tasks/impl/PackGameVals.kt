@@ -4,7 +4,10 @@ import dev.openrune.cache.GAMEVALS
 import dev.openrune.cache.tools.CacheTool
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.definition.Js5GameValGroup
+import dev.openrune.definition.util.toArray
+import dev.openrune.definition.util.writeString
 import dev.openrune.filesystem.Cache
+import io.netty.buffer.Unpooled
 
 internal class PackGameVals(private val rev : Int) : CacheTask() {
 
@@ -20,14 +23,50 @@ internal class PackGameVals(private val rev : Int) : CacheTask() {
     }
 
     private fun packGameVal(type: Js5GameValGroup, lastFileId: Int, values: List<Pair<String, Int>>, cache: Cache) {
+        val usedIds = values.map { it.second }.toSet()
+        val maxUsedId = usedIds.maxOrNull() ?: lastFileId
+        val missingIds = ((lastFileId + 1)..maxUsedId).filterNot(usedIds::contains)
+
         when (type) {
-            Js5GameValGroup.TABLETYPES, Js5GameValGroup.IFTYPES -> error("Not Supported Yet")
+            Js5GameValGroup.TABLETYPES -> {
+
+                val emptyWriter = Unpooled.buffer(4096).apply {
+                    writeByte(1)
+                    writeString("")
+                    writeByte(1)
+                    writeString("")
+                    writeByte(0)
+                }
+
+                val emptyData = emptyWriter.toArray()
+
+                for (id in missingIds) {
+                    cache.write(GAMEVALS, type.id, id, emptyData)
+                }
+
+                for ((name, id) in values) {
+                    val (tableName, columnsPart) = name.split(':')
+                    val columns = columnsPart.removePrefix("[").removeSuffix("]").split(',')
+
+                    val writer = Unpooled.buffer(4096).apply {
+                        writeByte(1)
+                        writeString(tableName)
+                        columns.forEach {
+                            writeByte(1)
+                            writeString(it)
+                        }
+                        writeByte(0)
+                    }
+
+                    cache.write(GAMEVALS, type.id, id, writer.toArray())
+                }
+            }
+
+            Js5GameValGroup.IFTYPES -> {
+                error("Not Supported Yet")
+            }
 
             else -> {
-                val usedIds = values.map { it.second }.toSet()
-                val maxUsedId = usedIds.max()
-                val missingIds = ((lastFileId + 1)..maxUsedId).filterNot { it in usedIds }
-
                 missingIds.forEach { cache.write(GAMEVALS, type.id, it, byteArrayOf()) }
 
                 for ((name, id) in values) {
