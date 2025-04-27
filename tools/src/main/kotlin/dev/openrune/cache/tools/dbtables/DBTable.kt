@@ -80,12 +80,31 @@ fun dbTable(tableId: Int, block: DBTableBuilder.() -> Unit): DBTable {
     return DBTableBuilder(tableId).apply(block).build()
 }
 
+val tableNames: MutableMap<Int, String> = mutableMapOf()
+val columnNames: MutableMap<Int, String> = mutableMapOf()
+val rowNames: MutableMap<Int, String> = mutableMapOf()
+
 class DBTableBuilder(private val tableId: Int) {
+
+    constructor(name: String, tableId: Int) : this(tableId) {
+        tableNames[tableId] = name
+    }
+
     private val columns = mutableMapOf<Int, DBColumnType>()
     private val rows = mutableListOf<DBRow>()
 
+    fun column(name: String, id: Int, types: Array<Type>, values: Array<Any>? = null) {
+        columnNames[id] = name
+        column(id, types, values)
+    }
+
     fun column(id: Int, types: Array<Type>, values: Array<Any>? = null) {
         columns[id] = DBColumnType(types, values)
+    }
+
+    fun row(name: String, rowId: Int, block: DBRowBuilder.() -> Unit) {
+        rowNames[rowId] = name
+        row(rowId, block)
     }
 
     fun row(rowId: Int, block: DBRowBuilder.() -> Unit) {
