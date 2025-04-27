@@ -32,7 +32,7 @@ object PackingTest {
             rowTypes.forEach {
                 val writer1 = Unpooled.buffer(4096)
                 with(rowCodec) { writer1.encode(it) }
-                dbtable_archive.add(it.id, writer1.toArray())
+                dbrow_archive.add(it.id, writer1.toArray())
             }
         }
 
