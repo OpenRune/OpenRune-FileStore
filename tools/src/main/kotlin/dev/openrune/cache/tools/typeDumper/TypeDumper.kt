@@ -243,36 +243,52 @@ class TypeDumper(
         endWriter(builder, path)
     }
 
-    private fun unpackGameVal(type: Int, id: Int, bytes: ByteArray?, builder: StringBuilder) {
-        val data = Unpooled.wrappedBuffer(bytes)
-        when (Js5GameValGroup.fromId(type)) {
-            TABLETYPES -> {
-                data.readUnsignedByte()
-                val tableName = data.readString()
-                if (tableName.isEmpty()) return
-                var columnId = 0
-                while (data.readUnsignedByte().toInt() != 0) {
-                    val columnName = data.readString()
-                    builder.appendLine("$tableName.$columnName.$id.$columnId")
-                    columnId++
+    companion object {
+
+        fun unpackGameVal(type: Js5GameValGroup, id: Int, bytes: ByteArray?, builder: StringBuilder) {
+            unpackGameVal(type.id, id, bytes,builder)
+        }
+
+        fun unpackGameVal(type: Int, id: Int, bytes: ByteArray?, builder: StringBuilder) {
+            val data = Unpooled.wrappedBuffer(bytes)
+            when (Js5GameValGroup.fromId(type)) {
+                TABLETYPES -> {
+                    data.readUnsignedByte()
+                    val tableName = data.readString()
+                    if (tableName.isEmpty()) return
+                    var columnId = 0
+                    while (data.readUnsignedByte().toInt() != 0) {
+                        val columnName = data.readString()
+                        builder.appendLine("$tableName.$columnName.$id.$columnId")
+                        columnId++
+                    }
                 }
-            }
-            IFTYPES -> {
-                var interfaceName = data.readString().takeIf { it.isNotEmpty() } ?: "_"
-                if (interfaceName.isEmpty()) return
-                var componentId = 0
-                while (data.readUnsignedByte().toInt() != 0xFF) {
-                    val componentName = data.readString().takeIf { it.isNotEmpty() } ?: "_"
-                    builder.appendLine("${interfaceName}-${id}-${componentName}-${componentId}")
-                    componentId++
+                IFTYPES -> {
+                    var interfaceName = data.readString().takeIf { it.isNotEmpty() } ?: "_"
+                    if (interfaceName.isEmpty()) return
+                    var componentId = 0
+                    while (true) {
+                        val value = data.readUnsignedByte().toInt()
+                        val nextByte = data.getUnsignedByte(data.readerIndex()).toInt()
+
+                        if (value == 0xFF && nextByte == 0) {
+                            break
+                        }
+
+                        val key = (id shl 16) or componentId
+                        val name = data.readString()
+                        builder.appendLine("$interfaceName-$id-$name-$key")
+                        componentId++
+                    }
+
                 }
-            }
-            else -> {
-                val arr = ByteArray(data.readableBytes())
-                data.readBytes(arr)
-                val name = String(arr)
-                if (name.isEmpty()) return
-                builder.appendLine("$name:$id")
+                else -> {
+                    val arr = ByteArray(data.readableBytes())
+                    data.readBytes(arr)
+                    val name = String(arr)
+                    if (name.isEmpty()) return
+                    builder.appendLine("$name:$id")
+                }
             }
         }
     }
