@@ -115,7 +115,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
     }
 
     private fun symDumper(basePath: File,cache: Cache, name: String, group: Js5GameValGroup) {
-        if (!valsToUpdate.containsKey(group.id)) return
+        //if (!valsToUpdate.containsKey(group.id)) return
         if (group == Js5GameValGroup.TABLETYPES) return
 
         val builder = StringBuilder()
@@ -131,11 +131,11 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
             }
 
 
-        File(basePath,"$name.sym").writeText(transformed)
+        File(basePath,"$name.sym").writeText("${transformed}\n")
     }
 
     private fun symDumperDBTables(basePath: File,cache: Cache) {
-        if (!valsToUpdate.keys.any { it == Js5GameValGroup.TABLETYPES.id || it == Js5GameValGroup.ROWTYPES.id }) return
+        //if (!valsToUpdate.keys.any { it == Js5GameValGroup.TABLETYPES.id || it == Js5GameValGroup.ROWTYPES.id }) return
 
         val content = buildString {
             cache.files(GAMEVALS, Js5GameValGroup.TABLETYPES.id).forEach { file ->
@@ -176,12 +176,14 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
             }
         }
 
+        dbColumn.appendLine()
+
         File(basePath,"dbcolumn.sym").writeText(dbColumn.toString())
-        File(basePath,"dbtable.sym").writeText(dbTables.joinToString("\n"))
+        File(basePath,"dbtable.sym").writeText("${dbTables.joinToString("\n")}\n")
     }
 
     private fun symDumperInterface(basePath: File,cache: Cache) {
-        if (!valsToUpdate.containsKey(Js5GameValGroup.IFTYPES.id)) return
+        //if (!valsToUpdate.containsKey(Js5GameValGroup.IFTYPES.id)) return
 
         val interfaces = StringBuilder()
         val components = StringBuilder()
@@ -206,6 +208,9 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
                 components.appendLine(componentEntry)
             }
         }
+
+        interfaces.appendLine()
+        components.appendLine()
 
         File(basePath,"interface.sym").writeText(interfaces.toString())
         File(basePath,"component.sym").writeText(components.toString())
