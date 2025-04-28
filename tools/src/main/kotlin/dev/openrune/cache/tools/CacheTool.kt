@@ -26,13 +26,17 @@ class CacheTool(private val builder: Builder) {
             TaskType.BUILD -> {
                 BuildCache(
                     input = builder.cacheLocation,
-                    tasks = builder.extraTasks.toMutableList().apply { add(PackGameVals(builder.revision)) }
+                    tasks = builder.extraTasks.toMutableList().apply {
+                        add(PackGameVals(builder.revision))
+                    }.sortedBy { it.priority.priorityValue }.toMutableList()
                 ).initialize()
             }
             TaskType.FRESH_INSTALL -> {
                 FreshCache(
                     downloadLocation = builder.cacheLocation,
-                    tasks = builder.extraTasks.toMutableList().apply { add(PackGameVals(builder.revision)) },
+                    tasks = builder.extraTasks.toMutableList().apply {
+                        add(PackGameVals(builder.revision))
+                    }.sortedBy { it.priority.priorityValue }.toMutableList(),
                     revision = builder.revision,
                     removeXteas = builder.removeXteas(),
                     removeBzip = builder.removeBzip(),
