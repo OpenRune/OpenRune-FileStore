@@ -1,5 +1,7 @@
 package dev.openrune.cache.tools.dbtables
 
+import dev.openrune.definition.RSCMHandler
+import dev.openrune.definition.serialization.Rscm
 import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.type.DBTableType
@@ -76,8 +78,11 @@ data class DBRow(
     val columns: Map<Int, Array<Any>>
 )
 
-fun dbTable(name : String,tableId: Int, block: DBTableBuilder.() -> Unit): DBTable {
-    return DBTableBuilder(name,tableId).apply(block).build()
+fun dbTable(tableId: String, block: DBTableBuilder.() -> Unit): DBTable {
+    val rscmId = RSCMHandler.getMapping(tableId) ?: error("Invalid RSCM mapping for tableId: $tableId")
+    val rscmName = tableId.substringAfter(".")
+
+    return DBTableBuilder(rscmName,rscmId).apply(block).build()
 }
 
 fun dbTable(tableId: Int, block: DBTableBuilder.() -> Unit): DBTable {
@@ -97,23 +102,30 @@ class DBTableBuilder(private val tableId: Int) {
     private val columns = mutableMapOf<Int, DBColumnType>()
     private val rows = mutableListOf<DBRow>()
 
-    fun column(name: String, id: Int, types: Array<Type>, values: Array<Any>? = null) {
-        columnNames[id] = name
-        column(id, types, values)
+    fun column(name : String,id: Int, types: Array<Type>, values: Array<Any>? = null) {
+        if (name.isNotEmpty()) {
+            columnNames[id] = name
+        }
+        columns[id] = DBColumnType(types, values)
     }
 
     fun column(id: Int, types: Array<Type>, values: Array<Any>? = null) {
         columns[id] = DBColumnType(types, values)
     }
 
-    fun row(name: String, rowId: Int, block: DBRowBuilder.() -> Unit) {
-        rowNames[rowId] = name
-        row(rowId, block)
-    }
-
     fun row(rowId: Int, block: DBRowBuilder.() -> Unit) {
         val builder = DBRowBuilder(rowId).apply(block)
         rows.add(builder.build())
+    }
+
+    fun row(rowId: String, block: DBRowBuilder.() -> Unit) {
+        val rscmId = RSCMHandler.getMapping(rowId) ?: error("Invalid RSCM mapping for rowId: $rowId")
+        val rscmName = rowId.substringAfter(".")
+        if (rscmName.isNotEmpty()) {
+            rowNames[rscmId] = rscmName
+        }
+
+        row(rowId = rscmId, block = block)
     }
 
     fun build(): DBTable {
@@ -123,6 +135,14 @@ class DBTableBuilder(private val tableId: Int) {
 
 class DBRowBuilder(private val rowId: Int) {
     private val columns = mutableMapOf<Int, Array<Any>>()
+
+    fun columnRSCM(id: Int, values: Array<String>) {
+        val resolvedValues: List<Any> = values.map { value ->
+            RSCMHandler.getMapping(value)
+                ?: error("Invalid RSCM mapping for value: $value")
+        }
+        columns[id] = resolvedValues.toTypedArray()
+    }
 
     fun column(id: Int, values: Array<Any>) {
         columns[id] = values
