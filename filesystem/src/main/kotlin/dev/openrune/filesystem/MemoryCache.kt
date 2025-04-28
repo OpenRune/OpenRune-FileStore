@@ -37,6 +37,14 @@ class MemoryCache(
         return data.getOrNull(index)?.getOrNull(archive)?.getOrNull(file)
     }
 
+    override fun crc(index: Int): Int {
+        TODO("Not yet implemented")
+    }
+
+    override fun crc(index: Int, archive: Int): Int {
+        TODO("Not yet implemented")
+    }
+
     companion object : CacheLoader {
         private val logger = KotlinLogging.logger {}
 

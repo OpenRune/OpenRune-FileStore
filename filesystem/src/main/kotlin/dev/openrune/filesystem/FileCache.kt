@@ -51,6 +51,14 @@ class FileCache(
         return files[matchingIndex]
     }
 
+    override fun crc(index: Int): Int {
+        TODO("Not yet implemented")
+    }
+
+    override fun crc(index: Int, archive: Int): Int {
+        TODO("Not yet implemented")
+    }
+
     override fun close() {
         main.close()
         for (file in indexes) {
