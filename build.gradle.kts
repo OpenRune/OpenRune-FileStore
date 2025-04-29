@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("jvm") version "1.9.0"
     id("maven-publish")
@@ -27,6 +29,13 @@ subprojects {
         implementation(kotlin("stdlib-jdk8"))
         implementation("io.github.oshai:kotlin-logging-jvm:5.1.0")
         implementation("org.slf4j:slf4j-api:2.1.0-alpha1")
+    }
+
+
+    tasks.withType<KotlinCompile> {
+        kotlinOptions {
+            jvmTarget = "11"
+        }
     }
 
     val sourcesJar by tasks.registering(Jar::class) {

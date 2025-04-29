@@ -53,6 +53,10 @@ class CacheDelegate(val library: CacheLibrary) : Cache {
 
     override fun data(index: Int, name: String, xtea: IntArray?) = library.data(index, name, xtea)
 
+    override fun crc(index: Int): Int = library.index(index).crc
+
+    override fun crc(index: Int, archive: Int): Int = library.index(index).archive(archive)?.crc?: -1
+
     override fun createIndex(
         compressionType: Compression,
         version: Int,

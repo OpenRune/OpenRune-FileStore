@@ -48,6 +48,10 @@ interface Cache {
 
     fun data(index: Int, name: String, xtea: IntArray? = null) = data(index, archiveId(index, name), xtea = xtea)
 
+    fun crc(index: Int): Int
+
+    fun crc(index: Int, archive: Int): Int
+
     fun write(index: Int, archive: Int, file: Int, data: ByteArray, xteas: IntArray? = null)
 
     fun write(index: Int, archive: Int, data: ByteArray, xteas: IntArray? = null)
