@@ -10,12 +10,9 @@ import dev.openrune.cache.util.progress
 import dev.openrune.clientscript.compiler.ClientScripts
 import dev.openrune.definition.Js5GameValGroup
 import dev.openrune.definition.type.DBTableType
-import dev.openrune.definition.util.readString
 import dev.openrune.filesystem.Cache
-import io.netty.buffer.ByteBuf
-import io.netty.buffer.Unpooled
 import java.io.File
-import java.util.Properties
+import java.util.*
 
 class PackCs2(private val cs2Dir: File) : CacheTask() {
 
@@ -53,7 +50,9 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
 
             progress.close()
             saveCurrentVals(cache)
-        }catch (e : Exception) {}
+        }catch (e : Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun collectValsToUpdate(cache: Cache, savedVals: Map<Int, Int>): Map<Int, Int> {
@@ -115,7 +114,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
     }
 
     private fun symDumper(basePath: File,cache: Cache, name: String, group: Js5GameValGroup) {
-        //if (!valsToUpdate.containsKey(group.id)) return
+        if (!valsToUpdate.containsKey(group.id)) return
         if (group == Js5GameValGroup.TABLETYPES) return
 
         val builder = StringBuilder()
@@ -135,7 +134,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
     }
 
     private fun symDumperDBTables(basePath: File,cache: Cache) {
-        //if (!valsToUpdate.keys.any { it == Js5GameValGroup.TABLETYPES.id || it == Js5GameValGroup.ROWTYPES.id }) return
+        if (!valsToUpdate.keys.any { it == Js5GameValGroup.TABLETYPES.id || it == Js5GameValGroup.ROWTYPES.id }) return
 
         val content = buildString {
             cache.files(GAMEVALS, Js5GameValGroup.TABLETYPES.id).forEach { file ->
@@ -183,7 +182,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
     }
 
     private fun symDumperInterface(basePath: File,cache: Cache) {
-        //if (!valsToUpdate.containsKey(Js5GameValGroup.IFTYPES.id)) return
+        if (!valsToUpdate.containsKey(Js5GameValGroup.IFTYPES.id)) return
 
         val interfaces = StringBuilder()
         val components = StringBuilder()
