@@ -1,10 +1,9 @@
-package dev.openrune.cache.tools.tasks.impl
+package dev.openrune.cache.tools.dbtables
 
 import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.DBROW
 import dev.openrune.cache.DBTABLE
 import dev.openrune.cache.tools.CacheTool
-import dev.openrune.cache.tools.dbtables.*
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.Js5GameValGroup
