@@ -1,6 +1,6 @@
 package dev.openrune.cache.util
 
-import dev.openrune.cache.tools.Language
+import dev.openrune.cache.tools.typeDumper.Language
 import java.util.*
 
 class Namer {

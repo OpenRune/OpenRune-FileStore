@@ -102,6 +102,7 @@ object CacheManager {
     fun getHealthBars() = combinedHealthBars.toMap()
     fun getHitsplats() = combinedHitsplats.toMap()
     fun getStructs() = combinedStructs.toMap()
+    fun getRows() = combinedDbrows.toMap()
 
     fun revisionIsOrAfter(cacheRevision : Int,rev: Int) = rev <= cacheRevision
     fun revisionIsOrBefore(cacheRevision : Int,rev: Int) = rev >= cacheRevision

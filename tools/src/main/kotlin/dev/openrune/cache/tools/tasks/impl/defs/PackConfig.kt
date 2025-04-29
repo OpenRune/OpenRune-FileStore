@@ -209,7 +209,7 @@ class PackConfig(
         }
 
         if (packType.gameValGroup != null) {
-            val matchingName = RSCMHandler.mappings.entries.firstOrNull { it.value == defId }?.key
+            val matchingName : String? = lines["id"]?.toString()?.takeIf { it.all { char -> char.isDigit() } }?.let { null } ?: lines["id"].toString()
 
             val name = matchingName?.substringAfter(".") ?: when (packType.gameValGroup) {
                 Js5GameValGroup.OBJTYPES -> (def as ItemType).name
