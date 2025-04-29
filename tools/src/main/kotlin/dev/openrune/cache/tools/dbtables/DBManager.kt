@@ -93,24 +93,7 @@ class DBManager(private val store: CacheLibrary) {
     }
 
     companion object {
-        @JvmStatic
-        fun main(args: Array<String>) {
-            val library = CacheLibrary("C:\\Users\\Advo\\Downloads\\cache-oldschool-live-en-b227-2024-12-10-12-15-06-openrs2#1984\\cache")
-            val manager = DBManager(library)
-            manager.load()
-            val table = manager.getTable(30)!!
-            val rows = manager.rows.values.mapNotNull { row ->
-                if (row.tableId != table.id) return@mapNotNull null
-                row
-            }
-
-            //TODO: do stuff with table/serialize it
-            println(generateDsl(table, rows))
-
-            val table30 = manager.toDatabaseTable(30, ::fsw_info_fresh_table)
-            println(table30)
-        }
-
+       
         inline fun <T> toDatabaseTable(table: DBTableType, rows: List<DBRowType>, constructor: (FullDBRow) -> T): List<T> {
             val result = mutableListOf<T>()
             for (row in rows) {
