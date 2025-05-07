@@ -5,8 +5,8 @@ plugins {
     id("maven-publish")
 }
 
-val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "K:\\documents\\GitHub\\hosting\\"
-val buildNumber = "2.0.14"
+val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "E:\\RSPS\\OpenRune\\hosting"
+val buildNumber = "2.0.15"
 
 subprojects {
     apply(plugin = "kotlin")
@@ -21,6 +21,7 @@ subprojects {
 
     repositories {
         mavenCentral()
+        mavenLocal()
         maven("https://raw.githubusercontent.com/OpenRune/hosting/master")
         maven("https://jitpack.io")
     }
