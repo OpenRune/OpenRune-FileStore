@@ -1,11 +1,11 @@
 package dev.openrune.definition.codec
 
+import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.type.ObjectType
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.ByteBuf
 import java.util.stream.IntStream
 import kotlin.streams.toList
@@ -312,6 +312,6 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
     override fun createDefinition() = dev.openrune.definition.type.ObjectType()
 
     companion object {
-        internal val logger = KotlinLogging.logger {}
+        internal val logger = InlineLogger()
     }
 }

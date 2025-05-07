@@ -2,6 +2,7 @@ package dev.openrune.cache.tools.tasks.impl.defs
 
 import com.akuleshov7.ktoml.Toml
 import com.akuleshov7.ktoml.TomlInputConfig
+import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.*
 import dev.openrune.cache.tools.CacheTool
@@ -19,7 +20,6 @@ import dev.openrune.definition.RSCMHandler
 import dev.openrune.definition.codec.*
 import dev.openrune.definition.util.Type
 import dev.openrune.filesystem.Cache
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.Unpooled
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.serializer
@@ -136,7 +136,7 @@ class PackConfig(
     }
 
 
-    val logger = KotlinLogging.logger {}
+    val logger = InlineLogger()
 
     override fun init(cache: Cache) {
         val size = getFiles(directory, "toml").size

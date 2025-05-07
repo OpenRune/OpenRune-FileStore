@@ -1,8 +1,8 @@
 package dev.openrune.filesystem
 
+import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.filesystem.util.compress.DecompressionContext
 import dev.openrune.filesystem.util.secure.VersionTableBuilder
-import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.RandomAccessFile
@@ -46,7 +46,7 @@ class MemoryCache(
     }
 
     companion object : CacheLoader {
-        private val logger = KotlinLogging.logger {}
+        private val logger = InlineLogger()
 
         operator fun invoke(path: String, threadUsage: Double = 1.0, xteas: Map<Int, IntArray>? = null): Cache {
             return load(path, xteas, threadUsage) as ReadOnlyCache

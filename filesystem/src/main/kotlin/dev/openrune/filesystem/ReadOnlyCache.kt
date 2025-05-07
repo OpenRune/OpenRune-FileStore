@@ -1,11 +1,11 @@
 package dev.openrune.filesystem
 
+import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.filesystem.util.compress.DecompressionContext
 import dev.openrune.filesystem.util.readByte
 import dev.openrune.filesystem.util.readInt
 import dev.openrune.filesystem.util.readUnsignedByte
 import dev.openrune.filesystem.util.secure.VersionTableBuilder
-import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 
@@ -236,7 +236,7 @@ abstract class ReadOnlyCache(
 
     companion object {
         private const val MAPS = 5
-        private val logger = KotlinLogging.logger {}
+        private val logger = InlineLogger()
         private const val NAME_FLAG = 0x1
         private const val WHIRLPOOL_FLAG = 0x2
         private const val SIZE_FLAG: Int = 0x4

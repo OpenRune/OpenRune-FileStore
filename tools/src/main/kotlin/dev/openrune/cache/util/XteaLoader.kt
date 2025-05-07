@@ -1,10 +1,10 @@
 package dev.openrune.cache.util
 
+import com.github.michaelbull.logging.InlineLogger
 import com.google.gson.Gson
-import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.File
 
-val logger = KotlinLogging.logger {}
+val logger = InlineLogger()
 
 data class Xtea(
     val archive : Int,

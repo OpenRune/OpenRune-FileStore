@@ -1,10 +1,10 @@
 package dev.openrune.filesystem.util.compress
 
+import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.filesystem.util.readByte
 import dev.openrune.filesystem.util.readInt
 import dev.openrune.filesystem.util.readUnsignedByte
 import dev.openrune.filesystem.util.secure.Xtea
-import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.zip.Inflater
@@ -69,6 +69,6 @@ internal class DecompressionContext {
         private const val BZIP2 = 1
         private const val GZIP = 2
         private val warned = AtomicBoolean()
-        private val logger = KotlinLogging.logger {}
+        private val logger = InlineLogger()
     }
 }

@@ -1,10 +1,10 @@
 package dev.openrune.cache.tools
 
+import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.RemoveBzip
 import dev.openrune.cache.tools.tasks.impl.RemoveXteas
 import dev.openrune.cache.util.progress
-import io.github.oshai.kotlinlogging.KotlinLogging
 import me.tongfei.progressbar.ProgressBar
 import java.io.File
 import java.io.FileInputStream
@@ -23,7 +23,7 @@ class FreshCache(
     private val removeBzip: Boolean = false
 ) {
 
-    private val logger = KotlinLogging.logger {}
+    private val logger = InlineLogger()
 
     fun initialize() {
         val time = measureTimeMillis {
