@@ -2,6 +2,7 @@ package dev.openrune.cache.tools.tasks.impl
 
 import dev.openrune.OsrsCacheProvider
 import dev.openrune.cache.CLIENTSCRIPT
+import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.GAMEVALS
 import dev.openrune.cache.tools.TaskPriority
 import dev.openrune.cache.tools.tasks.CacheTask
@@ -26,6 +27,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
 
     override fun init(cache: Cache) {
         try {
+            val library = (cache as CacheDelegate).library
             val configFile = File(cs2Dir, "neptune.toml")
             if (!configFile.exists()) {
                 println("Missing neptune cs2 setup.")
@@ -41,9 +43,13 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
 
             scripts.forEach { script ->
                 if (!script.archiveName.contains(script.id.toString())) {
-                    cache.write(CLIENTSCRIPT, script.archiveName, script.bytes)
+                    if (!library.index(CLIENTSCRIPT).contains(script.id)) {
+                        library.put(CLIENTSCRIPT,script.id,script.archiveName, script.bytes)
+                    } else {
+                        library.put(CLIENTSCRIPT,script.archiveName, script.bytes)
+                    }
                 } else {
-                    cache.write(CLIENTSCRIPT, script.id, script.bytes)
+                    library.put(CLIENTSCRIPT, script.id, script.bytes)
                 }
                 progress.step()
             }

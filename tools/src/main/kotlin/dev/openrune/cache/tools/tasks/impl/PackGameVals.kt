@@ -63,7 +63,32 @@ internal class PackGameVals(private val rev : Int) : CacheTask() {
             }
 
             Js5GameValGroup.IFTYPES -> {
-                error("Not Supported Yet")
+                missingIds.forEach {
+                    val writer = Unpooled.buffer(64).apply {
+                        writeString("")
+                        writeByte(0xFF)
+                        writeByte(0)
+                    }
+                    cache.write(GAMEVALS, type.id, it, writer.toArray())
+                }
+
+                for ((name, id) in values) {
+                    val (infName, _) = name.substringBefore("[").split(":")
+                    val components = name.substringAfter("[").replace(",]","").split(",")
+
+                    val writer = Unpooled.buffer(4096).apply {
+                        writeString(infName)
+                        components.forEach {
+                            val (componentMame,_) = it.split(":")
+                            writeByte(1)
+                            writeString(componentMame)
+                        }
+                        writeByte(0xFF)
+                        writeByte(0)
+
+                    }
+                    cache.write(GAMEVALS, type.id, id, writer.toArray())
+                }
             }
 
             else -> {

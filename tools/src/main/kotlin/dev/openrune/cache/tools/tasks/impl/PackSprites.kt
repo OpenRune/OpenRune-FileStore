@@ -40,9 +40,9 @@ class PackSprites(
     private var manifest: Map<String, SpriteManifest> = emptyMap()
 
     override fun init(cache: Cache) {
-        val files = getFiles(spritesDirectory, "png")
+        val files = getFiles(spritesDirectory, "png","PNG")
         val alreadyPacked = mutableListOf<String>()
-        val progress = progress("Packing OSRS Sprites", files.filter { it.extension == "png" }.size)
+        val progress = progress("Packing OSRS Sprites", files.filter { it.extension.contains("png",true) }.size)
 
         if (spriteManifest.exists()) {
             manifest = mapper.decode<Map<String,SpriteManifest>>(spriteManifest.toPath())
@@ -90,7 +90,7 @@ class PackSprites(
     }
 
     private fun handleUnNamedSprite(spriteFile: File, cache: Cache) {
-        if (spriteFile.name.matches(Regex("^[_0-9]+\\.png$"))) {
+        if (spriteFile.name.matches(Regex("^[_0-9]+\\.png$", RegexOption.IGNORE_CASE))) {
             val (group, index) = spriteFile.nameWithoutExtension.split("_").let {
                 it[0].toInt() to it.getOrElse(1) { "0" }.toInt()
             }

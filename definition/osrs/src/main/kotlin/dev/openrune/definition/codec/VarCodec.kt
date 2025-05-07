@@ -12,7 +12,10 @@ class VarCodec : DefinitionCodec<VarpType> {
     }
 
     override fun ByteBuf.encode(definition: VarpType) {
-        TODO("Not yet implemented")
+        writeByte(5)
+        writeShort(definition.configType)
+
+        writeByte(0)
     }
 
     override fun createDefinition() = VarpType()

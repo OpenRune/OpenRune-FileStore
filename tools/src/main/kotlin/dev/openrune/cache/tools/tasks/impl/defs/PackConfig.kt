@@ -73,6 +73,8 @@ class PackConfig(
             def.actions.fromOptions("option", content)
         }
         packTypes.registerPackType(SPOTANIM, SpotAnimCodec::class, "graphics", Js5GameValGroup.SPOTTYPES)
+        packTypes.registerPackType(SPOTANIM, SpotAnimCodec::class, "graphic", Js5GameValGroup.SPOTTYPES)
+
         packTypes.registerPackType(SEQUENCE, SequenceCodec::class, "animation", Js5GameValGroup.SEQTYPES)
         packTypes.registerPackType(STRUCT, StructCodec::class, "struct") { content, def: StructType ->
             val filteredMap = content.filterKeys { key ->
