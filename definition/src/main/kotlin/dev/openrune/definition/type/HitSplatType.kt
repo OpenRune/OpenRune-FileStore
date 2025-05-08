@@ -2,12 +2,11 @@ package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
 import dev.openrune.definition.Transforms
-import dev.openrune.definition.serialization.Rscm
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class HitSplatType(
-    override var id: Rscm = -1,
+    override var id: Int = -1,
+    override var inherit: Int = 1,
+    override var debugName : String = "",
     var font: Int = -1,
     var textColour: Int = 16777215,
     var icon: Int = -1,

@@ -4,19 +4,15 @@ import dev.openrune.definition.Definition
 import dev.openrune.definition.Parameterized
 import dev.openrune.definition.Recolourable
 import dev.openrune.definition.Transforms
-import dev.openrune.definition.serialization.ListRscm
-import dev.openrune.definition.serialization.Rscm
-import dev.openrune.definition.serialization.RscmString
-import kotlinx.serialization.Contextual
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class ObjectType(
-    override var id: Rscm = -1,
+    override var id: Int = -1,
+    override var inherit: Int = 1,
+    override var debugName : String = "",
     var name: String = "null",
     var decorDisplacement: Int = 16,
     var isHollow: Boolean = false,
-    var objectModels: ListRscm? = null,
+    var objectModels: MutableList<Int>? = null,
     var objectTypes: MutableList<Int>? = null,
     var recolorToFind: MutableList<Int>? = null,
     var mapAreaId: Int = -1,
@@ -65,7 +61,7 @@ data class ObjectType(
     override var varbit: Int = -1,
     override var varp: Int = -1,
     override var transforms: MutableList<Int>? = null,
-    override var params: MutableMap<Int, @Contextual Any>? = null
+    override var params: MutableMap<Int, Any>? = null
 ) : Definition, Transforms, Recolourable, Parameterized {
 
     fun hasActions() = actions.any { it != null }

@@ -19,7 +19,7 @@ enum class ItemSlotType(val type: String, val slot: Int, val override1: Int = -1
 
     companion object {
         fun fetchTypes() = entries.map { it.type }.toTypedArray()
-        fun fetchType(type: String) = entries.find { it.type == type }
+        fun fetchType(type: String): ItemSlotType? = entries.find { it.type == type }
     }
 
 }

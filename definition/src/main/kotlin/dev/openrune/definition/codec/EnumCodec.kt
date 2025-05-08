@@ -45,7 +45,7 @@ class EnumCodec : DefinitionCodec<EnumType> {
                 writeByte(5)
                 writeShort(definition.values.size)
                 for ((key, value) in definition.values) {
-                    writeInt(key)
+                    writeInt(key as Int)
                     writeString(value.toString())
                 }
             }
@@ -59,7 +59,7 @@ class EnumCodec : DefinitionCodec<EnumType> {
                 writeByte(6)
                 writeShort(definition.values.size)
                 for ((key, value) in definition.values) {
-                    writeInt(key)
+                    writeInt(key as Int)
                     writeInt(value.toString().toDouble().toInt())
                 }
             }

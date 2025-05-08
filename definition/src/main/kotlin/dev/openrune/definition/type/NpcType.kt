@@ -4,19 +4,16 @@ import dev.openrune.definition.Definition
 import dev.openrune.definition.Parameterized
 import dev.openrune.definition.Recolourable
 import dev.openrune.definition.Transforms
-import dev.openrune.definition.serialization.ListRscm
-import dev.openrune.definition.serialization.Rscm
-import kotlinx.serialization.Contextual
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class NpcType(
-    override var id: Rscm = -1,
+    override var id: Int = -1,
+    override var inherit: Int = 1,
+    override var debugName : String = "",
     var name: String = "null",
     var size : Int = 1,
     var category : Int = -1,
-    var models: ListRscm? = null,
-    var chatheadModels: ListRscm? = null,
+    var models: MutableList<Int>? = null,
+    var chatheadModels: MutableList<Int>? = null,
     var standAnim : Int = -1,
     var rotateLeftAnim : Int = -1,
     var rotateRightAnim : Int = -1,
@@ -54,7 +51,7 @@ data class NpcType(
     var crawlBackSequence : Int = -1,
     var crawlRightSequence : Int = -1,
     var crawlLeftSequence : Int = -1,
-    override var params: MutableMap<Int, @Contextual Any>? = null,
+    override var params: MutableMap<Int, Any>? = null,
     var height: Int = -1,
     var attack : Int = 1,
     var defence : Int = 1,

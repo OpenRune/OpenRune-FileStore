@@ -2,15 +2,14 @@ package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
 import dev.openrune.definition.game.render.util.JagexColor
-import dev.openrune.definition.serialization.Rscm
-import kotlinx.serialization.Serializable
 import kotlin.math.pow
 
 val DEFAULT_TEXTURE_SIZE = 128
 
-@Serializable
 data class TextureType(
-    override var id: Rscm = -1,
+    override var id: Int = -1,
+    override var inherit: Int = 1,
+    override var debugName : String = "",
     var isTransparent : Boolean = false,
     var fileIds : MutableList<Int> = emptyList<Int>().toMutableList(),
     var combineModes : MutableList<Int> = emptyList<Int>().toMutableList(),

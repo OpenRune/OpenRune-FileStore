@@ -1,7 +1,6 @@
 package dev.openrune.cache.tools.dbtables
 
 import dev.openrune.definition.RSCMHandler
-import dev.openrune.definition.serialization.Rscm
 import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.type.DBTableType

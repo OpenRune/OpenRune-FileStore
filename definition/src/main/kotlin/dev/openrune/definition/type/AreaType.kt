@@ -1,12 +1,12 @@
 package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
-import dev.openrune.definition.serialization.Rscm
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class AreaType(
-    override var id: Rscm = -1,
+    override var id: Int = -1,
+    override var inherit: Int = 1,
+    override var debugName : String = "",
+
     var sprite1: Int = -1,
 
     var sprite2: Int = -1,

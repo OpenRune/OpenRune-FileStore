@@ -3,12 +3,11 @@ package dev.openrune.definition.type
 import dev.openrune.definition.Definition
 import dev.openrune.definition.Sound
 import dev.openrune.definition.SoundData
-import dev.openrune.definition.serialization.Rscm
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class SequenceType(
-    override var id: Rscm = -1,
+    override var id: Int = -1,
+    override var inherit: Int = 1,
+    override var debugName : String = "",
     var frameIDs: MutableList<Int>? = null,
     var chatFrameIds: MutableList<Int>? = null,
     var frameDelays: MutableList<Int>? = null,
@@ -30,8 +29,6 @@ data class SequenceType(
     var rangeEnd : Int = 0,
     var skeletalSounds: MutableMap<Int, SoundData> = emptyMap<Int, SoundData>().toMutableMap(),
     var mask: MutableList<Boolean>? = null,
-    var debugName : String = ""
-
 ) : Definition, Sound {
     var lengthInCycles = 0
     val cycleLength: Int get() = lengthInCycles

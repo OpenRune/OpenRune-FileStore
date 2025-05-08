@@ -2,13 +2,12 @@ package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
 import dev.openrune.definition.game.IndexedSprite
-import kotlinx.serialization.Serializable
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import java.io.File
 import java.nio.file.Path
 import javax.imageio.ImageIO
-@Serializable
+
 enum class SpriteSaveMode {
     /**
      * Saves each sprite individually as a separate PNG file.
@@ -28,7 +27,9 @@ enum class SpriteSaveMode {
 }
 
 data class SpriteType(
-    override var id: Int,
+    override var id: Int = -1,
+    override var inherit: Int = 1,
+    override var debugName : String = "",
     var sprites: Array<IndexedSprite> = emptyArray(),
 
 ) : Definition {
