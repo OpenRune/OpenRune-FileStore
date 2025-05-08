@@ -14,7 +14,7 @@ data class ItemType(
     override var modifiedColours: MutableList<Int>? = null,
     override var originalTextureColours: MutableList<Int>? = null,
     override var modifiedTextureColours: MutableList<Int>? = null,
-    override var params: MutableMap<Int, Any>? = null,
+    override var params: MutableMap<String, Any>? = null,
     var resizeX: Int = 128,
     var resizeY: Int = 128,
     var resizeZ: Int = 128,

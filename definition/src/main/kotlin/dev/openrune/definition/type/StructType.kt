@@ -7,12 +7,12 @@ data class StructType(
     override var id: Int = -1,
     override var inherit: Int = 1,
     override var debugName : String = "",
-    override var params: MutableMap<Int, Any>? = HashMap()
+    override var params: MutableMap<String, Any>? = HashMap()
 ) : Definition, Parameterized {
 
-    fun getInt(key: Int): Int = params?.get(key) as? Int ?: -1
+    fun getInt(key: Int): Int = params?.get(key.toString()) as? Int ?: -1
 
-    fun getString(key: Int): String = params?.get(key) as? String ?: ""
+    fun getString(key: Int): String = params?.get(key.toString()) as? String ?: ""
 
     companion object {
         val EMPTY = StructType()

@@ -61,7 +61,7 @@ data class ObjectType(
     override var varbit: Int = -1,
     override var varp: Int = -1,
     override var transforms: MutableList<Int>? = null,
-    override var params: MutableMap<Int, Any>? = null
+    override var params: MutableMap<String, Any>? = null
 ) : Definition, Transforms, Recolourable, Parameterized {
 
     fun hasActions() = actions.any { it != null }

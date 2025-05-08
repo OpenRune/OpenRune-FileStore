@@ -19,9 +19,9 @@ class EnumCodec : DefinitionCodec<EnumType> {
                 for (i in 0 until count) {
                     val key = buffer.readInt()
                     if (opcode == 5) {
-                        values[key] = buffer.readString()
+                        values[key.toString()] = buffer.readString()
                     } else {
-                        values[key] = buffer.readInt()
+                        values[key.toString()] = buffer.readInt()
                     }
                 }
             }
@@ -45,7 +45,7 @@ class EnumCodec : DefinitionCodec<EnumType> {
                 writeByte(5)
                 writeShort(definition.values.size)
                 for ((key, value) in definition.values) {
-                    writeInt(key as Int)
+                    writeInt(key.toInt())
                     writeString(value.toString())
                 }
             }
@@ -59,7 +59,7 @@ class EnumCodec : DefinitionCodec<EnumType> {
                 writeByte(6)
                 writeShort(definition.values.size)
                 for ((key, value) in definition.values) {
-                    writeInt(key as Int)
+                    writeInt(key.toInt())
                     writeInt(value.toString().toDouble().toInt())
                 }
             }
