@@ -38,14 +38,9 @@ class PackType(
     val codecClass: KClass<*>,
     val name: String,
     val gameValGroup: Js5GameValGroup? = null,
-    val tomlMapper: TomlMapper
-) {
-    val typeClass: KClass<*> = codecClass.supertypes.firstOrNull()
-        ?.arguments?.firstOrNull()?.type?.classifier as? KClass<*>
-        ?: throw IllegalArgumentException("Type class not found for codec $codecClass")
-
-    val kType: KType = List::class.createType(listOf(KTypeProjection.invariant(typeClass.createType())))
-}
+    val tomlMapper: TomlMapper,
+    val kType: KType
+)
 
 class PackConfig(
     private val directory : File,
@@ -75,15 +70,15 @@ class PackConfig(
                 def.options.fromOptions("option", content)
                 def.interfaceOptions.fromOptions("ioption", content)
             }
-        })
+        }, kType = typeOf<List<ItemType>>())
 
-        registerPackType(index = TEXTURES, archive = 0, codec = TextureCodec::class, name = "texture")
+        registerPackType(index = TEXTURES, archive = 0, codec = TextureCodec::class, name = "texture", kType = typeOf<List<TextureType>>())
 
         registerPackType(OBJECT, ObjectCodec::class, "object",Js5GameValGroup.LOCTYPES, tomlMapper = tomlMapper {
             addDecoder<ObjectType> { content , def: ObjectType ->
                 def.actions.fromOptions("option", content)
             }
-        })
+        }, kType = typeOf<List<ObjectType>>())
 
         registerPackType(ENUM, EnumCodec::class, "enum", tomlMapper =  tomlMapper {
             addDecoder<EnumType> { content , def: EnumType ->
@@ -103,36 +98,35 @@ class PackConfig(
                     }
                 }
             }
-        })
+        }, kType = typeOf<List<EnumType>>())
 
-
-        registerPackType(SPOTANIM, SpotAnimCodec::class, "graphics", Js5GameValGroup.SPOTTYPES)
-        registerPackType(SPOTANIM, SpotAnimCodec::class, "graphic", Js5GameValGroup.SPOTTYPES)
-        registerPackType(SEQUENCE, SequenceCodec::class, "animation", Js5GameValGroup.SEQTYPES)
+        registerPackType(SPOTANIM, SpotAnimCodec::class, "graphics", Js5GameValGroup.SPOTTYPES, kType = typeOf<List<SpotAnimType>>())
+        registerPackType(SPOTANIM, SpotAnimCodec::class, "graphic", Js5GameValGroup.SPOTTYPES, kType = typeOf<List<SpotAnimType>>())
+        registerPackType(SEQUENCE, SequenceCodec::class, "animation", Js5GameValGroup.SEQTYPES, kType = typeOf<List<SequenceType>>())
 
         registerPackType(NPC, NPCCodec::class, "npc",Js5GameValGroup.NPCTYPES, tomlMapper = tomlMapper {
             addDecoder<NpcType> { content , def: NpcType ->
                 def.actions.fromOptions("option", content)
             }
-        })
+        }, kType = typeOf<List<NpcType>>())
 
-        registerPackType(VARBIT, VarBitCodec::class, "varbit",Js5GameValGroup.VARBITTYPES)
+        registerPackType(VARBIT, VarBitCodec::class, "varbit",Js5GameValGroup.VARBITTYPES, kType = typeOf<List<VarBitType>>())
 
         registerPackType(AREA, AreaCodec::class, "area", tomlMapper = tomlMapper {
             addDecoder<AreaType> { content , def: AreaType ->
                 def.options.fromOptions("option", content)
             }
-        })
+        }, kType = typeOf<List<AreaType>>())
 
-        registerPackType(HEALTHBAR, HealthBarCodec::class, "health")
-        registerPackType(HITSPLAT, HitSplatCodec::class, "hitsplat")
-        registerPackType(IDENTKIT, IdentityKitCodec::class, "idk")
-        registerPackType(INV, InventoryCodec::class, "inventory",Js5GameValGroup.INVTYPES)
-        registerPackType(OVERLAY, OverlayCodec::class, "overlay")
-        registerPackType(UNDERLAY, OverlayCodec::class, "underlay")
-        registerPackType(PARAMS, ParamCodec::class, "params")
-        registerPackType(VARPLAYER, VarCodec::class, "varp",Js5GameValGroup.VARPTYPES)
-        registerPackType(VARCLIENT, VarClientCodec::class, "varclient")
+        registerPackType(HEALTHBAR, HealthBarCodec::class, "health", kType = typeOf<List<HealthBarType>>())
+        registerPackType(HITSPLAT, HitSplatCodec::class, "hitsplat", kType = typeOf<List<HitSplatType>>())
+        registerPackType(IDENTKIT, IdentityKitCodec::class, "idk", kType = typeOf<List<IdentityKitType>>())
+        registerPackType(INV, InventoryCodec::class, "inventory",Js5GameValGroup.INVTYPES, kType = typeOf<List<InventoryType>>())
+        registerPackType(OVERLAY, OverlayCodec::class, "overlay", kType = typeOf<List<OverlayType>>())
+        registerPackType(UNDERLAY, OverlayCodec::class, "underlay", kType = typeOf<List<UnderlayType>>())
+        registerPackType(PARAMS, ParamCodec::class, "params", kType = typeOf<List<ParamType>>())
+        registerPackType(VARPLAYER, VarCodec::class, "varp",Js5GameValGroup.VARPTYPES, kType = typeOf<List<VarpType>>())
+        registerPackType(VARCLIENT, VarClientCodec::class, "varclient", kType = typeOf<List<VarClientType>>())
 
     }
 
@@ -347,9 +341,10 @@ class PackConfig(
             name: String,
             gameValGroup: Js5GameValGroup? = null,
             index: Int = CONFIGS,
-            tomlMapper: TomlMapper = tomlMapperDefault
+            tomlMapper: TomlMapper = tomlMapperDefault,
+            kType: KType,
         ) {
-            val packType = PackType(index,archive, codec, name, gameValGroup,tomlMapper)
+            val packType = PackType(index,archive, codec, name, gameValGroup,tomlMapper,kType)
             packTypes[packType.name] = packType
         }
 
@@ -358,9 +353,10 @@ class PackConfig(
             archive: Int,
             codec: KClass<*>,
             name: String,
-            gameValGroup: Js5GameValGroup? = null
+            gameValGroup: Js5GameValGroup? = null,
+            kType: KType,
         ) {
-            val packType = PackType(index,archive, codec, name,gameValGroup,tomlMapperDefault)
+            val packType = PackType(index,archive, codec, name,gameValGroup,tomlMapperDefault,kType)
             packTypes[packType.name] = packType
         }
 
