@@ -2,8 +2,6 @@ package dev.openrune.definition
 
 interface Definition {
     var id: Int
-    var inherit : Int
-    var debugName : String
 
     val extra: MutableMap<String, Any?>
         get() = mutableMapOf()

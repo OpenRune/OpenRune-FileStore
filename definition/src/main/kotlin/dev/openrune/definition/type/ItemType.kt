@@ -6,8 +6,6 @@ import dev.openrune.definition.Recolourable
 
 data class ItemType(
     override var id: Int = -1,
-    override var inherit: Int = 1,
-    override var debugName : String = "",
     var name: String = "null",
     var examine: String = "null",
     override var originalColours: MutableList<Int>? = null,

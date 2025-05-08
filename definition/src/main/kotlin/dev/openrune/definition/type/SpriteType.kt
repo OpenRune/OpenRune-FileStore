@@ -28,8 +28,6 @@ enum class SpriteSaveMode {
 
 data class SpriteType(
     override var id: Int = -1,
-    override var inherit: Int = 1,
-    override var debugName : String = "",
     var sprites: Array<IndexedSprite> = emptyArray(),
 
 ) : Definition {

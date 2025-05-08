@@ -4,8 +4,6 @@ import dev.openrune.definition.Definition
 
 data class HealthBarType(
     override var id: Int = -1,
-    override var inherit: Int = 1,
-    override var debugName : String = "",
     var int1: Int = 255,
     var int2: Int = 255,
     var int3: Int = -1,

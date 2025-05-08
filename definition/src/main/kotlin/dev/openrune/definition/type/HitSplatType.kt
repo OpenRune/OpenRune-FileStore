@@ -5,8 +5,6 @@ import dev.openrune.definition.Transforms
 
 data class HitSplatType(
     override var id: Int = -1,
-    override var inherit: Int = 1,
-    override var debugName : String = "",
     var font: Int = -1,
     var textColour: Int = 16777215,
     var icon: Int = -1,

@@ -8,8 +8,6 @@ open class ComponentType : Definition {
     var name: String? = null
     var debugInterfaceName = ""
     override var id: Int = -1
-    override var inherit: Int = 1
-    override var debugName : String = ""
     var child: Int = -1
     var isIf3: Boolean = false
     var type: Int = 0

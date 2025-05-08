@@ -5,8 +5,6 @@ import dev.openrune.definition.util.Type
 
 data class EnumType(
     override var id: Int = -1,
-    override var inherit: Int = 1,
-    override var debugName: String = "",
     var keyType: Type = Type.INT,
     var valueType: Type = Type.INT,
     var defaultInt: Int = 0,

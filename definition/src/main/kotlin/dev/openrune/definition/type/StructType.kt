@@ -5,8 +5,6 @@ import dev.openrune.definition.Parameterized
 
 data class StructType(
     override var id: Int = -1,
-    override var inherit: Int = 1,
-    override var debugName : String = "",
     override var params: MutableMap<String, Any>? = HashMap()
 ) : Definition, Parameterized {
 

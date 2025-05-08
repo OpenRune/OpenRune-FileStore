@@ -21,15 +21,12 @@ import dev.openrune.cache.util.progress
 import dev.openrune.definition.Js5GameValGroup
 import dev.openrune.definition.RSCMHandler
 import dev.openrune.definition.codec.*
-import dev.openrune.definition.util.Type
 import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled
 import java.io.File
 import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
-import kotlin.reflect.KTypeProjection
-import kotlin.reflect.full.createType
 import kotlin.reflect.typeOf
 
 class PackType(
@@ -147,9 +144,13 @@ class PackConfig(
                     val packType: PackType? = packTypes[prop.key]
                     packType?.let {
                         val decodedDefinitions : List<Definition> = packType.tomlMapper.decode(packType.kType, prop.value)
+                        val decodedDefinitionsRaw : List<Map<String, Any>> = packType.tomlMapper.decode(prop.value)
                         val codecInstance = createCodecInstance(packType)
-                        decodedDefinitions.forEach { definition ->
-                            packDefinition(packType, definition, codecInstance,cache)
+                        decodedDefinitions.forEachIndexed { index, definition ->
+                            val def = decodedDefinitionsRaw[index]
+                            val inherit = def["inherit"]?.toString()?.toIntOrNull() ?: -1
+                            val debugName = def["debugName"]?.toString() ?: ""
+                            packDefinition(packType, definition, codecInstance,cache,inherit,debugName)
                         }
                     }
                 }
@@ -164,7 +165,9 @@ class PackConfig(
         packType: PackType,
         def : Definition,
         codec: DefinitionCodec<T>,
-        cache: Cache
+        cache: Cache,
+        inherit : Int,
+        debugName : String
     ) {
         val index = packType.index
         val archive = packType.archive
@@ -175,8 +178,6 @@ class PackConfig(
         }
 
         val defId = def.id
-
-        val inherit = def.inherit
 
         if (inherit != -1) {
             val inheritedDef = getInheritedDefinition(inherit, codec,archive, index,cache)
@@ -193,7 +194,7 @@ class PackConfig(
         }
 
         if (packType.gameValGroup != null) {
-            val matchingName : String = def.debugName
+            val matchingName : String = debugName
             val name = when {
                 matchingName.isEmpty() || !matchingName.contains(".") -> {
                     when (packType.gameValGroup) {
@@ -239,10 +240,8 @@ class PackConfig(
     private fun <T : Definition> mergeDefinitions(baseDef: T, inheritedDef: T, codec: DefinitionCodec<T>): T {
         val defaultDef = codec.createDefinition()
 
-        val excludedFields = setOf("debugName", "inherit", "id")
-
         defaultDef::class.java.declaredFields.forEach { field ->
-            if (!Modifier.isStatic(field.modifiers) && field.name !in excludedFields) {
+            if (!Modifier.isStatic(field.modifiers)) {
                 field.isAccessible = true
                 val baseValue = field.get(baseDef)
                 val inheritedValue = field.get(inheritedDef)

@@ -7,8 +7,6 @@ import dev.openrune.definition.Transforms
 
 data class ObjectType(
     override var id: Int = -1,
-    override var inherit: Int = 1,
-    override var debugName : String = "",
     var name: String = "null",
     var decorDisplacement: Int = 16,
     var isHollow: Boolean = false,

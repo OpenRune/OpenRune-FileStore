@@ -8,8 +8,6 @@ val DEFAULT_TEXTURE_SIZE = 128
 
 data class TextureType(
     override var id: Int = -1,
-    override var inherit: Int = 1,
-    override var debugName : String = "",
     var isTransparent : Boolean = false,
     var fileIds : MutableList<Int> = emptyList<Int>().toMutableList(),
     var combineModes : MutableList<Int> = emptyList<Int>().toMutableList(),

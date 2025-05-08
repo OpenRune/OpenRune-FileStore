@@ -5,8 +5,6 @@ import dev.openrune.definition.Recolourable
 
 data class IdentityKitType(
     override var id: Int = -1,
-    override var inherit: Int = 1,
-    override var debugName : String = "",
     override var originalColours: MutableList<Int>? = null,
     override var modifiedColours: MutableList<Int>? = null,
     override var originalTextureColours: MutableList<Int>? = null,
