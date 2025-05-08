@@ -1,5 +1,6 @@
 package dev.openrune.cache.tools.tasks.impl.defs
 
+import com.github.michaelbull.logging.InlineLogger
 import cc.ekblad.toml.TomlMapper
 import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.serialization.from
@@ -21,7 +22,6 @@ import dev.openrune.definition.Js5GameValGroup
 import dev.openrune.definition.RSCMHandler
 import dev.openrune.definition.codec.*
 import dev.openrune.filesystem.Cache
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.Unpooled
 import java.io.File
 import java.lang.reflect.Modifier
@@ -117,7 +117,7 @@ class PackConfig(
     }
 
 
-    val logger = KotlinLogging.logger {}
+    internal val logger = InlineLogger()
 
     @OptIn(InternalAPI::class)
     override fun init(cache: Cache) {
