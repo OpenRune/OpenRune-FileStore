@@ -2,9 +2,9 @@ package dev.openrune.cache
 
 import com.displee.cache.CacheLibrary
 import com.displee.compress.CompressionType
+import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.filesystem.Cache
 import dev.openrune.filesystem.Compression
-import io.github.oshai.kotlinlogging.KotlinLogging
 
 class CacheDelegate(val library: CacheLibrary) : Cache {
 
@@ -103,7 +103,7 @@ class CacheDelegate(val library: CacheLibrary) : Cache {
     }
 
     companion object {
-        private val logger = KotlinLogging.logger {}
+        private val logger = InlineLogger()
 
         private fun timed(directory: String): CacheLibrary {
             val start = System.currentTimeMillis()

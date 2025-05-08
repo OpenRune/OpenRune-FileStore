@@ -1,5 +1,6 @@
 package dev.openrune.definition.codec
 
+import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.definition.util.readShortSmart
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
@@ -7,7 +8,6 @@ import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.revisionIsOrBefore
 import dev.openrune.definition.type.NpcType
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.ByteBuf
 
 class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
@@ -324,6 +324,6 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
     override fun createDefinition() = NpcType()
 
     companion object {
-        internal val logger = KotlinLogging.logger {}
+        internal val logger = InlineLogger()
     }
 }

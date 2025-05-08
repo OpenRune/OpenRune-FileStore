@@ -1,11 +1,11 @@
 package dev.openrune
 
+import com.github.michaelbull.logging.InlineLogger
 import com.google.gson.Gson
 import dev.openrune.cache.tools.CacheInfo
 import dev.openrune.cache.util.progress
 import dev.openrune.cache.util.stringToTimestamp
 import dev.openrune.cache.util.toEchochUTC
-import io.github.oshai.kotlinlogging.KotlinLogging
 import net.lingala.zip4j.ZipFile
 import java.io.File
 import java.io.FileOutputStream
@@ -17,7 +17,7 @@ import kotlin.system.exitProcess
 
 object DownloadOSRS {
 
-    private val logger = KotlinLogging.logger {}
+    private val logger = InlineLogger()
 
     private const val CACHE_DOWNLOAD_LOCATION = "https://archive.openrs2.org/caches.json"
 

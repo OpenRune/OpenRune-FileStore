@@ -1,9 +1,9 @@
 package dev.openrune.cache.tools
 
 import com.displee.cache.CacheLibrary
+import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.tools.tasks.CacheTask
-import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.File
 import kotlin.system.measureTimeMillis
 
@@ -14,7 +14,7 @@ class BuildCache(
     val tasks: MutableList<CacheTask> = mutableListOf()
 ) {
 
-    private val logger = KotlinLogging.logger {}
+    private val logger = InlineLogger()
 
     fun initialize() {
         try {

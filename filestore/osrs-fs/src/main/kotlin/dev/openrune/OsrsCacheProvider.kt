@@ -1,5 +1,6 @@
 package dev.openrune
 
+import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.*
 import dev.openrune.filesystem.Cache
 import dev.openrune.cache.filestore.definition.ConfigDefinitionDecoder
@@ -7,12 +8,11 @@ import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.definition.DefinitionTransform
 import dev.openrune.definition.type.*
 import dev.openrune.definition.codec.*
-import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.BufferUnderflowException
 
 class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : Int = -1) : CacheStore() {
 
-    private val logger = KotlinLogging.logger {}
+    private val logger = InlineLogger()
 
     init {
         CACHE_REVISION = cacheRevision

@@ -1,10 +1,10 @@
 package dev.openrune.cache.filestore.definition
 
+import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.SPRITES
 import dev.openrune.definition.Definition
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.filesystem.Cache
-import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.BufferUnderflowException
 
 abstract class DefinitionDecoder<T : Definition>(val index: Int, private val codec: DefinitionCodec<T>, private var transform: DefinitionTransform<T>? = null) {
@@ -54,6 +54,6 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int, private val cod
     open fun getArchive(id: Int) = id
 
     companion object {
-        internal val logger = KotlinLogging.logger {}
+        internal val logger = InlineLogger()
     }
 }

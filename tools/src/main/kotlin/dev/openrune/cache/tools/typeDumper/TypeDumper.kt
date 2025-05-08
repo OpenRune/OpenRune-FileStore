@@ -1,5 +1,6 @@
 package dev.openrune.cache.tools.typeDumper
 
+import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.OsrsCacheProvider
 import dev.openrune.cache.*
 import dev.openrune.cache.tools.typeDumper.impl.IfTypes
@@ -10,7 +11,6 @@ import dev.openrune.definition.Js5GameValGroup
 import dev.openrune.definition.Js5GameValGroup.*
 import dev.openrune.definition.util.readString
 import dev.openrune.filesystem.Cache
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.buffer.Unpooled
 import java.io.File
 import java.nio.file.Files
@@ -73,7 +73,7 @@ class TypeDumper(
     private val rev: Int,
     val exportSettings: TypeExportSettings = TypeExportSettings()
 ) {
-    private val logger = KotlinLogging.logger {}
+    private val logger = InlineLogger()
     private val namer = Namer()
     lateinit var language: Language
     private var names: MutableMap<Int, String> = mutableMapOf()
