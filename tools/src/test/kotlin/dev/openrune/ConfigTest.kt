@@ -51,12 +51,12 @@ class ConfigTest {
         val objectId = 60005
         val objectDef = CacheManager.getObjectOrDefault(objectId)
 
-        assertEquals(objectDef.name, "Merlin Rune Portal")
-        assertEquals(objectDef.animationId, 2212)
-        assertEquals(objectDef.sizeX, 2)
-        assertEquals(objectDef.sizeY, 2)
-        assertEquals(objectDef.actions, listOf("Teleport", null, null, null, null))
-        assertEquals(objectDef.objectModels, listOf(63101))
+        assertEquals("Merlin Rune Portal",objectDef.name)
+        assertEquals(2212,objectDef.animationId)
+        assertEquals(2,objectDef.sizeX)
+        assertEquals(2,objectDef.sizeY)
+        assertEquals(listOf("Teleport", null, null, null, null),objectDef.actions)
+        assertEquals(listOf(63101), objectDef.objectModels)
     }
 
     @Test
@@ -64,8 +64,8 @@ class ConfigTest {
         val item = 31671
         val itemDef = CacheManager.getItemOrDefault(item)
 
-        assertEquals(itemDef.examine, "Lovely money!")
-        assertEquals(itemDef.name, "Blood Money")
+        assertEquals("Lovely money!",itemDef.examine)
+        assertEquals("Blood Money",itemDef.name)
     }
 
     @Test
@@ -73,7 +73,8 @@ class ConfigTest {
         val objectId = 69
         val objectDef = CacheManager.getObjectOrDefault(objectId)
 
-        assertEquals(objectDef.name, "Custom Pank")
-        assertEquals(objectDef.objectModels, listOf(1844))
+        assertEquals("Custom Pank", objectDef.name)
+        assertEquals(listOf(1844),objectDef.objectModels)
     }
+
 }

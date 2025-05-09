@@ -1,9 +1,8 @@
 package dev.openrune.definition
 
-import dev.openrune.definition.serialization.Rscm
-
 interface Definition {
-    var id: Rscm
+    var id: Int
+
     val extra: MutableMap<String, Any?>
         get() = mutableMapOf()
 

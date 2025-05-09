@@ -1,3 +1,7 @@
+[[tokenizedReplacement]]
+TELEPORTOPTION="Teleport"
+ANIMATION=2212
+
 [[item]]
 id = 31671
 inherit = 995
@@ -10,14 +14,14 @@ inherit = 69
 name = "Custom Pank"
 
 [[object]]
-id = 60005
+id = "objects.merlin_rune_portal"
 name = "Merlin Rune Portal"
-animationId = 2212
+animationId = %ANIMATION%
 description = "Adventures can use this to loot items, exchange points and invest for rewards."
 sizeX = 2
 sizeY = 2
-option1 = "Teleport"
-objectModels = [63101]
+option1 = "%TELEPORTOPTION%"
+objectModels = ["models.modeltest3"]
 
 
 [[idk]]

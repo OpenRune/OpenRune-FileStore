@@ -1,15 +1,14 @@
 package dev.openrune.definition.type.widget
 
 import dev.openrune.definition.Definition
-import dev.openrune.definition.serialization.Rscm
 import java.awt.Color
 
 open class ComponentType : Definition {
 
     var name: String? = null
     var debugInterfaceName = ""
-    override var id: Rscm = -1
-    var child: Rscm = -1
+    override var id: Int = -1
+    var child: Int = -1
     var isIf3: Boolean = false
     var type: Int = 0
     var contentType: Int = 0

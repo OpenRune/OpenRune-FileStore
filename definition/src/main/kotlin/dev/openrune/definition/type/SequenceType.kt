@@ -3,12 +3,9 @@ package dev.openrune.definition.type
 import dev.openrune.definition.Definition
 import dev.openrune.definition.Sound
 import dev.openrune.definition.SoundData
-import dev.openrune.definition.serialization.Rscm
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class SequenceType(
-    override var id: Rscm = -1,
+    override var id: Int = -1,
     var frameIDs: MutableList<Int>? = null,
     var chatFrameIds: MutableList<Int>? = null,
     var frameDelays: MutableList<Int>? = null,

@@ -3,20 +3,16 @@ package dev.openrune.definition.type
 import dev.openrune.definition.Definition
 import dev.openrune.definition.Parameterized
 import dev.openrune.definition.Recolourable
-import dev.openrune.definition.serialization.Rscm
-import kotlinx.serialization.Contextual
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class ItemType(
-    override var id: Rscm = -1,
+    override var id: Int = -1,
     var name: String = "null",
     var examine: String = "null",
     override var originalColours: MutableList<Int>? = null,
     override var modifiedColours: MutableList<Int>? = null,
     override var originalTextureColours: MutableList<Int>? = null,
     override var modifiedTextureColours: MutableList<Int>? = null,
-    override var params: MutableMap<Int, @Contextual Any>? = null,
+    override var params: MutableMap<String, Any>? = null,
     var resizeX: Int = 128,
     var resizeY: Int = 128,
     var resizeZ: Int = 128,
@@ -31,7 +27,7 @@ data class ItemType(
     var cost: Int = 1,
     var isTradeable: Boolean = false,
     var stacks: Int = 0,
-    var inventoryModel: Rscm = 0,
+    var inventoryModel: Int = 0,
     var members: Boolean = false,
     var zoom2d: Int = 2000,
     var xOffset2d: Int = 0,
@@ -42,18 +38,18 @@ data class ItemType(
     var countObj: MutableList<Int>? = null,
     var options: MutableList<String?> = mutableListOf(null, null, "Take", null, null),
     var interfaceOptions: MutableList<String?> = mutableListOf(null, null, null, null, "Drop"),
-    var maleModel0: Rscm = -1,
-    var maleModel1: Rscm = -1,
-    var maleModel2: Rscm = -1,
-    var maleOffset: Rscm = 0,
-    var maleHeadModel0: Rscm = -1,
-    var maleHeadModel1: Rscm = -1,
-    var femaleModel0: Rscm = -1,
-    var femaleModel1: Rscm = -1,
-    var femaleModel2: Rscm = -1,
-    var femaleOffset: Rscm = 0,
-    var femaleHeadModel0: Rscm = -1,
-    var femaleHeadModel1: Rscm = -1,
+    var maleModel0: Int = -1,
+    var maleModel1: Int = -1,
+    var maleModel2: Int = -1,
+    var maleOffset: Int = 0,
+    var maleHeadModel0: Int = -1,
+    var maleHeadModel1: Int = -1,
+    var femaleModel0: Int = -1,
+    var femaleModel1: Int = -1,
+    var femaleModel2: Int = -1,
+    var femaleOffset: Int = 0,
+    var femaleHeadModel0: Int = -1,
+    var femaleHeadModel1: Int = -1,
     var noteLinkId: Int = -1,
     var noteTemplateId: Int = -1,
     var teamCape: Int = 0,

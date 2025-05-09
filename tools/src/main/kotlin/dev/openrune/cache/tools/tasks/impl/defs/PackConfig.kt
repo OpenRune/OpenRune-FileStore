@@ -1,8 +1,11 @@
 package dev.openrune.cache.tools.tasks.impl.defs
 
-import com.akuleshov7.ktoml.Toml
-import com.akuleshov7.ktoml.TomlInputConfig
 import com.github.michaelbull.logging.InlineLogger
+import cc.ekblad.toml.TomlMapper
+import cc.ekblad.toml.model.TomlValue
+import cc.ekblad.toml.serialization.from
+import cc.ekblad.toml.tomlMapper
+import cc.ekblad.toml.util.InternalAPI
 import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.*
 import dev.openrune.cache.tools.CacheTool
@@ -18,14 +21,13 @@ import dev.openrune.cache.util.progress
 import dev.openrune.definition.Js5GameValGroup
 import dev.openrune.definition.RSCMHandler
 import dev.openrune.definition.codec.*
-import dev.openrune.definition.util.Type
 import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled
-import kotlinx.serialization.InternalSerializationApi
-import kotlinx.serialization.serializer
 import java.io.File
 import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
+import kotlin.reflect.KType
+import kotlin.reflect.typeOf
 
 class PackType(
     val index: Int,
@@ -33,111 +35,102 @@ class PackType(
     val codecClass: KClass<*>,
     val name: String,
     val gameValGroup: Js5GameValGroup? = null,
-    val modify: ((Map<String, Any>, Any) -> Unit)? = null
-) {
-    val typeClass: KClass<*> = codecClass.supertypes.firstOrNull()
-        ?.arguments?.firstOrNull()?.type?.classifier as? KClass<*>
-        ?: throw IllegalArgumentException("Type class not found for codec $codecClass")
-}
+    val tomlMapper: TomlMapper,
+    val kType: KType
+)
 
 class PackConfig(
     private val directory : File,
-    val tokenizedReplacement: Map<String,String> = emptyMap()
+    private val tokenizedReplacement: Map<String,String> = emptyMap()
 ) : CacheTask() {
 
+
     fun MutableList<String?>.fromOptions(keyName: String, content: Map<String, Any?>) {
-        (1..5).forEachIndexed { index, i ->
-            content["${keyName}$i"]?.let { this[index] = it.toString().replace("\"", "") }
-        }
+        (1..5).mapNotNull { content["${keyName}$it"] as? TomlValue.String }
+            .forEachIndexed { index, option -> this[index] = option.value }
     }
+
 
     init {
 
-        packTypes.registerPackType(ITEM, ItemCodec::class, "item",Js5GameValGroup.OBJTYPES) { content, def: ItemType ->
-            if (content["equipmentType"] != null) {
-                content["equipmentType"]?.toString()?.replace("\"", "")?.takeIf { ItemSlotType.fetchTypes().contains(it) }?.let { type ->
-                    ItemSlotType.fetchType(type)?.apply {
-                        def.equipSlot = slot
-                        def.appearanceOverride1 = override1
-                        def.appearanceOverride2 = override2
+        registerPackType(ITEM, ItemCodec::class, "item",Js5GameValGroup.OBJTYPES, tomlMapper = tomlMapper {
+            addDecoder<ItemType> { content , def: ItemType ->
+                content["equipmentType"]?.let { typeValue ->
+                    val type = (typeValue as? TomlValue.String)?.value ?: error("equipmentType must be a string")
+                    val slotType = ItemSlotType.fetchType(type) ?: error("Unable to find slot type for $type")
+                    def.apply {
+                        equipSlot = slotType.slot
+                        appearanceOverride1 = slotType.override1
+                        appearanceOverride2 = slotType.override2
                     }
-                } ?: println("Unknown Slot: ${content["equipmentType"]}")
-
+                }
+                def.options.fromOptions("option", content)
+                def.interfaceOptions.fromOptions("ioption", content)
             }
-            def.options.fromOptions("option", content)
-            def.interfaceOptions.fromOptions("ioption", content)
-        }
+        }, kType = typeOf<List<ItemType>>())
 
-        packTypes.registerPackType(index = TEXTURES, archive = 0, codec = TextureCodec::class, name = "texture")
-        packTypes.registerPackType(OBJECT, ObjectCodec::class, "object",Js5GameValGroup.LOCTYPES) { content, def: ObjectType ->
-            def.actions.fromOptions("option", content)
-        }
-        packTypes.registerPackType(SPOTANIM, SpotAnimCodec::class, "graphics", Js5GameValGroup.SPOTTYPES)
-        packTypes.registerPackType(SPOTANIM, SpotAnimCodec::class, "graphic", Js5GameValGroup.SPOTTYPES)
+        registerPackType(index = TEXTURES, archive = 0, codec = TextureCodec::class, name = "texture", kType = typeOf<List<TextureType>>())
 
-        packTypes.registerPackType(SEQUENCE, SequenceCodec::class, "animation", Js5GameValGroup.SEQTYPES)
-        packTypes.registerPackType(STRUCT, StructCodec::class, "struct") { content, def: StructType ->
-            val filteredMap = content.filterKeys { key ->
-                key.toIntOrNull() != null
-            }.mapKeys { (key, _) -> key.toInt() }
-
-            filteredMap.forEach { (key, value) ->
-                def.params?.set(key, value)
+        registerPackType(OBJECT, ObjectCodec::class, "object",Js5GameValGroup.LOCTYPES, tomlMapper = tomlMapper {
+            addDecoder<ObjectType> { content , def: ObjectType ->
+                def.actions.fromOptions("option", content)
             }
-        }
-        packTypes.registerPackType(NPC, NPCCodec::class, "npc",Js5GameValGroup.NPCTYPES) { content, def: NpcType ->
-            def.actions.fromOptions("option", content)
-        }
+        }, kType = typeOf<List<ObjectType>>())
 
-        packTypes.registerPackType(ENUM, EnumCodec::class, "enum") { content, def: EnumType ->
-            val filteredMap = content.filterKeys { key ->
-                key.toIntOrNull() != null
-            }.mapKeys { (key, _) -> key.toInt() }
+        registerPackType(ENUM, EnumCodec::class, "enum", tomlMapper =  tomlMapper {
+            addDecoder<EnumType> { content , def: EnumType ->
 
-            content["keytype"]?.let {
-                def.valueType = Type.valueOf(it.toString().replace("\"", "").uppercase())
-            }
+                if (content.containsKey("clear")) {
+                    def.values.clear()
+                }
 
-            content["valuetype"]?.let {
-                def.valueType = Type.valueOf(it.toString().replace("\"", "").uppercase())
-            }
+                val value = (content["default"] as? TomlValue.String)?.value
 
-            content["clear"]?.takeIf { it == "true" }?.let {
-                def.values.clear()
-            }
-
-            content["default"]?.let {
-                val value = it.toString().replace("\"", "")
-                if (value.matches(Regex("^[0-9]+$"))) {
-                    def.defaultInt = value.toInt()
+                if (value.isNullOrEmpty()) {
+                    def.defaultString = ""
                 } else {
-                    def.defaultString = value
+                    when {
+                        value.all { it.isDigit() } -> def.defaultInt = value.toInt()
+                        else -> def.defaultString = value
+                    }
                 }
             }
+        }, kType = typeOf<List<EnumType>>())
 
-            filteredMap.forEach { (key, value) ->
-                def.values[key] = value
+        registerPackType(SPOTANIM, SpotAnimCodec::class, "graphics", Js5GameValGroup.SPOTTYPES, kType = typeOf<List<SpotAnimType>>())
+        registerPackType(SPOTANIM, SpotAnimCodec::class, "graphic", Js5GameValGroup.SPOTTYPES, kType = typeOf<List<SpotAnimType>>())
+        registerPackType(SEQUENCE, SequenceCodec::class, "animation", Js5GameValGroup.SEQTYPES, kType = typeOf<List<SequenceType>>())
+
+        registerPackType(NPC, NPCCodec::class, "npc",Js5GameValGroup.NPCTYPES, tomlMapper = tomlMapper {
+            addDecoder<NpcType> { content , def: NpcType ->
+                def.actions.fromOptions("option", content)
             }
-        }
-        packTypes.registerPackType(VARBIT, VarBitCodec::class, "varbit",Js5GameValGroup.VARBITTYPES)
-        packTypes.registerPackType(AREA, AreaCodec::class, "area") { content, def: AreaType ->
-            def.options.fromOptions("option", content)
-        }
-        packTypes.registerPackType(HEALTHBAR, HealthBarCodec::class, "health")
-        packTypes.registerPackType(HITSPLAT, HitSplatCodec::class, "hitsplat")
-        packTypes.registerPackType(IDENTKIT, IdentityKitCodec::class, "idk")
-        packTypes.registerPackType(INV, InventoryCodec::class, "inventory",Js5GameValGroup.INVTYPES)
-        packTypes.registerPackType(OVERLAY, OverlayCodec::class, "overlay")
-        packTypes.registerPackType(UNDERLAY, OverlayCodec::class, "underlay")
-        packTypes.registerPackType(PARAMS, ParamCodec::class, "params")
-        packTypes.registerPackType(VARPLAYER, VarCodec::class, "varp",Js5GameValGroup.VARPTYPES)
-        packTypes.registerPackType(VARCLIENT, VarClientCodec::class, "varclient")
+        }, kType = typeOf<List<NpcType>>())
+
+        registerPackType(VARBIT, VarBitCodec::class, "varbit",Js5GameValGroup.VARBITTYPES, kType = typeOf<List<VarBitType>>())
+
+        registerPackType(AREA, AreaCodec::class, "area", tomlMapper = tomlMapper {
+            addDecoder<AreaType> { content , def: AreaType ->
+                def.options.fromOptions("option", content)
+            }
+        }, kType = typeOf<List<AreaType>>())
+
+        registerPackType(HEALTHBAR, HealthBarCodec::class, "health", kType = typeOf<List<HealthBarType>>())
+        registerPackType(HITSPLAT, HitSplatCodec::class, "hitsplat", kType = typeOf<List<HitSplatType>>())
+        registerPackType(IDENTKIT, IdentityKitCodec::class, "idk", kType = typeOf<List<IdentityKitType>>())
+        registerPackType(INV, InventoryCodec::class, "inventory",Js5GameValGroup.INVTYPES, kType = typeOf<List<InventoryType>>())
+        registerPackType(OVERLAY, OverlayCodec::class, "overlay", kType = typeOf<List<OverlayType>>())
+        registerPackType(UNDERLAY, OverlayCodec::class, "underlay", kType = typeOf<List<UnderlayType>>())
+        registerPackType(PARAMS, ParamCodec::class, "params", kType = typeOf<List<ParamType>>())
+        registerPackType(VARPLAYER, VarCodec::class, "varp",Js5GameValGroup.VARPTYPES, kType = typeOf<List<VarpType>>())
+        registerPackType(VARCLIENT, VarClientCodec::class, "varclient", kType = typeOf<List<VarClientType>>())
 
     }
 
 
-    val logger = InlineLogger()
+    internal val logger = InlineLogger()
 
+    @OptIn(InternalAPI::class)
     override fun init(cache: Cache) {
         val size = getFiles(directory, "toml").size
         val progress = progress("Packing Configs", size)
@@ -145,20 +138,19 @@ class PackConfig(
             getFiles(directory, "toml").forEach {
                 progress.extraMessage = it.name
 
-                val defs = parseTomlSectionToMap(tokenizedReplacement.toMutableMap(),packTypes.keys.toList(), it.readText())
 
-                defs.forEach { (typeName, items) ->
-                    val codec: PackType? = packTypes[typeName]
-                    codec?.let {
-                        items.forEach { item ->
-                            val constructor = codec.codecClass.constructors.first()
-                            val params = constructor.parameters.size
-                            val codecInstance = if (params == 0) {
-                                constructor.call() as DefinitionCodec<*>
-                            } else {
-                                constructor.call(CACHE_REVISION) as DefinitionCodec<*>
-                            }
-                            packDefinitions(item.section, item.lines, codec, codecInstance, cache)
+                val document = TomlValue.from(processDocumentChanges(it.readText()))
+                document.properties.forEach { prop ->
+                    val packType: PackType? = packTypes[prop.key]
+                    packType?.let {
+                        val decodedDefinitions : List<Definition> = packType.tomlMapper.decode(packType.kType, prop.value)
+                        val decodedDefinitionsRaw : List<Map<String, Any>> = packType.tomlMapper.decode(prop.value)
+                        val codecInstance = createCodecInstance(packType)
+                        decodedDefinitions.forEachIndexed { index, definition ->
+                            val def = decodedDefinitionsRaw[index]
+                            val inherit = def["inherit"]?.toString()?.toIntOrNull() ?: -1
+                            val debugName = def["debugName"]?.toString() ?: ""
+                            packDefinition(packType, definition, codecInstance,cache,inherit,debugName)
                         }
                     }
                 }
@@ -169,19 +161,17 @@ class PackConfig(
         }
     }
 
-    @OptIn(InternalSerializationApi::class)
-    private fun <T : Definition> packDefinitions(
-        tomlContent: String,
-        lines : Map<String, Any>,
+    private fun <T : Definition> packDefinition(
         packType: PackType,
+        def : Definition,
         codec: DefinitionCodec<T>,
-        cache: Cache
+        cache: Cache,
+        inherit : Int,
+        debugName : String
     ) {
-        val toml = Toml(TomlInputConfig(ignoreUnknownNames = true))
-        var def = toml.decodeFromString(packType.typeClass.serializer(), tomlContent) as T
         val index = packType.index
         val archive = packType.archive
-
+        var definition = def
         if (def.id == -1) {
             logger.info { "Unable to pack as the ID is -1 or has not been defined" }
             return
@@ -189,44 +179,41 @@ class PackConfig(
 
         val defId = def.id
 
-        val inheritText = lines["inherit"].toString().replace("\"", "")
-
-        val inherit = inheritText.let {
-            it.toIntOrNull() ?: RSCMHandler.getMapping(it) ?: -1
-        }
-
         if (inherit != -1) {
             val inheritedDef = getInheritedDefinition(inherit, codec,archive, index,cache)
             inheritedDef?.let {
-                def = mergeDefinitions(it, def, codec)
+                definition = mergeDefinitions(it, def as T, codec)
             } ?: run {
                 logger.warn { "No inherited definition found for ID $inherit" }
                 return
             }
         }
-        packType.modify?.let { it(lines, def) }
 
         if (packType.index == TEXTURES) {
-            def = manageTexture(cache,def) as T
+            definition = manageTexture(cache,def) as T
         }
 
         if (packType.gameValGroup != null) {
-            val matchingName : String? = lines["id"]?.toString()?.takeIf { it.all { char -> char.isDigit() } }?.let { null } ?: lines["id"].toString()
-
-            val name = matchingName?.substringAfter(".") ?: when (packType.gameValGroup) {
-                Js5GameValGroup.OBJTYPES -> (def as ItemType).name
-                Js5GameValGroup.NPCTYPES -> (def as NpcType).name
-                Js5GameValGroup.LOCTYPES -> (def as ObjectType).name
-                else -> null
+            val matchingName : String = debugName
+            val name = when {
+                matchingName.isEmpty() || !matchingName.contains(".") -> {
+                    when (packType.gameValGroup) {
+                        Js5GameValGroup.OBJTYPES -> (def as ItemType).name
+                        Js5GameValGroup.NPCTYPES -> (def as NpcType).name
+                        Js5GameValGroup.LOCTYPES -> (def as ObjectType).name
+                        else -> null
+                    }
+                }
+                else -> matchingName.substringAfter(".")
             }
 
             if (!name.isNullOrBlank() && name != "null") {
-                CacheTool.addGameValMapping(packType.gameValGroup, name, defId)
+                CacheTool.addGameValMapping(packType.gameValGroup, name.lowercase(), defId)
             }
         }
 
         val writer = Unpooled.buffer(4096)
-        with(codec) { writer.encode(def) }
+        with(codec) { writer.encode(definition as T) }
         cache.write(index,archive,defId,writer.toArray())
     }
 
@@ -269,85 +256,109 @@ class PackConfig(
         return baseDef
     }
 
-    data class TomlSection(var section: String, val lines: MutableMap<String, String>)
+    private fun processDocumentChanges(content: String): String {
+        val tokenMap = tokenizedReplacement.toMutableMap()
+        val regex = Regex("""\[\[tokenizedReplacement]](.*?)(?=\n\[\[|\z)""", RegexOption.DOT_MATCHES_ALL)
 
-    private fun parseTomlSectionToMap(
-        tokenizedReplacement: MutableMap<String, String>,
-        types: List<String>,
-        tomlContent: String
-    ): MutableMap<String, MutableList<TomlSection>> {
+        regex.find(content)?.groups?.get(1)?.value
+            ?.lineSequence()
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?.forEach { parseInlineTableString(it).forEach { (k, v) -> tokenMap[k] = v.removeSurrounding("\"") } }
 
-        val combinedMap = mutableMapOf<String, MutableList<TomlSection>>()
-        val sectionRegex = """\[\[([\w.]+)\]\](.*?)(?=\[\[|\Z)""".toRegex(RegexOption.DOT_MATCHES_ALL)
+        var updated = content
+        tokenMap.forEach { (key, value) ->
+            updated = updated.replace(Regex("%${Regex.escape(key)}%", RegexOption.IGNORE_CASE), value)
+        }
 
-        sectionRegex.findAll(tomlContent).forEach { match ->
-            val (fullSectionName, sectionContent) = match.destructured
-            val sectionParts = fullSectionName.split(".") // Handle sub-tables
+        return processRSCMModifier(updated)
+    }
 
-            val sectionMap = sectionContent.trim().lineSequence()
-                .mapNotNull { it.split("=").map(String::trim).takeIf { it.size == 2 } }
-                .associate { it[0] to it[1].removeSurrounding("\"") }
-                .toMutableMap()
+    private fun parseInlineTableString(input: String): List<Pair<String, String>> =
+        input.removePrefix("{").removeSuffix("}")
+            .split(",")
+            .map { it.split("=").map { it.trim() } }
+            .map { it[0].lowercase() to it[1] }
 
-            val topLevelSection = sectionParts.first()
-            val subTableName = sectionParts.drop(1).joinToString(".") // Capture sub-table name if present
+    private fun createCodecInstance(codec: PackType): DefinitionCodec<*> {
+        val constructor = codec.codecClass.constructors.first()
+        val params = constructor.parameters.size
 
-            when (topLevelSection) {
-                in types -> {
-                    val sectionObject = TomlSection(sectionContent, sectionMap)
-                    combinedMap.getOrPut(fullSectionName) { mutableListOf() }.add(sectionObject)
-                }
-                "tokenizedReplacement" -> {
-                    sectionMap.forEach { (key, value) ->
-                        tokenizedReplacement[key] = value
+        return if (params == 0) {
+            constructor.call() as DefinitionCodec<*>
+        } else {
+            constructor.call(CACHE_REVISION) as DefinitionCodec<*>
+        }
+    }
+
+
+    private fun processRSCMModifier(input: String): String {
+        val allowedPrefixes = RSCMHandler.rscmTypes
+        val output = StringBuilder()
+        var debugNameAdded = false
+
+        val quotedStringRegex = Regex(""""([^"]+)"""")
+
+        input.lines().forEach { line ->
+            val trimmed = line.trim()
+
+            if (trimmed.startsWith("[[")) {
+                debugNameAdded = false
+                output.appendLine(line)
+                return@forEach
+            }
+
+            var modifiedLine = line
+            val matches = quotedStringRegex.findAll(line)
+
+            for (match in matches) {
+                val fullValue = match.groupValues[1]
+                if (allowedPrefixes.any { fullValue.startsWith(it) }) {
+                    val resolved = RSCMHandler.getMapping(fullValue) ?: error("Invalid RSCM reference: \"$fullValue\" not found")
+                    modifiedLine = modifiedLine.replace("\"$fullValue\"", resolved.toString())
+
+                    if (!debugNameAdded && trimmed.startsWith("id") && fullValue == match.groupValues[1]) {
+                        output.appendLine("debugName = \"$fullValue\"")
+                        debugNameAdded = true
                     }
                 }
             }
+
+            output.appendLine(modifiedLine)
         }
 
-        // Apply token replacements
-        combinedMap.values.flatten().forEach { item ->
-            item.lines.replaceAll { key, value ->
-                tokenizedReplacement.entries.fold(value) { acc, (placeholder, replacement) ->
-                    acc.replace("%$placeholder%", replacement)
-                }
-            }
-            item.section = tokenizedReplacement.entries.fold(item.section) { acc, (placeholder, replacement) ->
-                acc.replace("%$placeholder%", replacement)
-            }
-        }
-
-        return combinedMap
+        return output.toString()
     }
 
     companion object {
+
+        val tomlMapperDefault = tomlMapper {  }
         val packTypes = mutableMapOf<String, PackType>()
 
-        fun <T : Definition>MutableMap<String, PackType>.registerPackType(
+        fun registerPackType(
             archive: Int, codec: KClass<*>,
             name: String,
             gameValGroup: Js5GameValGroup? = null,
             index: Int = CONFIGS,
-            modify: ((Map<String, Any>, T) -> Unit)
+            tomlMapper: TomlMapper = tomlMapperDefault,
+            kType: KType,
         ) {
-            val packType = PackType(index,archive, codec, name, gameValGroup,modify as ((Map<String, Any>, Any) -> Unit)?)
-            this[packType.name] = packType
+            val packType = PackType(index,archive, codec, name, gameValGroup,tomlMapper,kType)
+            packTypes[packType.name] = packType
         }
 
-        fun MutableMap<String, PackType>.registerPackType(
+        fun registerPackType(
             index: Int,
             archive: Int,
             codec: KClass<*>,
             name: String,
-            gameValGroup: Js5GameValGroup? = null
+            gameValGroup: Js5GameValGroup? = null,
+            kType: KType,
         ) {
-            val packType = PackType(index,archive, codec, name, gameValGroup)
-            this[packType.name] = packType
+            val packType = PackType(index,archive, codec, name,gameValGroup,tomlMapperDefault,kType)
+            packTypes[packType.name] = packType
         }
 
-        fun MutableMap<String, PackType>.registerPackType(archive: Int, codec: KClass<*>, name: String, gameValGroup: Js5GameValGroup? = null) {
-            registerPackType(CONFIGS,archive, codec, name,gameValGroup)
-        }
     }
 
 }
