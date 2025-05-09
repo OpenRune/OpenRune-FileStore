@@ -5,8 +5,8 @@ plugins {
     id("maven-publish")
 }
 
-val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "E:\\RSPS\\OpenRune\\hosting"
-val buildNumber = "2.0.15"
+val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "K:\\documents\\GitHub\\hosting\\"
+val buildNumber = "2.0.14"
 
 
 subprojects {
