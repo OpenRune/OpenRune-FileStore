@@ -96,7 +96,7 @@ class FreshCache(
             if (unzip(zipLoc, downloadLocation)) {
                 logger.info { "Cache downloaded and unzipped successfully." }
                 if (tasks.isNotEmpty()) {
-                    BuildCache(input = downloadLocation, output = output, tempLocation = File(output, "temp"), tasks = tasks).initialize()
+                    BuildCache(input = downloadLocation, output = output, tempLocation = File(output, "temp"), tasks = tasks,revision).initialize()
                 }
                 zipLoc.delete()
             } else {

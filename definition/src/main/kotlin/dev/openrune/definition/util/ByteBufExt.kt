@@ -12,6 +12,16 @@ fun ByteBuf.readShortSmart(): Int {
     return if (peek < 128) peek - 64 else (peek shl 8 or readUnsignedByte().toInt()) - 49152
 }
 
+fun ByteBuf.writeShortSmart(v: Int): ByteBuf {
+    when (v) {
+        in -0x40..0x3F -> writeByte(v + 0x40)
+        in -0x4000..0x3FFF -> writeShort(0x8000 or (v + 0x4000))
+        else -> throw IllegalArgumentException()
+    }
+
+    return this
+}
+
 
 fun ByteBuf.readSmart(): Int {
     val peek = readUnsignedByte().toInt()

@@ -12,9 +12,7 @@ data class ObjectType(
     var isHollow: Boolean = false,
     var objectModels: MutableList<Int>? = null,
     var objectTypes: MutableList<Int>? = null,
-    var recolorToFind: MutableList<Int>? = null,
     var mapAreaId: Int = -1,
-    var retextureToReplace: MutableList<Int>? = null,
     var sizeX: Int = 1,
     var sizeY: Int = 1,
     var soundDistance: Int = 0,
@@ -31,7 +29,6 @@ data class ObjectType(
     var solid: Int = 2,
     var mapSceneID: Int = -1,
     var clipMask: Int = 0,
-    var recolorToReplace: List<Short>? = null,
     var clipped: Boolean = true,
     var modelSizeX: Int = 128,
     var modelSizeZ: Int = 128,
@@ -43,9 +40,7 @@ data class ObjectType(
     var clipType: Int = -1,
     var category: Int = -1,
     var supportsItems: Int = -1,
-    var configs: IntArray? = null,
     var isRotated: Boolean = false,
-    var varpId: Int = -1,
     var ambientSoundId: Int = -1,
     var modelClipped: Boolean = false,
     var soundMin: Int = 0,
@@ -71,8 +66,6 @@ data class ObjectType(
             actions.hashCode(),
             sizeX,
             sizeY,
-            recolorToFind?.hashCode() ?: 0,
-            retextureToReplace?.hashCode() ?: 0,
             objectModels?.hashCode() ?: 0,
             modelSizeX,
             modelSizeY,
@@ -91,8 +84,6 @@ data class ObjectType(
                 actions == other.actions &&
                 sizeX == other.sizeX &&
                 sizeY == other.sizeY &&
-                recolorToFind == other.recolorToFind &&
-                retextureToReplace == other.retextureToReplace &&
                 objectModels == other.objectModels &&
                 modelSizeX == other.modelSizeX &&
                 modelSizeY == other.modelSizeY &&

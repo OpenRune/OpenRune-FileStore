@@ -11,7 +11,8 @@ class BuildCache(
     private val input: File,
     private val output: File = input,
     private val tempLocation: File = File(output, "temp"),
-    val tasks: MutableList<CacheTask> = mutableListOf()
+    val tasks: MutableList<CacheTask> = mutableListOf(),
+    val revision: Int = -1,
 ) {
 
     private val logger = InlineLogger()
@@ -27,7 +28,10 @@ class BuildCache(
             val library = CacheLibrary(input.absolutePath)
 
             val time = measureTimeMillis {
-                tasks.forEach { task -> task.init(CacheDelegate(library)) }
+                tasks.forEach { task ->
+                    task.revision = revision
+                    task.init(CacheDelegate(library))
+                }
             }
 
             val hours = time / 3600000

@@ -12,17 +12,16 @@ import java.nio.file.Path
 
 fun main() {
     val tasks : MutableList<CacheTask> = listOf(
-        PackConfig(File("E:\\RSPS\\Illerai\\Cadarn-Server\\data\\raw-cache\\definitions\\enum"))
+        PackConfig(File("E:\\RSPS\\Illerai\\Cadarn-Server\\data\\raw-cache\\definitions\\"))
     ).toMutableList()
 
-    val builder = Builder(type = TaskType.FRESH_INSTALL, revision = 230, File("E:\\RSPS\\Illerai\\Cadarn-Server\\data\\cache"))
+    val builder = Builder(type = TaskType.BUILD, revision = 230, File("E:\\RSPS\\Illerai\\Cadarn-Server\\data\\cache"))
     builder.registerRSCM(File("E:\\RSPS\\Illerai\\Cadarn-Server\\mappings"))
     builder.extraTasks(*tasks.toTypedArray()).build().initialize()
 
     CacheManager.init(OsrsCacheProvider(Cache.load(Path.of("E:\\RSPS\\Illerai\\Cadarn-Server\\data\\cache"),false),230))
 
-    CacheManager.getEnum(65526)!!.values.forEach {
-        println(it)
-    }
+    println(CacheManager.getItem(995).toString())
+    println(CacheManager.getObject(10060).toString())
 
 }

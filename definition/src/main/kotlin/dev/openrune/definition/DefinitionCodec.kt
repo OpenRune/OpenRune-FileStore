@@ -25,7 +25,11 @@ interface DefinitionCodec<T : Definition> {
         definition.id = id
         if(data != null && data.size > 0) {
             val reader = Unpooled.wrappedBuffer(data)
-            readLoop(definition, reader)
+            try {
+                readLoop(definition, reader)
+            }catch (e: Exception) {
+                error("Unable to decode ${definition.javaClass.simpleName} [$id]")
+            }
         }
         return definition
     }

@@ -8,6 +8,11 @@ import dev.openrune.definition.type.model.particles.EffectiveVertex
 import dev.openrune.definition.type.model.particles.EmissiveTriangle
 import dev.openrune.definition.type.model.particles.FaceBillboard
 import dev.openrune.definition.type.model.texture.*
+import dev.openrune.definition.util.applyGZCompression
+import dev.openrune.definition.util.toArray
+import dev.openrune.definition.util.writeShortSmart
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -1475,5 +1480,833 @@ data class ModelType(
             (65536.0 * cos(it * UNIT)).toInt()
         }
     }
+
+    fun saveAsGZ(): ByteArray = applyGZCompression(encode().toArray())
+
+    fun saveAsDat(): ByteArray = encode().toArray()
+
+
+    fun encode(): ByteBuf = when (type) {
+        MeshType.Unversioned -> encode1()
+        MeshType.Versioned -> encode2()
+        MeshType.UnversionedSkeletal -> encode3()
+        MeshType.VersionedSkeletal -> encode4()
+    }
+
+    private fun encode1(): ByteBuf {
+        val masterBuffer = Unpooled.buffer(16 * 1024)
+        val vertexFlagsBuffer = Unpooled.buffer(128)
+        val faceTypesBuffer = Unpooled.buffer(128)
+        val faceIndexTypesBuffer = Unpooled.buffer(128)
+        val facePrioritiesBuffer = Unpooled.buffer(128)
+        val faceSkinsBuffer = Unpooled.buffer(128)
+        val vertexSkinsBuffer = Unpooled.buffer(128)
+        val faceAlphasBuffer = Unpooled.buffer(128)
+        val faceIndicesBuffer = Unpooled.buffer(128)
+        val faceColorsBuffer = Unpooled.buffer(128)
+        val vertexXBuffer = Unpooled.buffer(128)
+        val vertexYBuffer = Unpooled.buffer(128)
+        val vertexZBuffer = Unpooled.buffer(128)
+        val texturesBuffer = Unpooled.buffer(128)
+        val footerBuffer = Unpooled.buffer(128)
+        val buffers = listOf(
+            vertexFlagsBuffer,
+            faceIndexTypesBuffer,
+            facePrioritiesBuffer,
+            faceSkinsBuffer,
+            faceTypesBuffer,
+            vertexSkinsBuffer,
+            faceAlphasBuffer,
+            faceIndicesBuffer,
+            faceColorsBuffer,
+            texturesBuffer,
+            vertexXBuffer,
+            vertexYBuffer,
+            vertexZBuffer,
+            footerBuffer,
+        )
+        encodeVertexPositions(
+            hasSkeletalBones = false,
+            vertexXBuffer,
+            vertexYBuffer,
+            vertexZBuffer,
+            vertexFlagsBuffer,
+            vertexSkinsBuffer
+        )
+        encodeUnversionedTriangleInfo(
+            faceColorsBuffer,
+            faceTypesBuffer,
+            facePrioritiesBuffer,
+            faceAlphasBuffer,
+            faceSkinsBuffer
+        )
+        encodeVertices(
+            faceIndicesBuffer,
+            faceIndexTypesBuffer
+        )
+        encodeUnversionedTriangles(
+            texturesBuffer
+        )
+        footerBuffer.writeShort(vertexCount)
+        footerBuffer.writeShort(triangleCount)
+        footerBuffer.writeByte(textureTriangleCount)
+        footerBuffer.writeBoolean(triangleRenderTypes != null)
+        footerBuffer.writeByte(if (triangleRenderPriorities != null) -1 else renderPriority)
+        footerBuffer.writeBoolean(triangleAlphas != null)
+        footerBuffer.writeBoolean(triangleSkins != null)
+        footerBuffer.writeBoolean(vertexSkins != null)
+        footerBuffer.writeShort(vertexXBuffer.writerIndex())
+        footerBuffer.writeShort(vertexYBuffer.writerIndex())
+        footerBuffer.writeShort(vertexZBuffer.writerIndex())
+        footerBuffer.writeShort(faceIndicesBuffer.writerIndex())
+        buffers.forEach(masterBuffer::writeBytes)
+        return masterBuffer
+    }
+
+    private fun encode2(): ByteBuf {
+        val masterBuffer = Unpooled.buffer(16 * 1024)
+        val faceMappingsBuffer = Unpooled.buffer(128)
+        val vertexFlagsBuffer = Unpooled.buffer(128)
+        val faceTypesBuffer = Unpooled.buffer(128)
+        val faceIndexTypesBuffer = Unpooled.buffer(128)
+        val facePrioritiesBuffer = Unpooled.buffer(128)
+        val faceSkinsBuffer = Unpooled.buffer(128)
+        val vertexSkinsBuffer = Unpooled.buffer(128)
+        val faceAlphasBuffer = Unpooled.buffer(128)
+        val faceIndicesBuffer = Unpooled.buffer(128)
+        val faceMaterialsBuffer = Unpooled.buffer(128)
+        val faceTexturesBuffer = Unpooled.buffer(128)
+        val faceColorsBuffer = Unpooled.buffer(128)
+        val vertexXBuffer = Unpooled.buffer(128)
+        val vertexYBuffer = Unpooled.buffer(128)
+        val vertexZBuffer = Unpooled.buffer(128)
+        val simpleTexturesBuffer = Unpooled.buffer(128)
+        val complexTexturesBuffer = Unpooled.buffer(128)
+        val textureScaleBuffer = Unpooled.buffer(128)
+        val textureRotationBuffer = Unpooled.buffer(128)
+        val textureDirectionBuffer = Unpooled.buffer(128)
+        val textureTranslationBuffer = Unpooled.buffer(128)
+        val particleEffectsBuffer = Unpooled.buffer(128)
+        val billboardsBuffer = Unpooled.buffer(128)
+        val footerBuffer = Unpooled.buffer(128)
+        val buffers = listOf(
+            faceMappingsBuffer,
+            vertexFlagsBuffer,
+            faceTypesBuffer,
+            faceIndexTypesBuffer,
+            facePrioritiesBuffer,
+            faceSkinsBuffer,
+            vertexSkinsBuffer,
+            faceAlphasBuffer,
+            faceIndicesBuffer,
+            faceMaterialsBuffer,
+            faceTexturesBuffer,
+            faceColorsBuffer,
+            vertexXBuffer,
+            vertexYBuffer,
+            vertexZBuffer,
+            simpleTexturesBuffer,
+            complexTexturesBuffer,
+            textureScaleBuffer,
+            textureRotationBuffer,
+            textureDirectionBuffer,
+            textureTranslationBuffer,
+            particleEffectsBuffer,
+            billboardsBuffer,
+            footerBuffer
+        )
+        if (textureTriangleCount > 0) {
+            val textureRenderTypes = requireNotNull(this.textureRenderTypes)
+            for (face in 0 until textureTriangleCount) {
+                faceMappingsBuffer.writeByte(textureRenderTypes[face])
+            }
+        }
+
+        encodeVertexPositions(
+            hasSkeletalBones = false,
+            vertexXBuffer,
+            vertexYBuffer,
+            vertexZBuffer,
+            vertexFlagsBuffer,
+            vertexSkinsBuffer
+        )
+
+        val hasFaceTypes = triangleRenderTypes != null
+        val hasFacePriorities = triangleRenderPriorities != null
+        val hasFaceAlpha = triangleAlphas != null
+        val hasFaceSkins = triangleSkins != null
+        val hasFaceTextures = triangleTextures != null
+        val hasVertexSkins = this.vertexSkins != null
+        encodeVersionedTriangleInfo(
+            hasFaceTypes,
+            hasFacePriorities,
+            hasFaceAlpha,
+            hasFaceSkins,
+            hasFaceTextures,
+            faceColorsBuffer,
+            faceTypesBuffer,
+            facePrioritiesBuffer,
+            faceAlphasBuffer,
+            faceSkinsBuffer,
+            faceMaterialsBuffer,
+            faceTexturesBuffer
+        )
+        encodeVertices(
+            faceIndicesBuffer,
+            faceIndexTypesBuffer
+        )
+        encodeVersionedTriangles(
+            simpleTexturesBuffer,
+            complexTexturesBuffer,
+            textureScaleBuffer,
+            textureRotationBuffer,
+            textureDirectionBuffer,
+            textureTranslationBuffer
+        )
+        val hasParticleEffects = emitters != null || effectors != null
+        if (hasParticleEffects) {
+            encodeParticles(particleEffectsBuffer)
+        }
+        val hasBillboards = this.faceBillboards != null
+        if (hasBillboards) {
+            encodeBillboards(billboardsBuffer)
+        }
+        val hasVersion = version != UNVERSIONED && version != DEFAULT_VERSION
+        if (hasVersion) {
+            footerBuffer.writeByte(version)
+        }
+        footerBuffer.writeShort(vertexCount)
+        footerBuffer.writeShort(triangleCount)
+        footerBuffer.writeByte(textureTriangleCount)
+        var flags = 0
+        if (hasFaceTypes) {
+            flags = flags or FACE_TYPES_FLAG
+        }
+        if (hasParticleEffects) {
+            flags = flags or PARTICLES_FLAG
+        }
+        if (hasBillboards) {
+            flags = flags or BILLBOARDS_FLAG
+        }
+        if (hasVersion) {
+            flags = flags or VERSION_FLAG
+        }
+        footerBuffer.writeByte(flags)
+        footerBuffer.writeByte(if (hasFacePriorities) -1 else renderPriority)
+        footerBuffer.writeBoolean(hasFaceAlpha)
+        footerBuffer.writeBoolean(hasFaceSkins)
+        footerBuffer.writeBoolean(hasFaceTextures)
+        footerBuffer.writeBoolean(hasVertexSkins)
+        footerBuffer.writeShort(vertexXBuffer.writerIndex())
+        footerBuffer.writeShort(vertexYBuffer.writerIndex())
+        footerBuffer.writeShort(vertexZBuffer.writerIndex())
+        footerBuffer.writeShort(faceIndicesBuffer.writerIndex())
+        footerBuffer.writeShort(faceTexturesBuffer.writerIndex())
+        buffers.forEach(masterBuffer::writeBytes)
+        masterBuffer.writeByte(0xFF).writeByte(0xFF)
+        return masterBuffer
+    }
+
+    private fun encode3(): ByteBuf {
+        val masterBuffer = Unpooled.buffer(16 * 1024)
+        val vertexFlagsBuffer = Unpooled.buffer(128)
+        val faceTypesBuffer = Unpooled.buffer(128)
+        val faceIndexTypesBuffer = Unpooled.buffer(128)
+        val facePrioritiesBuffer = Unpooled.buffer(128)
+        val faceSkinsBuffer = Unpooled.buffer(128)
+        val vertexSkinsBuffer = Unpooled.buffer(128)
+        val faceAlphasBuffer = Unpooled.buffer(128)
+        val faceIndicesBuffer = Unpooled.buffer(128)
+        val faceColorsBuffer = Unpooled.buffer(128)
+        val vertexXBuffer = Unpooled.buffer(128)
+        val vertexYBuffer = Unpooled.buffer(128)
+        val vertexZBuffer = Unpooled.buffer(128)
+        val texturesBuffer = Unpooled.buffer(128)
+        val footerBuffer = Unpooled.buffer(128)
+        val hasSkeletalBones = this.skeletalBones != null && this.skeletalScales != null
+        val buffers = listOf(
+            vertexFlagsBuffer,
+            faceIndexTypesBuffer,
+            facePrioritiesBuffer,
+            faceSkinsBuffer,
+            faceTypesBuffer,
+            vertexSkinsBuffer,
+            faceAlphasBuffer,
+            faceIndicesBuffer,
+            faceColorsBuffer,
+            texturesBuffer,
+            vertexXBuffer,
+            vertexYBuffer,
+            vertexZBuffer,
+            footerBuffer,
+        )
+        encodeVertexPositions(
+            hasSkeletalBones,
+            vertexXBuffer,
+            vertexYBuffer,
+            vertexZBuffer,
+            vertexFlagsBuffer,
+            vertexSkinsBuffer
+        )
+        encodeUnversionedTriangleInfo(
+            faceColorsBuffer,
+            faceTypesBuffer,
+            facePrioritiesBuffer,
+            faceAlphasBuffer,
+            faceSkinsBuffer
+        )
+        encodeVertices(
+            faceIndicesBuffer,
+            faceIndexTypesBuffer
+        )
+        encodeUnversionedTriangles(
+            texturesBuffer
+        )
+        footerBuffer.writeShort(vertexCount)
+        footerBuffer.writeShort(triangleCount)
+        footerBuffer.writeByte(textureTriangleCount)
+        footerBuffer.writeBoolean(triangleRenderTypes != null)
+        footerBuffer.writeByte(if (triangleRenderPriorities != null) -1 else renderPriority)
+        footerBuffer.writeBoolean(triangleAlphas != null)
+        footerBuffer.writeBoolean(triangleSkins != null)
+        footerBuffer.writeBoolean(vertexSkins != null)
+        footerBuffer.writeBoolean(hasSkeletalBones)
+        footerBuffer.writeShort(vertexXBuffer.writerIndex())
+        footerBuffer.writeShort(vertexYBuffer.writerIndex())
+        footerBuffer.writeShort(vertexZBuffer.writerIndex())
+        footerBuffer.writeShort(faceIndicesBuffer.writerIndex())
+        footerBuffer.writeShort(vertexSkinsBuffer.writerIndex())
+        buffers.forEach(masterBuffer::writeBytes)
+        masterBuffer.writeByte(0xFF).writeByte(0xFE)
+        return masterBuffer
+    }
+
+    private fun encode4(): ByteBuf {
+        val masterBuffer = Unpooled.buffer(16 * 1024)
+        val faceMappingsBuffer = Unpooled.buffer(128)
+        val vertexFlagsBuffer = Unpooled.buffer(128)
+        val faceTypesBuffer = Unpooled.buffer(128)
+        val faceIndexTypesBuffer = Unpooled.buffer(128)
+        val facePrioritiesBuffer = Unpooled.buffer(128)
+        val faceSkinsBuffer = Unpooled.buffer(128)
+        val vertexSkinsBuffer = Unpooled.buffer(128)
+        val faceAlphasBuffer = Unpooled.buffer(128)
+        val faceIndicesBuffer = Unpooled.buffer(128)
+        val faceMaterialsBuffer = Unpooled.buffer(128)
+        val faceTexturesBuffer = Unpooled.buffer(128)
+        val faceColorsBuffer = Unpooled.buffer(128)
+        val vertexXBuffer = Unpooled.buffer(128)
+        val vertexYBuffer = Unpooled.buffer(128)
+        val vertexZBuffer = Unpooled.buffer(128)
+        val simpleTexturesBuffer = Unpooled.buffer(128)
+        val complexTexturesBuffer = Unpooled.buffer(128)
+        val textureScaleBuffer = Unpooled.buffer(128)
+        val textureRotationBuffer = Unpooled.buffer(128)
+        val textureDirectionBuffer = Unpooled.buffer(128)
+        val textureTranslationBuffer = Unpooled.buffer(128)
+        val particleEffectsBuffer = Unpooled.buffer(128)
+        val billboardsBuffer = Unpooled.buffer(128)
+        val footerBuffer = Unpooled.buffer(128)
+        val hasSkeletalBones = this.skeletalBones != null && this.skeletalScales != null
+        val buffers = listOf(
+            faceMappingsBuffer,
+            vertexFlagsBuffer,
+            faceTypesBuffer,
+            faceIndexTypesBuffer,
+            facePrioritiesBuffer,
+            faceSkinsBuffer,
+            vertexSkinsBuffer,
+            faceAlphasBuffer,
+            faceIndicesBuffer,
+            faceMaterialsBuffer,
+            faceTexturesBuffer,
+            faceColorsBuffer,
+            vertexXBuffer,
+            vertexYBuffer,
+            vertexZBuffer,
+            simpleTexturesBuffer,
+            complexTexturesBuffer,
+            textureScaleBuffer,
+            textureRotationBuffer,
+            textureDirectionBuffer,
+            textureTranslationBuffer,
+            particleEffectsBuffer,
+            billboardsBuffer,
+            footerBuffer
+        )
+        if (textureTriangleCount > 0) {
+            val textureRenderTypes = requireNotNull(this.textureRenderTypes)
+            for (face in 0 until textureTriangleCount) {
+                faceMappingsBuffer.writeByte(textureRenderTypes[face])
+            }
+        }
+
+        encodeVertexPositions(
+            hasSkeletalBones,
+            vertexXBuffer,
+            vertexYBuffer,
+            vertexZBuffer,
+            vertexFlagsBuffer,
+            vertexSkinsBuffer
+        )
+
+        val hasFaceTypes = triangleRenderTypes != null
+        val hasFacePriorities = triangleRenderPriorities != null
+        val hasFaceAlpha = triangleAlphas != null
+        val hasFaceSkins = triangleSkins != null
+        val hasFaceTextures = triangleTextures != null
+        val hasVertexSkins = this.vertexSkins != null
+        encodeVersionedTriangleInfo(
+            hasFaceTypes,
+            hasFacePriorities,
+            hasFaceAlpha,
+            hasFaceSkins,
+            hasFaceTextures,
+            faceColorsBuffer,
+            faceTypesBuffer,
+            facePrioritiesBuffer,
+            faceAlphasBuffer,
+            faceSkinsBuffer,
+            faceMaterialsBuffer,
+            faceTexturesBuffer
+        )
+        encodeVertices(
+            faceIndicesBuffer,
+            faceIndexTypesBuffer
+        )
+        encodeVersionedTriangles(
+            simpleTexturesBuffer,
+            complexTexturesBuffer,
+            textureScaleBuffer,
+            textureRotationBuffer,
+            textureDirectionBuffer,
+            textureTranslationBuffer
+        )
+        val hasParticleEffects = emitters != null || effectors != null
+        if (hasParticleEffects) {
+            encodeParticles(particleEffectsBuffer)
+        }
+        val hasBillboards = this.faceBillboards != null
+        if (hasBillboards) {
+            encodeBillboards(billboardsBuffer)
+        }
+        val hasVersion = version != UNVERSIONED && version != DEFAULT_VERSION
+        if (hasVersion) {
+            footerBuffer.writeByte(version)
+        }
+        footerBuffer.writeShort(vertexCount)
+        footerBuffer.writeShort(triangleCount)
+        footerBuffer.writeByte(textureTriangleCount)
+        var flags = 0
+        if (hasFaceTypes) {
+            flags = flags or FACE_TYPES_FLAG
+        }
+        if (hasParticleEffects) {
+            flags = flags or PARTICLES_FLAG
+        }
+        if (hasBillboards) {
+            flags = flags or BILLBOARDS_FLAG
+        }
+        if (hasVersion) {
+            flags = flags or VERSION_FLAG
+        }
+        footerBuffer.writeByte(flags)
+        footerBuffer.writeByte(if (hasFacePriorities) -1 else renderPriority)
+        footerBuffer.writeBoolean(hasFaceAlpha)
+        footerBuffer.writeBoolean(hasFaceSkins)
+        footerBuffer.writeBoolean(hasFaceTextures)
+        footerBuffer.writeBoolean(hasVertexSkins)
+        footerBuffer.writeBoolean(hasSkeletalBones)
+        footerBuffer.writeShort(vertexXBuffer.writerIndex())
+        footerBuffer.writeShort(vertexYBuffer.writerIndex())
+        footerBuffer.writeShort(vertexZBuffer.writerIndex())
+        footerBuffer.writeShort(faceIndicesBuffer.writerIndex())
+        footerBuffer.writeShort(faceTexturesBuffer.writerIndex())
+        footerBuffer.writeShort(vertexSkinsBuffer.writerIndex())
+        buffers.forEach(masterBuffer::writeBytes)
+        masterBuffer.writeByte(0xFF).writeByte(0xFD)
+        return masterBuffer
+    }
+
+    private fun encodeBillboards(
+        billboardsBuffer: ByteBuf
+    ) {
+        val faceBillboards = requireNotNull(this.faceBillboards)
+        billboardsBuffer.writeByte(faceBillboards.size)
+        for (billboard in faceBillboards) {
+            billboardsBuffer.writeShort(billboard.id)
+            billboardsBuffer.writeShort(billboard.face)
+            billboardsBuffer.writeByte(billboard.skin)
+            billboardsBuffer.writeByte(billboard.distance)
+        }
+    }
+
+    private fun encodeParticles(
+        particleEffectsBuffer: ByteBuf,
+    ) {
+        val numEmitters = emitters?.size ?: 0
+        particleEffectsBuffer.writeByte(numEmitters)
+        if (numEmitters > 0) {
+            val emitters = requireNotNull(this.emitters)
+            for (index in 0 until numEmitters) {
+                val (emitter, face) = emitters[index]
+                particleEffectsBuffer.writeShort(emitter)
+                particleEffectsBuffer.writeShort(face)
+            }
+        }
+        val numEffectors = effectors?.size ?: 0
+        particleEffectsBuffer.writeByte(numEffectors)
+        if (numEffectors > 0) {
+            val effectors = requireNotNull(this.effectors)
+            for (index in 0 until numEffectors) {
+                val (effector, vertex1) = effectors[index]
+                particleEffectsBuffer.writeShort(effector)
+                particleEffectsBuffer.writeShort(vertex1)
+            }
+        }
+    }
+
+    private fun encodeUnversionedTriangleInfo(
+        faceColoursBuf: ByteBuf,
+        faceTypesBuf: ByteBuf,
+        facePrioritiesBuf: ByteBuf,
+        faceAlphasBuf: ByteBuf,
+        faceSkinsBuf: ByteBuf,
+    ) {
+        if (triangleCount <= 0) return
+        val triangleColors = requireNotNull(this.triangleColors)
+        val hasTriangleRenderTypes = triangleRenderTypes != null || this.textureCoordinates != null || this.triangleTextures != null
+        val hasTriangleRenderPriorities = triangleRenderPriorities != null
+        val hasTriangleAlphas = triangleAlphas != null
+        val hasTriangleSkins = triangleSkins != null
+        for (index in 0 until triangleCount) {
+            faceColoursBuf.writeShort(triangleColors[index].toInt())
+            if (hasTriangleRenderTypes) {
+                val faceType = this.triangleRenderTypes?.get(index) ?: 0
+                val triangleCoordinate = this.textureCoordinates?.get(index) ?: -1
+                val triangleTexture = this.triangleTextures?.get(index) ?: -1
+                var flag = 0x0
+                if (faceType == 1) {
+                    flag = flag or USES_FACE_TYPES_FLAG
+                }
+                if (triangleCoordinate != -1 || triangleTexture != -1) {
+                    flag = flag or (triangleCoordinate shl 2)
+                    flag = flag or USES_MATERIALS_FLAG
+                }
+                faceTypesBuf.writeByte(flag)
+            }
+            if (hasTriangleRenderPriorities) {
+                val triangleRenderPriorities = requireNotNull(this.triangleRenderPriorities)
+                facePrioritiesBuf.writeByte(triangleRenderPriorities[index])
+            }
+            if (hasTriangleAlphas) {
+                val triangleAlphas = requireNotNull(this.triangleAlphas)
+                faceAlphasBuf.writeByte(triangleAlphas[index])
+            }
+            if (hasTriangleSkins) {
+                val triangleSkins = requireNotNull(this.triangleSkins)
+                faceSkinsBuf.writeByte(triangleSkins[index])
+            }
+        }
+    }
+
+    private fun encodeVersionedTriangleInfo(
+        hasFaceTypes: Boolean,
+        hasFacePriorities: Boolean,
+        hasFaceAlpha: Boolean,
+        hasFaceSkins: Boolean,
+        hasFaceTextures: Boolean,
+        faceColorsBuffer: ByteBuf,
+        faceTypesBuffer: ByteBuf,
+        facePrioritiesBuffer: ByteBuf,
+        faceAlphasBuffer: ByteBuf,
+        faceSkinsBuffer: ByteBuf,
+        faceMaterialsBuffer: ByteBuf,
+        faceTexturesBuffer: ByteBuf,
+    ) {
+        if (triangleCount <= 0) return
+        val triangleColors = requireNotNull(this.triangleColors)
+        val textureCoordinates = this.textureCoordinates
+        for (face in 0 until triangleCount) {
+            faceColorsBuffer.writeShort(triangleColors[face].toInt())
+            if (hasFaceTypes) {
+                val triangleRenderTypes = requireNotNull(this.triangleRenderTypes)
+                faceTypesBuffer.writeByte(triangleRenderTypes[face])
+            }
+            if (hasFacePriorities) {
+                val triangleRenderPriorities = requireNotNull(this.triangleRenderPriorities)
+                facePrioritiesBuffer.writeByte(triangleRenderPriorities[face])
+            }
+            if (hasFaceAlpha) {
+                val triangleAlphas = requireNotNull(this.triangleAlphas)
+                faceAlphasBuffer.writeByte(triangleAlphas[face])
+            }
+            if (hasFaceSkins) {
+                val triangleSkins = requireNotNull(this.triangleSkins)
+                faceSkinsBuffer.writeByte(triangleSkins[face])
+            }
+            if (hasFaceTextures) {
+                val triangleTextures = requireNotNull(this.triangleTextures)
+                println("Encode: ${triangleTextures[face] + 1}")
+                faceMaterialsBuffer.writeShort(triangleTextures[face] + 1)
+            }
+            if (textureCoordinates != null) {
+                val triangleTextures = requireNotNull(this.triangleTextures)
+                if (triangleTextures[face] != -1) {
+                    faceTexturesBuffer.writeByte(textureCoordinates[face] + 1)
+                }
+            }
+        }
+    }
+
+    private fun encodeVertexPositions(
+        hasSkeletalBones: Boolean,
+        vertexXBuffer: ByteBuf,
+        vertexYBuffer: ByteBuf,
+        vertexZBuffer: ByteBuf,
+        vertexFlagsBuffer: ByteBuf,
+        vertexSkinsBuffer: ByteBuf,
+    ) {
+        if (vertexCount <= 0) return
+        val vertexPositionsX = requireNotNull(this.vertexPositionsX)
+        val vertexPositionsY = requireNotNull(this.vertexPositionsY)
+        val vertexPositionsZ = requireNotNull(this.vertexPositionsZ)
+        var baseX = 0
+        var baseY = 0
+        var baseZ = 0
+        for (vertex in 0 until vertexCount) {
+            val x = vertexPositionsX[vertex]
+            val y = vertexPositionsY[vertex]
+            val z = vertexPositionsZ[vertex]
+            val xOffset = x - baseX
+            val yOffset = y - baseY
+            val zOffset = z - baseZ
+            var flag = 0
+            if (xOffset != 0) {
+                flag = flag or X_POS_FLAG
+                vertexXBuffer.writeShortSmart(xOffset)
+            }
+            if (yOffset != 0) {
+                flag = flag or Y_POS_FLAG
+                vertexYBuffer.writeShortSmart(yOffset)
+            }
+            if (zOffset != 0) {
+                flag = flag or Z_POS_FLAG
+                vertexZBuffer.writeShortSmart(zOffset)
+            }
+            vertexFlagsBuffer.writeByte(flag)
+            baseX += xOffset
+            baseY += yOffset
+            baseZ += zOffset
+            val vertexSkins = this.vertexSkins
+            if (vertexSkins != null) {
+                val weight = vertexSkins[vertex]
+                vertexSkinsBuffer.writeByte(weight)
+            }
+        }
+        if (hasSkeletalBones) {
+            val skeletalBones = requireNotNull(this.skeletalBones)
+            val skeletalScales = requireNotNull(this.skeletalScales)
+            require(skeletalBones.size == skeletalScales.size)
+            for (index in 0 until vertexCount) {
+                val bones = requireNotNull(skeletalBones[index])
+                val scales = requireNotNull(skeletalScales[index])
+                require(bones.size == scales.size)
+                vertexSkinsBuffer.writeByte(bones.size)
+                for (i in bones.indices) {
+                    vertexSkinsBuffer.writeByte(bones[i])
+                    vertexSkinsBuffer.writeByte(scales[i])
+                }
+            }
+        }
+    }
+
+    private fun encodeUnversionedTriangles(
+        texturesBuf: ByteBuf
+    ) {
+        if (textureTriangleCount <= 0) return
+        val textureTriangleVertex1 = requireNotNull(this.textureTriangleVertex1)
+        val textureTriangleVertex2 = requireNotNull(this.textureTriangleVertex2)
+        val textureTriangleVertex3 = requireNotNull(this.textureTriangleVertex3)
+        for (index in 0 until textureTriangleCount) {
+            texturesBuf.writeShort(textureTriangleVertex1[index])
+            texturesBuf.writeShort(textureTriangleVertex2[index])
+            texturesBuf.writeShort(textureTriangleVertex3[index])
+        }
+    }
+
+    private fun encodeVersionedTriangles(
+        simple: ByteBuf,
+        complex: ByteBuf,
+        scale: ByteBuf,
+        rotation: ByteBuf,
+        direction: ByteBuf,
+        translation: ByteBuf
+    ) {
+        if (textureTriangleCount <= 0) return
+        val textureRenderTypes = requireNotNull(this.textureRenderTypes)
+        val textureTriangleVertex1 = requireNotNull(this.textureTriangleVertex1)
+        val textureTriangleVertex2 = requireNotNull(this.textureTriangleVertex2)
+        val textureTriangleVertex3 = requireNotNull(this.textureTriangleVertex3)
+        var version = this.version
+        for (face in 0 until textureTriangleCount) {
+            val type = textureRenderTypes[face] and 0xFF
+            if (type == SIMPLE_TEXTURE) {
+                simple.writeShort(textureTriangleVertex1[face])
+                simple.writeShort(textureTriangleVertex2[face])
+                simple.writeShort(textureTriangleVertex3[face])
+                continue
+            }
+            val scaleX = requireNotNull(textureScaleX)[face]
+            val scaleY = requireNotNull(textureScaleY)[face]
+            val scaleZ = requireNotNull(textureScaleZ)[face]
+            val textureSpeed = requireNotNull(this.textureSpeed)
+            val textureRotation = requireNotNull(this.textureRotation)
+            val textureDirection = requireNotNull(this.textureDirection)
+            when (type) {
+                CYLINDRICAL_TEXTURE -> {
+                    complex.writeShort(textureTriangleVertex1[face])
+                    complex.writeShort(textureTriangleVertex2[face])
+                    complex.writeShort(textureTriangleVertex3[face])
+                    if (version >= 15 || scaleX > 0xffff || scaleZ > 0xffff) {
+                        if (version < 15) {
+                            version = 15
+                        }
+                        val speed = textureSpeed[face]
+                        scale.writeMedium(scaleZ)
+                        scale.writeMedium(speed)
+                        scale.writeMedium(scaleX)
+                    } else {
+                        scale.writeShort(scaleZ)
+                        val speed = textureSpeed[face]
+                        if (version < 14 && speed > 0xffff) {
+                            version = 14
+                        }
+                        if (version < 14) {
+                            scale.writeShort(speed)
+                        } else {
+                            scale.writeMedium(speed)
+                        }
+                        scale.writeShort(scaleX)
+                    }
+                    rotation.writeByte(textureRotation[face])
+                    direction.writeByte(scaleY)
+                    translation.writeByte(textureDirection[face])
+                }
+
+                CUBE_TEXTURE -> {
+                    val textureTransU = requireNotNull(this.textureTransU)
+                    val textureTransV = requireNotNull(this.textureTransV)
+                    complex.writeShort(textureTriangleVertex1[face])
+                    complex.writeShort(textureTriangleVertex2[face])
+                    complex.writeShort(textureTriangleVertex3[face])
+                    if (version >= 15 || scaleX > 0xffff || scaleZ > 0xffff) {
+                        if (version < 15) {
+                            version = 15
+                        }
+                        val speed = textureSpeed[face]
+                        scale.writeMedium(scaleZ)
+                        scale.writeMedium(speed)
+                        scale.writeMedium(scaleX)
+                    } else {
+                        scale.writeShort(scaleZ)
+                        val speed = textureSpeed[face]
+                        if (version < 14 && speed > 0xffff) {
+                            version = 14
+                        }
+                        if (version < 14) {
+                            scale.writeShort(speed)
+                        } else {
+                            scale.writeMedium(speed)
+                        }
+                        scale.writeShort(scaleX)
+                    }
+                    rotation.writeByte(textureRotation[face])
+                    direction.writeByte(scaleY)
+                    translation.writeByte(textureDirection[face])
+                    translation.writeByte(textureTransU[face])
+                    translation.writeByte(textureTransV[face])
+                }
+
+                SPHERICAL_TEXTURE -> {
+                    complex.writeShort(textureTriangleVertex1[face])
+                    complex.writeShort(textureTriangleVertex2[face])
+                    complex.writeShort(textureTriangleVertex3[face])
+                    if (version >= 15 || scaleX > 0xFFFF || scaleZ > 0xFFFF) {
+                        if (version < 15) {
+                            version = 15
+                        }
+                        val speed = textureSpeed[face]
+                        scale.writeMedium(scaleZ)
+                        scale.writeMedium(speed)
+                        scale.writeMedium(scaleX)
+                    } else {
+                        scale.writeShort(scaleZ)
+                        val speed = textureSpeed[face]
+                        if (version < 14 && speed > 0xFFFF) {
+                            version = 14
+                        }
+                        if (version < 14) {
+                            scale.writeShort(speed)
+                        } else {
+                            scale.writeMedium(speed)
+                        }
+                        scale.writeShort(scaleX)
+                    }
+                    rotation.writeByte(textureRotation[face])
+                    direction.writeByte(scaleY)
+                    translation.writeByte(textureDirection[face])
+                }
+            }
+        }
+    }
+
+    private fun encodeVertices(ibuffer: ByteBuf, tbuffer: ByteBuf) {
+        if (triangleCount <= 0) return
+        val triangleVertex1 = requireNotNull(this.triangleVertex1)
+        val triangleVertex2 = requireNotNull(this.triangleVertex2)
+        val triangleVertex3 = requireNotNull(this.triangleVertex3)
+        var lastA = 0
+        var lastB = 0
+        var lastC = 0
+        var accum = 0
+        for (index in 0 until triangleCount) {
+            val a = triangleVertex1[index]
+            val b = triangleVertex2[index]
+            val c = triangleVertex3[index]
+
+            val compression = when {
+                a == lastA && b == lastC -> {
+                    ibuffer.writeShortSmart(c - accum)
+                    accum = c
+                    2
+                }
+                a == lastC && b == lastB -> {
+                    ibuffer.writeShortSmart(c - accum)
+                    accum = c
+                    3
+                }
+                a == lastB && b == lastA -> {
+                    ibuffer.writeShortSmart(c - accum)
+                    accum = c
+                    4
+                }
+                else -> {
+                    ibuffer.writeShortSmart(a - accum)
+                    accum = a
+                    ibuffer.writeShortSmart(b - accum)
+                    accum = b
+                    ibuffer.writeShortSmart(c - accum)
+                    accum = c
+                    1
+                }
+            }
+            lastA = a
+            lastB = b
+            lastC = c
+            tbuffer.writeByte(compression)
+        }
+    }
+
 
 }
