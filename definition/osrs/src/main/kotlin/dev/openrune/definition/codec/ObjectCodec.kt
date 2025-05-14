@@ -12,7 +12,7 @@ import kotlin.streams.toList
 
 class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
 
-    override fun dev.openrune.definition.type.ObjectType.read(opcode: Int, buffer: ByteBuf) {
+    override fun ObjectType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
@@ -112,11 +112,11 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
             89 -> randomizeAnimStart = true
             90 -> delayAnimationUpdate = true
             249 -> readParameters(buffer)
-            else -> dev.openrune.definition.codec.ObjectCodec.logger.info { "Unable to decode Object [${opcode}]" }
+            else -> logger.info { "Unable to decode Object [${opcode}]" }
         }
     }
 
-    override fun ByteBuf.encode(definition: dev.openrune.definition.type.ObjectType) {
+    override fun ByteBuf.encode(definition: ObjectType) {
         if (definition.objectModels != null) {
             if (definition.objectTypes != null) {
                 writeByte(1)
@@ -195,13 +195,14 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
         writeByte(definition.contrast / 25)
 
 
-        if (definition.actions.any { it != null }) {
-            for (i in 0 until definition.actions.size) {
-                if (definition.actions[i] == null) {
+        val actions = definition.actions.map { if (it == "null") null else it }
+        if (actions.any { it != null }) {
+            for (i in actions.indices) {
+                if (actions[i] == null) {
                     continue
                 }
                 writeByte(30 + i)
-                writeString(definition.actions[i]!!)
+                writeString(actions[i]!!)
             }
         }
 
@@ -309,7 +310,7 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
         writeByte(0)
     }
 
-    override fun createDefinition() = dev.openrune.definition.type.ObjectType()
+    override fun createDefinition() = ObjectType()
 
     companion object {
         internal val logger = InlineLogger()

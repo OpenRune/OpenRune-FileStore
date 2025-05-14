@@ -204,23 +204,25 @@ class ItemCodec : DefinitionCodec<ItemType> {
             writeByte(definition.appearanceOverride2)
         }
 
-        if (definition.options != mutableListOf(null, null, "Take", null, null)) {
-            for (i in 0 until definition.options.size) {
-                if (definition.options[i] == null) {
+        val options = definition.options.map { if (it == "null") null else it }
+        if (options != mutableListOf(null, null, "Take", null, null)) {
+            for (i in options.indices) {
+                if (options[i] == null) {
                     continue
                 }
                 writeByte(i + 30)
-                writeString(definition.options[i]!!)
+                writeString(options[i]!!)
             }
         }
 
-        if (definition.interfaceOptions != mutableListOf(null, null, null, null, "Drop")) {
-            for (i in 0 until definition.interfaceOptions.size) {
-                if (definition.interfaceOptions[i] == null) {
+        val interfaceOptions = definition.interfaceOptions.map { if (it == "null") null else it }
+        if (interfaceOptions != mutableListOf(null, null, null, null, "Drop")) {
+            for (i in interfaceOptions.indices) {
+                if (interfaceOptions[i] == null) {
                     continue
                 }
                 writeByte(i + 35)
-                writeString(definition.interfaceOptions[i]!!)
+                writeString(interfaceOptions[i]!!)
             }
         }
 

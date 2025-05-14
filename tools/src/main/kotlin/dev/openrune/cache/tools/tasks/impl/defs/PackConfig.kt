@@ -6,7 +6,6 @@ import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.serialization.from
 import cc.ekblad.toml.tomlMapper
 import cc.ekblad.toml.util.InternalAPI
-import dev.openrune.OsrsCacheProvider.Companion.CACHE_REVISION
 import dev.openrune.cache.*
 import dev.openrune.cache.tools.CacheTool
 import dev.openrune.cache.tools.item.ItemSlotType
@@ -150,7 +149,11 @@ class PackConfig(
                             val def = decodedDefinitionsRaw[index]
                             val inherit = def["inherit"]?.toString()?.toIntOrNull() ?: -1
                             val debugName = def["debugName"]?.toString() ?: ""
-                            packDefinition(packType, definition, codecInstance,cache,inherit,debugName)
+                            try {
+                                packDefinition(packType, definition, codecInstance,cache,inherit,debugName)
+                            }catch (e : Exception) {
+                                println("Unable to pack ${packType.name} with ID ${definition.id} due to an error: ${e.message}")
+                            }
                         }
                     }
                 }
@@ -184,14 +187,12 @@ class PackConfig(
             inheritedDef?.let {
                 definition = mergeDefinitions(it, def as T, codec)
             } ?: run {
-                logger.warn { "No inherited definition found for ID $inherit" }
+                logger.warn { "No inherited definition found for ID (${def.id} inheritdID ${inherit}) [${def::class.simpleName}]" }
                 return
             }
         }
 
-        if (packType.index == TEXTURES) {
-            definition = manageTexture(cache,def) as T
-        }
+
 
         if (packType.gameValGroup != null) {
             val matchingName : String = debugName
@@ -212,18 +213,17 @@ class PackConfig(
             }
         }
 
+        if (defId == 7817) {
+            println(definition)
+        }
+
+        if (defId == 133) {
+            println(definition)
+        }
+
         val writer = Unpooled.buffer(4096)
         with(codec) { writer.encode(definition as T) }
         cache.write(index,archive,defId,writer.toArray())
-    }
-
-    private fun <T : Definition> manageTexture(cache: Cache, inheritedDef: T): TextureType {
-        val def = inheritedDef as TextureType
-        val spriteID = def.fileIds.firstOrNull() ?: return def.copy(averageRgb = 0)
-        val spriteBuff = cache.data(SPRITES, spriteID) ?: return def.copy(averageRgb = 0)
-        val sprite = SpriteSet.decode(spriteID, Unpooled.wrappedBuffer(spriteBuff))
-        val color = sprite.sprites.firstOrNull()?.averageColorForPixels() ?: 0
-        return def.copy(averageRgb = color)
     }
 
     private fun <T : Definition> getInheritedDefinition(
@@ -287,7 +287,7 @@ class PackConfig(
         return if (params == 0) {
             constructor.call() as DefinitionCodec<*>
         } else {
-            constructor.call(CACHE_REVISION) as DefinitionCodec<*>
+            constructor.call(revision) as DefinitionCodec<*>
         }
     }
 

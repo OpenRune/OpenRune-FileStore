@@ -176,13 +176,16 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             writeShort(definition.category)
         }
 
-        if (definition.actions.any { it != null }) {
-            for (i in 0 until definition.actions.size) {
-                if (definition.actions[i] == null) {
+        val actions = definition.actions.map { if (it == "null") null else it }
+
+        if (actions.any { it != null }) {
+            for (i in actions.indices) {
+                if (actions[i] == null) {
                     continue
                 }
+
                 writeByte(30 + i)
-                writeString(definition.actions[i]!!)
+                writeString(actions[i]!!)
             }
         }
 

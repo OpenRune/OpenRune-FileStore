@@ -28,7 +28,8 @@ class CacheTool(private val builder: Builder) {
                     input = builder.cacheLocation,
                     tasks = builder.extraTasks.toMutableList().apply {
                         add(PackGameVals(builder.revision))
-                    }.sortedBy { it.priority.priorityValue }.toMutableList()
+                    }.sortedBy { it.priority.priorityValue }.toMutableList(),
+                    revision = builder.revision,
                 ).initialize()
             }
             TaskType.FRESH_INSTALL -> {
