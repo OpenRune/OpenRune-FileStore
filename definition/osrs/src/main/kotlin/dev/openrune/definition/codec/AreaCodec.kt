@@ -95,7 +95,6 @@ class AreaCodec : DefinitionCodec<AreaType> {
         if (definition.options.any { it != null }) {
             for (i in definition.options.indices) {
                 writeByte(7 + i)
-                System.out.println("Op : ${7 + i}")
                 if (definition.options[i] == null) {
                     continue
                 }

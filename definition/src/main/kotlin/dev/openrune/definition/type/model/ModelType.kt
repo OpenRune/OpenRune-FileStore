@@ -2047,7 +2047,6 @@ data class ModelType(
             }
             if (hasFaceTextures) {
                 val triangleTextures = requireNotNull(this.triangleTextures)
-                println("Encode: ${triangleTextures[face] + 1}")
                 faceMaterialsBuffer.writeShort(triangleTextures[face] + 1)
             }
             if (textureCoordinates != null) {
