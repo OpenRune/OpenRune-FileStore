@@ -34,8 +34,8 @@ data class NpcType(
     var hasRenderPriority : Boolean = false,
     var ambient : Int = 0,
     var contrast : Int = 0,
-    var headIconArchiveIds: MutableList<Int>? = null,
-    var headIconSpriteIndex: MutableList<Int>? = null,
+    var headIconGraphics: MutableList<Int>? = null,
+    var headIconIndexes: MutableList<Int>? = null,
     var rotation : Int = 32,
     var isInteractable : Boolean = true,
     var isClickable : Boolean = true,
@@ -96,8 +96,8 @@ data class NpcType(
         if (hasRenderPriority != other.hasRenderPriority) return false
         if (ambient != other.ambient) return false
         if (contrast != other.contrast) return false
-        if (headIconArchiveIds != other.headIconArchiveIds) return false
-        if (headIconSpriteIndex != other.headIconSpriteIndex) return false
+        if (headIconGraphics != other.headIconGraphics) return false
+        if (headIconIndexes != other.headIconIndexes) return false
         if (rotation != other.rotation) return false
         if (isInteractable != other.isInteractable) return false
         if (isClickable != other.isClickable) return false
@@ -153,8 +153,8 @@ data class NpcType(
         result = 31 * result + hasRenderPriority.hashCode()
         result = 31 * result + ambient
         result = 31 * result + contrast
-        result = 31 * result + (headIconArchiveIds?.hashCode() ?: 0)
-        result = 31 * result + (headIconSpriteIndex?.hashCode() ?: 0)
+        result = 31 * result + (headIconGraphics?.hashCode() ?: 0)
+        result = 31 * result + (headIconIndexes?.hashCode() ?: 0)
         result = 31 * result + rotation
         result = 31 * result + isInteractable.hashCode()
         result = 31 * result + isClickable.hashCode()

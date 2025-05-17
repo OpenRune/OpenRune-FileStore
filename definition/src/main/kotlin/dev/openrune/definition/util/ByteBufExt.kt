@@ -49,6 +49,15 @@ fun ByteBuf.readNullableLargeSmart(): Int = if (getByte(readerIndex()) < 0) {
     if (result == 32767) -1 else result
 }
 
+fun ByteBuf.readShortSmartSub(): Int {
+    val peek = getUnsignedByte(readerIndex())
+    return if (peek < 128) {
+        readUnsignedByte() - 1
+    } else {
+        readUnsignedShort() - 32769
+    }
+}
+
 // 0 terminated string.
 fun ByteBuf.readString(): String {
     val sb = StringBuilder()
@@ -83,10 +92,10 @@ fun ByteBuf.writeByte(value: Boolean) {
 }
 
 fun ByteBuf.writeSmart(value: Int) {
-    if (value >= 128) {
-        writeShort(value + 32768)
-    } else {
-        writeByte(value)
+    when (value) {
+        in 0..127 -> writeShort(value + 32768)
+        in 0..32767 -> writeByte(value)
+        else -> throw IllegalArgumentException("writeSmart out of range: $value")
     }
 }
 

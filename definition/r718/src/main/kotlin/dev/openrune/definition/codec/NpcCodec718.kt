@@ -186,8 +186,8 @@ class NpcCodec718 : DefinitionCodec<NpcType> {
             100 -> ambient = buffer.readByte().toInt()
             101 -> contrast = 5 * buffer.readByte().toInt()
             102 -> {
-                headIconArchiveIds = MutableList(0) { 0 }
-                headIconSpriteIndex = MutableList(buffer.readShort().toInt()) { 0 }
+                headIconGraphics = mutableListOf(0)
+                headIconIndexes = mutableListOf(buffer.readUnsignedShort())
             }
 
             103 -> rotation = buffer.readShort().toInt()

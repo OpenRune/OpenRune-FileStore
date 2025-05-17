@@ -1,13 +1,11 @@
 package dev.openrune.definition.codec
 
 import com.github.michaelbull.logging.InlineLogger
-import dev.openrune.definition.util.readShortSmart
-import dev.openrune.definition.util.readString
-import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.revisionIsOrBefore
 import dev.openrune.definition.type.NpcType
+import dev.openrune.definition.util.*
 import io.netty.buffer.ByteBuf
 
 class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
@@ -69,29 +67,28 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             101 -> contrast = buffer.readByte().toInt()
             102 -> {
                 if (revisionIsOrBefore(revision, 210)) {
-                    headIconArchiveIds = MutableList(0) { 0 }
-                    headIconSpriteIndex = MutableList(buffer.readUnsignedShort()) { 0 }
+                    headIconGraphics = mutableListOf(0)
+                    headIconIndexes = mutableListOf(buffer.readUnsignedShort())
                 } else {
-                    val bitfield = buffer.readUnsignedByte().toInt()
-                    var size = 0
 
-                    var pos = bitfield
-                    while (pos != 0) {
-                        ++size
-                        pos = pos shr 1
-                    }
-                    headIconArchiveIds = MutableList(size) { 0 }
-                    headIconSpriteIndex = MutableList(size) { 0 }
+                    val bits = buffer.readUnsignedByte().toInt()
+                    val length = 32 - Integer.numberOfLeadingZeros(bits)
+                    val iconGroups = MutableList(length) { 0 }
+                    val iconIndexes = MutableList(length) { 0 }
 
-                    for (i in 0 until size) {
-                        if (bitfield and (1 shl i) == 0) {
-                            headIconArchiveIds!![i] = -1
-                            headIconSpriteIndex!![i] = -1
+                    for (index in 0 until length) {
+                        if ((bits and (1 shl index)) == 0) {
+                            iconGroups[index] = -1
+                            iconIndexes[index] = -1
                         } else {
-                            headIconArchiveIds!![i] = buffer.readUnsignedShort()
-                            headIconSpriteIndex!![i] = buffer.readShortSmart() - 1
+                            iconGroups[index] = buffer.readNullableLargeSmart()
+                            iconIndexes[index] = buffer.readShortSmartSub()
                         }
                     }
+
+                    this.headIconGraphics = iconGroups
+                    this.headIconIndexes = iconIndexes
+
                 }
             }
 
@@ -249,16 +246,31 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
         writeByte(101)
         writeByte(definition.contrast)
 
-        if (definition.headIconSpriteIndex != null) {
+        if (definition.headIconIndexes != null) {
             writeByte(102)
+
             if (revisionIsOrBefore(revision, 210)) {
-                writeShort(definition.headIconSpriteIndex!!.first())
+                writeShort(definition.headIconIndexes!!.first().toInt())
             } else {
-                writeShort(definition.headIconArchiveIds!!.size)
-                repeat(definition.headIconArchiveIds!!.size) {
-                    writeShort(definition.headIconArchiveIds!![it])
-                    writeShort(definition.headIconSpriteIndex!![it])
+                val iconGraphics = checkNotNull(definition.headIconGraphics)
+                val iconIndexes = checkNotNull(definition.headIconIndexes)
+
+                check(iconGraphics.size == iconIndexes.size)
+
+                val bitsPlaceholderPos = writerIndex()
+                writeByte(0)
+
+                var bits = 0
+                for (i in iconGraphics.indices) {
+                    if (iconGraphics[i] >= 0 && iconIndexes[i] >= 0) {
+                        writeNullableLargeSmartCorrect(iconGraphics[i])
+                        writeSmart(iconIndexes[i] + 1)
+                        bits = bits or (1 shl i)
+                    }
                 }
+
+                // update bits value
+                setByte(bitsPlaceholderPos, bits)
             }
         }
 
