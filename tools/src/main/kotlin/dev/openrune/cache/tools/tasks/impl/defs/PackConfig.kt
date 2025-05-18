@@ -44,11 +44,13 @@ class PackConfig(
 ) : CacheTask() {
 
 
-    fun MutableList<String?>.fromOptions(keyName: String, content: Map<String, Any?>) {
-        (1..5).mapNotNull { content["${keyName}$it"] as? TomlValue.String }
-            .forEachIndexed { index, option -> this[index] = option.value }
+    private fun MutableList<String?>.fromOptions(keyName: String, content: Map<String, Any?>) {
+        for (i in 1..5) {
+            val key = "$keyName$i"
+            val value = content[key]
+            this[i - 1] = (value as? TomlValue.String)?.value
+        }
     }
-
 
     init {
 
