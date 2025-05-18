@@ -8,7 +8,7 @@ import dev.openrune.definition.codec.DBTableCodec
 import dev.openrune.definition.dbtables.DBRow
 import dev.openrune.definition.dbtables.DBTable
 import dev.openrune.definition.dbtables.FullDBRow
-import dev.openrune.definition.type.DBColumnType
+import dev.openrune.definition.dbtables.toDatabaseTable
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.type.DBTableType
 import java.util.*
@@ -69,23 +69,6 @@ class DBManager(private val store: CacheLibrary) {
         return DBTable(table.id, table.columns, streamlinedRows)
     }
 
-    fun convertToDBTableType(dbTableWithRows: DBTable): DBTableType {
-        return DBTableType(dbTableWithRows.tableId).apply {
-            columns.putAll(dbTableWithRows.columns)
-        }
-    }
-
-    fun convertToDBRowType(dbTableWithRows: DBTable): List<DBRowType> {
-        return dbTableWithRows.rows.map { row ->
-            DBRowType(row.rowId).apply {
-                tableId = dbTableWithRows.tableId
-                columns.putAll(row.columns.mapValues { (columnId, values) ->
-                    DBColumnType(dbTableWithRows.columns[columnId]?.types ?: emptyArray(), values)
-                })
-            }
-        }
-    }
-
     fun <T> toDatabaseTable(tableId: Int, constructor: (FullDBRow) -> T): List<T> {
         val table = getTable(tableId) ?: return emptyList()
         val rows = rows.values.mapNotNull { row ->
@@ -93,32 +76,5 @@ class DBManager(private val store: CacheLibrary) {
             row
         }
         return toDatabaseTable(table, rows, constructor)
-    }
-
-    companion object {
-       
-        inline fun <T> toDatabaseTable(table: DBTableType, rows: List<DBRowType>, constructor: (FullDBRow) -> T): List<T> {
-            val result = mutableListOf<T>()
-            for (row in rows) {
-                val fullColumns = mutableMapOf<Int, Array<Any>>()
-
-                for ((colId, columnDef) in table.columns) {
-                    val value = row.columns[colId]
-                    if (value?.values != null) {
-                        fullColumns[colId] = value.values!!
-                    } else {
-                        val default = columnDef.values
-                        if (default != null) {
-                            fullColumns[colId] = default
-                        } else {
-                            fullColumns[colId] = emptyArray<Any>()
-                        }
-                    }
-                }
-
-                result.add(constructor(FullDBRow(row.id, fullColumns)))
-            }
-            return result
-        }
     }
 }
