@@ -93,8 +93,8 @@ fun ByteBuf.writeByte(value: Boolean) {
 
 fun ByteBuf.writeSmart(value: Int) {
     when (value) {
-        in 0..127 -> writeShort(value + 32768)
-        in 0..32767 -> writeByte(value)
+        in 0..127 -> writeByte(value + 32768)
+        in 0..32767 -> writeShort(value)
         else -> throw IllegalArgumentException("writeSmart out of range: $value")
     }
 }
