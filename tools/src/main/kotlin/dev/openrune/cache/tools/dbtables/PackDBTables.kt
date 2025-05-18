@@ -9,6 +9,12 @@ import dev.openrune.cache.util.progress
 import dev.openrune.definition.Js5GameValGroup
 import dev.openrune.definition.codec.DBRowCodec
 import dev.openrune.definition.codec.DBTableCodec
+import dev.openrune.definition.dbtables.DBTable
+import dev.openrune.definition.dbtables.columnNames
+import dev.openrune.definition.dbtables.rowNames
+import dev.openrune.definition.dbtables.tableNames
+import dev.openrune.definition.dbtables.toDbRowTypes
+import dev.openrune.definition.dbtables.toDbTableType
 import dev.openrune.definition.util.toArray
 import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled

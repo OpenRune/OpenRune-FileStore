@@ -5,6 +5,9 @@ import dev.openrune.cache.DBROW
 import dev.openrune.cache.DBTABLE
 import dev.openrune.definition.codec.DBRowCodec
 import dev.openrune.definition.codec.DBTableCodec
+import dev.openrune.definition.dbtables.DBRow
+import dev.openrune.definition.dbtables.DBTable
+import dev.openrune.definition.dbtables.FullDBRow
 import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.type.DBTableType

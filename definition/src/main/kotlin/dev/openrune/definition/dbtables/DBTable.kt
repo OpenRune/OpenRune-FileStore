@@ -1,4 +1,4 @@
-package dev.openrune.cache.tools.dbtables
+package dev.openrune.definition.dbtables
 
 import dev.openrune.definition.RSCMHandler
 import dev.openrune.definition.type.DBColumnType
