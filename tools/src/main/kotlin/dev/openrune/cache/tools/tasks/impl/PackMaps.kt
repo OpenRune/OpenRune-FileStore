@@ -31,10 +31,12 @@ class PackMaps(private val mapsDirectory: File, private val xteaLocation: File =
         }
 
         val mapSize = getFiles(mapsDirectory,"gz","dat").size
-        val progressMaps = progress("Packing Maps", mapSize * 1)
+        val progressMaps = progress("Packing Maps", mapSize)
         if (mapSize != 0) {
             getFiles(mapsDirectory,"gz","dat").filter { it.name.startsWith("l") }.forEach { mapFile ->
+
                 if (mapFile.name.first().toString() == "l") {
+
 
                     val objectFile = File(mapFile.parent,mapFile.name.replaceFirstChar { "m" })
 
@@ -73,7 +75,7 @@ class PackMaps(private val mapsDirectory: File, private val xteaLocation: File =
 
                 }
 
-                progressMaps.stepBy(3)
+                progressMaps.stepBy(2)
 
             }
 
