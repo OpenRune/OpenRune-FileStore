@@ -3,6 +3,15 @@ package dev.openrune.cache
 import dev.openrune.definition.Definition
 import dev.openrune.definition.type.*
 
+
+/**
+ * Returns a new map where all keys (IDs) are incremented by the given [offset],
+ * and each definition's internal `id` property is updated accordingly.
+ *
+ * This is useful when loading multiple sets of definitions (e.g., items, NPCs)
+ * that may have overlapping IDs and need to be shifted to avoid conflicts.
+ *
+ */
 fun <T : Definition> MutableMap<Int, T>.withOffset(offset: Int): MutableMap<Int, T> {
     if (offset == 0) return this.toMutableMap()
 
@@ -15,36 +24,34 @@ fun <T : Definition> MutableMap<Int, T>.withOffset(offset: Int): MutableMap<Int,
 
 object CacheManager {
 
-    private val combinedNpcs = mutableMapOf<Int, NpcType>()
-    private val combinedObjects = mutableMapOf<Int, ObjectType>()
-    private val combinedItems = mutableMapOf<Int, ItemType>()
-    private val combinedVarbits = mutableMapOf<Int, VarBitType>()
-    private val combinedVarps = mutableMapOf<Int, VarpType>()
-    private val combinedAnims = mutableMapOf<Int, SequenceType>()
-    private val combinedEnums = mutableMapOf<Int, EnumType>()
-    private val combinedHealthBars = mutableMapOf<Int, HealthBarType>()
-    private val combinedHitsplats = mutableMapOf<Int, HitSplatType>()
-    private val combinedStructs = mutableMapOf<Int, StructType>()
-    private val combinedDbrows = mutableMapOf<Int, DBRowType>()
-    private val combinedDbtables = mutableMapOf<Int, DBTableType>()
+    private val npcs = mutableMapOf<Int, NpcType>()
+    private val objects = mutableMapOf<Int, ObjectType>()
+    private val items = mutableMapOf<Int, ItemType>()
+    private val varbits = mutableMapOf<Int, VarBitType>()
+    private val varps = mutableMapOf<Int, VarpType>()
+    private val anims = mutableMapOf<Int, SequenceType>()
+    private val enums = mutableMapOf<Int, EnumType>()
+    private val healthBars = mutableMapOf<Int, HealthBarType>()
+    private val hitsplats = mutableMapOf<Int, HitSplatType>()
+    private val structs = mutableMapOf<Int, StructType>()
+    private val dbrows = mutableMapOf<Int, DBRowType>()
+    private val dbtables = mutableMapOf<Int, DBTableType>()
 
     @JvmStatic
-    fun init(vararg dataSources : CacheStore) {
-        for (data in dataSources) {
-            data.init()
-            combinedNpcs.putAll(data.npcs.withOffset(data.npcOffset))
-            combinedObjects.putAll(data.objects.withOffset(data.objectOffset))
-            combinedItems.putAll(data.items.withOffset(data.itemOffset))
-            combinedVarbits.putAll(data.varbits.withOffset(data.varbitOffset))
-            combinedVarps.putAll(data.varps.withOffset(data.varpOffset))
-            combinedAnims.putAll(data.anims.withOffset(data.animOffset))
-            combinedEnums.putAll(data.enums.withOffset(data.enumOffset))
-            combinedHealthBars.putAll(data.healthBars.withOffset(data.healthBarOffset))
-            combinedHitsplats.putAll(data.hitsplats.withOffset(data.hitsplatOffset))
-            combinedStructs.putAll(data.structs.withOffset(data.structOffset))
-            combinedDbrows.putAll(data.dbrows.withOffset(data.dbrowOffset))
-            combinedDbtables.putAll(data.dbtables.withOffset(data.dbtableOffset))
-        }
+    fun init(cacheStore : CacheStore) {
+        cacheStore.init()
+        npcs.putAll(cacheStore.npcs)
+        objects.putAll(cacheStore.objects)
+        items.putAll(cacheStore.items)
+        varbits.putAll(cacheStore.varbits)
+        varps.putAll(cacheStore.varps)
+        anims.putAll(cacheStore.anims)
+        enums.putAll(cacheStore.enums)
+        healthBars.putAll(cacheStore.healthBars)
+        hitsplats.putAll(cacheStore.hitsplats)
+        structs.putAll(cacheStore.structs)
+        dbrows.putAll(cacheStore.dbrows)
+        dbtables.putAll(cacheStore.dbtables)
     }
 
     private fun <T> getOrDefault(map: Map<Int, T>, id: Int, default: T, typeName: String): T {
@@ -53,56 +60,56 @@ object CacheManager {
         }
     }
 
-    fun getNpc(id: Int) = combinedNpcs[id]
-    fun getObject(id: Int) = combinedObjects[id]
-    fun getItem(id: Int) = combinedItems[id]
-    fun getVarbit(id: Int) = combinedVarbits[id]
-    fun getVarp(id: Int) = combinedVarps[id]
-    fun getAnim(id: Int) = combinedAnims[id]
-    fun getEnum(id: Int) = combinedEnums[id]
-    fun getHealthBar(id: Int) = combinedHealthBars[id]
-    fun getHitsplat(id: Int) = combinedHitsplats[id]
-    fun getStruct(id: Int) = combinedStructs[id]
-    fun getDbrow(id: Int) = combinedDbrows[id]
-    fun getDbtable(id: Int) = combinedDbtables[id]
+    fun getNpc(id: Int) = npcs[id]
+    fun getObject(id: Int) = objects[id]
+    fun getItem(id: Int) = items[id]
+    fun getVarbit(id: Int) = varbits[id]
+    fun getVarp(id: Int) = varps[id]
+    fun getAnim(id: Int) = anims[id]
+    fun getEnum(id: Int) = enums[id]
+    fun getHealthBar(id: Int) = healthBars[id]
+    fun getHitsplat(id: Int) = hitsplats[id]
+    fun getStruct(id: Int) = structs[id]
+    fun getDbrow(id: Int) = dbrows[id]
+    fun getDbtable(id: Int) = dbtables[id]
 
-    fun getNpcOrDefault(id: Int) = getOrDefault(combinedNpcs, id, NpcType(), "Npc")
-    fun getObjectOrDefault(id: Int) = getOrDefault(combinedObjects, id, ObjectType(), "Object")
-    fun getItemOrDefault(id: Int) = getOrDefault(combinedItems, id, ItemType(), "Item")
-    fun getVarbitOrDefault(id: Int) = getOrDefault(combinedVarbits, id, VarBitType(), "Varbit")
-    fun getVarpOrDefault(id: Int) = getOrDefault(combinedVarps, id, VarpType(), "Varp")
-    fun getAnimOrDefault(id: Int) = getOrDefault(combinedAnims, id, SequenceType(), "Anim")
-    fun getEnumOrDefault(id: Int) = getOrDefault(combinedEnums, id, EnumType(), "Enum")
-    fun getHealthBarOrDefault(id: Int) = getOrDefault(combinedHealthBars, id, HealthBarType(), "HealthBar")
-    fun getHitsplatOrDefault(id: Int) = getOrDefault(combinedHitsplats, id, HitSplatType(), "Hitsplat")
-    fun getStructOrDefault(id: Int) = getOrDefault(combinedStructs, id, StructType(), "Struct")
-    fun getDbrowOrDefault(id: Int) = getOrDefault(combinedDbrows, id, DBRowType(), "DBRow")
-    fun getDbtableOrDefault(id: Int) = getOrDefault(combinedDbtables, id, DBTableType(), "DBTable")
+    fun getNpcOrDefault(id: Int) = getOrDefault(npcs, id, NpcType(), "Npc")
+    fun getObjectOrDefault(id: Int) = getOrDefault(objects, id, ObjectType(), "Object")
+    fun getItemOrDefault(id: Int) = getOrDefault(items, id, ItemType(), "Item")
+    fun getVarbitOrDefault(id: Int) = getOrDefault(varbits, id, VarBitType(), "Varbit")
+    fun getVarpOrDefault(id: Int) = getOrDefault(varps, id, VarpType(), "Varp")
+    fun getAnimOrDefault(id: Int) = getOrDefault(anims, id, SequenceType(), "Anim")
+    fun getEnumOrDefault(id: Int) = getOrDefault(enums, id, EnumType(), "Enum")
+    fun getHealthBarOrDefault(id: Int) = getOrDefault(healthBars, id, HealthBarType(), "HealthBar")
+    fun getHitsplatOrDefault(id: Int) = getOrDefault(hitsplats, id, HitSplatType(), "Hitsplat")
+    fun getStructOrDefault(id: Int) = getOrDefault(structs, id, StructType(), "Struct")
+    fun getDbrowOrDefault(id: Int) = getOrDefault(dbrows, id, DBRowType(), "DBRow")
+    fun getDbtableOrDefault(id: Int) = getOrDefault(dbtables, id, DBTableType(), "DBTable")
 
     // Size methods
-    fun npcSize() = combinedNpcs.size
-    fun objectSize() = combinedObjects.size
-    fun itemSize() = combinedItems.size
-    fun varbitSize() = combinedVarbits.size
-    fun varpSize() = combinedVarps.size
-    fun animSize() = combinedAnims.size
-    fun enumSize() = combinedEnums.size
-    fun healthBarSize() = combinedHealthBars.size
-    fun hitsplatSize() = combinedHitsplats.size
-    fun structSize() = combinedStructs.size
+    fun npcSize() = npcs.size
+    fun objectSize() = objects.size
+    fun itemSize() = items.size
+    fun varbitSize() = varbits.size
+    fun varpSize() = varps.size
+    fun animSize() = anims.size
+    fun enumSize() = enums.size
+    fun healthBarSize() = healthBars.size
+    fun hitsplatSize() = hitsplats.size
+    fun structSize() = structs.size
 
     // Bulk getters
-    fun getNpcs() = combinedNpcs.toMap()
-    fun getObjects() = combinedObjects.toMap()
-    fun getItems() = combinedItems.toMap()
-    fun getVarbits() = combinedVarbits.toMap()
-    fun getVarps() = combinedVarps.toMap()
-    fun getAnims() = combinedAnims.toMap()
-    fun getEnums() = combinedEnums.toMap()
-    fun getHealthBars() = combinedHealthBars.toMap()
-    fun getHitsplats() = combinedHitsplats.toMap()
-    fun getStructs() = combinedStructs.toMap()
-    fun getRows() = combinedDbrows.toMap()
+    fun getNpcs() = npcs.toMap()
+    fun getObjects() = objects.toMap()
+    fun getItems() = items.toMap()
+    fun getVarbits() = varbits.toMap()
+    fun getVarps() = varps.toMap()
+    fun getAnims() = anims.toMap()
+    fun getEnums() = enums.toMap()
+    fun getHealthBars() = healthBars.toMap()
+    fun getHitsplats() = hitsplats.toMap()
+    fun getStructs() = structs.toMap()
+    fun getRows() = dbrows.toMap()
 
     fun revisionIsOrAfter(cacheRevision : Int,rev: Int) = rev <= cacheRevision
     fun revisionIsOrBefore(cacheRevision : Int,rev: Int) = rev >= cacheRevision
