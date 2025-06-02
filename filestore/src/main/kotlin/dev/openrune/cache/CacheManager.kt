@@ -22,6 +22,22 @@ fun <T : Definition> MutableMap<Int, T>.withOffset(offset: Int): MutableMap<Int,
     }.toMutableMap()
 }
 
+/**
+ * Retrieves a value from the given [map] by [id], or returns the specified [default] if not found.
+ * Additionally logs a warning message if the [id] is -1, indicating a potentially missing or invalid entry.
+ *
+ * @param map The map to retrieve the value from.
+ * @param id The key to look up in the map.
+ * @param default The value to return if the key is not present in the map.
+ * @param typeName The name of the type being looked up (used in the warning message).
+ * @return The value associated with [id], or [default] if not present.
+ */
+fun <T> getOrDefault(map: Map<Int, T>, id: Int, default: T, typeName: String): T {
+    return map.getOrDefault(id, default).also {
+        if (id == -1) println("$typeName with id $id is missing.")
+    }
+}
+
 object CacheManager {
 
     private val npcs = mutableMapOf<Int, NpcType>()
@@ -52,12 +68,6 @@ object CacheManager {
         structs.putAll(cacheStore.structs)
         dbrows.putAll(cacheStore.dbrows)
         dbtables.putAll(cacheStore.dbtables)
-    }
-
-    private fun <T> getOrDefault(map: Map<Int, T>, id: Int, default: T, typeName: String): T {
-        return map.getOrDefault(id, default).also {
-            if (id == -1) println("$typeName with id $id is missing.")
-        }
     }
 
     fun getNpc(id: Int) = npcs[id]
