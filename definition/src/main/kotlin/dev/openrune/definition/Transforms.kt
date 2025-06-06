@@ -1,5 +1,6 @@
 package dev.openrune.definition
 
+import dev.openrune.definition.util.readSmart
 import io.netty.buffer.ByteBuf
 
 interface Transforms {
@@ -7,7 +8,7 @@ interface Transforms {
     var varp: Int
     var transforms: MutableList<Int>?
 
-    fun readTransforms(buffer: ByteBuf, isLast: Boolean) {
+    fun readTransforms(buffer: ByteBuf, isLast: Boolean, extendedTransforms: Boolean = false) {
         varbit = buffer.readShort().toInt()
         if (varbit == 65535) {
             varbit = -1
@@ -23,7 +24,7 @@ interface Transforms {
                 last = -1
             }
         }
-        val length = buffer.readUnsignedByte().toInt()
+        val length = if(extendedTransforms) buffer.readSmart() else buffer.readUnsignedByte().toInt()
         transforms = MutableList(length + 2) { -1 }
         for (count in 0..length) {
             transforms!![count] = buffer.readUnsignedShort()

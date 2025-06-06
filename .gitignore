@@ -27,3 +27,4 @@ tools/build/*
 /cache/build
 /filesystem/build
 /displee/build
+/definition/rs3/build
