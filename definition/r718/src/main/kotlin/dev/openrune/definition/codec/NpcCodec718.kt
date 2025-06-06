@@ -184,7 +184,7 @@ class NpcCodec718 : DefinitionCodec<NpcType> {
             98 -> heightScale = buffer.readShort().toInt()
             99 -> hasRenderPriority = true
             100 -> ambient = buffer.readByte().toInt()
-            101 -> contrast = 5 * buffer.readByte().toInt()
+            101 -> contrast = buffer.readByte().toInt()
             102 -> {
                 headIconGraphics = mutableListOf(0)
                 headIconIndexes = mutableListOf(buffer.readUnsignedShort())
