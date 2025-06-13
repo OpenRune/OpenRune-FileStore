@@ -116,8 +116,9 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             122 -> lowPriorityFollowerOps = true
             123 -> isFollower = true
             124 -> height = buffer.readUnsignedShort()
+            126 -> footprintSize = buffer.readUnsignedShort()
             249 -> readParameters(buffer)
-            else -> dev.openrune.definition.codec.NPCCodec.logger.info { "Unable to decode Npcs [${opcode}]" }
+            else -> logger.info { "Unable to decode Npcs [${opcode}]" }
         }
     }
 
@@ -329,6 +330,11 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
         if(definition.height != -1) {
             writeByte(124)
             writeShort(definition.height)
+        }
+
+        if (definition.footprintSize != -1) {
+            writeByte(127)
+            writeShort(definition.footprintSize)
         }
 
         definition.writeParameters(this)

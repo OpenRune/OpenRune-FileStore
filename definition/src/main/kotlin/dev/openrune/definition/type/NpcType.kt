@@ -56,7 +56,8 @@ data class NpcType(
     var strength : Int = 1,
     var hitpoints : Int = 1,
     var ranged : Int = 1,
-    var magic : Int = 1
+    var magic : Int = 1,
+    var footprintSize : Int = -1
     ) : Definition, Transforms, Recolourable, Parameterized {
 
     var examine : String = ""
