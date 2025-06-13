@@ -11,7 +11,7 @@ enum class Js5GameValGroup(val id: Int, val groupName: String) {
     SPOTTYPES(8, "spotanims"),
     ROWTYPES(9, "dbrows"),
     TABLETYPES(10, "dbtables"),
-    JINGLETYOES(11, "jingles"),
+    SOUNDTYPES(11, "jingles"),
     SPRITETYPES(12, "sprites"),
     IFTYPES(13, "components");
 

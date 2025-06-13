@@ -6,7 +6,6 @@ import dev.openrune.cache.*
 import dev.openrune.cache.tools.typeDumper.impl.IfTypes
 import dev.openrune.cache.tools.typeDumper.impl.TablesAndRows
 import dev.openrune.cache.util.Namer
-import dev.openrune.cache.util.Namer.Companion.formatForClassName
 import dev.openrune.definition.Js5GameValGroup
 import dev.openrune.definition.Js5GameValGroup.*
 import dev.openrune.definition.util.readString
@@ -47,7 +46,7 @@ data class TypeExportSettings(
         fun spotAnimations(name: String) = TypeNameOverride(SPOTTYPES, name)
         fun rows(name: String) = TypeNameOverride(ROWTYPES, name)
         fun tables(name: String) = TypeNameOverride(TABLETYPES, name)
-        fun jingles(name: String) = TypeNameOverride(JINGLETYOES, name)
+        fun jingles(name: String) = TypeNameOverride(SOUNDTYPES, name)
         fun sprites(name: String) = TypeNameOverride(SPRITETYPES, name)
         fun iftypes(name: String) = TypeNameOverride(IFTYPES, name)
     }
