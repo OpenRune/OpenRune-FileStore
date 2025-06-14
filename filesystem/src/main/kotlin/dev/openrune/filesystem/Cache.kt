@@ -67,5 +67,10 @@ interface Cache {
             val loader = if (live) MemoryCache else FileCache
             return loader.load(location.toFile().absolutePath)
         }
+
+        fun load(location : Path): Cache {
+            return load(location,true)
+        }
+
     }
 }

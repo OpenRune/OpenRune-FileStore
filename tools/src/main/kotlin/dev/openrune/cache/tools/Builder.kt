@@ -3,11 +3,18 @@ package dev.openrune.cache.tools
 import dev.openrune.definition.RSCMHandler
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.TaskType
+import dev.openrune.cache.tools.tasks.impl.PackGameVals
+import dev.openrune.cache.tools.tasks.impl.RemoveBzip
+import dev.openrune.cache.tools.tasks.impl.RemoveXteas
 import java.io.File
 import java.nio.file.Path
 
 val DEFAULT_PATH = Path.of("data", "cache").toFile()
 
+@Deprecated(
+    message = "Builder is deprecated in kotlin. Use the CacheToolDsl class instead.",
+    replaceWith = ReplaceWith("CacheToolDsl", "dev.openrune.cache.tools.CacheToolDsl")
+)
 data class Builder(
     var type: TaskType,
     var revision: Int,
@@ -33,5 +40,16 @@ data class Builder(
 
     fun cacheLocation(cacheLocation: File) = apply { this.cacheLocation = cacheLocation }
 
-    fun build() = CacheTool(this)
+    fun build() : CacheTool {
+
+        val tasks = extraTasks.toMutableList()
+        if (type == TaskType.FRESH_INSTALL) {
+            if (removeBzip) tasks.add(0, RemoveBzip())
+            if (removeXteas) tasks.add(1, RemoveXteas(File(cacheLocation, "xteas.json")))
+        }
+
+        tasks.add(PackGameVals(revision))
+
+        return CacheTool(type,revision,cacheLocation, tasks)
+    }
 }

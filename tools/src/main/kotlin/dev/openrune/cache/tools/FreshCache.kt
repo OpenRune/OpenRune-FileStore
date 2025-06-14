@@ -18,17 +18,13 @@ class FreshCache(
     private val downloadLocation: File,
     private val output: File = downloadLocation,
     val tasks: MutableList<CacheTask> = mutableListOf(),
-    val revision: Int = -1,
-    private val removeXteas: Boolean = false,
-    private val removeBzip: Boolean = false
+    val revision: Int = -1
 ) {
 
     private val logger = InlineLogger()
 
     fun initialize() {
         val time = measureTimeMillis {
-            if (removeBzip) tasks.add(0, RemoveBzip())
-            if (removeXteas) tasks.add(1, RemoveXteas(File(downloadLocation, "xteas.json")))
 
             logger.info { "Downloading Cache (revision=$revision, Tasks: ${tasks.joinToString(", ") { it.javaClass.simpleName }})" }
             logger.info { "Getting Xteas..." }
