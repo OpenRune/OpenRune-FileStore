@@ -41,6 +41,7 @@ class CacheTool(
                 ).initialize()
             }
             TaskType.FRESH_INSTALL -> {
+                File(cacheLocation,"xteas.json").delete()
                 FreshCache(
                     downloadLocation = cacheLocation,
                     tasks = sortedTasks.toMutableList(),
