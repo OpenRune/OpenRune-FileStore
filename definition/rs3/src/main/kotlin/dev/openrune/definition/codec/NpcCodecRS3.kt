@@ -161,6 +161,7 @@ fun NpcType.getAnInt2862(): Int {
 
 class NpcCodecRS3(private val revision: Int) : DefinitionCodec<NpcType> {
     private val extendedTransforms: Boolean = revision > 909
+    private val extendedModels: Boolean = revision > 670
 
     override fun NpcType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
