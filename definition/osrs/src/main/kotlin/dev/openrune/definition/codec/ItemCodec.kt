@@ -8,6 +8,7 @@ import dev.openrune.definition.type.ItemType
 import io.netty.buffer.ByteBuf
 
 class ItemCodec : DefinitionCodec<ItemType> {
+
     override fun ItemType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> inventoryModel = buffer.readUnsignedShort()
@@ -109,7 +110,7 @@ class ItemCodec : DefinitionCodec<ItemType> {
             148 -> placeholderLink = buffer.readUnsignedShort()
             149 -> placeholderTemplate = buffer.readUnsignedShort()
             249 -> readParameters(buffer)
-            else -> dev.openrune.definition.codec.ItemCodec.logger.info { "Unable to decode Items [${opcode}]" }
+            else -> logger.info { "Unable to decode Items [${opcode}]" }
         }
     }
 

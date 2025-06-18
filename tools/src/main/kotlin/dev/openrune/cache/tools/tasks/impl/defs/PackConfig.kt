@@ -15,6 +15,7 @@ import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.*
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet
+import dev.openrune.cache.util.ItemParam
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.Js5GameValGroup
@@ -43,12 +44,39 @@ class PackConfig(
     private val tokenizedReplacement: Map<String,String> = emptyMap()
 ) : CacheTask() {
 
+    val skillNameToId = mapOf(
+        "ATTACK" to 0,
+        "DEFENCE" to 1,
+        "STRENGTH" to 2,
+        "HITPOINTS" to 3,
+        "RANGED" to 4,
+        "PRAYER" to 5,
+        "MAGIC" to 6,
+        "COOKING" to 7,
+        "WOODCUTTING" to 8,
+        "FLETCHING" to 9,
+        "FISHING" to 10,
+        "FIREMAKING" to 11,
+        "CRAFTING" to 12,
+        "SMITHING" to 13,
+        "MINING" to 14,
+        "HERBLORE" to 15,
+        "AGILITY" to 16,
+        "THIEVING" to 17,
+        "SLAYER" to 18,
+        "FARMING" to 19,
+        "RUNECRAFTING" to 20,
+        "HUNTER" to 21,
+        "CONSTRUCTION" to 22
+    )
 
     private fun MutableList<String?>.fromOptions(keyName: String, content: Map<String, Any?>) {
         for (i in 1..5) {
             val key = "$keyName$i"
             val value = content[key]
-            this[i - 1] = (value as? TomlValue.String)?.value
+            if (value != null) {
+                this[i] = (value as? TomlValue.String)?.value
+            }
         }
     }
 
@@ -65,6 +93,42 @@ class PackConfig(
                         appearanceOverride2 = slotType.override2
                     }
                 }
+                (content["params"] as? TomlValue.Map)?.properties?.forEach { (key, value) ->
+                    val param = ItemParam.entries.find { it.formattedName == key } ?: return@forEach
+                    def.params?.remove(key)
+
+                    val paramId = param.id.toString()
+
+                    if (param.isSkillParam) {
+                        val skillList = (value as? TomlValue.List)?.elements?.toList() ?: error("Expected a list for skill param '$paramId'.")
+
+                        require(skillList.size >= 2) {
+                            "Skill param '$paramId' must contain at least 2 elements (skill name/id and level)."
+                        }
+
+                        val skillId = when (val skillValue = skillList[0]) {
+                            is TomlValue.Integer -> skillValue.value.toInt()
+                            is TomlValue.String -> skillNameToId[skillValue.value.uppercase()] ?: error("Unknown skill name: '${skillValue.value}' in param '$paramId'.")
+                            else -> error("First skill param must be an integer or string in param '$paramId'.")
+                        }
+
+                        val level = (skillList[1] as? TomlValue.Integer)?.value
+                            ?: error("Second skill param must be an integer level in param '$paramId'.")
+
+                        def.params?.apply {
+                            put(paramId, skillId)
+                            put(param.linkedLevelReqId.toString(), level)
+                        }
+                    } else {
+                        val tomlValue = when (value) {
+                            is TomlValue.Integer -> value.value.toString()
+                            is TomlValue.String -> value.value
+                            else -> ""
+                        }
+                        def.params?.put(paramId, tomlValue)
+                    }
+                }
+
                 def.options.fromOptions("option", content)
                 def.interfaceOptions.fromOptions("ioption", content)
             }

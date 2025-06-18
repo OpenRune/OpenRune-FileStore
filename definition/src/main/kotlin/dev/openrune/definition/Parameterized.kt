@@ -25,17 +25,25 @@ interface Parameterized {
     }
 
     fun writeParameters(writer: ByteBuf) {
-        params?.let { params ->
-            writer.writeByte(249)
-            writer.writeByte(params.size)
-            params.forEach { (id, value) ->
-                writer.writeByte(value is String)
-                writer.writeMedium(id.toInt())
-                if (value is String) {
-                    writer.writeString(value)
-                } else if (value is Int) {
-                    writer.writeInt(value)
+        val params = params ?: return
+
+        writer.writeByte(249)
+        writer.writeByte(params.size)
+        for ((id, value) in params) {
+            val isString = value is String
+            writer.writeByte(if (isString) 1 else 0)
+            writer.writeMedium(id.toInt())
+
+            when (value) {
+                is String -> writer.writeString(value)
+                is Int -> writer.writeInt(value)
+                is Long -> {
+                    require(value in Int.MIN_VALUE..Int.MAX_VALUE) {
+                        "Long value $value is out of Int range for id $id"
+                    }
+                    writer.writeInt(value.toInt())
                 }
+                else -> error("Unsupported parameter type for id $id: ${value::class}")
             }
         }
     }
