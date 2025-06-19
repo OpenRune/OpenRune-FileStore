@@ -1,14 +1,13 @@
 package dev.openrune.cache.util
 
 import com.google.gson.GsonBuilder
-import dev.openrune.cache.GAMEVALS
 import dev.openrune.cache.filestore.definition.FontDecoder
-import dev.openrune.cache.tools.typeDumper.TypeDumper.Companion.unpackGameVal
-import dev.openrune.definition.Js5GameValGroup
+import dev.openrune.cache.gameval.GameValHandler
+import dev.openrune.cache.gameval.GameValHandler.lookup
+import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.type.FontType
 import dev.openrune.filesystem.Cache
 import java.io.File
-import java.nio.file.Path
 
 data class FontJson(
     val ascent: Int,
@@ -31,34 +30,14 @@ class DumpFonts(private val cache: Cache, private val dumpLocation: File) {
 
     fun init() {
 
-        val spriteNames = buildSpriteNameMap()
+        val spriteNames = GameValHandler.readGameVal(GameValGroupTypes.SPRITETYPES,cache)
 
         val fontDecoder = FontDecoder(cache)
 
         fontDecoder.loadAllFonts().forEach { (key, font) ->
-            val name = spriteNames[key] ?: "unknown_$key"
+            val name = spriteNames.lookup(key)?.name?: ""
             generateJson(name, font)
         }
-    }
-
-    private fun buildSpriteNameMap(): Map<Int, String> {
-        val lines = buildString {
-            cache.files(GAMEVALS, Js5GameValGroup.SPRITETYPES.id).forEach { file ->
-                unpackGameVal(
-                    Js5GameValGroup.SPRITETYPES,
-                    file,
-                    cache.data(GAMEVALS, Js5GameValGroup.SPRITETYPES.id, file),
-                    this
-                )
-            }
-        }.lines()
-
-        return lines.mapNotNull { line ->
-            val parts = line.split(":")
-            if (parts.size >= 2) {
-                parts[1].toIntOrNull()?.let { id -> id to parts[0] }
-            } else null
-        }.toMap()
     }
 
     private fun generateJson(name: String, font: FontType) {

@@ -1,14 +1,14 @@
+import com.github.michaelbull.logging.InlineLogger
 import com.google.gson.GsonBuilder
 import dev.openrune.*
-import dev.openrune.cache.*
+import dev.openrune.cache.gameval.GameValHandler
+import dev.openrune.cache.gameval.GameValHandler.lookup
 import dev.openrune.cache.tools.animations.*
-import dev.openrune.cache.tools.typeDumper.TypeDumper.Companion.unpackGameVal
 import dev.openrune.definition.*
 import dev.openrune.definition.type.*
 import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled
 import kotlinx.coroutines.*
-import mu.KotlinLogging
 import java.io.*
 import java.nio.file.Path
 import java.util.*
@@ -17,7 +17,7 @@ import kotlin.system.measureTimeMillis
 
 internal class AnimationGrouping {
 
-    private val logger = KotlinLogging.logger {}
+    private val logger = InlineLogger()
 
     private lateinit var cache: Cache
     private lateinit var frames: FrameArchive
@@ -28,61 +28,42 @@ internal class AnimationGrouping {
     private val npcs = HashMap<Int, NpcType>(10000)
     private val sequences = HashMap<Int, SequenceType>(10000)
 
-    suspend fun generate() = withContext(Dispatchers.Default) {
+    suspend fun generate(cache: Cache) = withContext(Dispatchers.Default) {
 
         logger.info { "Initializing cache..." }
-        loadCache()
+        init(cache)
 
         val animationGroups = computeAnimationGroups()
 
-        val outputFile = File("anims.txt").apply { createNewFile() }
         val gson = GsonBuilder().setPrettyPrinting().create()
         val jsonGroups = ConcurrentHashMap<Int, AnimationGroup>()
 
-        val spotNames = collectGameVals(Js5GameValGroup.SPOTTYPES)
-        val seqNames = collectGameVals(Js5GameValGroup.SEQTYPES)
-        val npcNames = collectGameVals(Js5GameValGroup.NPCTYPES)
-        val locNames = collectGameVals(Js5GameValGroup.LOCTYPES)
+        val spotNames = GameValHandler.readGameVal(GameValGroupTypes.SPOTTYPES,cache)
+        val seqNames = GameValHandler.readGameVal(GameValGroupTypes.SEQTYPES,cache)
+        val npcNames = GameValHandler.readGameVal(GameValGroupTypes.NPCTYPES,cache)
+        val locNames = GameValHandler.readGameVal(GameValGroupTypes.LOCTYPES,cache)
 
         withContext(Dispatchers.IO) {
-            BufferedWriter(FileWriter(outputFile)).use { writer ->
-                animationGroups.toSortedMap().forEach { (baseId, anims) ->
-                    writer.writeLine("Skeleton: $baseId")
-                    if (anims.isEmpty()) return@forEach
+            animationGroups.toSortedMap().forEach { (baseId, anims) ->
+                if (anims.isEmpty()) return@forEach
 
-                    writer.writeLine("seq: [${anims.joinToString { "${seqNames[it]} ($it)" }}]")
+                val matchedNpcs = npcs.values.filter { it.sequenceIds().any(anims::contains) }
+                val matchedGraphics = graphics.values.filter { it.animationId in anims }
+                val matchedObjects = objects.values.filter { it.animationId in anims }
 
-                    val matchedNpcs = npcs.values.filter { it.sequenceIds().any(anims::contains) }
-                    val matchedGraphics = graphics.values.filter { it.animationId in anims }
-                    val matchedObjects = objects.values.filter { it.animationId in anims }
-
-                    if (matchedNpcs.isNotEmpty()) {
-                        writer.writeLine("npc: [${matchedNpcs.joinToString { "${npcNames[it.id]} (${it.id})" }}]")
-                    }
-                    if (matchedObjects.isNotEmpty()) {
-                        writer.writeLine("loc: [${matchedObjects.joinToString { "${locNames[it.id]} (${it.id})" }}]")
-                    }
-                    if (matchedGraphics.isNotEmpty()) {
-                        writer.writeLine("spotanim: [${matchedGraphics.joinToString { "${spotNames[it.id]} (${it.id})" }}]")
-                    }
-
-                    writer.newLine()
-
-                    jsonGroups[baseId] = AnimationGroup(
-                        anims.map { NamedElement(seqNames[it] ?: "null", it) },
-                        matchedGraphics.map { NamedElement(spotNames[it.id] ?: "null", it.id) },
-                        matchedNpcs.map { NamedElement(npcNames[it.id] ?: "null", it.id) },
-                        matchedObjects.map { NamedElement(locNames[it.id] ?: "null", it.id) }
-                    )
-                }
+                jsonGroups[baseId] = AnimationGroup(
+                    anims.map { NamedElement(seqNames.lookup(it)?.name?: "null", it) },
+                    matchedGraphics.map { NamedElement(spotNames.lookup(it.id)?.name?: "null", it.id) },
+                    matchedNpcs.map { NamedElement(npcNames.lookup(it.id)?.name?: "null", it.id) },
+                    matchedObjects.map { NamedElement(locNames.lookup(it.id)?.name?: "null", it.id) }
+                )
             }
         }
 
         File("anims.json").writeText(gson.toJson(jsonGroups))
     }
 
-    private suspend fun loadCache() = withContext(Dispatchers.IO) {
-        cache = Cache.load(Path.of("E:\\RSPS\\Hazy\\HazyGameServer\\data\\cache"), false)
+    private suspend fun init(cache: Cache) = withContext(Dispatchers.IO) {
         OsrsCacheProvider.CACHE_REVISION = 231
 
         OsrsCacheProvider.SequenceDecoder().load(cache, sequences)
@@ -149,26 +130,6 @@ internal class AnimationGrouping {
         return groups
     }
 
-    private fun collectGameVals(type: Js5GameValGroup): Map<Int, String> {
-        val result = HashMap<Int, String>(5000)
-        val lines = buildString {
-            cache.files(GAMEVALS, type.id).forEach { file ->
-                val data = cache.data(GAMEVALS, type.id, file)
-                unpackGameVal(type, file, data, this)
-            }
-        }
-        lines.lineSequence().filter { it.isNotEmpty() }.forEach {
-            val (name, id) = it.split(":")
-            result[id.toInt()] = name
-        }
-        return result
-    }
-
-    private fun BufferedWriter.writeLine(string: String) {
-        write(string)
-        newLine()
-    }
-
     private fun NpcType.sequenceIds(): IntArray = intArrayOfNotNull(
         standAnim, walkAnim, rotateBackAnim, walkLeftAnim, walkRightAnim,
         rotateLeftAnim, rotateRightAnim, runBackSequence, runLeftSequence, runRightSequence
@@ -193,7 +154,8 @@ internal class AnimationGrouping {
 
 fun main() = runBlocking {
     val time = measureTimeMillis {
-        AnimationGrouping().generate()
+        val cache = Cache.load(Path.of("E:\\RSPS\\Hazy\\HazyGameServer\\data\\cache"), false)
+        AnimationGrouping().generate(cache)
     }
     println("Time To Dump: ${time} ms")
 }

@@ -1,10 +1,15 @@
 package dev.openrune.cache.tools.typeDumper.impl
 
+import dev.openrune.cache.gameval.GameValElement
+import dev.openrune.cache.gameval.GameValHandler
+import dev.openrune.cache.gameval.GameValHandler.elementAs
+import dev.openrune.cache.gameval.impl.Interface
 import dev.openrune.cache.tools.typeDumper.Language
 import dev.openrune.cache.tools.typeDumper.TypeDumper
 import dev.openrune.cache.util.Namer
 import dev.openrune.cache.util.Namer.Companion.formatForClassName
-import dev.openrune.definition.Js5GameValGroup
+import dev.openrune.definition.GameValGroupTypes
+import dev.openrune.filesystem.Cache
 
 class IfTypes(
     private val typeDumper: TypeDumper,
@@ -13,35 +18,38 @@ class IfTypes(
 
     private val namer = Namer()
 
-    fun writeInterfacesAndComponents(group : Js5GameValGroup,data: StringBuilder) {
+    fun writeInterfacesAndComponents(group : GameValGroupTypes, cache: Cache) {
         val writtenInterfaces = mutableSetOf<String>()
+
+        val ifTypes = GameValHandler.readGameVal(GameValGroupTypes.IFTYPES,cache)
 
         if (typeDumper.exportSettings.useGameVal!!.combineInterfaceAndComponents) {
             val (components, pathComponents) = typeDumper.generateWriter(group)
 
-            data.lines().forEach { line ->
-                val tokens = line.split("-")
-                if (tokens.size == 4) {
-                    val (interfaceName, interfaceID, _, _) = tokens
-                    if (!writtenInterfaces.contains(interfaceName)) {
-                        writeComponentData(interfaceName, interfaceID, components, writeToJava)
-                        writtenInterfaces.add(interfaceName)
-                    }
+            ifTypes.forEach {
+                val inf = it.elementAs<Interface>()
+                val (interfaceName, interfaceID, _, _) = arrayOf(inf!!.name,inf.id.toString(),"","")
+                if (!writtenInterfaces.contains(interfaceName)) {
+                    writeComponentData(interfaceName, interfaceID, components, writeToJava)
+                    writtenInterfaces.add(interfaceName)
                 }
             }
 
             if (typeDumper.language == Language.RSCM) {
-                data.lines().forEach { line ->
-                    val tokens = line.split("-")
-                    if (tokens.size == 4) {
-                        val (interfaceName, interfaceID, componentName, componentID) = tokens
-                        val finalComponentID = getPackedComponentID(interfaceID, componentID)
-                        val componentKey = namer.name("$interfaceName.$componentName", finalComponentID, typeDumper.language, writeToJava)
+
+                ifTypes.forEach {
+                    val inf = it.elementAs<Interface>()
+                    val interfaceName = inf!!.name
+
+                    inf.components.forEach { component ->
+                        val comp = component.elementAs<Interface.InterfaceComponent>()
+                        val finalComponentID = comp?.packed.toString()
+                        val componentKey = namer.name("$interfaceName.${comp?.name}", finalComponentID, typeDumper.language, writeToJava)
                         typeDumper.write(components, typeDumper.fieldName(componentKey, finalComponentID))
                     }
                 }
             } else {
-                writeGroupedComponents(data, components, writeToJava)
+                writeGroupedComponents(components, writeToJava,ifTypes)
             }
 
             typeDumper.endWriter(components, pathComponents)
@@ -49,20 +57,24 @@ class IfTypes(
             val (interfaces, pathInterfaces) = typeDumper.generateWriter(override = "interfaces")
             val (components, pathComponents) = typeDumper.generateWriter(group)
 
-            data.lines().forEach { line ->
-                val tokens = line.split("-")
-                if (tokens.size == 4) {
-                    val (interfaceName, interfaceID, componentName, componentID) = tokens
+            ifTypes.forEach {
+
+                val inf = it.elementAs<Interface>()
+                val interfaceName = inf!!.name
+                val interfaceID = inf.id.toString()
+
+                inf.components.forEach { comp ->
                     if (!writtenInterfaces.contains(interfaceName)) {
                         writeComponentData(interfaceName, interfaceID, interfaces, writeToJava)
                         writtenInterfaces.add(interfaceName)
                     }
 
-                    val finalComponentID = getPackedComponentID(interfaceID, componentID)
+                    val finalComponentID = comp.packed.toString()
                     val splitter = if (typeDumper.language == Language.RSCM) "." else "_"
-                    val componentKey = namer.name("${interfaceName}${splitter}${componentName}", finalComponentID, typeDumper.language, writeToJava)
+                    val componentKey = namer.name("${interfaceName}${splitter}${comp.name}", finalComponentID, typeDumper.language, writeToJava)
                     typeDumper.write(components, typeDumper.fieldName(componentKey, finalComponentID))
                 }
+
             }
 
             typeDumper.endWriter(interfaces, pathInterfaces)
@@ -75,15 +87,19 @@ class IfTypes(
         typeDumper.write(components, typeDumper.fieldName(interfaceKey, interfaceID))
     }
 
-    private fun writeGroupedComponents(data: StringBuilder?, components: StringBuilder, writeToJava: Boolean) {
+    private fun writeGroupedComponents(components: StringBuilder, writeToJava: Boolean, ifTypes: List<GameValElement>) {
         val groupedComponents = mutableMapOf<String, MutableList<Pair<String, String>>>()
 
-        data?.lines()?.forEach { line ->
-            val tokens = line.split("-")
-            if (tokens.size == 4) {
-                val (interfaceName, interfaceID, componentName, componentID) = tokens
-                groupedComponents.computeIfAbsent("${interfaceName}:${interfaceID}") { mutableListOf() }.add(componentName to componentID)
+        ifTypes.forEach {
+            val element = it.elementAs<Interface>()
+
+            val interfaceName = it.name
+            val interfaceID = it.id.toString()
+
+            element?.components?.forEach { comp ->
+                groupedComponents.computeIfAbsent("${interfaceName}:${interfaceID}") { mutableListOf() }.add(comp.name to comp.id.toString())
             }
+
         }
 
         components.appendLine()
