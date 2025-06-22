@@ -32,15 +32,11 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
         when (opcode) {
             1 -> {
                 val frameCount = buffer.readUnsignedShort()
-                var totalFrameLength = 0
                 frameIDs = MutableList(frameCount) { 0 }
                 frameDelays = MutableList(frameCount) { 0 }
 
                 for (i in 0 until frameCount) {
                     frameDelays!![i] = buffer.readUnsignedShort()
-                    if (i < frameCount - 1 || frameDelays!![i] < 200) {
-                        totalFrameLength += frameDelays!![i]
-                    }
                 }
 
                 for (i in 0 until frameCount) {
@@ -51,8 +47,6 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
                     frameIDs!![i] += buffer.readUnsignedShort() shl 16
                 }
 
-
-                lengthInCycles = ceil((totalFrameLength * 20.0) / 600.0).toInt()
             }
 
             2 -> frameStep = buffer.readUnsignedShort()
