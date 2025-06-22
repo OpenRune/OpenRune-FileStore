@@ -1,6 +1,6 @@
 package dev.openrune.definition
 
-enum class Js5GameValGroup(val id: Int, val groupName: String) {
+enum class GameValGroupTypes(val id: Int, val groupName: String) {
     OBJTYPES(0, "items"),
     NPCTYPES(1, "npcs"),
     INVTYPES(2, "inv"),
@@ -18,7 +18,7 @@ enum class Js5GameValGroup(val id: Int, val groupName: String) {
     companion object {
         private val idMap = values().associateBy { it.id }
 
-        fun fromId(id: Int): Js5GameValGroup =
+        fun fromId(id: Int): GameValGroupTypes =
             idMap[id] ?: error("Unknown group type: $id")
     }
 

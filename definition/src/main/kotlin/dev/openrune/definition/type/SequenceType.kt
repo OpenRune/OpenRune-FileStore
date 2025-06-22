@@ -3,6 +3,7 @@ package dev.openrune.definition.type
 import dev.openrune.definition.Definition
 import dev.openrune.definition.Sound
 import dev.openrune.definition.SoundData
+import kotlin.math.ceil
 
 data class SequenceType(
     override var id: Int = -1,
@@ -30,6 +31,21 @@ data class SequenceType(
     var debugName : String = ""
 
 ) : Definition, Sound {
-    var lengthInCycles = 0
-    val cycleLength: Int get() = lengthInCycles
+    val lengthInCycles: Int
+        get() = getAnimationLength()
+
+    private val cycleLength: Int
+        get() = if (skeletalId >= 0 || frameDelays == null) -1 else frameDelays!!.sum()
+
+    fun getAnimationLength(): Int {
+        return if (skeletalId >= 0) {
+            (getSkeletalLength() / 30.0).toInt()
+        } else {
+            ceil((cycleLength * 20.0) / 600.0).toInt()
+        }
+    }
+
+    private fun getSkeletalLength(): Int = rangeEnd - rangeBegin
+
+
 }

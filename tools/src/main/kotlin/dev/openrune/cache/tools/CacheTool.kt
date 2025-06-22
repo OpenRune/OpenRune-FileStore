@@ -1,10 +1,10 @@
 package dev.openrune.cache.tools
 
 import com.github.michaelbull.logging.InlineLogger
+import dev.openrune.cache.gameval.GameValElement
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.TaskType
-import dev.openrune.cache.tools.tasks.impl.PackGameVals
-import dev.openrune.definition.Js5GameValGroup
+import dev.openrune.definition.GameValGroupTypes
 import java.io.File
 
 class CacheTool(
@@ -16,12 +16,11 @@ class CacheTool(
     private val logger = InlineLogger()
 
     companion object {
-        val gameValMappings: MutableMap<Js5GameValGroup, MutableList<Pair<String, Int>>> = mutableMapOf()
+        val gameValMappings: MutableMap<GameValGroupTypes, MutableList<GameValElement>> = mutableMapOf()
 
-        fun addGameValMapping(type: Js5GameValGroup, key: String, value: Int) {
+        fun addGameValMapping(type: GameValGroupTypes, element: GameValElement) {
             val list = gameValMappings.getOrPut(type) { mutableListOf() }
-            list.add(key to value)
-            gameValMappings[type] = list
+            list.add(element)
         }
     }
 

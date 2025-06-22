@@ -3,18 +3,15 @@ package dev.openrune.cache.tools.dbtables
 import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.DBROW
 import dev.openrune.cache.DBTABLE
+import dev.openrune.cache.gameval.GameValElement
+import dev.openrune.cache.gameval.impl.Table
 import dev.openrune.cache.tools.CacheTool
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.progress
-import dev.openrune.definition.Js5GameValGroup
+import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.codec.DBRowCodec
 import dev.openrune.definition.codec.DBTableCodec
-import dev.openrune.definition.dbtables.DBTable
-import dev.openrune.definition.dbtables.columnNames
-import dev.openrune.definition.dbtables.rowNames
-import dev.openrune.definition.dbtables.tableNames
-import dev.openrune.definition.dbtables.toDbRowTypes
-import dev.openrune.definition.dbtables.toDbTableType
+import dev.openrune.definition.dbtables.*
 import dev.openrune.definition.util.toArray
 import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled
@@ -40,18 +37,19 @@ class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
             with(tableCodec) { writer.encode(tableType) }
             dbtableArchive.add(tableType.id, writer.toArray())
 
-            val columnNamesList = table.columns.keys.map { columnNames[it] ?: "" }
-
             CacheTool.addGameValMapping(
-                Js5GameValGroup.TABLETYPES,
-                "${tableNames[table.tableId] ?: ""}:[${columnNamesList.joinToString(",")}]",
-                table.tableId
+                GameValGroupTypes.TABLETYPES,
+                Table(
+                    tableNames[table.tableId]?: "table_${table.tableId}",
+                    table.tableId,
+                    table.columns.map { Table.Column(columnNames[it.key]?: "col_${it.key}",it.key) }
+                )
             )
 
             rowTypes.forEach {
                 val writer1 = Unpooled.buffer(4096)
                 with(rowCodec) { writer1.encode(it) }
-                CacheTool.addGameValMapping(Js5GameValGroup.ROWTYPES, rowNames[it.id] ?: "",it.id)
+                CacheTool.addGameValMapping(GameValGroupTypes.ROWTYPES, GameValElement(rowNames[it.id] ?: "row_${it.id}",it.id))
 
                 dbrowArchive.add(it.id, writer1.toArray())
             }

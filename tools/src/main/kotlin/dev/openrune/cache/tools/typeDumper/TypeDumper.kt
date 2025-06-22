@@ -3,11 +3,12 @@ package dev.openrune.cache.tools.typeDumper
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.OsrsCacheProvider
 import dev.openrune.cache.*
+import dev.openrune.cache.gameval.GameValHandler
 import dev.openrune.cache.tools.typeDumper.impl.IfTypes
 import dev.openrune.cache.tools.typeDumper.impl.TablesAndRows
 import dev.openrune.cache.util.Namer
-import dev.openrune.definition.Js5GameValGroup
-import dev.openrune.definition.Js5GameValGroup.*
+import dev.openrune.definition.GameValGroupTypes
+import dev.openrune.definition.GameValGroupTypes.*
 import dev.openrune.definition.util.readString
 import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled
@@ -21,7 +22,7 @@ enum class Language(val ext: String) {
     RSCM(".rscm")
 }
 
-data class TypeNameOverride(val valType: Js5GameValGroup, val name: String)
+data class TypeNameOverride(val valType: GameValGroupTypes, val name: String)
 
 data class GameValSettings(
     val usePackedComponents: Boolean = true,
@@ -52,21 +53,6 @@ data class TypeExportSettings(
     }
 }
 
-fun main() {
-    val typeDumper = TypeDumper(
-        Cache.load(Path.of("E:\\RSPS\\Illerai\\Cadarn-Server\\data\\cache"),true),
-        230,
-
-        TypeExportSettings(
-            packageName = "com.cadarn.plugin.defsnew",
-            ignoreNullObjects = true,
-            useGameVal = GameValSettings(combineInterfaceAndComponents = true, usePackedComponents = true, combineTablesAndRows = false)
-        )
-    )
-
-    typeDumper.dump(Language.RSCM,  File("E:\\RSPS\\OpenRune\\OpenRune-FileStore\\RSCM").toPath())
-}
-
 class TypeDumper(
     private val cache: Cache,
     private val rev: Int,
@@ -84,7 +70,7 @@ class TypeDumper(
     }
 
     fun dump(language: Language, outputPath: Path = Path.of("./${language.name}")) {
-        Js5GameValGroup.entries.forEach { names[it.id] = it.groupName }
+        GameValGroupTypes.entries.forEach { names[it.id] = it.groupName }
         exportSettings.overrideNames.forEach { names[it.valType.id] = it.name }
 
         if (exportSettings.useGameVal != null && rev < 230) {
@@ -154,7 +140,7 @@ class TypeDumper(
         else -> "public static final int ${name?.uppercase()} = $index;"
     }
 
-    fun generateWriter(type: Js5GameValGroup = LOCTYPES, override : String = ""): Pair<StringBuilder, Path> {
+    fun generateWriter(type: GameValGroupTypes = LOCTYPES, override : String = ""): Pair<StringBuilder, Path> {
         val builder = StringBuilder()
         var fileName = if (names.contains(type.id)) names[type.id] ?: type.groupName else type.groupName
 
@@ -189,106 +175,38 @@ class TypeDumper(
     }
 
     private fun writeGameVals() {
-        val gameValData = mutableMapOf<Int, StringBuilder>()
-
-        for (group in cache.archives(GAMEVALS)) {
-            val builder = StringBuilder()
-            cache.files(GAMEVALS,group).forEach { file ->
-                unpackGameVal(group, file, cache.data(GAMEVALS,group,file), builder)
-            }
-            gameValData[group] = builder
-        }
 
         val writeToJava = language != Language.RSCM
 
-        Js5GameValGroup.entries.forEach { group ->
-            val data = gameValData[group.id] ?: return@forEach
+        GameValGroupTypes.entries.forEach { group ->
             namer.used.clear()
 
             when (group) {
-                IFTYPES -> IfTypes(this,writeToJava).writeInterfacesAndComponents(group,data)
-                TABLETYPES -> {
-                    val rows = gameValData[ROWTYPES.id]
-                        ?.lineSequence()
-                        ?.filter { ':' in it }
-                        ?.map { it.split(":").let { (key, value) -> key to value.toInt() } }
-                        ?.toMap()
-                        ?: emptyMap()
-
-                    TablesAndRows(this, writeToJava).writeTablesAndRows(group, data, rows)
-                }
-                else -> if (group != ROWTYPES) writeGeneralGroupData(group, data, writeToJava)
+                IFTYPES -> IfTypes(this,writeToJava).writeInterfacesAndComponents(group,cache)
+                TABLETYPES -> TablesAndRows(this, writeToJava).writeTablesAndRows(group,cache)
+                else -> if (group != ROWTYPES) writeGeneralGroupData(group, writeToJava)
             }
         }
     }
 
-    fun writeGeneralGroupData(group: Js5GameValGroup, data: StringBuilder?, writeToJava: Boolean, nameOverride : String = "") {
+    fun writeGeneralGroupData(group: GameValGroupTypes, writeToJava: Boolean, nameOverride : String = "") {
         val (builder, path) = generateWriter(group,nameOverride)
-        data?.lines()?.forEach { line ->
-            val tokens = line.split(":")
-            if (tokens.size == 2) {
-                val (key, id) = tokens
-                val name = namer.name(key, id, language, writeToJava)
-                if (exportSettings.ignoreNullObjects && group == LOCTYPES) {
-                    if (CacheManager.getObject(id.toInt())?.name != "null") {
-                        write(builder, fieldName(name, id))
-                    }
-                } else {
+        val gamevals = GameValHandler.readGameVal(group,cache)
+        gamevals.forEach {
+            val id = it.id.toString()
+            val key = it.name
+
+            val name = namer.name(key, id, language, writeToJava)
+            if (exportSettings.ignoreNullObjects && group == LOCTYPES) {
+                if (CacheManager.getObject(id.toInt())?.name != "null") {
                     write(builder, fieldName(name, id))
                 }
+            } else {
+                write(builder, fieldName(name, id))
             }
         }
 
         endWriter(builder, path)
     }
 
-    companion object {
-
-        fun unpackGameVal(type: Js5GameValGroup, id: Int, bytes: ByteArray?, builder: StringBuilder) {
-            unpackGameVal(type.id, id, bytes,builder)
-        }
-
-        fun unpackGameVal(type: Int, id: Int, bytes: ByteArray?, builder: StringBuilder) {
-            val data = Unpooled.wrappedBuffer(bytes)
-            when (Js5GameValGroup.fromId(type)) {
-                TABLETYPES -> {
-                    data.readUnsignedByte()
-                    val tableName = data.readString()
-                    if (tableName.isEmpty()) return
-                    var columnId = 0
-                    while (data.readUnsignedByte().toInt() != 0) {
-                        val columnName = data.readString()
-                        builder.appendLine("$tableName.$columnName.$id.$columnId")
-                        columnId++
-                    }
-                }
-                IFTYPES -> {
-                    var interfaceName = data.readString().takeIf { it.isNotEmpty() } ?: "_"
-                    if (interfaceName.isEmpty()) return
-                    var componentId = 0
-                    while (true) {
-                        val value = data.readUnsignedByte().toInt()
-                        val nextByte = data.getUnsignedByte(data.readerIndex()).toInt()
-
-                        if (value == 0xFF && nextByte == 0) {
-                            break
-                        }
-
-                        val key = (id shl 16) or componentId
-                        val name = data.readString()
-                        builder.appendLine("$interfaceName-$id-$name-$key")
-                        componentId++
-                    }
-
-                }
-                else -> {
-                    val arr = ByteArray(data.readableBytes())
-                    data.readBytes(arr)
-                    val name = String(arr)
-                    if (name.isEmpty()) return
-                    builder.appendLine("$name:$id")
-                }
-            }
-        }
-    }
 }

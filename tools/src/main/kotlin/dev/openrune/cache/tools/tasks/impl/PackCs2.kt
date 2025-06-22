@@ -4,12 +4,16 @@ import dev.openrune.OsrsCacheProvider
 import dev.openrune.cache.CLIENTSCRIPT
 import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.GAMEVALS
+import dev.openrune.cache.gameval.GameValHandler
+import dev.openrune.cache.gameval.GameValHandler.elementAs
+import dev.openrune.cache.gameval.impl.Interface
+import dev.openrune.cache.gameval.impl.Table
 import dev.openrune.cache.tools.TaskPriority
 import dev.openrune.cache.tools.tasks.CacheTask
-import dev.openrune.cache.tools.typeDumper.TypeDumper.Companion.unpackGameVal
 import dev.openrune.cache.util.progress
 import dev.openrune.clientscript.compiler.ClientScripts
-import dev.openrune.definition.Js5GameValGroup
+import dev.openrune.definition.GameValGroupTypes
+import dev.openrune.definition.GameValGroupTypes.IFTYPES
 import dev.openrune.definition.type.DBTableType
 import dev.openrune.filesystem.Cache
 import java.io.File
@@ -75,15 +79,15 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
     }
 
     private fun collectCurrentValCrcs(cache: Cache): Map<Int, Int> = mapOf(
-        Js5GameValGroup.OBJTYPES.id to cache.crc(GAMEVALS, Js5GameValGroup.OBJTYPES.id),
-        Js5GameValGroup.LOCTYPES.id to cache.crc(GAMEVALS, Js5GameValGroup.LOCTYPES.id),
-        Js5GameValGroup.NPCTYPES.id to cache.crc(GAMEVALS, Js5GameValGroup.NPCTYPES.id),
-        Js5GameValGroup.INVTYPES.id to cache.crc(GAMEVALS, Js5GameValGroup.INVTYPES.id),
-        Js5GameValGroup.VARBITTYPES.id to cache.crc(GAMEVALS, Js5GameValGroup.VARBITTYPES.id),
-        Js5GameValGroup.SEQTYPES.id to cache.crc(GAMEVALS, Js5GameValGroup.SEQTYPES.id),
-        Js5GameValGroup.ROWTYPES.id to cache.crc(GAMEVALS, Js5GameValGroup.ROWTYPES.id),
-        Js5GameValGroup.TABLETYPES.id to cache.crc(GAMEVALS, Js5GameValGroup.TABLETYPES.id),
-        Js5GameValGroup.IFTYPES.id to cache.crc(GAMEVALS, Js5GameValGroup.IFTYPES.id),
+        GameValGroupTypes.OBJTYPES.id to cache.crc(GAMEVALS, GameValGroupTypes.OBJTYPES.id),
+        GameValGroupTypes.LOCTYPES.id to cache.crc(GAMEVALS, GameValGroupTypes.LOCTYPES.id),
+        GameValGroupTypes.NPCTYPES.id to cache.crc(GAMEVALS, GameValGroupTypes.NPCTYPES.id),
+        GameValGroupTypes.INVTYPES.id to cache.crc(GAMEVALS, GameValGroupTypes.INVTYPES.id),
+        GameValGroupTypes.VARBITTYPES.id to cache.crc(GAMEVALS, GameValGroupTypes.VARBITTYPES.id),
+        GameValGroupTypes.SEQTYPES.id to cache.crc(GAMEVALS, GameValGroupTypes.SEQTYPES.id),
+        GameValGroupTypes.ROWTYPES.id to cache.crc(GAMEVALS, GameValGroupTypes.ROWTYPES.id),
+        GameValGroupTypes.TABLETYPES.id to cache.crc(GAMEVALS, GameValGroupTypes.TABLETYPES.id),
+        IFTYPES.id to cache.crc(GAMEVALS, IFTYPES.id),
     )
 
     private fun loadSavedVals(): Map<Int, Int> {
@@ -106,122 +110,87 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
         }
     }
 
-    private fun dumpCacheVals(basePath : File,cache: Cache) {
-        symDumper(basePath,cache,"obj", Js5GameValGroup.OBJTYPES)
-        symDumper(basePath,cache,"loc", Js5GameValGroup.LOCTYPES)
-        symDumper(basePath,cache,"npc", Js5GameValGroup.NPCTYPES)
-        symDumper(basePath,cache,"inv", Js5GameValGroup.INVTYPES)
-        symDumper(basePath,cache,"varbit", Js5GameValGroup.VARBITTYPES)
-        symDumper(basePath,cache,"seq", Js5GameValGroup.SEQTYPES)
-        symDumper(basePath,cache,"dbrow", Js5GameValGroup.ROWTYPES)
+    fun dumpCacheVals(basePath : File,cache: Cache) {
+        symDumper(basePath,cache,"obj", GameValGroupTypes.OBJTYPES)
+        symDumper(basePath,cache,"loc", GameValGroupTypes.LOCTYPES)
+        symDumper(basePath,cache,"npc", GameValGroupTypes.NPCTYPES)
+        symDumper(basePath,cache,"inv", GameValGroupTypes.INVTYPES)
+        symDumper(basePath,cache,"varbit", GameValGroupTypes.VARBITTYPES)
+        symDumper(basePath,cache,"seq", GameValGroupTypes.SEQTYPES)
+        symDumper(basePath,cache,"dbrow", GameValGroupTypes.ROWTYPES)
 
         symDumperInterface(basePath,cache)
         symDumperDBTables(basePath,cache)
     }
 
-    private fun symDumper(basePath: File,cache: Cache, name: String, group: Js5GameValGroup) {
+    private fun symDumper(basePath: File,cache: Cache, name: String, group: GameValGroupTypes) {
         if (!valsToUpdate.containsKey(group.id)) return
-        if (group == Js5GameValGroup.TABLETYPES) return
+        if (group == GameValGroupTypes.TABLETYPES) return
 
-        val builder = StringBuilder()
-        cache.files(GAMEVALS, group.id).forEach { file ->
-            unpackGameVal(group, file, cache.data(GAMEVALS, group.id, file), builder)
-        }
-
-        val transformed = builder.lines()
-            .filter { it.isNotBlank() }
-            .joinToString("\n") { line ->
-                val (n, id) = line.split(":")
-                "$id\t$n"
-            }
-
-
-        File(basePath,"$name.sym").writeText("${transformed}\n")
+        val transformed = GameValHandler.readGameVal(group, cache).map { "${it.id}\t${it.name}" }
+        File(basePath, "$name.sym").writeText(transformed.joinToString("\n") + "\n")
     }
 
-    private fun symDumperDBTables(basePath: File,cache: Cache) {
-        if (!valsToUpdate.keys.any { it == Js5GameValGroup.TABLETYPES.id || it == Js5GameValGroup.ROWTYPES.id }) return
+    private fun symDumperDBTables(basePath: File, cache: Cache) {
+        if (!valsToUpdate.keys.any { it == GameValGroupTypes.TABLETYPES.id || it == GameValGroupTypes.ROWTYPES.id }) return
 
-        val content = buildString {
-            cache.files(GAMEVALS, Js5GameValGroup.TABLETYPES.id).forEach { file ->
-                unpackGameVal(Js5GameValGroup.TABLETYPES, file, cache.data(GAMEVALS, Js5GameValGroup.TABLETYPES.id, file), this)
-            }
-        }
-
-        val dbColumn = StringBuilder()
-        val dbTables = mutableSetOf<String>()
         val dbTableTypes = mutableMapOf<Int, DBTableType>()
-
         OsrsCacheProvider.DBTableDecoder().load(cache, dbTableTypes)
 
-        content.lineSequence().forEach { line ->
-            val parts = line.split(".")
-            if (parts.size != 4) return@forEach
+        val tables = GameValHandler.readGameVal(GameValGroupTypes.TABLETYPES, cache)
 
-            val (tableName, colName, tableIdStr, colIdStr) = parts
-            val tableId = tableIdStr.toIntOrNull() ?: return@forEach
-            val colId = colIdStr.toIntOrNull() ?: return@forEach
+        val dbTables = tables.map { "${it.id}\t${it.name}" }
+        File(basePath, "dbtable.sym").writeText(dbTables.joinToString("\n") + "\n")
 
-            dbTables.add("$tableId\t$tableName")
+        val dbColumns = tables.mapNotNull { it.elementAs<Table>() }.flatMap { table ->
+            val tableType = dbTableTypes[table.id] ?: return@flatMap emptyList()
+            val tableName = table.name
+            val packedBase = table.id shl 12
 
-            val tableType = dbTableTypes[tableId] ?: return@forEach
-            val packedColumn = (tableId shl 12) or (colId shl 4)
+            buildList {
+                table.columns.forEach { column ->
+                    val colId = column.id
+                    val colName = column.name
+                    val packedColumn = packedBase or (colId shl 4)
 
-            tableType.columns[colId]?.types?.map { it.name.lowercase().replace("coordgrid", "coord") }?.let { types ->
-                if (types.isNotEmpty()) {
+                    val types = tableType.columns[colId]?.types
+                        ?.map { it.name.lowercase().replace("coordgrid", "coord") }
+                        ?: return@forEach
+
+                    if (types.isEmpty()) return@forEach
+
                     if (types.size > 1) {
-                        dbColumn.appendLine("$packedColumn\t$tableName:$colName\t${types.joinToString(",")}")
+                        add("$packedColumn\t$tableName:$colName\t${types.joinToString(",")}")
                     }
+
                     types.forEachIndexed { index, typeName ->
                         val indexedName = if (types.size > 1) "$colName:$index" else colName
                         val indexedId = if (types.size > 1) packedColumn + (index + 1) else packedColumn
-                        dbColumn.appendLine("$indexedId\t$tableName:$indexedName\t$typeName")
+                        add("$indexedId\t$tableName:$indexedName\t$typeName")
                     }
                 }
             }
         }
 
-        dbColumn.appendLine()
-
-        File(basePath,"dbcolumn.sym").writeText(dbColumn.toString())
-        File(basePath,"dbtable.sym").writeText("${dbTables.joinToString("\n")}\n")
+        File(basePath, "dbcolumn.sym").writeText(dbColumns.joinToString("\n") + "\n")
     }
 
-    private fun symDumperInterface(basePath: File,cache: Cache) {
-        if (!valsToUpdate.containsKey(Js5GameValGroup.IFTYPES.id)) return
+    private fun symDumperInterface(basePath: File, cache: Cache) {
+        if (!valsToUpdate.containsKey(IFTYPES.id)) return
 
-        val interfaces = StringBuilder()
-        val components = StringBuilder()
-        val processedInterfaces = mutableSetOf<String>()
-        val processedComponents = mutableSetOf<String>()
+        val infTypes = GameValHandler.readGameVal(IFTYPES, cache)
 
-        buildString {
-            cache.files(GAMEVALS, Js5GameValGroup.IFTYPES.id).forEach { file ->
-                unpackGameVal(Js5GameValGroup.IFTYPES, file, cache.data(GAMEVALS, Js5GameValGroup.IFTYPES.id, file), this)
-            }
-        }.lineSequence().forEach { line ->
-            val parts = line.split("-")
-            if (parts.size != 4) return@forEach
-            val (interfaceName, interfaceId, componentName, componentId) = parts
-            val interfaceEntry = "$interfaceId\t$interfaceName"
-            if (processedInterfaces.add(interfaceEntry)) {
-                interfaces.appendLine(interfaceEntry)
-            }
+        val interfaceTypes = infTypes.map { "${it.id}\t${it.name}" }
+        File(basePath, "interface.sym").writeText(interfaceTypes.joinToString("\n") + "\n")
 
-            val componentEntry = "${pack(interfaceId.toInt(), componentId)}\t$interfaceName:$componentName"
-            if (processedComponents.add(componentEntry)) {
-                components.appendLine(componentEntry)
-            }
+        val componentTypes = infTypes.flatMap { inf ->
+            inf.elementAs<Interface>()
+                ?.components
+                ?.map { comp -> "${comp.packed}\t${inf.name}:${comp.name}" }
+                ?: emptyList()
         }
 
-        interfaces.appendLine()
-        components.appendLine()
-
-        File(basePath,"interface.sym").writeText(interfaces.toString())
-        File(basePath,"component.sym").writeText(components.toString())
+        File(basePath, "component.sym").writeText(componentTypes.joinToString("\n") + "\n")
     }
 
-    private fun pack(interfaceId: Int, componentId: String): Int {
-        return (interfaceId and 0xFFFF) shl 16 or (componentId.toInt() and 0xFFFF)
-    }
 }

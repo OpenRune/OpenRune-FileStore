@@ -4,11 +4,11 @@ import com.displee.cache.CacheLibrary
 import com.displee.cache.index.archive.Archive
 import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.INTERFACES
+import dev.openrune.cache.gameval.impl.Interface
 import dev.openrune.cache.tools.CacheTool
 import dev.openrune.cache.tools.tasks.CacheTask
-import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
-import dev.openrune.definition.Js5GameValGroup
+import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.codec.ComponentCodec
 import dev.openrune.definition.type.widget.ComponentType
 import dev.openrune.definition.util.toArray
@@ -34,12 +34,19 @@ class PackIfType(
     private fun packInterface(cache: CacheLibrary, id: Int, components: List<ComponentType>) {
         val codec = ComponentCodec()
         val archive = Archive(id)
-        var data = ""
+
+        var infVal : Interface? = null
+
+        val componentList = emptyList<Interface.InterfaceComponent>().toMutableList()
+        var interfaceName = ""
+        var interfaceID : Int = -1
 
         components.forEachIndexed { index, componentType ->
+            val components = emptyList<Interface.InterfaceComponent>().toMutableList()
             if (componentType.id != -1) {
                 if (componentType.debugInterfaceName != "") {
-                    data += "${componentType.debugInterfaceName}:${componentType.id}["
+                    interfaceName = componentType.debugInterfaceName
+                    interfaceID = componentType.id
                 }
 
                 if (index == 0) {
@@ -52,11 +59,11 @@ class PackIfType(
 
             val writer = Unpooled.buffer(4096)
             with(codec) { writer.encode(componentType) }
-            data += "${componentType.name}:${index},"
+            components.add(Interface.InterfaceComponent(componentType.name?: "com_${index}",index,componentType.id))
             archive.add(index,writer.toArray())
         }
-        data += "]"
-        CacheTool.addGameValMapping(Js5GameValGroup.IFTYPES, data.lowercase(), id)
+
+        CacheTool.addGameValMapping(GameValGroupTypes.IFTYPES, Interface(interfaceName,interfaceID,componentList))
         cache.index(INTERFACES).add(archive)
         cache.update()
     }

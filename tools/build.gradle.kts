@@ -10,6 +10,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("commons-io:commons-io:2.15.1")
     implementation(project(":displee"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
 
     implementation("org.slf4j:slf4j-simple:2.0.3")
     implementation("cc.ekblad:4koma:1.2.2-openrune")

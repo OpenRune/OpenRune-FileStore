@@ -7,6 +7,7 @@ import cc.ekblad.toml.serialization.from
 import cc.ekblad.toml.tomlMapper
 import cc.ekblad.toml.util.InternalAPI
 import dev.openrune.cache.*
+import dev.openrune.cache.gameval.GameValElement
 import dev.openrune.cache.tools.CacheTool
 import dev.openrune.cache.tools.item.ItemSlotType
 import dev.openrune.definition.util.toArray
@@ -14,11 +15,10 @@ import dev.openrune.definition.Definition
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.*
 import dev.openrune.cache.tools.tasks.CacheTask
-import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet
 import dev.openrune.cache.util.ItemParam
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
-import dev.openrune.definition.Js5GameValGroup
+import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.RSCMHandler
 import dev.openrune.definition.codec.*
 import dev.openrune.filesystem.Cache
@@ -34,7 +34,7 @@ class PackType(
     val archive: Int,
     val codecClass: KClass<*>,
     val name: String,
-    val gameValGroup: Js5GameValGroup? = null,
+    val gameValGroup: GameValGroupTypes? = null,
     val tomlMapper: TomlMapper,
     val kType: KType
 )
@@ -82,7 +82,7 @@ class PackConfig(
 
     init {
 
-        registerPackType(ITEM, ItemCodec::class, "item",Js5GameValGroup.OBJTYPES, tomlMapper = tomlMapper {
+        registerPackType(ITEM, ItemCodec::class, "item",GameValGroupTypes.OBJTYPES, tomlMapper = tomlMapper {
             addDecoder<ItemType> { content , def: ItemType ->
                 content["equipmentType"]?.let { typeValue ->
                     val type = (typeValue as? TomlValue.String)?.value ?: error("equipmentType must be a string")
@@ -136,7 +136,7 @@ class PackConfig(
 
         registerPackType(index = TEXTURES, archive = 0, codec = TextureCodec::class, name = "texture", kType = typeOf<List<TextureType>>())
 
-        registerPackType(OBJECT, ObjectCodec::class, "object",Js5GameValGroup.LOCTYPES, tomlMapper = tomlMapper {
+        registerPackType(OBJECT, ObjectCodec::class, "object",GameValGroupTypes.LOCTYPES, tomlMapper = tomlMapper {
             addDecoder<ObjectType> { content , def: ObjectType ->
                 def.actions.fromOptions("option", content)
             }
@@ -162,17 +162,17 @@ class PackConfig(
             }
         }, kType = typeOf<List<EnumType>>())
 
-        registerPackType(SPOTANIM, SpotAnimCodec::class, "graphics", Js5GameValGroup.SPOTTYPES, kType = typeOf<List<SpotAnimType>>())
-        registerPackType(SPOTANIM, SpotAnimCodec::class, "graphic", Js5GameValGroup.SPOTTYPES, kType = typeOf<List<SpotAnimType>>())
-        registerPackType(SEQUENCE, SequenceCodec::class, "animation", Js5GameValGroup.SEQTYPES, kType = typeOf<List<SequenceType>>())
+        registerPackType(SPOTANIM, SpotAnimCodec::class, "graphics", GameValGroupTypes.SPOTTYPES, kType = typeOf<List<SpotAnimType>>())
+        registerPackType(SPOTANIM, SpotAnimCodec::class, "graphic", GameValGroupTypes.SPOTTYPES, kType = typeOf<List<SpotAnimType>>())
+        registerPackType(SEQUENCE, SequenceCodec::class, "animation", GameValGroupTypes.SEQTYPES, kType = typeOf<List<SequenceType>>())
 
-        registerPackType(NPC, NPCCodec::class, "npc",Js5GameValGroup.NPCTYPES, tomlMapper = tomlMapper {
+        registerPackType(NPC, NPCCodec::class, "npc",GameValGroupTypes.NPCTYPES, tomlMapper = tomlMapper {
             addDecoder<NpcType> { content , def: NpcType ->
                 def.actions.fromOptions("option", content)
             }
         }, kType = typeOf<List<NpcType>>())
 
-        registerPackType(VARBIT, VarBitCodec::class, "varbit",Js5GameValGroup.VARBITTYPES, kType = typeOf<List<VarBitType>>())
+        registerPackType(VARBIT, VarBitCodec::class, "varbit",GameValGroupTypes.VARBITTYPES, kType = typeOf<List<VarBitType>>())
 
         registerPackType(AREA, AreaCodec::class, "area", tomlMapper = tomlMapper {
             addDecoder<AreaType> { content , def: AreaType ->
@@ -183,11 +183,11 @@ class PackConfig(
         registerPackType(HEALTHBAR, HealthBarCodec::class, "health", kType = typeOf<List<HealthBarType>>())
         registerPackType(HITSPLAT, HitSplatCodec::class, "hitsplat", kType = typeOf<List<HitSplatType>>())
         registerPackType(IDENTKIT, IdentityKitCodec::class, "idk", kType = typeOf<List<IdentityKitType>>())
-        registerPackType(INV, InventoryCodec::class, "inventory",Js5GameValGroup.INVTYPES, kType = typeOf<List<InventoryType>>())
+        registerPackType(INV, InventoryCodec::class, "inventory",GameValGroupTypes.INVTYPES, kType = typeOf<List<InventoryType>>())
         registerPackType(OVERLAY, OverlayCodec::class, "overlay", kType = typeOf<List<OverlayType>>())
         registerPackType(UNDERLAY, OverlayCodec::class, "underlay", kType = typeOf<List<UnderlayType>>())
         registerPackType(PARAMS, ParamCodec::class, "params", kType = typeOf<List<ParamType>>())
-        registerPackType(VARPLAYER, VarCodec::class, "varp",Js5GameValGroup.VARPTYPES, kType = typeOf<List<VarpType>>())
+        registerPackType(VARPLAYER, VarCodec::class, "varp",GameValGroupTypes.VARPTYPES, kType = typeOf<List<VarpType>>())
         registerPackType(VARCLIENT, VarClientCodec::class, "varclient", kType = typeOf<List<VarClientType>>())
 
     }
@@ -258,24 +258,17 @@ class PackConfig(
             }
         }
 
-
-
         if (packType.gameValGroup != null) {
-            val matchingName : String = debugName
-            val name = when {
-                matchingName.isEmpty() || !matchingName.contains(".") -> {
-                    when (packType.gameValGroup) {
-                        Js5GameValGroup.OBJTYPES -> (def as ItemType).name
-                        Js5GameValGroup.NPCTYPES -> (def as NpcType).name
-                        Js5GameValGroup.LOCTYPES -> (def as ObjectType).name
-                        else -> null
-                    }
+            val name = debugName.ifEmpty {
+                when (packType.gameValGroup) {
+                    GameValGroupTypes.OBJTYPES -> (def as ItemType).name
+                    GameValGroupTypes.NPCTYPES -> (def as NpcType).name
+                    GameValGroupTypes.LOCTYPES -> (def as ObjectType).name
+                    else -> null
                 }
-                else -> matchingName.substringAfter(".")
             }
-
             if (!name.isNullOrBlank() && name != "null") {
-                CacheTool.addGameValMapping(packType.gameValGroup, name.lowercase(), defId)
+                CacheTool.addGameValMapping(packType.gameValGroup, GameValElement(name, defId))
             }
         }
         
@@ -376,7 +369,7 @@ class PackConfig(
                     modifiedLine = modifiedLine.replace("\"$fullValue\"", resolved.toString())
 
                     if (!debugNameAdded && trimmed.startsWith("id") && fullValue == match.groupValues[1]) {
-                        output.appendLine("debugName = \"$fullValue\"")
+                        output.appendLine("debugName = \"${fullValue.substringAfter(".")}\"")
                         debugNameAdded = true
                     }
                 }
@@ -390,13 +383,13 @@ class PackConfig(
 
     companion object {
 
-        val tomlMapperDefault = tomlMapper {  }
+        private val tomlMapperDefault = tomlMapper {  }
         val packTypes = mutableMapOf<String, PackType>()
 
         fun registerPackType(
             archive: Int, codec: KClass<*>,
             name: String,
-            gameValGroup: Js5GameValGroup? = null,
+            gameValGroup: GameValGroupTypes? = null,
             index: Int = CONFIGS,
             tomlMapper: TomlMapper = tomlMapperDefault,
             kType: KType,
@@ -410,7 +403,7 @@ class PackConfig(
             archive: Int,
             codec: KClass<*>,
             name: String,
-            gameValGroup: Js5GameValGroup? = null,
+            gameValGroup: GameValGroupTypes? = null,
             kType: KType,
         ) {
             val packType = PackType(index,archive, codec, name,gameValGroup,tomlMapperDefault,kType)
