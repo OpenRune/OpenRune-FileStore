@@ -30,7 +30,7 @@ object GameValHandler {
             unpackGameVal(type, file, data)
         }
 
-    fun unpackGameVal(type: GameValGroupTypes, id: Int, bytes: ByteArray?): List<GameValElement> {
+    private fun unpackGameVal(type: GameValGroupTypes, id: Int, bytes: ByteArray?): List<GameValElement> {
         if (bytes == null) return emptyList()
         val data = Unpooled.wrappedBuffer(bytes)
         val elements = mutableListOf<GameValElement>()
@@ -39,7 +39,6 @@ object GameValHandler {
             TABLETYPES -> {
                 data.readUnsignedByte()
                 val tableName = data.readString()
-                if (tableName.isEmpty()) return elements
                 val columns = mutableListOf<Table.Column>()
                 var columnId = 0
                 while (true) {
@@ -53,8 +52,7 @@ object GameValHandler {
             }
 
             IFTYPES -> {
-                val interfaceName = data.readString().takeIf { it.isNotEmpty() } ?: "_"
-                if (interfaceName == "_") return elements
+                val interfaceName = data.readString()
 
                 val components = mutableListOf<InterfaceComponent>()
                 while (true) {
@@ -76,15 +74,13 @@ object GameValHandler {
                 val remainingBytes = ByteArray(data.readableBytes())
                 data.readBytes(remainingBytes)
                 val name = remainingBytes.toString(Charsets.UTF_8)
-                if (name.isNotEmpty()) {
-                    if (type == SPRITETYPES) {
-                        val parts = name.split(',')
-                        val spriteName = parts[0]
-                        val index = parts.getOrNull(1)?.toIntOrNull() ?: -1
-                        elements.add(Sprite(spriteName, index, id))
-                    } else {
-                        elements.add(GameValElement(name, id))
-                    }
+                if (type == SPRITETYPES) {
+                    val parts = name.split(',')
+                    val spriteName = parts[0]
+                    val index = parts.getOrNull(1)?.toIntOrNull() ?: -1
+                    elements.add(Sprite(spriteName, index, id))
+                } else {
+                    elements.add(GameValElement(name, id))
                 }
             }
         }
@@ -93,28 +89,8 @@ object GameValHandler {
     }
 
     fun encodeGameVals(type: GameValGroupTypes, values: List<GameValElement>, cache: Cache) {
-        val lastFileId = cache.lastFileId(GAMEVALS, type.id)
-
-        val usedIds = values.map { it.id }.toSet()
-        val maxUsedId = usedIds.maxOrNull() ?: lastFileId
-        val missingIds = ((lastFileId + 1)..maxUsedId).filterNot(usedIds::contains)
-
         when (type) {
             TABLETYPES -> {
-                val emptyWriter = Unpooled.buffer(4096).apply {
-                    writeByte(1)
-                    writeString("")
-                    writeByte(1)
-                    writeString("")
-                    writeByte(0)
-                }
-
-                val emptyData = emptyWriter.toArray()
-
-                for (id in missingIds) {
-                    cache.write(GAMEVALS, type.id, id, emptyData)
-                }
-
                 values.forEach { element ->
                     element.elementAs<Table>()?.let { table ->
                         val writer = Unpooled.buffer(4096).apply {
@@ -133,15 +109,6 @@ object GameValHandler {
             }
 
             IFTYPES -> {
-                missingIds.forEach {
-                    val writer = Unpooled.buffer(64).apply {
-                        writeString("")
-                        writeByte(0xFF)
-                        writeByte(0)
-                    }
-                    cache.write(GAMEVALS, type.id, it, writer.toArray())
-                }
-
                 values.forEach { element ->
                     val writer = Unpooled.buffer(4096).apply {
                         element.elementAs<Interface>()?.let { inf ->
@@ -159,7 +126,6 @@ object GameValHandler {
             }
 
             else -> {
-                missingIds.forEach { cache.write(GAMEVALS, type.id, it, byteArrayOf()) }
                 values.forEach { element ->
                     val data = when (type) {
                         SPRITETYPES -> element.elementAs<Sprite>()?.let { sprite ->
@@ -168,6 +134,7 @@ object GameValHandler {
                         }
                         else -> element.elementAs<GameValElement>()?.name?.let(GameValHandler::standardizeGamevalName)
                     }
+                    println("HERE: " + element.toFullString())
                     data?.encodeToByteArray()?.let { cache.write(GAMEVALS, type.id, element.id, it) }
                 }
             }

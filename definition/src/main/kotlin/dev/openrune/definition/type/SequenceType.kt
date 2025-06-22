@@ -34,8 +34,9 @@ data class SequenceType(
     val lengthInCycles: Int
         get() = getAnimationLength()
 
-    private val cycleLength: Int
-        get() = if (skeletalId >= 0 || frameDelays == null) -1 else frameDelays!!.sum()
+    private val cycleLength: Int by lazy {
+        if (skeletalId >= 0 || frameDelays == null) -1 else frameDelays!!.sum()
+    }
 
     fun getAnimationLength(): Int {
         return if (skeletalId >= 0) {
