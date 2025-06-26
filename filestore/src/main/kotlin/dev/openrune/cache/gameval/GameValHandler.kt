@@ -134,7 +134,6 @@ object GameValHandler {
                         }
                         else -> element.elementAs<GameValElement>()?.name?.let(GameValHandler::standardizeGamevalName)
                     }
-                    println("HERE: " + element.toFullString())
                     data?.encodeToByteArray()?.let { cache.write(GAMEVALS, type.id, element.id, it) }
                 }
             }
