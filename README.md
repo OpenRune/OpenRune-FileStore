@@ -39,12 +39,13 @@ repositories {
 
 ### Adding the Dependency
 
+Modules are currently published under the dev.or2 organization at the above maven remote. The all module will include all of the modules in OpenRune-Filestore. Please see the following for instructions on adding it to your dependency manager.
 <details>
 <summary><b>Gradle Kotlin DSL (build.gradle.kts)</b></summary>
 
 ```kotlin
 dependencies {
-    implementation("dev.openrune:filestore:1.2.4")
+    implementation("dev.or2:all:2.1.1")
 }
 ```
 
@@ -55,7 +56,7 @@ dependencies {
 
 ```groovy
 dependencies {
-    implementation 'dev.openrune:filestore:1.2.4'
+    implementation 'dev.or2:all:2.1.1'
 }
 ```
 
@@ -66,13 +67,76 @@ dependencies {
 
 ```xml
 <dependency>
-    <groupId>dev.openrune</groupId>
-    <artifactId>filestore</artifactId>
-    <version>1.2.4</version>
+    <groupId>dev.or2</groupId>
+    <artifactId>all</artifactId>
+    <version>2.1.1</version>
 </dependency>
 ```
 
 </details>
+
+## Openrune Modules Overview
+
+Openrune is structured as a multi-module project. Below is a breakdown of the key modules and their purposes.
+
+### Definition Modules
+
+These modules focus on decoding definition data from byte arrays.
+
+- **`definition-base`**  
+  Core implementations of definition classes, along with generic cross-revision codecs and utility methods.
+
+- **`opcode-kotlin`**  
+  A Kotlin reflection-based framework for constructing definition codecs and abstracting low-level buffer interactions.
+
+- **`osrs`**  
+  Definition codecs specifically for decoding OSRS formats.
+
+- **`r718`**  
+  Definition codecs for decoding RuneScape 718 revision formats.
+
+- **`rs3`**  
+  Definition codecs for RS3 formats.
+
+---
+
+### Cache and File Handling Modules
+
+These modules provide systems for loading, reading, and decoding cache files:
+
+- **`displee`**  
+  A fork of Displee's cache library with internal fixes. This is a temporary dependency until the original is updated and published properly to Maven Central.
+
+- **`filestore`**  
+  A shared abstraction layer for loading caches via the `filesystem` module and decoding them using the definition modules.
+
+- **`osrs-fs`**  
+  An OSRS-specific implementation of the `filestore` system.
+
+- **`r718-fs`**  
+  A 718-specific implementation of the `filestore` system.
+
+- **`filesystem`**  
+  Low-level library. Handles reading cache files and extracting them into byte arrays for higher-level decoding.
+
+- **`tools`**  
+  Utility module providing tools for cache packing, downloading caches from OpenRS2, and performing modifications.
+
+---
+
+### Aggregate Modules
+
+To simplify dependency management, Openrune provides aggregate POM modules:
+
+- **`all`**  
+  Includes **all** modules listed above.
+
+- **`all-osrs`**  
+  Includes only the definition and osrs modules.
+
+Both aggregate POMs use `compile` scope, meaning their subprojects are transitively exposed when added as dependencies.
+
+---
 
 This structure includes essential attributes like the item's ID, name, and the model used in the inventory. Each task that involves packing from JSON will look for files with similar structures tailored to the specific game element being packed.
 
