@@ -6,7 +6,7 @@ plugins {
 }
 
 val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "K:\\documents\\GitHub\\hosting\\"
-val buildNumber = "2.2"
+val buildNumber = "2.2.1"
 
 
 
@@ -90,6 +90,7 @@ subprojects {
 
 val filesystemVersion = buildNumber
 val definitionVersion = buildNumber
+val definitionOpcodeVersion = buildNumber
 val definitionOsrsVersion = buildNumber
 val definitionR718Version = buildNumber
 val filestoreVersion = buildNumber
@@ -131,6 +132,12 @@ publishing {
                         definition.appendNode("artifactId", "definition")
                         definition.appendNode("version", definitionVersion)
                         definition.appendNode("scope", "compile")
+
+                        val definitionOpcode = appendNode("dependency")
+                        definitionOpcode.appendNode("groupId", "dev.or2")
+                        definitionOpcode.appendNode("artifactId", "opcode")
+                        definitionOpcode.appendNode("version", definitionOpcodeVersion)
+                        definitionOpcode.appendNode("scope", "compile")
 
                         val definitionOSRS = appendNode("dependency")
                         definitionOSRS.appendNode("groupId", "dev.or2")
