@@ -28,3 +28,4 @@ tools/build/*
 /filesystem/build
 /displee/build
 /definition/rs3/build
+/definition/opcode/build
