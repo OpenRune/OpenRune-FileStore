@@ -6,7 +6,7 @@ plugins {
 }
 
 val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "K:\\documents\\GitHub\\hosting\\"
-val buildNumber = "2.2.1"
+val buildNumber = "2.2.2"
 
 
 
