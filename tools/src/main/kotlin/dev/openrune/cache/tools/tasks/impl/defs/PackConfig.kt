@@ -70,12 +70,33 @@ class PackConfig(
         "CONSTRUCTION" to 22
     )
 
-    private fun MutableList<String?>.fromOptions(keyName: String, content: Map<String, Any?>) {
+    private fun MutableList<String?>.fromOptions(  id: Int, name: String,keyName: String, content: Map<String, Any?>) {
+        val context = buildString {
+            append("[$id]")
+            if (name.isNotBlank()) append(" [$name]")
+        }
+
+        val invalidKeys = content.keys.filter { it.startsWith(keyName) }.mapNotNull {
+            val suffix = it.removePrefix(keyName).toIntOrNull()
+            if (suffix != null && (suffix < 1 || suffix > 5)) suffix else null
+        }
+
+        if (invalidKeys.isNotEmpty()) {
+            val sorted = invalidKeys.sorted()
+            val keyString = sorted.joinToString()
+            when {
+                sorted.any { it < 1 } -> println("$context Warning: Invalid keys for '$keyName': $keyString — indices must start at 1.")
+                sorted.any { it > 5 } -> println("$context Warning: Invalid keys for '$keyName': $keyString — indices must not exceed 5.")
+                else -> println("Warning: Invalid option key(s): ${sorted.joinToString()}.")
+            }
+            return
+        }
+
         for (i in 1..5) {
             val key = "$keyName$i"
             val value = content[key]
             if (value != null) {
-                this[i] = (value as? TomlValue.String)?.value
+                this[i - 1] = (value as? TomlValue.String)?.value
             }
         }
     }
@@ -129,8 +150,8 @@ class PackConfig(
                     }
                 }
 
-                def.options.fromOptions("option", content)
-                def.interfaceOptions.fromOptions("ioption", content)
+                def.options.fromOptions(def.id,def.name,"option", content)
+                def.interfaceOptions.fromOptions(def.id,def.name,"ioption", content)
             }
         }, kType = typeOf<List<ItemType>>())
 
@@ -138,7 +159,7 @@ class PackConfig(
 
         registerPackType(OBJECT, ObjectCodec::class, "object",GameValGroupTypes.LOCTYPES, tomlMapper = tomlMapper {
             addDecoder<ObjectType> { content , def: ObjectType ->
-                def.actions.fromOptions("option", content)
+                def.actions.fromOptions(def.id,def.name,"option", content)
             }
         }, kType = typeOf<List<ObjectType>>())
 
@@ -168,7 +189,7 @@ class PackConfig(
 
         registerPackType(NPC, NPCCodec::class, "npc",GameValGroupTypes.NPCTYPES, tomlMapper = tomlMapper {
             addDecoder<NpcType> { content , def: NpcType ->
-                def.actions.fromOptions("option", content)
+                def.actions.fromOptions(def.id,def.name,"option", content)
             }
         }, kType = typeOf<List<NpcType>>())
 
@@ -176,7 +197,7 @@ class PackConfig(
 
         registerPackType(AREA, AreaCodec::class, "area", tomlMapper = tomlMapper {
             addDecoder<AreaType> { content , def: AreaType ->
-                def.options.fromOptions("option", content)
+                def.options.fromOptions(def.id,def.name,"option", content)
             }
         }, kType = typeOf<List<AreaType>>())
 
