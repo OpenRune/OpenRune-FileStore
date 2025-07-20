@@ -1,6 +1,6 @@
 package dev.openrune.cache.tools.tasks.impl
 
-import dev.openrune.definition.RSCMHandler
+import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.cache.MODELS
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.decompressGzipToBytes
@@ -26,7 +26,7 @@ class PackModels(
                 val id: Int? = if (name.matches(Regex("-?\\d+"))) {
                     name.toInt()
                 } else {
-                    RSCMHandler.getMapping(rscmMappingPrefix + name.lowercase().replace(" ", "_"))
+                    ConstantProvider.getMapping(rscmMappingPrefix + name.lowercase().replace(" ", "_"))
                 }
 
                 val buffer = if (file.extension == "gz") {

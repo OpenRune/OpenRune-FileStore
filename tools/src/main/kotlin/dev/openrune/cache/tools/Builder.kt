@@ -1,6 +1,6 @@
 package dev.openrune.cache.tools
 
-import dev.openrune.definition.RSCMHandler
+import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.TaskType
 import dev.openrune.cache.tools.tasks.impl.PackGameVals
@@ -35,7 +35,7 @@ data class Builder(
     fun removeBzip(removeBzip: Boolean) = apply { this.removeBzip = removeBzip }
 
     fun registerRSCM(mappingsDir: File) = apply {
-        RSCMHandler.load(mappingsDir)
+        ConstantProvider.load(mappingsDir)
     }
 
     fun cacheLocation(cacheLocation: File) = apply { this.cacheLocation = cacheLocation }

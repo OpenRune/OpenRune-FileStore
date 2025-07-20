@@ -5,7 +5,7 @@ import dev.openrune.cache.tools.tasks.TaskType
 import dev.openrune.cache.tools.tasks.impl.PackGameVals
 import dev.openrune.cache.tools.tasks.impl.RemoveBzip
 import dev.openrune.cache.tools.tasks.impl.RemoveXteas
-import dev.openrune.definition.RSCMHandler
+import dev.openrune.definition.constants.ConstantProvider
 import java.io.File
 
 fun cacheTool(block: CacheToolDsl.() -> Unit): CacheTool {
@@ -42,7 +42,7 @@ class CacheToolDsl {
         val revision = revision ?: error("`revision` must be set")
         val cacheLocation = cache ?: error("`cache` must be set")
 
-        rscmDir?.let(RSCMHandler::load)
+        rscmDir?.let(ConstantProvider::load)
 
         val defaultGameVals = PackGameVals(revision)
 
