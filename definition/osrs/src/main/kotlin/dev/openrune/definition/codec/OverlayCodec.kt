@@ -11,6 +11,7 @@ class OverlayCodec : DefinitionCodec<OverlayType> {
             2 -> texture = buffer.readUnsignedByte().toInt()
             5 -> hideUnderlay = false
             7 -> secondaryRgb = buffer.readUnsignedMedium()
+            9 -> water = buffer.readUnsignedByte().toInt()
         }
     }
 

@@ -78,6 +78,7 @@ data class ModelType(
     var textureScaleZ: IntArray? = null,
     var textureRotation: IntArray? = null,
     var textureDirection: IntArray? = null,
+    var faceZOffsets: ByteArray? = null,
     var textureSpeed: IntArray? = null,
     var textureTransU: IntArray? = null,
     var textureTransV: IntArray? = null,
