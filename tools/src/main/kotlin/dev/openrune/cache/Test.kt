@@ -14,6 +14,7 @@ import dev.openrune.definition.GameValGroupTypes.TABLETYPES
 import dev.openrune.filesystem.Cache
 import java.io.File
 import java.nio.file.Path
+import java.util.Arrays
 
 
 fun main() {
@@ -27,9 +28,15 @@ fun main() {
 
     val models = ModelDecoder(cache)
 
+    var count = 0
     cache.archives(MODELS).forEach {
-        println(models.getModel(it))
+        val model = models.getModel(it)
+        if (model?.faceZOffsets != null) {
+            println(Arrays.toString(model!!.faceZOffsets))
+            count++
+        }
     }
+    println("ON TOTAL: $count")
 
 //    println(CacheManager.getItem(995).toString())
 //    println(CacheManager.getObject(10060).toString())
