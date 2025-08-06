@@ -1,5 +1,6 @@
 package dev.openrune.cache.gameval
 
+import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.GAMEVALS
 import dev.openrune.cache.gameval.impl.Interface.InterfaceComponent
 import dev.openrune.cache.gameval.GameValHandler.lookup
@@ -17,6 +18,8 @@ import io.netty.buffer.Unpooled
 
 object GameValHandler {
 
+    private val logger = InlineLogger()
+
     fun List<GameValElement>.lookup(id: Int): GameValElement? = this.firstOrNull { it.id == id }
 
     inline fun <reified T : GameValElement> GameValElement.elementAs(): T? = this as? T
@@ -24,11 +27,24 @@ object GameValHandler {
     inline fun <reified T : GameValElement> List<GameValElement>.lookupAs(id: Int): T? =
         filterIsInstance<T>().firstOrNull { it.id == id }
 
-    fun readGameVal(type: GameValGroupTypes, cache: Cache): List<GameValElement> =
-        cache.files(GAMEVALS, type.id).flatMap { file ->
-            val data = cache.data(GAMEVALS, type.id, file)
+    fun readGameVal(type: GameValGroupTypes, cache: Cache): List<GameValElement> {
+
+        var type = type
+
+        if (type == IFTYPES) {
+            // In revision 232, the interface type format changed and was moved to IFTYPES_V2.
+            // We detect this by checking if the original IFTYPES entry is empty — if so, we switch to the new format.
+            if (cache.files(GAMEVALS, type.id).isEmpty()) {
+                type = IFTYPES_V2
+            }
+        }
+
+        return cache.files(GAMEVALS, type.id).flatMap { file ->
+            val archive = type.id
+            val data = cache.data(GAMEVALS, archive, file)
             unpackGameVal(type, file, data)
         }
+    }
 
     private fun unpackGameVal(type: GameValGroupTypes, id: Int, bytes: ByteArray?): List<GameValElement> {
         if (bytes == null) return emptyList()
@@ -70,6 +86,24 @@ object GameValHandler {
                 elements.add(Interface(interfaceName, id, components))
             }
 
+            IFTYPES_V2 -> {
+                val interfaceName = data.readString()
+
+                val components = mutableListOf<InterfaceComponent>()
+                while (true) {
+                    val byte = data.readShort().toInt()
+
+                    if (byte == 0xFFFF) break
+
+                    val componentName = data.readString()
+                    if (componentName.isEmpty()) break
+
+                    components.add(InterfaceComponent(componentName, components.size, id))
+                }
+
+                elements.add(Interface(interfaceName, id, components))
+            }
+
             else -> {
                 val remainingBytes = ByteArray(data.readableBytes())
                 data.readBytes(remainingBytes)
@@ -89,6 +123,17 @@ object GameValHandler {
     }
 
     fun encodeGameVals(type: GameValGroupTypes, values: List<GameValElement>, cache: Cache) {
+
+        var type = type
+
+        if (type == IFTYPES) {
+            // In revision 232, the interface type format changed and was moved to IFTYPES_V2.
+            // We detect this by checking if the original IFTYPES entry is empty — if so, we switch to the new format.
+            if (cache.files(GAMEVALS, type.id).isEmpty()) {
+                type = IFTYPES_V2
+            }
+        }
+
         when (type) {
             TABLETYPES -> {
                 values.forEach { element ->
@@ -119,6 +164,23 @@ object GameValHandler {
                             }
                             writeByte(0xFF)
                             writeByte(0)
+                        }
+                    }
+                    cache.write(GAMEVALS, type.id, element.id, writer.toArray())
+                }
+            }
+
+
+            IFTYPES_V2 -> {
+                values.forEach { element ->
+                    val writer = Unpooled.buffer(4096).apply {
+                        element.elementAs<Interface>()?.let { inf ->
+                            writeString(standardizeGamevalName(inf.name))
+                            inf.components.sortedBy { it.id }.forEach {
+                                writeByte(1)
+                                writeString(standardizeGamevalName(it.name))
+                            }
+                            writeByte(0xFFFF)
                         }
                     }
                     cache.write(GAMEVALS, type.id, element.id, writer.toArray())

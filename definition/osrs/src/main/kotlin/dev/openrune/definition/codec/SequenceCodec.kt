@@ -102,6 +102,7 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
                 rangeEnd = buffer.readUnsignedShort()
             }
 
+            16 -> verticalOffset = buffer.readByte().toInt()
             17 -> {
                 mask = MutableList(256) { false }
                 val count = buffer.readUnsignedByte().toInt()

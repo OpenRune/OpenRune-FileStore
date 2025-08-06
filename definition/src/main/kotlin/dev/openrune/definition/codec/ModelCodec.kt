@@ -378,6 +378,15 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         if (hasBillboards) {
             decodeBillboards(buf1,def)
         }
+
+        val hasOffsets = buf1.readUnsignedByte().toInt() == 1
+        if (hasOffsets) {
+            def.faceZOffsets = ByteArray(def.triangleCount)
+            for (i in 0 until def.triangleCount) {
+                def.faceZOffsets!![i] = buf1.readByte()
+            }
+        }
+        
         if (options.contains(MeshDecodingOption.ScaleVersionedMesh)) {
             if (version > DEFAULT_VERSION) {
                 downscale(def = def)
@@ -500,6 +509,14 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             buf2,
             def
         )
+        val hasOffsets = buf1.readUnsignedByte().toInt() == 1
+        if (hasOffsets) {
+            def.faceZOffsets = ByteArray(def.triangleCount)
+            for (i in 0 until def.triangleCount) {
+                def.faceZOffsets!![i] = buf1.readByte()
+            }
+        }
+
         buf1.readerIndex(faceMappingsOffset)
         readUnversionedTextureVertices(buf1,def)
         if (!options.contains(MeshDecodingOption.PreserveOriginalData)) {
@@ -720,6 +737,7 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
         if (hasBillboards) {
             decodeBillboards(buf1,def)
         }
+
         if (options.contains(MeshDecodingOption.ScaleVersionedMesh)) {
             if (version > DEFAULT_VERSION) {
                 downscale(def)

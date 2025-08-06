@@ -13,10 +13,12 @@ enum class GameValGroupTypes(val id: Int, val groupName: String) {
     TABLETYPES(10, "dbtables"),
     SOUNDTYPES(11, "jingles"),
     SPRITETYPES(12, "sprites"),
-    IFTYPES(13, "components");
+    IFTYPES(13, "components"),
+    IFTYPES_V2(14, "components"),
+    VARCS(15, "varcs");
 
     companion object {
-        private val idMap = values().associateBy { it.id }
+        private val idMap = GameValGroupTypes.entries.associateBy { it.id }
 
         fun fromId(id: Int): GameValGroupTypes =
             idMap[id] ?: error("Unknown group type: $id")
