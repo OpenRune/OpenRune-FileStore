@@ -1,6 +1,6 @@
 package dev.openrune.definition
 
-enum class GameValGroupTypes(val id: Int, val groupName: String) {
+enum class GameValGroupTypes(val id: Int, val groupName: String, val revision : Int = -1) {
     OBJTYPES(0, "items"),
     NPCTYPES(1, "npcs"),
     INVTYPES(2, "inv"),
@@ -14,8 +14,9 @@ enum class GameValGroupTypes(val id: Int, val groupName: String) {
     SOUNDTYPES(11, "jingles"),
     SPRITETYPES(12, "sprites"),
     IFTYPES(13, "components"),
-    IFTYPES_V2(14, "components"),
-    VARCS(15, "varcs");
+    IFTYPES_V2(14, "components",232),
+    VARCS(15, "varcs",232);
+
 
     companion object {
         private val idMap = GameValGroupTypes.entries.associateBy { it.id }

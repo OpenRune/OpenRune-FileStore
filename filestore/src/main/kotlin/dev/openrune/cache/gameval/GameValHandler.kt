@@ -15,6 +15,7 @@ import dev.openrune.definition.util.toArray
 import dev.openrune.definition.util.writeString
 import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled
+import readCacheRevision
 
 object GameValHandler {
 
@@ -27,13 +28,18 @@ object GameValHandler {
     inline fun <reified T : GameValElement> List<GameValElement>.lookupAs(id: Int): T? =
         filterIsInstance<T>().firstOrNull { it.id == id }
 
-    fun readGameVal(type: GameValGroupTypes, cache: Cache): List<GameValElement> {
+    fun readGameVal(type: GameValGroupTypes, cache: Cache, cacheRevision : Int = -1): List<GameValElement> {
 
         var type = type
 
+        if (type.revision != -1) {
+            val rev = if (cacheRevision == -1) readCacheRevision(cache,"${type.name} is unsupported in this revision") else cacheRevision
+            if (rev < type.revision) {
+                error("${type.name} is unsupported in this revision")
+            }
+        }
+
         if (type == IFTYPES) {
-            // In revision 232, the interface type format changed and was moved to IFTYPES_V2.
-            // We detect this by checking if the original IFTYPES entry is empty — if so, we switch to the new format.
             if (cache.files(GAMEVALS, type.id).isEmpty()) {
                 type = IFTYPES_V2
             }
@@ -122,13 +128,18 @@ object GameValHandler {
         return elements
     }
 
-    fun encodeGameVals(type: GameValGroupTypes, values: List<GameValElement>, cache: Cache) {
+    fun encodeGameVals(type: GameValGroupTypes, values: List<GameValElement>, cache: Cache, cacheRevision : Int = -1) {
 
         var type = type
 
+        if (type.revision != -1) {
+            val rev = if (cacheRevision == -1) readCacheRevision(cache,"${type.name} is unsupported in this revision") else cacheRevision
+            if (rev < type.revision) {
+                error("${type.name} is unsupported in this revision")
+            }
+        }
+
         if (type == IFTYPES) {
-            // In revision 232, the interface type format changed and was moved to IFTYPES_V2.
-            // We detect this by checking if the original IFTYPES entry is empty — if so, we switch to the new format.
             if (cache.files(GAMEVALS, type.id).isEmpty()) {
                 type = IFTYPES_V2
             }

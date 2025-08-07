@@ -40,6 +40,9 @@ class CacheTool(
                 ).initialize()
             }
             TaskType.FRESH_INSTALL -> {
+                if (revision == -1) {
+                   error("Unable to detect cache revision — set it manually via .revision(id).")
+                }
                 File(cacheLocation,"xteas.json").delete()
                 FreshCache(
                     downloadLocation = cacheLocation,

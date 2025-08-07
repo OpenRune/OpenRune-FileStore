@@ -5,15 +5,15 @@ import dev.openrune.cache.tools.CacheTool
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.filesystem.Cache
 
-internal class PackGameVals(private val rev : Int) : CacheTask() {
+internal class PackGameVals() : CacheTask() {
 
     override fun init(cache: Cache) {
-        if (rev < 230) {
+        if (revision < 230) {
             return
         }
 
         CacheTool.gameValMappings.forEach { (gameValGroup, values) ->
-            GameValHandler.encodeGameVals(gameValGroup,values,cache)
+            GameValHandler.encodeGameVals(gameValGroup,values,cache,revision)
         }
     }
 

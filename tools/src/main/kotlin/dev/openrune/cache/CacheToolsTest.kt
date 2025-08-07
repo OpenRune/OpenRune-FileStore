@@ -21,14 +21,14 @@ fun main(args : Array<String>) {
 
     when(type) {
         "update" -> {
-            val builder = Builder(type = TaskType.FRESH_INSTALL, revision = rev, File(getCacheLocation()))
+            val builder = Builder(type = TaskType.FRESH_INSTALL, File(getCacheLocation()))
             builder.removeXteas()
             builder.removeBzip()
             builder.registerRSCM(File("./mappings"))
             builder.extraTasks(*tasks.toTypedArray()).build().initialize()
         }
         "build" -> {
-            val builder = Builder(type = TaskType.BUILD, revision = rev, cacheLocation = File(getCacheLocation()))
+            val builder = Builder(type = TaskType.BUILD, cacheLocation = File(getCacheLocation()))
             builder.registerRSCM(File("./mappings"))
             builder.extraTasks(*tasks.toTypedArray()).build().initialize()
         }

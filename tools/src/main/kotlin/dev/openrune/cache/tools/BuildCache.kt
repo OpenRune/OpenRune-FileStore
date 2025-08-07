@@ -2,9 +2,12 @@ package dev.openrune.cache.tools
 
 import com.displee.cache.CacheLibrary
 import com.github.michaelbull.logging.InlineLogger
+import dev.openrune.cache.CLIENTSCRIPT
 import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.tools.tasks.CacheTask
+import readCacheRevision
 import java.io.File
+import java.nio.ByteBuffer
 import kotlin.system.measureTimeMillis
 
 class BuildCache(
@@ -12,20 +15,31 @@ class BuildCache(
     private val output: File = input,
     private val tempLocation: File = File(output, "temp"),
     val tasks: MutableList<CacheTask> = mutableListOf(),
-    val revision: Int = -1,
+    var revision: Int = -1,
 ) {
 
     private val logger = InlineLogger()
 
     fun initialize() {
         try {
-            logger.info { "Building Cache (Tasks: ${tasks.joinToString(", ") { it.javaClass.simpleName }})" }
 
             input.listFiles { file -> file.extension in listOf("dat", "idx") }?.forEach { file ->
                 file.copyTo(File(tempLocation, file.name), overwrite = true)
             }
 
             val library = CacheLibrary(input.absolutePath)
+
+            if (revision == -1) {
+                val data = library.data(CLIENTSCRIPT, "version.dat")
+                    ?: error("version.dat is missing. Unable to detect cache revision — set it manually via .revision(id).")
+
+                revision = readCacheRevision(
+                    ByteBuffer.wrap(data),
+                    "version.dat is larger than expected. Unable to detect cache revision — set it manually via .revision(id)."
+                )
+            }
+
+            logger.info { "Building Cache (revision: ${revision}) (Tasks: ${tasks.joinToString(", ") { it.javaClass.simpleName }})" }
 
             val time = measureTimeMillis {
                 tasks.forEach { task ->
