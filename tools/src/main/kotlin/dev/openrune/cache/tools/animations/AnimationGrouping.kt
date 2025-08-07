@@ -63,13 +63,12 @@ internal class AnimationGrouping {
         File("anims.json").writeText(gson.toJson(jsonGroups))
     }
 
-    private suspend fun init(cache: Cache) = withContext(Dispatchers.IO) {
-        OsrsCacheProvider.CACHE_REVISION = 231
+    private suspend fun init(cache: Cache, cacheRevision : Int = readCacheRevision(cache)) = withContext(Dispatchers.IO) {
 
-        OsrsCacheProvider.SequenceDecoder().load(cache, sequences)
-        OsrsCacheProvider.NPCDecoder().load(cache, npcs)
+        OsrsCacheProvider.SequenceDecoder(cacheRevision).load(cache, sequences)
+        OsrsCacheProvider.NPCDecoder(cacheRevision).load(cache, npcs)
         OsrsCacheProvider.SpotAnimDecoder().load(cache, graphics)
-        OsrsCacheProvider.ObjectDecoder().load(cache, objects)
+        OsrsCacheProvider.ObjectDecoder(cacheRevision).load(cache, objects)
 
         frameMaps = FrameMapArchive.load(cache)
 

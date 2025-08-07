@@ -8,19 +8,12 @@ import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.definition.DefinitionTransform
 import dev.openrune.definition.type.*
 import dev.openrune.definition.codec.*
+import readCacheRevision
 import java.nio.BufferUnderflowException
 
-class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : Int = -1) : CacheStore() {
+class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : Int = readCacheRevision(cache)) : CacheStore() {
 
     private val logger = InlineLogger()
-
-    init {
-        CACHE_REVISION = cacheRevision
-    }
-
-    companion object {
-        var CACHE_REVISION = -1
-    }
 
     override val npcs: MutableMap<Int, NpcType> = mutableMapOf()
     override val objects: MutableMap<Int, ObjectType> = mutableMapOf()
@@ -37,13 +30,13 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
 
     override fun init() {
         try {
-            // Use the decoders to load the definitions directly into the maps
-            ObjectDecoder().load(cache, objects)
-            NPCDecoder().load(cache, npcs)
+            logger.info { "Cache loaded (revision $cacheRevision)" }
+            ObjectDecoder(cacheRevision).load(cache, objects)
+            NPCDecoder(cacheRevision).load(cache, npcs)
             ItemDecoder().load(cache, items)
             VarBitDecoder().load(cache, varbits)
             VarDecoder().load(cache, varps)
-            SequenceDecoder().load(cache, anims)
+            SequenceDecoder(cacheRevision).load(cache, anims)
             EnumDecoder().load(cache, enums)
             HealthBarDecoder().load(cache, healthBars)
             HitSplatDecoder().load(cache, hitsplats)
@@ -70,13 +63,13 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     class HealthBarDecoder : ConfigDefinitionDecoder<HealthBarType>(HealthBarCodec(), HEALTHBAR)
     class HitSplatDecoder : ConfigDefinitionDecoder<HitSplatType>(HitSplatCodec(), HITSPLAT)
     class ItemDecoder : ConfigDefinitionDecoder<ItemType>(ItemCodec(), ITEM)
-    class NPCDecoder : ConfigDefinitionDecoder<NpcType>(NPCCodec(CACHE_REVISION), NPC)
-    class ObjectDecoder : ConfigDefinitionDecoder<ObjectType>(ObjectCodec(CACHE_REVISION), OBJECT)
+    class NPCDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<NpcType>(NPCCodec(cacheRevision), NPC)
+    class ObjectDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<ObjectType>(ObjectCodec(cacheRevision), OBJECT)
 
     class OverlayDecoder : ConfigDefinitionDecoder<OverlayType>(OverlayCodec(), OVERLAY,
         DefinitionTransform { id, definition -> definition.calculateHsl() })
     class ParamDecoder : ConfigDefinitionDecoder<ParamType>(ParamCodec(), PARAMS)
-    class SequenceDecoder : ConfigDefinitionDecoder<SequenceType>(SequenceCodec(CACHE_REVISION), SEQUENCE)
+    class SequenceDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<SequenceType>(SequenceCodec(cacheRevision), SEQUENCE)
     class StructDecoder : ConfigDefinitionDecoder<StructType>(StructCodec(), STRUCT)
     class UnderlayDecoder : ConfigDefinitionDecoder<UnderlayType>(UnderlayCodec(), UNDERLAY)
     class VarBitDecoder : ConfigDefinitionDecoder<VarBitType>(VarBitCodec(), VARBIT)
