@@ -1,0 +1,9 @@
+7812	hiscore_setapi	int
+253952	clan_setting_options_list:clan_setting_title	string
+253968	clan_setting_options_list:clan_setting_option	int,string,graphic
+253969	clan_setting_options_list:clan_setting_option:0	int
+253970	clan_setting_options_list:clan_setting_option:1	string
+253971	clan_setting_options_list:clan_setting_option:2	graphic
+253984	clan_setting_options_list:clan_setting_entry_height	int
+254000	clan_setting_options_list:clan_setting_mobile_entry_height
+254016	clan_setting_options_list:clan_setting_icon_size	int

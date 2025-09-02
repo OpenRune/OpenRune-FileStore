@@ -92,4 +92,35 @@ object ConstantProvider {
     }
     
     fun getMappingOrNull(key: String): Int? = mappings[key]
+    
+    /**
+     * Extension function to get sub-types from a complex type mapping.
+     * Usage: ConstantProvider.getMapping("base.type").subtype(0) returns the type name (e.g., "int", "string")
+     */
+    fun Int.subtype(index: Int): String {
+        // Find the key that maps to this value
+        val key = mappings.entries.find { it.value == this }?.key
+        if (key != null) {
+            // Try to get type info from SymProvider
+            val symProvider = getCurrentProviders().find { it is SymProvider } as? SymProvider
+            val typeInfo = symProvider?.getTypeInfo(key)
+            
+            if (typeInfo != null) {
+                if (typeInfo.contains(",")) {
+                    // Complex type with multiple sub-types
+                    val subTypes = typeInfo.split(",").map { it.trim() }
+                    if (index < subTypes.size) {
+                        return subTypes[index]
+                    }
+                } else {
+                    // Simple type with single type - only return it for index 0
+                    if (index == 0) {
+                        return typeInfo.trim()
+                    }
+                }
+            }
+        }
+        // Fallback - return "unknown" if no type info found or invalid index
+        return "unknown"
+    }
 }
