@@ -1,6 +1,6 @@
 package dev.openrune.definition.dbtables
 
-import dev.openrune.definition.RSCMHandler
+import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.type.DBTableType
@@ -121,7 +121,7 @@ data class DBRow(
 )
 
 fun dbTable(tableId: String, block: DBTableBuilder.() -> Unit): DBTable {
-    val rscmId = RSCMHandler.getMapping(tableId) ?: error("Invalid RSCM mapping for tableId: $tableId")
+    val rscmId = ConstantProvider.getMapping(tableId) ?: error("Invalid RSCM mapping for tableId: $tableId")
     val rscmName = tableId.substringAfter(".")
 
     return DBTableBuilder(rscmName,rscmId).apply(block).build()
@@ -161,7 +161,7 @@ class DBTableBuilder(private val tableId: Int) {
     }
 
     fun row(rowId: String, block: DBRowBuilder.() -> Unit) {
-        val rscmId = RSCMHandler.getMapping(rowId) ?: error("Invalid RSCM mapping for rowId: $rowId")
+        val rscmId = ConstantProvider.getMapping(rowId) ?: error("Invalid RSCM mapping for rowId: $rowId")
         val rscmName = rowId.substringAfter(".")
         if (rscmName.isNotEmpty()) {
             rowNames[rscmId] = rscmName
@@ -180,7 +180,7 @@ class DBRowBuilder(private val rowId: Int) {
 
     fun columnRSCM(id: Int, values: Array<String>) {
         val resolvedValues: List<Any> = values.map { value ->
-            RSCMHandler.getMapping(value)
+            ConstantProvider.getMapping(value)
                 ?: error("Invalid RSCM mapping for value: $value")
         }
         columns[id] = resolvedValues.toTypedArray()

@@ -1,6 +1,6 @@
 package dev.openrune.definition.dbtables
 
-import dev.openrune.definition.RSCMHandler
+import dev.openrune.definition.constants.ConstantProvider
 
 abstract class DatabaseRow(val row: FullDBRow)
 
@@ -64,5 +64,5 @@ fun <A, B, C> DatabaseRow.multiColumn(columnId: Int, typeA: ColumnType<A>, typeB
 }
 
 fun String.toColumnId(): Int {
-    return RSCMHandler.getMapping(this) ?: this.toIntOrNull()?: error("Invalid key")
+    return ConstantProvider.getMapping(this) ?: this.toIntOrNull()?: error("Invalid key")
 }

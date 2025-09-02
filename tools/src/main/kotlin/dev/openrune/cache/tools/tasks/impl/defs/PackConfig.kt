@@ -19,7 +19,7 @@ import dev.openrune.cache.util.ItemParam
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.GameValGroupTypes
-import dev.openrune.definition.RSCMHandler
+import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.definition.codec.*
 import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled
@@ -365,7 +365,7 @@ class PackConfig(
 
 
     private fun processRSCMModifier(input: String): String {
-        val allowedPrefixes = RSCMHandler.rscmTypes
+        val allowedPrefixes = ConstantProvider.rscmTypes
         val output = StringBuilder()
         var debugNameAdded = false
 
@@ -386,7 +386,7 @@ class PackConfig(
             for (match in matches) {
                 val fullValue = match.groupValues[1]
                 if (allowedPrefixes.any { fullValue.startsWith(it) }) {
-                    val resolved = RSCMHandler.getMapping(fullValue) ?: error("Invalid RSCM reference: \"$fullValue\" not found")
+                    val resolved = ConstantProvider.getMapping(fullValue) ?: error("Invalid RSCM reference: \"$fullValue\" not found")
                     modifiedLine = modifiedLine.replace("\"$fullValue\"", resolved.toString())
 
                     if (!debugNameAdded && trimmed.startsWith("id") && fullValue == match.groupValues[1]) {
