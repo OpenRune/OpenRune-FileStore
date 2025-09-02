@@ -7,6 +7,7 @@ data class OverlayType(
     var primaryRgb: Int = 0,
     var secondaryRgb: Int = -1,
     var texture: Int = -1,
+    var water: Int = -1,
     var hideUnderlay: Boolean = true
 ) : Definition {
 

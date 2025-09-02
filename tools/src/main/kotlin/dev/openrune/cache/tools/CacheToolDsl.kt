@@ -33,6 +33,11 @@ class CacheToolDsl {
         cache = File(path)
     }
 
+    fun revision(revision: Int) {
+        this.revision = revision
+    }
+
+
     fun rscm(path: String) {
         rscmDir = File(path)
     }
@@ -44,7 +49,7 @@ class CacheToolDsl {
 
         rscmDir?.let(ConstantProvider::load)
 
-        val defaultGameVals = PackGameVals(revision)
+        val defaultGameVals = PackGameVals()
 
         if (removedTasks.none { it is PackGameVals }) {
             addedTasks += defaultGameVals

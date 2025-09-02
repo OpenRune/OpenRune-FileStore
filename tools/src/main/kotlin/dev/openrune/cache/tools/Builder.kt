@@ -17,11 +17,11 @@ val DEFAULT_PATH = Path.of("data", "cache").toFile()
 )
 data class Builder(
     var type: TaskType,
-    var revision: Int,
     var cacheLocation : File = DEFAULT_PATH,
     var extraTasks: Array<CacheTask> = emptyArray()
 ) {
 
+    private var revision: Int = -1
     private var removeXteas : Boolean = true
     private var removeBzip : Boolean = true
 
@@ -29,6 +29,8 @@ data class Builder(
     fun removeBzip()  = removeBzip
 
     fun extraTasks(vararg types: CacheTask) = apply { this.extraTasks = types.toMutableList().toTypedArray() }
+
+    fun revision(revision: Int) = apply { this.revision = revision }
 
     fun removeXteas(removeXteas: Boolean) = apply { this.removeXteas = removeXteas }
 
@@ -48,7 +50,7 @@ data class Builder(
             if (removeXteas) tasks.add(1, RemoveXteas(File(cacheLocation, "xteas.json")))
         }
 
-        tasks.add(PackGameVals(revision))
+        tasks.add(PackGameVals())
 
         return CacheTool(type,revision,cacheLocation, tasks)
     }
