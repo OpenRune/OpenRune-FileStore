@@ -194,7 +194,7 @@ class NpcCodecRS3(private val revision: Int) : DefinitionCodec<NpcType> {
             95 -> combatLevel = buffer.readShort().toInt()
             97 -> widthScale = buffer.readShort().toInt()
             98 -> heightScale = buffer.readShort().toInt()
-            99 -> hasRenderPriority = true
+            99 -> renderPriority = 1
             100 -> ambient = buffer.readByte().toInt()
             101 -> contrast = buffer.readByte().toInt()
             102 -> {
@@ -277,7 +277,7 @@ class NpcCodecRS3(private val revision: Int) : DefinitionCodec<NpcType> {
             138 -> setExtraProperty("armyIcon", buffer.readBigSmart())
             139 -> setExtraProperty("spriteId", buffer.readBigSmart())
             140 -> setExtraProperty("ambientSoundVolume", buffer.readUnsignedByte().toInt())
-            141 -> hasRenderPriority = true
+            141 -> renderPriority = 1
             142 -> setExtraProperty("mapFunction", buffer.readShort().toInt())
             143 -> setExtraProperty("invisiblePriority", true)
             in 150..154 -> actions[opcode - 150] = buffer.readString()

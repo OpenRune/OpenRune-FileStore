@@ -6,6 +6,7 @@ import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.type.ObjectType
+import dev.openrune.definition.util.writeByte
 import io.netty.buffer.ByteBuf
 import java.util.stream.IntStream
 import kotlin.streams.toList
@@ -310,6 +311,28 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
         if (definition.delayAnimationUpdate) {
             writeByte(90)
         }
+
+        if (definition.soundDistanceFadeCurve != 0) {
+            writeByte(91)
+            writeByte(definition.soundDistanceFadeCurve)
+        }
+
+        val defaults = listOf(0, 0, 300, 300)
+        val values = listOf(
+            definition.soundFadeInCurve,
+            definition.soundFadeOutCurve,
+            definition.soundFadeInDuration,
+            definition.soundFadeOutDuration
+        )
+
+        if (values.indices.any { values[it] != defaults[it] }) {
+            writeByte(definition.soundFadeInCurve)
+            writeShort(definition.soundFadeInDuration)
+            writeByte(definition.soundFadeOutCurve)
+            writeShort(definition.soundFadeOutDuration)
+        }
+
+
 
         definition.writeTransforms(this, 77,92)
         definition.writeParameters(this)

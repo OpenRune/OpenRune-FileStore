@@ -79,7 +79,7 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     class SpotAnimDecoder : ConfigDefinitionDecoder<SpotAnimType>(SpotAnimCodec(), SPOTANIM)
     class VarClientDecoder : ConfigDefinitionDecoder<VarClientType>(VarClientCodec(), VARCLIENT)
 
-    class TextureDecoder : DefinitionDecoder<TextureType>(TEXTURES, TextureCodec()) {
+    class TextureDecoder(cacheRevision: Int) : DefinitionDecoder<TextureType>(TEXTURES, TextureCodec(cacheRevision)) {
         override fun getArchive(id: Int) = 0
         override fun getFile(id: Int) = id
     }

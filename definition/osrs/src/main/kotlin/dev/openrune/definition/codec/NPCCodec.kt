@@ -62,7 +62,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             95 -> combatLevel = buffer.readUnsignedShort()
             97 -> widthScale = buffer.readUnsignedShort()
             98 -> heightScale = buffer.readUnsignedShort()
-            99 -> hasRenderPriority = true
+            99 -> renderPriority = 1
             100 -> ambient = buffer.readByte().toInt()
             101 -> contrast = buffer.readByte().toInt()
             102 -> {
@@ -92,7 +92,11 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                 }
             }
 
-            111 -> isFollower = true
+            111 -> if (revisionIsOrBefore(revision,232)) {
+                isFollower = true
+            } else {
+                renderPriority = 2
+            }
             103 -> rotation = buffer.readUnsignedShort()
             106, 118 -> readTransforms(buffer, opcode == 118)
             107 -> isInteractable = false
@@ -236,10 +240,9 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
         writeShort(definition.heightScale)
 
 
-        if (definition.hasRenderPriority) {
+        if (definition.renderPriority != 0 && revision < 223) {
             writeByte(99)
         }
-
 
         writeByte(100)
         writeByte(definition.ambient)
@@ -296,8 +299,14 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                 writeByte(123)
             }
         } else {
-            if (definition.isFollower) {
-                writeByte(111)
+            if(revisionIsOrBefore(revision,232)) {
+                if (definition.isFollower) {
+                    writeByte(111)
+                }
+            } else {
+                if (definition.renderPriority == 2) {
+                    writeByte(111)
+                }
             }
         }
 

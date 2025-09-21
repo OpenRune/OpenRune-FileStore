@@ -31,7 +31,7 @@ data class NpcType(
     var combatLevel : Int = -1,
     var widthScale : Int = 128,
     var heightScale : Int = 128,
-    var hasRenderPriority : Boolean = false,
+    var renderPriority : Int = 0,
     var ambient : Int = 0,
     var contrast : Int = 0,
     var headIconGraphics: MutableList<Int>? = null,
@@ -94,7 +94,7 @@ data class NpcType(
         if (combatLevel != other.combatLevel) return false
         if (widthScale != other.widthScale) return false
         if (heightScale != other.heightScale) return false
-        if (hasRenderPriority != other.hasRenderPriority) return false
+        if (renderPriority != other.renderPriority) return false
         if (ambient != other.ambient) return false
         if (contrast != other.contrast) return false
         if (headIconGraphics != other.headIconGraphics) return false
@@ -151,7 +151,7 @@ data class NpcType(
         result = 31 * result + combatLevel
         result = 31 * result + widthScale
         result = 31 * result + heightScale
-        result = 31 * result + hasRenderPriority.hashCode()
+        result = 31 * result + renderPriority.hashCode()
         result = 31 * result + ambient
         result = 31 * result + contrast
         result = 31 * result + (headIconGraphics?.hashCode() ?: 0)
