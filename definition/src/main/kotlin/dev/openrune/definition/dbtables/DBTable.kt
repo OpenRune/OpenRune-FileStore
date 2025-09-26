@@ -114,11 +114,21 @@ inline fun <T> toDatabaseTable(table: DBTableType, rows: List<DBRowType>, constr
     }
     return result
 }
-
 data class DBRow(
     val rowId: Int,
     val columns: Map<Int, Array<Any>>
-)
+) {
+    override fun toString(): String {
+        val cols = columns.entries.joinToString(
+            separator = ", ",
+            prefix = "{",
+            postfix = "}"
+        ) { (colId, values) ->
+            "$colId=${values.joinToString(prefix = "[", postfix = "]")}"
+        }
+        return "DBRow(rowId=$rowId, columns=$cols)"
+    }
+}
 
 fun dbTable(tableId: String, block: DBTableBuilder.() -> Unit): DBTable {
     val rscmId = ConstantProvider.getMapping(tableId) ?: error("Invalid RSCM mapping for tableId: $tableId")
