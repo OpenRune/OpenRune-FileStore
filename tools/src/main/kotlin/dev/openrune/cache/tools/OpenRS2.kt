@@ -9,6 +9,8 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.time.Instant
+import java.time.format.DateTimeFormatter
 
 enum class GameType {
     DARKSCAPE, DOTD, OLDSCHOOL, RUNESCAPE;
@@ -33,14 +35,14 @@ object OpenRS2 {
         }
     }
 
-    fun downloadCacheByRevision(revision: Int, directory: File,type: GameType = GameType.OLDSCHOOL, listener: DownloadListener? = null) {
+    fun downloadCacheByRevision(revision: Int,directory: File,type: GameType = GameType.OLDSCHOOL,environment: CacheEnvironment,subRev : Int = -1, listener: DownloadListener? = null) {
         loadCaches()
-        downloadCacheByInternalID(findRevision(revision,type).id,directory, listener)
+        downloadCacheByInternalID(findRevision(revision,subRev,type,environment).id,directory, listener)
     }
 
-    fun downloadKeysByRevision(revision: Int, directory: File, type: GameType = GameType.OLDSCHOOL, listener: DownloadListener? = null) {
+    fun downloadKeysByRevision(revision: Int,directory: File, type: GameType = GameType.OLDSCHOOL,environment: CacheEnvironment,subRev : Int, listener: DownloadListener? = null) {
         loadCaches()
-        downloadKeysByInternalID(directory, findRevision(revision,type).id, listener)
+        downloadKeysByInternalID(directory, findRevision(revision,subRev,type,environment).id, listener)
     }
 
     fun downloadCacheByInternalID(target: Int, directory: File, listener: DownloadListener? = null) {
@@ -110,6 +112,8 @@ object OpenRS2 {
         }
     }
 
+    val formatter = DateTimeFormatter.ISO_INSTANT
+
     fun getLatest(caches: Array<CacheInfo>, game: GameType = GameType.OLDSCHOOL) =
         caches
             .filter { it.game.contains(game.formatName()) }
@@ -119,13 +123,32 @@ object OpenRS2 {
             .maxByOrNull { it.timestamp.stringToTimestamp().toEchochUTC() }
             ?: error("Unable to find Latest Revision")
 
-    fun findRevision(rev: Int, game: GameType = GameType.OLDSCHOOL) =
-        allCaches
+    fun findRevision(
+        rev: Int,
+        subRev: Int = -1,
+        game: GameType = GameType.OLDSCHOOL,
+        environment: CacheEnvironment = CacheEnvironment.LIVE,
+    ): CacheInfo {
+        val formatter = DateTimeFormatter.ISO_INSTANT
+
+        val candidates = allCaches
+            .asSequence()
             .filter { it.game.contains(game.formatName()) }
             .filter { it.builds.isNotEmpty() && it.builds[0].major == rev }
-            .filter { it.timestamp != null }
-            .filter { it.size != 0.toLong() }
-            .filter { it.environment == "live" }
-            .maxByOrNull { it.timestamp.stringToTimestamp().toEchochUTC() }
-            ?: error("Unable to find Revision: $rev")
+            .filter { it.timestamp.isNotBlank() }
+            .filter { it.size != 0L }
+            .filter { it.environment == environment.toString().lowercase() }
+            .sortedBy { Instant.from(formatter.parse(it.timestamp)).toEpochMilli() }
+            .toList()
+
+        if (candidates.isEmpty()) {
+            error("Unable to find Revision: $rev for environment $environment")
+        }
+
+        return when {
+            subRev == -1 -> candidates.last()
+            subRev in candidates.indices -> candidates[subRev]
+            else -> error("Sub revision $subRev out of range for revision $rev (max ${candidates.size - 1})")
+        }
+    }
 }

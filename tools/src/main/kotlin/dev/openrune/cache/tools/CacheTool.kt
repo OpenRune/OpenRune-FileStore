@@ -10,6 +10,8 @@ import java.io.File
 class CacheTool(
     val type: TaskType,
     val revision: Int,
+    val subRevision : Int = -1,
+    val cacheEnvironment: CacheEnvironment = CacheEnvironment.LIVE,
     val cacheLocation: File,
     val extraTasks: List<CacheTask> = emptyList()
 ) {
@@ -47,7 +49,9 @@ class CacheTool(
                 FreshCache(
                     downloadLocation = cacheLocation,
                     tasks = sortedTasks.toMutableList(),
-                    revision = revision
+                    revision = revision,
+                    subRev = subRevision,
+                    cacheEnvironment = cacheEnvironment
                 ).initialize()
             }
         }

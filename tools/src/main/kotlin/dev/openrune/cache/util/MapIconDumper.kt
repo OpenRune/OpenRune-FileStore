@@ -15,8 +15,9 @@ import dev.openrune.cache.gameval.GameValElement
 import dev.openrune.definition.type.EnumType
 
 data class MapIconGroup(
-    val category: String,
-    val objects: List<Int>
+    val category: String?,
+    val categoryID: Int,
+    val mapId: Int
 )
 
 fun orderCategoriesByPriorityAndSize(categoryMap: Map<String, List<Int>>): List<String> {
@@ -34,8 +35,8 @@ fun orderCategoriesByPriorityAndSize(categoryMap: Map<String, List<Int>>): List<
 }
 
 fun main() {
-    val cache = Cache.load(File("C:\\Users\\Home\\Desktop\\New folder").toPath())
-    CacheManager.init(OsrsCacheProvider(cache))
+    val cache = Cache.load(File("C:\\Users\\Home\\Desktop\\Alter-feature-support-231\\Alter-feature-support-231\\data\\cache").toPath())
+    CacheManager.init(OsrsCacheProvider(cache,234))
 
     val area: MutableMap<Int, AreaType> = mutableMapOf()
     val enum: MutableMap<Int, EnumType> = mutableMapOf()
@@ -44,33 +45,11 @@ fun main() {
     OsrsCacheProvider.EnumDecoder().load(cache, enum)
 
     writeMapFunctionData(objectGameVals,area,enum)
-    writeMapIconsData(objectGameVals)
+
 
 }
 
-fun writeMapIconsData(objectGameVals: List<GameValElement>) {
-    val objectsByMapArea = CacheManager.getObjects()
-        .asSequence()
-        .filterNot { it.value.mapSceneID == -1 }
-        .groupBy { it.value.mapSceneID }
 
-    val categoryMap = mutableMapOf<String, MutableList<Int>>()
-
-    objectsByMapArea.forEach { (mapId, entries) ->
-        val categoryName = "icon $mapId"
-        val objList = categoryMap.getOrPut(categoryName) { mutableListOf() }
-        objList.addAll(entries.map { it.key })
-    }
-
-    val finalCategories = orderCategoriesByPriorityAndSize(categoryMap)
-
-    val result = finalCategories.map { cat ->
-        MapIconGroup(cat, categoryMap[cat]?.distinct() ?: emptyList())
-    }
-
-    val gson = GsonBuilder().setPrettyPrinting().create()
-    println(gson.toJson(result))
-}
 
 fun writeMapFunctionData(
     objectGameVals: List<GameValElement>,
@@ -82,7 +61,14 @@ fun writeMapFunctionData(
         .filterNot { it.value.mapAreaId == -1 }
         .groupBy { it.value.mapAreaId }
 
-    val categoryMap = mutableMapOf<String, MutableList<Int>>()
+    data class CategoryEntry(
+        val mapId: Int,
+        val categoryID: Int,
+        val objectIds: MutableList<Int>,
+        var customName: String? = null
+    )
+
+    val categoryMap = mutableMapOf<String, CategoryEntry>()
     val realNameEnum = enum[1713]!!
 
     val transportRegex = Regex(
@@ -94,7 +80,9 @@ fun writeMapFunctionData(
         val areaType = area[mapId] ?: return@forEach
         if (!areaType.renderOnMinimap) return@forEach
 
-        var categoryName = realNameEnum.values[areaType.category.toString()]?.toString() ?: "Unknown"
+        val defaultName = realNameEnum.values[areaType.category.toString()]?.toString() ?: "Unknown"
+        var categoryName = defaultName
+        var customName: String? = null
 
         val firstObjectName = entries.mapNotNull { objectGameVals.lookup(it.key)?.name }
             .firstOrNull { it.isNotBlank() }
@@ -103,21 +91,31 @@ fun writeMapFunctionData(
             when {
                 firstObjectName.contains("Tutor", ignoreCase = true) -> {
                     categoryName = "Tutors"
+                    customName = categoryName
                 }
                 transportRegex.matches(firstObjectName) -> {
                     categoryName = "Fairy Rings"
+                    customName = categoryName
                 }
             }
         }
 
-        val objList = categoryMap.getOrPut(categoryName) { mutableListOf() }
-        objList.addAll(entries.map { it.key })
+        val entry = categoryMap.getOrPut(categoryName) {
+            CategoryEntry(mapId, areaType.category, mutableListOf(), customName)
+        }
+        entry.objectIds.addAll(entries.map { it.key })
     }
 
-    val finalCategories = orderCategoriesByPriorityAndSize(categoryMap)
+    val finalCategories = orderCategoriesByPriorityAndSize(categoryMap.mapValues { it.value.objectIds })
 
     val result = finalCategories.map { cat ->
-        MapIconGroup(cat, categoryMap[cat]?.distinct() ?: emptyList())
+        val entry = categoryMap[cat]!!
+        // only assign name if it's custom
+        if (entry.customName != null) {
+            MapIconGroup(entry.customName!!, entry.categoryID, entry.mapId)
+        } else {
+            MapIconGroup(null, entry.categoryID, entry.mapId)
+        }
     }
 
     val gson = GsonBuilder().setPrettyPrinting().create()

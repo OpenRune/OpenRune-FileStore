@@ -2,8 +2,6 @@ package dev.openrune.cache.tools
 
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.tools.tasks.CacheTask
-import dev.openrune.cache.tools.tasks.impl.RemoveBzip
-import dev.openrune.cache.tools.tasks.impl.RemoveXteas
 import dev.openrune.cache.util.progress
 import me.tongfei.progressbar.ProgressBar
 import java.io.File
@@ -18,7 +16,9 @@ class FreshCache(
     private val downloadLocation: File,
     private val output: File = downloadLocation,
     val tasks: MutableList<CacheTask> = mutableListOf(),
-    val revision: Int = -1
+    val revision: Int = -1,
+    val subRev: Int = -1,
+    val cacheEnvironment : CacheEnvironment = CacheEnvironment.LIVE
 ) {
 
     private val logger = InlineLogger()
@@ -29,8 +29,8 @@ class FreshCache(
             logger.info { "Downloading Cache (revision=$revision, Tasks: ${tasks.joinToString(", ") { it.javaClass.simpleName }})" }
             logger.info { "Getting Xteas..." }
 
-            OpenRS2.downloadKeysByRevision(revision = revision, directory = downloadLocation)
-            OpenRS2.downloadCacheByRevision(revision = revision, directory = downloadLocation, listener = downloadListener)
+            OpenRS2.downloadKeysByRevision(revision = revision, directory = downloadLocation,environment = cacheEnvironment, subRev = subRev)
+            OpenRS2.downloadCacheByRevision(revision = revision, directory = downloadLocation, environment = cacheEnvironment,subRev = subRev,listener = downloadListener)
         }
         val hours = time / 3600000
         val minutes = (time % 3600000) / 60000

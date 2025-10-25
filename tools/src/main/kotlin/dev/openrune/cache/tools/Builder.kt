@@ -11,6 +11,10 @@ import java.nio.file.Path
 
 val DEFAULT_PATH = Path.of("data", "cache").toFile()
 
+enum class CacheEnvironment {
+    LIVE,BETA
+}
+
 @Deprecated(
     message = "Builder is deprecated in kotlin. Use the CacheToolDsl class instead.",
     replaceWith = ReplaceWith("CacheToolDsl", "dev.openrune.cache.tools.CacheToolDsl")
@@ -22,6 +26,8 @@ data class Builder(
 ) {
 
     private var revision: Int = -1
+    private var subRevision: Int = -1
+    private var environment: CacheEnvironment = CacheEnvironment.LIVE
     private var removeXteas : Boolean = true
     private var removeBzip : Boolean = true
 
@@ -31,6 +37,10 @@ data class Builder(
     fun extraTasks(vararg types: CacheTask) = apply { this.extraTasks = types.toMutableList().toTypedArray() }
 
     fun revision(revision: Int) = apply { this.revision = revision }
+
+    fun environment(environment: CacheEnvironment) = apply { this.environment = environment }
+
+    fun subRevision(revision: Int) = apply { this.subRevision = revision }
 
     fun removeXteas(removeXteas: Boolean) = apply { this.removeXteas = removeXteas }
 
@@ -52,6 +62,6 @@ data class Builder(
 
         tasks.add(PackGameVals())
 
-        return CacheTool(type,revision,cacheLocation, tasks)
+        return CacheTool(type,revision,subRevision,environment,cacheLocation, tasks)
     }
 }
