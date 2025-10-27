@@ -66,14 +66,14 @@ fun List<GameValElement>.dumpComponentsCombined(
 fun List<GameValElement>.writeComponentsFiles(outputDir: File, format: Format, usePackedComponents: Boolean = true) {
     val result = dumpComponents(format, usePackedComponents)
     result.forEach { (name, content) ->
-        val extension = if (format == Format.RSCM_V1) ".rscm" else ".rscm2"
+        val extension = if (format == Format.RSCM_V1) ".rscm" else ".rscm"
         File(outputDir, "$name$extension").writeText(content)
     }
 }
 
 fun List<GameValElement>.writeComponentsCombinedFile(outputDir: File, name: String, format: Format, usePackedComponents: Boolean = true) {
     val result = dumpComponentsCombined(format, usePackedComponents)
-    val extension = if (format == Format.RSCM_V1) ".rscm" else ".rscm2"
+    val extension = if (format == Format.RSCM_V1) ".rscm" else ".rscm"
     result["components"]?.let { File(outputDir, "$name$extension").writeText(it) }
 }
 
@@ -115,14 +115,14 @@ fun List<GameValElement>.dumpTablesCombined(
 fun List<GameValElement>.writeTablesFiles(outputDir: File, format: Format, usePackedColumns: Boolean = true) {
     val result = dumpTables(format, usePackedColumns)
     result.forEach { (name, content) ->
-        val extension = if (format == Format.RSCM_V1) ".rscm" else ".rscm2"
+        val extension = if (format == Format.RSCM_V1) ".rscm" else ".rscm"
         File(outputDir, "$name$extension").writeText(content)
     }
 }
 
 fun List<GameValElement>.writeTablesCombinedFile(outputDir: File, name: String, format: Format, usePackedColumns: Boolean = true) {
     val result = dumpTablesCombined(format, usePackedColumns)
-    val extension = if (format == Format.RSCM_V1) ".rscm" else ".rscm2"
+    val extension = if (format == Format.RSCM_V1) ".rscm" else ".rscm"
     result["columns"]?.let { File(outputDir, "$name$extension").writeText(it) }
 }
 
