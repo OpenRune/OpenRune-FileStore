@@ -121,6 +121,8 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             123 -> isFollower = true
             124 -> height = buffer.readUnsignedShort()
             126 -> footprintSize = buffer.readUnsignedShort()
+            145 -> canHideForOverlap = true
+            146 -> overlapTintHSL = buffer.readUnsignedShort()
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Npcs [${opcode}]" }
         }
@@ -345,6 +347,17 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             writeByte(127)
             writeShort(definition.footprintSize)
         }
+
+        if (definition.canHideForOverlap) {
+            writeByte(145)
+        }
+
+
+        if (definition.overlapTintHSL != 39188) {
+            writeByte(146)
+            writeShort(definition.overlapTintHSL)
+        }
+
 
         definition.writeParameters(this)
 

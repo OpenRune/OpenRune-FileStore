@@ -57,7 +57,9 @@ data class NpcType(
     var hitpoints : Int = 1,
     var ranged : Int = 1,
     var magic : Int = 1,
-    var footprintSize : Int = -1
+    var footprintSize : Int = -1,
+    var canHideForOverlap : Boolean = false,
+    var overlapTintHSL : Int = 39188
     ) : Definition, Transforms, Recolourable, Parameterized {
 
     var examine : String = ""

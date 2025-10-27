@@ -119,6 +119,7 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
             60, 82 -> mapAreaId = buffer.readUnsignedShort()
             89 -> randomizeAnimStart = true
             90 -> delayAnimationUpdate = true
+            95 -> soundVisibility = buffer.readUnsignedByte().toInt()
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Object [${opcode}]" }
         }
@@ -315,6 +316,11 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
         if (definition.soundDistanceFadeCurve != 0) {
             writeByte(91)
             writeByte(definition.soundDistanceFadeCurve)
+        }
+
+        if (definition.soundVisibility != 2) {
+            writeByte(95)
+            writeByte(definition.soundVisibility)
         }
 
         val defaults = listOf(0, 0, 300, 300)

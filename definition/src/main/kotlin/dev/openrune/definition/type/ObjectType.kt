@@ -53,6 +53,7 @@ data class ObjectType(
     var soundFadeOutCurve : Int = 0,
     var delayAnimationUpdate: Boolean = false,
     var impenetrable: Boolean = true,
+    var soundVisibility : Int = 2,
     override var originalColours: MutableList<Int>? = null,
     override var modifiedColours: MutableList<Int>? = null,
     override var originalTextureColours: MutableList<Int>? = null,
