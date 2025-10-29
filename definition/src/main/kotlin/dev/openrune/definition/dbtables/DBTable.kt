@@ -8,6 +8,7 @@ import dev.openrune.definition.util.VarType
 
 data class DBTable(
     val tableId: Int,
+    val rscmName: String? = null,
     val columns: Map<Int, DBColumnType>,
     val rows: List<DBRow>
 )
@@ -27,10 +28,10 @@ fun convertToDBTableType(dbTableWithRows: DBTable): DBTableType {
 
 fun DBTable.toDbRowTypes(): List<DBRowType> {
     val dbRows = mutableListOf<DBRowType>()
-    this.rows.forEach { (id, tableColumns) ->
-        val row = DBRowType(id)
+    this.rows.forEach { dbRow ->
+        val row = DBRowType(dbRow.rowId, dbRow.rscmName)
         row.tableId = this.tableId
-        for ((columnId, values) in tableColumns) {
+        for ((columnId, values) in dbRow.columns) {
             val columnDef = this.columns[columnId]
             checkNotNull(columnDef) { "Invalid column $columnId" }
             row.columns[columnId] = DBColumnType(
@@ -46,7 +47,7 @@ fun DBTable.toDbRowTypes(): List<DBRowType> {
 @Deprecated("Use extension function: toDbRowTypes")
 fun convertToDBRowType(dbTableWithRows: DBTable): List<DBRowType> {
     return dbTableWithRows.rows.map { row ->
-        DBRowType(row.rowId).apply {
+        DBRowType(row.rowId, row.rscmName).apply {
             tableId = dbTableWithRows.tableId
             columns.putAll(row.columns.mapValues { (columnId, values) ->
                 DBColumnType(dbTableWithRows.columns[columnId]?.types ?: emptyArray(), values)
@@ -116,6 +117,7 @@ inline fun <T> toDatabaseTable(table: DBTableType, rows: List<DBRowType>, constr
 }
 data class DBRow(
     val rowId: Int,
+    val rscmName: String? = null,
     val columns: Map<Int, Array<Any>>
 ) {
     override fun toString(): String {
@@ -145,9 +147,9 @@ val tableNames: MutableMap<Int, String> = mutableMapOf()
 val columnNames: MutableMap<Int, String> = mutableMapOf()
 val rowNames: MutableMap<Int, String> = mutableMapOf()
 
-class DBTableBuilder(private val tableId: Int) {
+class DBTableBuilder(private val tableId: Int, private val tableRscmName: String? = null) {
 
-    constructor(name: String, tableId: Int) : this(tableId) {
+    constructor(name: String, tableId: Int) : this(tableId, name) {
         tableNames[tableId] = name
     }
 
@@ -158,7 +160,7 @@ class DBTableBuilder(private val tableId: Int) {
         if (name.isNotEmpty()) {
             columnNames[id] = name
         }
-        columns[id] = DBColumnType(types, values)
+        columns[id] = DBColumnType(types, values, name)
     }
 
     fun column(id: Int, types: Array<VarType>, values: Array<Any>? = null) {
@@ -177,15 +179,16 @@ class DBTableBuilder(private val tableId: Int) {
             rowNames[rscmId] = rscmName
         }
 
-        row(rowId = rscmId, block = block)
+        val builder = DBRowBuilder(rscmId, rscmName).apply(block)
+        rows.add(builder.build())
     }
 
     fun build(): DBTable {
-        return DBTable(tableId, columns, rows)
+        return DBTable(tableId, tableRscmName, columns, rows)
     }
 }
 
-class DBRowBuilder(private val rowId: Int) {
+class DBRowBuilder(private val rowId: Int, private val rowRscmName: String? = null) {
     private val columns = mutableMapOf<Int, Array<Any>>()
 
     fun columnRSCM(id: Int, values: Array<String>) {
@@ -201,7 +204,7 @@ class DBRowBuilder(private val rowId: Int) {
     }
 
     fun build(): DBRow {
-        return DBRow(rowId, columns)
+        return DBRow(rowId, rowRscmName, columns)
     }
 }
 

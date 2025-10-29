@@ -51,23 +51,6 @@ class DBManager(private val store: CacheLibrary) {
         return rows[rowId]
     }
 
-    fun getTableWithRows(tableId: Int): DBTable? {
-        val table = tables[tableId] ?: return null
-
-        val streamlinedRows = rows.values.mapNotNull { row ->
-            if (row.tableId != tableId) return@mapNotNull null
-
-            val filteredColumns = row.columns.mapNotNull { (columnId, column) ->
-                column.values?.let { columnId to it }
-            }.toMap()
-
-            if (filteredColumns.isEmpty()) return@mapNotNull null
-
-            DBRow(rowId = row.id, columns = filteredColumns)
-        }
-
-        return DBTable(table.id, table.columns, streamlinedRows)
-    }
 
     fun <T> toDatabaseTable(tableId: Int, constructor: (FullDBRow) -> T): List<T> {
         val table = getTable(tableId) ?: return emptyList()

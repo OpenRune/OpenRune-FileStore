@@ -40,18 +40,20 @@ class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
             CacheTool.addGameValMapping(
                 GameValGroupTypes.TABLETYPES,
                 Table(
-                    tableNames[table.tableId]?: "table_${table.tableId}",
+                    table.rscmName ?: "table_${table.tableId}",
                     table.tableId,
-                    table.columns.map { Table.Column(columnNames[it.key]?: "col_${it.key}",it.key) }
+                    table.columns.map { Table.Column(it.value.rscmName ?: "col_${it.key}", it.key) }
                 )
             )
 
-            rowTypes.forEach {
+            rowTypes.forEach { rowType ->
                 val writer1 = Unpooled.buffer(4096)
-                with(rowCodec) { writer1.encode(it) }
-                CacheTool.addGameValMapping(GameValGroupTypes.ROWTYPES, GameValElement(rowNames[it.id] ?: "row_${it.id}",it.id))
-
-                dbrowArchive.add(it.id, writer1.toArray())
+                with(rowCodec) { writer1.encode(rowType) }
+                
+                val rowRscmName = rowType.rscmName ?: "row_${rowType.id}"
+                
+                CacheTool.addGameValMapping(GameValGroupTypes.ROWTYPES, GameValElement(rowRscmName, rowType.id))
+                dbrowArchive.add(rowType.id, writer1.toArray())
             }
 
             progress.step()

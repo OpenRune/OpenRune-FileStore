@@ -2,8 +2,8 @@ package dev.openrune.definition.type
 
 import dev.openrune.definition.util.VarType
 
-class DBColumnType(val types: Array<VarType>, val values: Array<Any>?) {
+class DBColumnType(val types: Array<VarType>, val values: Array<Any>?, val rscmName: String? = null) {
     override fun toString(): String {
-        return "DBColumnType(types=${types.contentToString()}, values=${values?.contentToString()})"
+        return "DBColumnType(types=${types.contentToString()}, values=${values?.contentToString()}, rscmName=$rscmName)"
     }
 }
