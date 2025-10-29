@@ -2,7 +2,7 @@ package dev.openrune.definition.util
 
 private const val NO_KEY = 0.toChar()
 
-enum class Type {
+enum class VarType {
     INT(0, 'i', BaseVarType.INTEGER),
     BOOLEAN(1, '1', BaseVarType.INTEGER),
     HASH32(2, '2', BaseVarType.INTEGER),
@@ -257,7 +257,7 @@ enum class Type {
     val id: Int
     val ch: Char
     val baseType: BaseVarType?
-    val alias: Type?
+    val alias: VarType?
 
     constructor(id: Int, ch: Char, baseType: BaseVarType?) {
         this.id = id
@@ -275,7 +275,7 @@ enum class Type {
         alias = null
     }
 
-    constructor(id: Int, ch: Char, baseType: BaseVarType, alias: Type, name: String) {
+    constructor(id: Int, ch: Char, baseType: BaseVarType, alias: VarType, name: String) {
         this.id = id
         this.ch = ch
         this.baseType = baseType
@@ -292,7 +292,7 @@ enum class Type {
     }
 
     companion object {
-        fun byID(id: Int): Type {
+        fun byID(id: Int): VarType {
             for (value in entries) {
                 if (value.id == id) {
                     return value
@@ -302,7 +302,7 @@ enum class Type {
             throw IllegalArgumentException("unknown id $id")
         }
 
-        fun byChar(id: Char): Type {
+        fun byChar(id: Char): VarType {
             for (value in entries) {
                 if (value.ch == id) {
                     return value
@@ -313,7 +313,7 @@ enum class Type {
         }
 
         // todo: clean this up, just define the primitive subtypes and take reflexive transitive closure
-        fun subtype(a: Type, b: Type): Boolean {
+        fun subtype(a: VarType, b: VarType): Boolean {
             if (a == b) {
                 return true
             }
@@ -353,7 +353,7 @@ enum class Type {
             return false
         }
 
-        fun meet(typeA: Type, typeB: Type): Type? {
+        fun meet(typeA: VarType, typeB: VarType): VarType? {
             if (subtype(typeA, typeB)) {
                 return typeA
             }

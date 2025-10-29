@@ -8,7 +8,7 @@ import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBTableType
 import dev.openrune.definition.util.BaseVarType
-import dev.openrune.definition.util.Type
+import dev.openrune.definition.util.VarType
 import io.netty.buffer.ByteBuf
 
 class DBTableCodec : DefinitionCodec<DBTableType> {
@@ -22,7 +22,7 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
                     val columnId = setting and 0x7F
                     val hasDefault = setting and 0x80 != 0
                     val columnTypes = Array(buffer.readUnsignedByte().toInt()) {
-                        Type.byID(buffer.readSmart())
+                        VarType.byID(buffer.readSmart())
                     }
                     val defaultValues = if (hasDefault) decodeColumnFields(buffer, columnTypes) else null
                     columns[columnId] = DBColumnType(columnTypes, defaultValues)
@@ -64,7 +64,7 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
     override fun createDefinition() = DBTableType()
 }
 
-fun ByteBuf.writeColumnFields(types: Array<Type>, values: Array<Any>?) {
+fun ByteBuf.writeColumnFields(types: Array<VarType>, values: Array<Any>?) {
     requireNotNull(values) { "Values array cannot be null" }
 
     val fieldCount = values.size / types.size
@@ -79,7 +79,7 @@ fun ByteBuf.writeColumnFields(types: Array<Type>, values: Array<Any>?) {
             when (type.baseType) {
                 BaseVarType.INTEGER -> {
                     val intValue = when (type) {
-                        Type.BOOLEAN -> if (value as Boolean) 1 else 0
+                        VarType.BOOLEAN -> if (value as Boolean) 1 else 0
                         else -> (value as? Number)?.toInt()
                             ?: error("Expected Number for type ${type.name}, got ${value?.javaClass?.simpleName}")
                     }
@@ -94,7 +94,7 @@ fun ByteBuf.writeColumnFields(types: Array<Type>, values: Array<Any>?) {
     }
 }
 
-fun decodeColumnFields(buffer: ByteBuf, types: Array<Type>): Array<Any> {
+fun decodeColumnFields(buffer: ByteBuf, types: Array<VarType>): Array<Any> {
     val fieldCount = buffer.readSmart()
     val values = arrayOfNulls<Any>(fieldCount * types.size)
     for (fieldIndex in 0 until fieldCount) {
@@ -102,7 +102,7 @@ fun decodeColumnFields(buffer: ByteBuf, types: Array<Type>): Array<Any> {
             val type = types[typeIndex]
             val valuesIndex = fieldIndex * types.size + typeIndex
             values[valuesIndex] = when (type) {
-                Type.STRING -> buffer.readString()
+                VarType.STRING -> buffer.readString()
                 else -> buffer.readInt()
             }
         }

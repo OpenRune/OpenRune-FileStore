@@ -5,7 +5,7 @@ import dev.openrune.definition.util.writeSmart
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBRowType
-import dev.openrune.definition.util.Type
+import dev.openrune.definition.util.VarType
 import io.netty.buffer.ByteBuf
 
 class DBRowCodec : DefinitionCodec<DBRowType> {
@@ -17,7 +17,7 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
                 var columnId = buffer.readUnsignedByte().toInt()
                 while (columnId != 255) {
                     val columnTypes = Array(buffer.readUnsignedByte().toInt()) {
-                        Type.byID(buffer.readSmart())
+                        VarType.byID(buffer.readSmart())
                     }
                     val columnValues = decodeColumnFields(buffer, columnTypes)
                     columns[columnId] = DBColumnType(columnTypes, columnValues)

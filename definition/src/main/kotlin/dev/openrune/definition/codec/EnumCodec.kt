@@ -2,7 +2,7 @@ package dev.openrune.definition.codec
 
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.EnumType
-import dev.openrune.definition.util.Type
+import dev.openrune.definition.util.VarType
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
@@ -10,8 +10,8 @@ import io.netty.buffer.ByteBuf
 class EnumCodec : DefinitionCodec<EnumType> {
     override fun EnumType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
-            1 -> keyType = Type.byChar(buffer.readUnsignedByte().toInt().toChar())
-            2 -> valueType = Type.byChar(buffer.readUnsignedByte().toInt().toChar())
+            1 -> keyType = VarType.byChar(buffer.readUnsignedByte().toInt().toChar())
+            2 -> valueType = VarType.byChar(buffer.readUnsignedByte().toInt().toChar())
             3 -> defaultString = buffer.readString()
             4 -> defaultInt = buffer.readInt()
             5, 6 -> {
@@ -35,7 +35,7 @@ class EnumCodec : DefinitionCodec<EnumType> {
         writeByte(2)
         writeByte(definition.valueType.ch.code)
 
-        if (definition.valueType == Type.STRING) {
+        if (definition.valueType == VarType.STRING) {
             if (definition.defaultString.isNotEmpty()) {
                 writeByte(3)
                 writeString(definition.defaultString)

@@ -4,7 +4,7 @@ import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.type.DBTableType
-import dev.openrune.definition.util.Type
+import dev.openrune.definition.util.VarType
 
 data class DBTable(
     val tableId: Int,
@@ -154,14 +154,14 @@ class DBTableBuilder(private val tableId: Int) {
     private val columns = mutableMapOf<Int, DBColumnType>()
     private val rows = mutableListOf<DBRow>()
 
-    fun column(name : String,id: Int, types: Array<Type>, values: Array<Any>? = null) {
+    fun column(name : String, id: Int, types: Array<VarType>, values: Array<Any>? = null) {
         if (name.isNotEmpty()) {
             columnNames[id] = name
         }
         columns[id] = DBColumnType(types, values)
     }
 
-    fun column(id: Int, types: Array<Type>, values: Array<Any>? = null) {
+    fun column(id: Int, types: Array<VarType>, values: Array<Any>? = null) {
         columns[id] = DBColumnType(types, values)
     }
 
