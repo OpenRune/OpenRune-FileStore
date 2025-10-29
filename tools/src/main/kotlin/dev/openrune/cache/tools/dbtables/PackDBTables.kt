@@ -29,31 +29,35 @@ class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
         val dbrowArchive = library.index(2).archive(DBROW) ?: return
 
         tables.forEach { table ->
-            val tableType = table.toDbTableType()
-            val rowTypes = table.toDbRowTypes()
+            try {
+                val tableType = table.toDbTableType()
+                val rowTypes = table.toDbRowTypes()
 
 
-            val writer = Unpooled.buffer(4096)
-            with(tableCodec) { writer.encode(tableType) }
-            dbtableArchive.add(tableType.id, writer.toArray())
+                val writer = Unpooled.buffer(4096)
+                with(tableCodec) { writer.encode(tableType) }
+                dbtableArchive.add(tableType.id, writer.toArray())
 
-            CacheTool.addGameValMapping(
-                GameValGroupTypes.TABLETYPES,
-                Table(
-                    table.rscmName ?: "table_${table.tableId}",
-                    table.tableId,
-                    table.columns.map { Table.Column(it.value.rscmName ?: "col_${it.key}", it.key) }
+                CacheTool.addGameValMapping(
+                    GameValGroupTypes.TABLETYPES,
+                    Table(
+                        table.rscmName ?: "table_${table.tableId}",
+                        table.tableId,
+                        table.columns.map { Table.Column(it.value.rscmName ?: "col_${it.key}", it.key) }
+                    )
                 )
-            )
 
-            rowTypes.forEach { rowType ->
-                val writer1 = Unpooled.buffer(4096)
-                with(rowCodec) { writer1.encode(rowType) }
-                
-                val rowRscmName = rowType.rscmName ?: "row_${rowType.id}"
-                
-                CacheTool.addGameValMapping(GameValGroupTypes.ROWTYPES, GameValElement(rowRscmName, rowType.id))
-                dbrowArchive.add(rowType.id, writer1.toArray())
+                rowTypes.forEach { rowType ->
+                    val writer1 = Unpooled.buffer(4096)
+                    with(rowCodec) { writer1.encode(rowType) }
+
+                    val rowRscmName = rowType.rscmName ?: "row_${rowType.id}"
+
+                    CacheTool.addGameValMapping(GameValGroupTypes.ROWTYPES, GameValElement(rowRscmName, rowType.id))
+                    dbrowArchive.add(rowType.id, writer1.toArray())
+                }
+            }catch (e : Exception) {
+                e.printStackTrace()
             }
 
             progress.step()

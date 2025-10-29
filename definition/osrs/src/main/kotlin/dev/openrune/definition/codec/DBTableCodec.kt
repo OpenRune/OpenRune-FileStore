@@ -79,14 +79,18 @@ fun ByteBuf.writeColumnFields(types: Array<VarType>, values: Array<Any>?) {
             when (type.baseType) {
                 BaseVarType.INTEGER -> {
                     val intValue = when (type) {
-                        VarType.BOOLEAN -> if (value as Boolean) 1 else 0
+                        VarType.BOOLEAN -> when (value) {
+                            is Boolean -> if (value) 1 else 0
+                            is Number -> value.toInt()
+                            else -> error("Expected Boolean or Number for BOOLEAN type, got ${value.javaClass.simpleName}")
+                        }
                         else -> (value as? Number)?.toInt()
-                            ?: error("Expected Number for type ${type.name}, got ${value?.javaClass?.simpleName}")
+                            ?: error("Expected Number for type ${type.name}, got ${value.javaClass.simpleName}")
                     }
                     writeInt(intValue)
                 }
                 BaseVarType.LONG -> writeLong((value as? Number)?.toLong()
-                    ?: error("Expected Number for type ${type.name}, got ${value?.javaClass?.simpleName}"))
+                    ?: error("Expected Number for type ${type.name}, got ${value.javaClass.simpleName}"))
                 BaseVarType.STRING -> writeString(value as? String)
                 null -> error("Type ${type.name} has no base type defined")
             }
