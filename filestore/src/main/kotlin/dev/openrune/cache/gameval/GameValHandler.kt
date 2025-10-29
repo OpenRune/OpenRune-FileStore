@@ -78,15 +78,15 @@ object GameValHandler {
 
                 val components = mutableListOf<InterfaceComponent>()
                 while (true) {
-                    val byte = data.readUnsignedByte().toInt()
+                    val child = data.readUnsignedByte().toInt()
                     val nextByte = if (data.readerIndex() < data.array().size) data.array()[data.readerIndex()] else null
 
-                    if (byte == 0xFF && nextByte == 0.toByte()) break
+                    if (child == 0xFF && nextByte == 0.toByte()) break
 
                     val componentName = data.readString()
                     if (componentName.isEmpty()) break
 
-                    components.add(InterfaceComponent(componentName, components.size, id))
+                    components.add(InterfaceComponent(componentName, child, id))
                 }
 
                 elements.add(Interface(interfaceName, id, components))
@@ -97,14 +97,14 @@ object GameValHandler {
 
                 val components = mutableListOf<InterfaceComponent>()
                 while (true) {
-                    val byte = data.readShort().toInt()
+                    val child = data.readUnsignedShort()
 
-                    if (byte == 0xFFFF) break
-
+                    if (child == 0xFFFF) break
+                    
                     val componentName = data.readString()
                     if (componentName.isEmpty()) break
 
-                    components.add(InterfaceComponent(componentName, components.size, id))
+                    components.add(InterfaceComponent(componentName, child, id))
                 }
 
                 elements.add(Interface(interfaceName, id, components))
@@ -170,7 +170,7 @@ object GameValHandler {
                         element.elementAs<Interface>()?.let { inf ->
                             writeString(standardizeGamevalName(inf.name))
                             inf.components.sortedBy { it.id }.forEach {
-                                writeByte(1)
+                                writeShort(it.id and 0xFFFF)
                                 writeString(standardizeGamevalName(it.name))
                             }
                             writeByte(0xFF)
@@ -188,7 +188,7 @@ object GameValHandler {
                         element.elementAs<Interface>()?.let { inf ->
                             writeString(standardizeGamevalName(inf.name))
                             inf.components.sortedBy { it.id }.forEach {
-                                writeByte(1)
+                                writeByte(it.id)
                                 writeString(standardizeGamevalName(it.name))
                             }
                             writeByte(0xFFFF)
