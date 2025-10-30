@@ -6,7 +6,6 @@ import dev.openrune.cache.util.toEchochUTC
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.Instant
@@ -19,136 +18,152 @@ enum class GameType {
 }
 
 interface DownloadListener {
-    fun onProgress(progress: Int, max : Long, current : Long)
+    fun onProgress(progress: Int, max: Long, current: Long)
     fun onError(exception: Exception)
     fun onFinished()
 }
 
 object OpenRS2 {
     private const val CACHE_DOWNLOAD_LOCATION = "https://archive.openrs2.org/caches.json"
+    private val gson = Gson()
+    private val formatter = DateTimeFormatter.ISO_INSTANT
+
+    @Volatile
     var allCaches: Array<CacheInfo> = emptyArray()
 
     fun loadCaches() {
         if (allCaches.isEmpty()) {
-            val json = URL(CACHE_DOWNLOAD_LOCATION).readText()
-            allCaches = Gson().fromJson(json, Array<CacheInfo>::class.java)
-        }
-    }
-
-    fun downloadCacheByRevision(revision: Int,directory: File,type: GameType = GameType.OLDSCHOOL,environment: CacheEnvironment,subRev : Int = -1, listener: DownloadListener? = null) {
-        loadCaches()
-        downloadCacheByInternalID(findRevision(revision,subRev,type,environment).id,directory, listener)
-    }
-
-    fun downloadKeysByRevision(revision: Int,directory: File, type: GameType = GameType.OLDSCHOOL,environment: CacheEnvironment,subRev : Int, listener: DownloadListener? = null) {
-        loadCaches()
-        downloadKeysByInternalID(directory, findRevision(revision,subRev,type,environment).id, listener)
-    }
-
-    fun downloadCacheByInternalID(target: Int, directory: File, listener: DownloadListener? = null) {
-        if (!directory.exists()) {
-            directory.mkdirs()
-        }
-        downloadZip(target,"https://archive.openrs2.org/caches/runescape/${target}/disk.zip", directory.path, listener)
-    }
-
-    fun downloadKeysByInternalID(directory: File, target: Int, listener: DownloadListener? = null) {
-        if (!directory.exists()) {
-            directory.mkdirs()
-        }
-
-        val file = directory.resolve("xteas.json")
-        if (!file.exists()) {
-            val url = URL("https://archive.openrs2.org/caches/runescape/${target}/keys.json")
-            val connection = url.openConnection() as HttpURLConnection
-            connection.requestMethod = "GET"
-
-            try {
-                connection.inputStream.bufferedReader().use { reader ->
-                    val text = reader.readText()
-                    file.writeText(text)
+            synchronized(this) {
+                if (allCaches.isEmpty()) {
+                    val json = URL(CACHE_DOWNLOAD_LOCATION).readText()
+                    allCaches = gson.fromJson(json, Array<CacheInfo>::class.java)
                 }
-            } catch (e: IOException) {
-                listener?.onError(e)
-            } finally {
-                listener?.onFinished()
-                connection.disconnect()
             }
         }
     }
 
+    fun downloadCacheByRevision(
+        revision: Int,
+        directory: File,
+        type: GameType = GameType.OLDSCHOOL,
+        environment: CacheEnvironment,
+        subRev: Int = -1,
+        listener: DownloadListener? = null
+    ) {
+        loadCaches()
+        val info = findRevision(revision, subRev, type, environment)
+        downloadByInternalID(info.id, directory, listener, "disk.zip")
+    }
 
-    private fun downloadZip(target: Int,url: String, destinationDirectory: String, listener: DownloadListener? = null) {
+    fun downloadKeysByRevision(
+        revision: Int,
+        directory: File,
+        type: GameType = GameType.OLDSCHOOL,
+        environment: CacheEnvironment,
+        subRev: Int,
+        listener: DownloadListener? = null
+    ) {
+        loadCaches()
+        val info = findRevision(revision, subRev, type, environment)
+        downloadByInternalID(info.id, directory, listener, "xteas.json")
+    }
+
+    private fun downloadByInternalID(
+        target: Int,
+        directory: File,
+        listener: DownloadListener?,
+        fileName: String
+    ) {
+        directory.mkdirs()
+        val url = if (fileName.endsWith(".zip")) {
+            "https://archive.openrs2.org/caches/runescape/$target/$fileName"
+        } else {
+            "https://archive.openrs2.org/caches/runescape/$target/keys.json"
+        }
+        val expectedLength = if (fileName.endsWith(".zip")) allCaches.firstOrNull { it.id == target }?.size ?: -1 else -1
+        downloadFile(url, directory.resolve(fileName), expectedLength, listener)
+    }
+
+    private fun downloadFile(
+        urlString: String,
+        destination: File,
+        expectedLength: Long,
+        listener: DownloadListener?
+    ) {
+        var connection: HttpURLConnection? = null
         try {
-            loadCaches()
-            val urlConnection = URL(url).openConnection() as HttpURLConnection
-            urlConnection.requestMethod = "GET"
-            urlConnection.connect()
-
-            val contentLength = allCaches.first { it.id == target }.size
-            val inputStream = BufferedInputStream(urlConnection.inputStream)
-            val file = File(destinationDirectory, url.substringAfterLast("/"))
-            val outputStream = FileOutputStream(file)
-
-            val buffer = ByteArray(8192)
-            var bytesRead: Int
-            var totalBytesRead = 0L
-
-            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                outputStream.write(buffer, 0, bytesRead)
-                totalBytesRead += bytesRead
-                val progress = ((totalBytesRead * 100) / contentLength).toInt()
-                listener?.onProgress(progress,contentLength, totalBytesRead)
+            connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = 10_000
+                readTimeout = 60_000
+                connect()
             }
 
-            outputStream.flush()
-            outputStream.close()
-            inputStream.close()
-            urlConnection.disconnect()
+            val totalBytes = if (expectedLength > 0) expectedLength else connection.contentLengthLong
+
+            // Only print warning for ZIPs
+            if (fileIsZip(destination) && totalBytes <= 0) {
+                println("Warning: Unknown content length for $urlString")
+            }
+
+            BufferedInputStream(connection.inputStream).use { input ->
+                FileOutputStream(destination).use { output ->
+                    val buffer = ByteArray(16 * 1024)
+                    var totalRead = 0L
+                    var lastProgress = -1
+                    while (true) {
+                        val bytesRead = input.read(buffer)
+                        if (bytesRead == -1) break
+                        output.write(buffer, 0, bytesRead)
+                        totalRead += bytesRead
+                        if (totalBytes > 0) {
+                            val progress = ((totalRead * 100) / totalBytes).toInt()
+                            if (progress != lastProgress) {
+                                lastProgress = progress
+                                listener?.onProgress(progress, totalBytes, totalRead)
+                            }
+                        }
+                    }
+                }
+            }
+            listener?.onFinished()
         } catch (e: Exception) {
             listener?.onError(e)
         } finally {
-            listener?.onFinished()
+            connection?.disconnect()
         }
     }
 
-    val formatter = DateTimeFormatter.ISO_INSTANT
+    private fun fileIsZip(file: File) = file.extension.lowercase() == "zip"
 
-    fun getLatest(caches: Array<CacheInfo>, game: GameType = GameType.OLDSCHOOL) =
-        caches
+    fun getLatest(caches: Array<CacheInfo>, game: GameType = GameType.OLDSCHOOL): CacheInfo =
+        caches.asSequence()
             .filter { it.game.contains(game.formatName()) }
-            .filter { it.builds.isNotEmpty() }
-            .filter { it.timestamp != null }
-            .filter { it.environment == "live" }
+            .filter { it.builds.isNotEmpty() && it.timestamp.isNotBlank() && it.environment == "live" }
             .maxByOrNull { it.timestamp.stringToTimestamp().toEchochUTC() }
-            ?: error("Unable to find Latest Revision")
+            ?: error("Unable to find latest revision for $game")
 
     fun findRevision(
         rev: Int,
         subRev: Int = -1,
         game: GameType = GameType.OLDSCHOOL,
-        environment: CacheEnvironment = CacheEnvironment.LIVE,
+        environment: CacheEnvironment = CacheEnvironment.LIVE
     ): CacheInfo {
-        val formatter = DateTimeFormatter.ISO_INSTANT
-
-        val candidates = allCaches
-            .asSequence()
+        val candidates = allCaches.asSequence()
             .filter { it.game.contains(game.formatName()) }
             .filter { it.builds.isNotEmpty() && it.builds[0].major == rev }
-            .filter { it.timestamp.isNotBlank() }
-            .filter { it.size != 0L }
+            .filter { it.timestamp.isNotBlank() && it.size > 0 }
             .filter { it.environment == environment.toString().lowercase() }
             .sortedBy { Instant.from(formatter.parse(it.timestamp)).toEpochMilli() }
             .toList()
 
-        if (candidates.isEmpty()) {
-            error("Unable to find Revision: $rev for environment $environment")
-        }
+        if (candidates.isEmpty()) error("Unable to find Revision $rev for environment $environment")
 
         return when {
-            subRev == -1 -> candidates.last()
-            subRev in candidates.indices -> candidates[subRev]
-            else -> error("Sub revision $subRev out of range for revision $rev (max ${candidates.size - 1})")
+            subRev == -1 -> candidates.lastOrNull() ?: error("No candidates found for revision $rev")
+            subRev == 0 -> candidates.getOrNull(0) ?: error("No sub revisions available for revision $rev")
+            subRev in 1..candidates.size -> candidates[subRev - 1]
+            else -> candidates.lastOrNull() ?: error("No latest candidate found for revision $rev")
         }
     }
 }

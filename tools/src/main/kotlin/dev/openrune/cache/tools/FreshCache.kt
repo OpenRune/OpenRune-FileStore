@@ -89,14 +89,29 @@ class FreshCache(
         override fun onFinished() {
             progressBar?.close()
             val zipLoc = File(downloadLocation, "disk.zip")
-            if (unzip(zipLoc, downloadLocation)) {
-                logger.info { "Cache downloaded and unzipped successfully." }
-                if (tasks.isNotEmpty()) {
-                    BuildCache(input = downloadLocation, output = output, tempLocation = File(output, "temp"), tasks = tasks,revision).initialize()
+            try {
+                logger.info { "Starting unzip of ${zipLoc.absolutePath} to $downloadLocation" }
+
+                val success = unzip(zipLoc, downloadLocation)
+                if (success) {
+                    logger.info { "Cache downloaded and unzipped successfully." }
+                    if (tasks.isNotEmpty()) {
+                        BuildCache(
+                            input = downloadLocation,
+                            output = output,
+                            tempLocation = File(output, "temp"),
+                            tasks = tasks,
+                            revision
+                        ).initialize()
+                    }
+                    zipLoc.delete()
+                } else {
+                    logger.error { "Failed to unzip ${zipLoc.absolutePath} to $downloadLocation" }
+                    error("Error Unzipping: Check logs for details")
                 }
-                zipLoc.delete()
-            } else {
-                error("Error Unzipping")
+            } catch (e: Exception) {
+                logger.error(e) { "Exception while unzipping ${zipLoc.absolutePath}" }
+                error("Error Unzipping: ${e.message}")
             }
         }
     }
