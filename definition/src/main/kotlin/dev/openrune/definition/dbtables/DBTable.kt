@@ -156,29 +156,32 @@ class DBTableBuilder(private val tableId: Int, private val tableRscmName: String
     private val columns = mutableMapOf<Int, DBColumnType>()
     private val rows = mutableListOf<DBRow>()
 
-    fun column(name : String, id: Int, types: Array<VarType>, values: Array<Any>? = null) {
-        if (name.isNotEmpty()) {
-            columnNames[id] = name
-        }
-        columns[id] = DBColumnType(types, values, name)
+    /**
+     * Column with optional name and optional values.
+     * Supports single or multiple VarTypes.
+     */
+    fun column(name: String = "", id: Int, vararg types: VarType) {
+        if (name.isNotEmpty()) columnNames[id] = name
+        columns[id] = DBColumnType(Array(types.size) { i -> types[i] }, null, name)
     }
 
-    fun column(id: Int, types: Array<VarType>, values: Array<Any>? = null) {
-        columns[id] = DBColumnType(types, values)
-    }
-
+    /**
+     * Row by Int ID
+     */
     fun row(rowId: Int, block: DBRowBuilder.() -> Unit) {
         val builder = DBRowBuilder(rowId).apply(block)
         rows.add(builder.build())
     }
 
+    /**
+     * Row by RSCM string ID
+     */
     fun row(rowId: String, block: DBRowBuilder.() -> Unit) {
-        val rscmId = ConstantProvider.getMapping(rowId) ?: error("Invalid RSCM mapping for rowId: $rowId")
+        val rscmId = ConstantProvider.getMapping(rowId)
         val rscmName = rowId.substringAfter(".")
         if (rscmName.isNotEmpty()) {
             rowNames[rscmId] = rscmName
         }
-
         val builder = DBRowBuilder(rscmId, rscmName).apply(block)
         rows.add(builder.build())
     }
@@ -191,16 +194,18 @@ class DBTableBuilder(private val tableId: Int, private val tableRscmName: String
 class DBRowBuilder(private val rowId: Int, private val rowRscmName: String? = null) {
     private val columns = mutableMapOf<Int, Array<Any>>()
 
-    fun columnRSCM(id: Int, values: Array<String>) {
-        val resolvedValues: List<Any> = values.map { value ->
+    fun columnRSCM(id: Int, vararg values: String) {
+        columns[id] = values.map { value ->
             ConstantProvider.getMapping(value)
-                ?: error("Invalid RSCM mapping for value: $value")
-        }
-        columns[id] = resolvedValues.toTypedArray()
+        }.toTypedArray()
     }
 
-    fun column(id: Int, values: Array<Any>) {
-        columns[id] = values
+    fun column(id: Int, vararg values: Any) {
+        columns[id] = values.toList().toTypedArray()
+    }
+
+    fun column(id: Int, values: List<Any>) {
+        columns[id] = values.toTypedArray()
     }
 
     fun build(): DBRow {
