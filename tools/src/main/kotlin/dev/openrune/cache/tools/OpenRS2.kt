@@ -68,7 +68,7 @@ object OpenRS2 {
         downloadByInternalID(info.id, directory, listener, "xteas.json")
     }
 
-    private fun downloadByInternalID(
+    fun downloadByInternalID(
         target: Int,
         directory: File,
         listener: DownloadListener?,

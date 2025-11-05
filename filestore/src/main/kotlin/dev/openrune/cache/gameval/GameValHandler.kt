@@ -52,7 +52,7 @@ object GameValHandler {
         }
     }
 
-    private fun unpackGameVal(type: GameValGroupTypes, id: Int, bytes: ByteArray?): List<GameValElement> {
+    fun unpackGameVal(type: GameValGroupTypes, id: Int, bytes: ByteArray?): List<GameValElement> {
         if (bytes == null) return emptyList()
         val data = Unpooled.wrappedBuffer(bytes)
         val elements = mutableListOf<GameValElement>()
