@@ -33,17 +33,19 @@ data class SequenceType(
 
 ) : Definition, Sound {
     val lengthInCycles: Int
-        get() = getAnimationLength()
-
-    private val cycleLength: Int by lazy {
-        if (skeletalId >= 0 || frameDelays == null) -1 else frameDelays!!.sum()
-    }
-
-    fun getAnimationLength(): Int {
-        return if (skeletalId >= 0) {
+        get() = if (skeletalId >= 0) {
             (getSkeletalLength() / 30.0).toInt()
         } else {
             ceil((cycleLength * 20.0) / 600.0).toInt()
+        }
+
+    private val cycleLength: Int by lazy {
+        val delays = frameDelays
+        when {
+            skeletalId >= 0 || delays == null -> -1
+            else -> delays.withIndex().sumOf { (i, d) ->
+                if (i < delays.lastIndex || d < 200) d else 0
+            }
         }
     }
 
