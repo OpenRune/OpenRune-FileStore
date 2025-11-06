@@ -21,4 +21,5 @@ const val STRUCT = 34
 const val AREA = 35
 const val DBROW = 38
 const val DBTABLE = 39
+const val WORLDENTITY = 72
 const val WATERTYPE = 73
