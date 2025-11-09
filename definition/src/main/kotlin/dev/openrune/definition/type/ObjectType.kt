@@ -125,6 +125,23 @@ data class ObjectType(
         ).fold(0) { acc, hash -> 31 * acc + hash }
     }
 
+    fun postDecode() {
+        if (interactive == -1) {
+            interactive = 0
+            if (objectModels != null && (objectTypes == null || objectTypes!![0] == 10)) {
+                interactive = 1
+            }
+
+            if (hasActions()) {
+                interactive = 1
+            }
+        }
+
+        if (supportsItems == -1) {
+            supportsItems = if (solid != 0) 1 else 0
+        }
+    }
+
     // Optional: custom equals to match based on the same fields
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
