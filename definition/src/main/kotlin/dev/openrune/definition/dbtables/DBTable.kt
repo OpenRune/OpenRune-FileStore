@@ -54,6 +54,8 @@ class DBTableBuilder(private val tableId: Int, private val tableRscmName: String
     private val columns = mutableMapOf<Int, DBColumnType>()
     private val rows = mutableListOf<DBRow>()
 
+    fun VarType.count(count: Int): Array<VarType> = Array(count) { this }
+
     /**
      * Column with optional name and optional values.
      * Supports single or multiple VarTypes.
@@ -63,11 +65,30 @@ class DBTableBuilder(private val tableId: Int, private val tableRscmName: String
         columns[id] = DBColumnType(Array(types.size) { i -> types[i] }, null, name)
     }
 
+    fun column(name: String, id: Int, types: Array<VarType>, values: Array<Any>? = null) {
+        if(values != null) {
+            require(values.size == types.size) {
+                "When setting default values for a DBTable it is required that the number of defaults is equal to the number of types"
+            }
+        }
+        if (name.isNotEmpty()) columnNames[id] = name
+        columns[id] = DBColumnType(types, values, name)
+    }
+
+    fun column(id: Int, types: Array<VarType>, values: Array<Any>? = null) {
+        if(values != null) {
+            require(values.size == types.size) {
+                "When setting default values for a DBTable it is required that the number of defaults is equal to the number of types"
+            }
+        }
+        columns[id] = DBColumnType(types, values)
+    }
+
     /**
      * Row by Int ID
      */
     fun row(rowId: Int, block: DBRowBuilder.() -> Unit) {
-        val builder = DBRowBuilder(rowId).apply(block)
+        val builder = DBRowBuilder(columns, rowId).apply(block)
         rows.add(builder.build())
     }
 
@@ -80,7 +101,7 @@ class DBTableBuilder(private val tableId: Int, private val tableRscmName: String
         if (rscmName.isNotEmpty()) {
             rowNames[rscmId] = rscmName
         }
-        val builder = DBRowBuilder(rscmId, rscmName).apply(block)
+        val builder = DBRowBuilder(columns, rscmId, rscmName).apply(block)
         rows.add(builder.build())
     }
 
@@ -89,21 +110,30 @@ class DBTableBuilder(private val tableId: Int, private val tableRscmName: String
     }
 }
 
-class DBRowBuilder(private val rowId: Int, private val rowRscmName: String? = null) {
+class DBRowBuilder(private val tableColumns: Map<Int, DBColumnType>, private val rowId: Int, private val rowRscmName: String? = null) {
     private val columns = mutableMapOf<Int, Array<Any>>()
 
     fun columnRSCM(id: Int, vararg values: String) {
         columns[id] = values.map { value ->
             ConstantProvider.getMapping(value)
         }.toTypedArray()
+        validate(id)
     }
 
     fun column(id: Int, vararg values: Any) {
         columns[id] = values.toList().toTypedArray()
+        validate(id)
     }
 
     fun column(id: Int, values: List<Any>) {
         columns[id] = values.toTypedArray()
+        validate(id)
+    }
+
+    private fun validate(id: Int) {
+        require(columns[id]!!.size == tableColumns[id]!!.types.size) {
+            "DB Row mismatch: the number of columns in the row must equal the amount specified by the initial call to column when creating the table"
+        }
     }
 
     fun build(): DBRow {
