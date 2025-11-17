@@ -14,6 +14,7 @@ import dev.openrune.definition.type.DBTableType
 import java.util.*
 import kotlin.collections.HashMap
 
+@Deprecated("Potentially deprecated. Please use the new solution.")
 class DBManager(private val store: CacheLibrary) {
     private val tables: MutableMap<Int, DBTableType> = HashMap()
     private val rows: MutableMap<Int, DBRowType> = HashMap()

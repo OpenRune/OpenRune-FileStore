@@ -2,6 +2,7 @@ package dev.openrune.definition.dbtables
 
 import dev.openrune.definition.constants.ConstantProvider
 
+@Deprecated("Potentially deprecated. Please use the new solution.")
 abstract class DatabaseRow(val row: FullDBRow)
 
 interface ColumnType<T> {
