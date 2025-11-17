@@ -13,49 +13,6 @@ data class DBTable(
     val rows: List<DBRow>
 )
 
-fun DBTable.toDbTableType(): DBTableType {
-    val dbTable = DBTableType(this.tableId)
-    dbTable.columns.putAll(this.columns)
-    return dbTable
-}
-
-@Deprecated("Use extension function: toDbTableType")
-fun convertToDBTableType(dbTableWithRows: DBTable): DBTableType {
-    return DBTableType(dbTableWithRows.tableId).apply {
-        columns.putAll(dbTableWithRows.columns)
-    }
-}
-
-fun DBTable.toDbRowTypes(): List<DBRowType> {
-    val dbRows = mutableListOf<DBRowType>()
-    this.rows.forEach { dbRow ->
-        val row = DBRowType(dbRow.rowId, dbRow.rscmName)
-        row.tableId = this.tableId
-        for ((columnId, values) in dbRow.columns) {
-            val columnDef = this.columns[columnId]
-            checkNotNull(columnDef) { "Invalid column $columnId" }
-            row.columns[columnId] = DBColumnType(
-                types = columnDef.types,
-                values = values
-            )
-        }
-        dbRows.add(row)
-    }
-    return dbRows
-}
-
-@Deprecated("Use extension function: toDbRowTypes")
-fun convertToDBRowType(dbTableWithRows: DBTable): List<DBRowType> {
-    return dbTableWithRows.rows.map { row ->
-        DBRowType(row.rowId, row.rscmName).apply {
-            tableId = dbTableWithRows.tableId
-            columns.putAll(row.columns.mapValues { (columnId, values) ->
-                DBColumnType(dbTableWithRows.columns[columnId]?.types ?: emptyArray(), values)
-            })
-        }
-    }
-}
-
 data class DBRow(
     val rowId: Int,
     val rscmName: String? = null,

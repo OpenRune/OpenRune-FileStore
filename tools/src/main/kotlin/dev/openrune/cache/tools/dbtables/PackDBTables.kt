@@ -12,9 +12,13 @@ import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.codec.DBRowCodec
 import dev.openrune.definition.codec.DBTableCodec
 import dev.openrune.definition.dbtables.*
+import dev.openrune.definition.type.DBColumnType
+import dev.openrune.definition.type.DBRowType
+import dev.openrune.definition.type.DBTableType
 import dev.openrune.definition.util.toArray
 import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled
+import kotlin.collections.set
 
 class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
 
@@ -64,5 +68,27 @@ class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
         }
     }
 
+    private fun DBTable.toDbTableType(): DBTableType {
+        val dbTable = DBTableType(this.tableId)
+        dbTable.columns.putAll(this.columns)
+        return dbTable
+    }
 
+    private fun DBTable.toDbRowTypes(): List<DBRowType> {
+        val dbRows = mutableListOf<DBRowType>()
+        this.rows.forEach { dbRow ->
+            val row = DBRowType(dbRow.rowId, dbRow.rscmName)
+            row.tableId = this.tableId
+            for ((columnId, values) in dbRow.columns) {
+                val columnDef = this.columns[columnId]
+                checkNotNull(columnDef) { "Invalid column $columnId" }
+                row.columns[columnId] = DBColumnType(
+                    types = columnDef.types,
+                    values = values
+                )
+            }
+            dbRows.add(row)
+        }
+        return dbRows
+    }
 }
