@@ -54,7 +54,22 @@ class DBTableBuilder(private val tableId: Int, private val tableRscmName: String
     private val columns = mutableMapOf<Int, DBColumnType>()
     private val rows = mutableListOf<DBRow>()
 
+    /**
+     * Creates an array containing this [VarType] repeated [count] times.
+     *
+     * Useful when defining table columns that store multiple values of the same type.
+     *
+     * Example:
+     * ```
+     * column("items", ITEMS, VarType.OBJ.count(3))
+     * ```
+     *
+     * @param count The number of times to repeat this type.
+     * @return An array of [VarType] with size [count], each entry equal to this type.
+     */
     fun VarType.count(count: Int): Array<VarType> = Array(count) { this }
+
+
 
     /**
      * Column with optional name and optional values.
@@ -68,7 +83,7 @@ class DBTableBuilder(private val tableId: Int, private val tableRscmName: String
     fun column(name: String, id: Int, types: Array<VarType>, values: Array<Any>? = null) {
         if(values != null) {
             require(values.size == types.size) {
-                "When setting default values for a DBTable it is required that the number of defaults is equal to the number of types"
+                "When providing default values for DBTable '${tableRscmName}', you must supply exactly one default for each column type."
             }
         }
         if (name.isNotEmpty()) columnNames[id] = name
@@ -78,7 +93,8 @@ class DBTableBuilder(private val tableId: Int, private val tableRscmName: String
     fun column(id: Int, types: Array<VarType>, values: Array<Any>? = null) {
         if(values != null) {
             require(values.size == types.size) {
-                "When setting default values for a DBTable it is required that the number of defaults is equal to the number of types"
+                "$tableRscmName has invalid default values: provided ${values.size}, " +
+                        "but the table defines ${types.size} column types."
             }
         }
         columns[id] = DBColumnType(types, values)
@@ -132,7 +148,8 @@ class DBRowBuilder(private val tableColumns: Map<Int, DBColumnType>, private val
 
     private fun validate(id: Int) {
         require(columns[id]!!.size == tableColumns[id]!!.types.size) {
-            "DB Row mismatch: the number of columns in the row must equal the amount specified by the initial call to column when creating the table"
+            "DB row mismatch for '$rowRscmName': expected ${tableColumns[id]!!.types.size} columns, " +
+                    "but found ${columns[id]!!.size}."
         }
     }
 
