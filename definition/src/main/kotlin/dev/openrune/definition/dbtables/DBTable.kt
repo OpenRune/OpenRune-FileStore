@@ -147,7 +147,7 @@ class DBRowBuilder(private val tableColumns: Map<Int, DBColumnType>, private val
     }
 
     private fun validate(id: Int) {
-        require(columns[id]!!.size == tableColumns[id]!!.types.size) {
+        require(columns[id]!!.size <= tableColumns[id]!!.types.size) {
             "DB row mismatch for '$rowRscmName': expected ${tableColumns[id]!!.types.size} columns, " +
                     "but found ${columns[id]!!.size}."
         }
