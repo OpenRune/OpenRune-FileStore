@@ -107,17 +107,16 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
                     buffer.readUnsignedShort()
                 }.toList().toMutableList()
             }
-
+            81 -> clipType = (buffer.readUnsignedByte().toInt()) * 256
+            89 -> randomizeAnimStart = true
+            60, 82 -> mapAreaId = buffer.readUnsignedShort()
             91 -> soundDistanceFadeCurve = buffer.readUnsignedByte().toInt()
             93 -> {
                 soundFadeInCurve = buffer.readUnsignedByte().toInt()
-                soundFadeInDuration = buffer.readUnsignedByte().toInt()
+                soundFadeInDuration = buffer.readUnsignedShort().toInt()
                 soundFadeOutCurve = buffer.readUnsignedByte().toInt()
-                soundFadeOutDuration = buffer.readUnsignedByte().toInt()
+                soundFadeOutDuration = buffer.readUnsignedShort().toInt()
             }
-            81 -> clipType = (buffer.readUnsignedByte().toInt()) * 256
-            60, 82 -> mapAreaId = buffer.readUnsignedShort()
-            89 -> randomizeAnimStart = true
             90 -> delayAnimationUpdate = true
             95 -> soundVisibility = buffer.readUnsignedByte().toInt()
             249 -> readParameters(buffer)
