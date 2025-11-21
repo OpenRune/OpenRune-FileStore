@@ -6,6 +6,10 @@ import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.util.VarType
+import dev.openrune.definition.util.readColumnValues
+import dev.openrune.definition.util.readVarInt
+import dev.openrune.definition.util.writeColumnValues
+import dev.openrune.definition.util.writeVarInt
 import io.netty.buffer.ByteBuf
 
 class DBRowCodec : DefinitionCodec<DBRowType> {
@@ -25,7 +29,7 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
                 }
             }
 
-            4 -> this.tableId = buffer.readVarInt2()
+            4 -> this.tableId = buffer.readVarInt()
         }
     }
 
@@ -53,26 +57,4 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
     }
 
     override fun createDefinition() = DBRowType()
-
-    private fun ByteBuf.readVarInt2(): Int {
-        var value = 0
-        var bits = 0
-        var read: Int
-        do {
-            read = readUnsignedByte().toInt()
-            value = value or (read and 0x7F shl bits)
-            bits += 7
-        } while (read > 127)
-        return value
-    }
-
-    fun ByteBuf.writeVarInt(value: Int): ByteBuf {
-        var v = value
-        while ((v and 0xFFFFFF80.toInt()) != 0) {
-            writeByte((v and 0x7F) or 0x80)
-            v = v ushr 7
-        }
-        writeByte(v and 0x7F)
-        return this
-    }
 }

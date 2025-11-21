@@ -9,7 +9,9 @@ import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBTableType
 import dev.openrune.definition.util.BaseVarType
 import dev.openrune.definition.util.VarType
+import dev.openrune.definition.util.readColumnValues
 import dev.openrune.definition.util.readUnsignedShortSmart
+import dev.openrune.definition.util.writeColumnValues
 import dev.openrune.definition.util.writeUnsignedShortSmart
 import io.netty.buffer.ByteBuf
 
@@ -64,51 +66,4 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
     }
 
     override fun createDefinition() = DBTableType()
-}
-
-fun ByteBuf.writeColumnValues(values: Array<Any>?, types: Array<VarType>) {
-    requireNotNull(values) { "Values array cannot be null" }
-
-    val fieldCount = values.size / types.size
-    writeUnsignedShortSmart(fieldCount)
-
-    for (fieldIndex in 0 until fieldCount) {
-        for (typeIndex in types.indices) {
-            val type = types[typeIndex]
-            val valueIndex = fieldIndex * types.size + typeIndex
-            val value = values[valueIndex]
-
-            when (type.baseType) {
-                BaseVarType.INTEGER -> {
-                    val intValue = when (type) {
-                        VarType.BOOLEAN -> when (value) {
-                            is Boolean -> if (value) 1 else 0
-                            is Number -> value.toInt()
-                            else -> error("Expected Boolean or Number for BOOLEAN type, got ${value.javaClass.simpleName}")
-                        }
-                        else -> (value as? Number)?.toInt()
-                            ?: error("Expected Number for type ${type.name}, got ${value.javaClass.simpleName}")
-                    }
-                    writeInt(intValue)
-                }
-                BaseVarType.LONG -> writeLong((value as? Number)?.toLong()
-                    ?: error("Expected Number for type ${type.name}, got ${value.javaClass.simpleName}"))
-                BaseVarType.STRING -> writeString(value as? String)
-                null -> error("Type ${type.name} has no base type defined")
-            }
-        }
-    }
-}
-
-fun ByteBuf.readColumnValues(types: Array<VarType>): Array<Any> {
-    val fieldCount = readUnsignedShortSmart()
-    val values = arrayOfNulls<Any>(fieldCount * types.size)
-    for (fieldIndex in 0 until fieldCount) {
-        for (typeIndex in types.indices) {
-            val type = types[typeIndex]
-            val valuesIndex = fieldIndex * types.size + typeIndex
-            values[valuesIndex] = if (type == VarType.STRING) readString() else readInt()
-        }
-    }
-    return values.requireNoNulls()
 }
