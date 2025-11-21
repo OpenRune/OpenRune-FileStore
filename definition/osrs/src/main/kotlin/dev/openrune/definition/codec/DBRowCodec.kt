@@ -19,7 +19,7 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
                     val columnTypes = Array(buffer.readUnsignedByte().toInt()) {
                         VarType.byID(buffer.readSmart())
                     }
-                    val columnValues = decodeColumnFields(buffer, columnTypes)
+                    val columnValues = buffer.readColumnValues(columnTypes)
                     columns[columnId] = DBColumnType(columnTypes, columnValues)
                     columnId = buffer.readUnsignedByte().toInt()
                 }
@@ -41,7 +41,7 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
                 for (type in column.types) {
                     writeSmart(type.id)
                 }
-                writeColumnFields(column.types, column.values)
+                writeColumnValues(column.values, column.types)
             }
             writeByte(255)
         }

@@ -26,7 +26,7 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
                     val columnTypes = Array(buffer.readUnsignedByte().toInt()) {
                         VarType.byID(buffer.readSmart())
                     }
-                    val defaultValues = if (hasDefault) decodeColumnFields(buffer, columnTypes) else null
+                    val defaultValues = if (hasDefault) buffer.readColumnValues(columnTypes) else null
                     columns[columnId] = DBColumnType(columnTypes, defaultValues)
 
                     setting = buffer.readUnsignedByte().toInt()
@@ -55,7 +55,7 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
                 writeSmart(type.id)
             }
             if (hasDefault) {
-                writeColumnFields(column.types, column.values)
+                writeColumnValues(column.values, column.types)
             }
         }
 
@@ -66,7 +66,7 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
     override fun createDefinition() = DBTableType()
 }
 
-fun ByteBuf.writeColumnFields(types: Array<VarType>, values: Array<Any>?) {
+fun ByteBuf.writeColumnValues(values: Array<Any>?, types: Array<VarType>) {
     requireNotNull(values) { "Values array cannot be null" }
 
     val fieldCount = values.size / types.size
@@ -100,17 +100,14 @@ fun ByteBuf.writeColumnFields(types: Array<VarType>, values: Array<Any>?) {
     }
 }
 
-fun decodeColumnFields(buffer: ByteBuf, types: Array<VarType>): Array<Any> {
-    val fieldCount = buffer.readUnsignedShortSmart()
+fun ByteBuf.readColumnValues(types: Array<VarType>): Array<Any> {
+    val fieldCount = readUnsignedShortSmart()
     val values = arrayOfNulls<Any>(fieldCount * types.size)
     for (fieldIndex in 0 until fieldCount) {
         for (typeIndex in types.indices) {
             val type = types[typeIndex]
             val valuesIndex = fieldIndex * types.size + typeIndex
-            values[valuesIndex] = when (type) {
-                VarType.STRING -> buffer.readString()
-                else -> buffer.readInt()
-            }
+            values[valuesIndex] = if (type == VarType.STRING) readString() else readInt()
         }
     }
     return values.requireNoNulls()
