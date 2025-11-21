@@ -85,6 +85,15 @@ public fun ByteBuf.readStringCP(charset: Charset = Cp1252Charset): String {
     return s
 }
 
+public fun ByteBuf.readUnsignedShortSmart(): Int {
+    val peek = getUnsignedByte(readerIndex()).toInt()
+    return if ((peek and 0x80) == 0) {
+        readUnsignedByte().toInt()
+    } else {
+        readUnsignedShort() and 0x7FFF
+    }
+}
+
 //Writing
 
 fun ByteBuf.writeByte(value: Boolean) {
@@ -97,6 +106,16 @@ fun ByteBuf.writeSmart(value: Int) {
         in 0..32767 -> writeShort(value)
         else -> throw IllegalArgumentException("writeSmart out of range: $value")
     }
+}
+
+public fun ByteBuf.writeUnsignedShortSmart(v: Int): ByteBuf {
+    when (v) {
+        in 0..0x7F -> writeByte(v)
+        in 0..0x7FFF -> writeShort(0x8000 or v)
+        else -> throw IllegalArgumentException()
+    }
+
+    return this
 }
 
 fun ByteBuf.writeString(value: String?) {

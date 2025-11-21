@@ -9,6 +9,8 @@ import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBTableType
 import dev.openrune.definition.util.BaseVarType
 import dev.openrune.definition.util.VarType
+import dev.openrune.definition.util.readUnsignedShortSmart
+import dev.openrune.definition.util.writeUnsignedShortSmart
 import io.netty.buffer.ByteBuf
 
 class DBTableCodec : DefinitionCodec<DBTableType> {
@@ -68,7 +70,7 @@ fun ByteBuf.writeColumnFields(types: Array<VarType>, values: Array<Any>?) {
     requireNotNull(values) { "Values array cannot be null" }
 
     val fieldCount = values.size / types.size
-    writeSmart(fieldCount)
+    writeUnsignedShortSmart(fieldCount)
 
     for (fieldIndex in 0 until fieldCount) {
         for (typeIndex in types.indices) {
@@ -99,7 +101,7 @@ fun ByteBuf.writeColumnFields(types: Array<VarType>, values: Array<Any>?) {
 }
 
 fun decodeColumnFields(buffer: ByteBuf, types: Array<VarType>): Array<Any> {
-    val fieldCount = buffer.readSmart()
+    val fieldCount = buffer.readUnsignedShortSmart()
     val values = arrayOfNulls<Any>(fieldCount * types.size)
     for (fieldIndex in 0 until fieldCount) {
         for (typeIndex in types.indices) {
