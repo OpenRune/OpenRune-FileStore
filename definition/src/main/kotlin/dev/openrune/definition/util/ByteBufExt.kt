@@ -221,7 +221,7 @@ fun ByteBuf.writeColumnValues(values: Array<Any>?, types: Array<VarType>) {
                 BaseVarType.LONG -> writeLong((value as? Number)?.toLong()
                     ?: error("Expected Number for type ${type.name}, got ${value.javaClass.simpleName}"))
                 BaseVarType.STRING -> writeString(value as? String)
-                null -> error("Type ${type.name} has no base type defined")
+                BaseVarType.ARRAY -> error("Array Type ${type.name} is not yet defined")
             }
         }
     }
