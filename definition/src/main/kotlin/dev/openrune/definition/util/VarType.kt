@@ -292,85 +292,12 @@ enum class VarType {
     }
 
     companion object {
-        fun byID(id: Int): VarType {
-            for (value in entries) {
-                if (value.id == id) {
-                    return value
-                }
-            }
+        public val mappedChars: Map<Char, VarType> = entries.associateBy { it.ch }
 
-            throw IllegalArgumentException("unknown id $id")
-        }
+        public val mappedIds: Map<Int, VarType> = entries.associateBy { it.id }
 
-        fun byChar(id: Char): VarType {
-            for (value in entries) {
-                if (value.ch == id) {
-                    return value
-                }
-            }
+        fun byID(id: Int) = mappedIds[id]?: throw IllegalArgumentException("unknown id $id")
 
-            throw IllegalArgumentException("unknown char $id")
-        }
-
-        // todo: clean this up, just define the primitive subtypes and take reflexive transitive closure
-        fun subtype(a: VarType, b: VarType): Boolean {
-            if (a == b) {
-                return true
-            }
-
-            if (b == UNKNOWN) {
-                return true
-            }
-
-            if (b == UNKNOWN_INT) {
-                return a.baseType == BaseVarType.INTEGER || a == UNKNOWN_INT_NOTBOOLEAN || a == UNKNOWN_INT_NOTINT || a == UNKNOWN_INT_NOTINT_NOTBOOLEAN
-            }
-
-            if (b == UNKNOWN_INT_NOTBOOLEAN) {
-                return a.baseType == BaseVarType.INTEGER && a != BOOLEAN || a == UNKNOWN_INT_NOTINT_NOTBOOLEAN
-            }
-
-            if (b == UNKNOWN_INT_NOTINT) {
-                return a.baseType == BaseVarType.INTEGER && !subtype(a, INT) || a == UNKNOWN_INT_NOTINT_NOTBOOLEAN
-            }
-
-            if (b == UNKNOWN_INT_NOTINT_NOTBOOLEAN) {
-                return a.baseType == BaseVarType.INTEGER && !subtype(a, INT) && a != BOOLEAN
-            }
-
-            if (a == OBJ && b == NAMEDOBJ) { // todo: return has different behavior
-                return true
-            }
-
-            if (a.alias == b) {
-                return true
-            }
-
-            if (a == INT_INT && b.alias == INT) {
-                return true
-            }
-
-            return false
-        }
-
-        fun meet(typeA: VarType, typeB: VarType): VarType? {
-            if (subtype(typeA, typeB)) {
-                return typeA
-            }
-
-            if (subtype(typeB, typeA)) {
-                return typeB
-            }
-
-            if (typeA.alias == INT && typeB.alias == INT) {
-                return INT_INT
-            }
-
-            if (typeA == UNKNOWN_INT_NOTBOOLEAN && typeB == UNKNOWN_INT_NOTINT || typeA == UNKNOWN_INT_NOTINT && typeB == UNKNOWN_INT_NOTBOOLEAN) {
-                return UNKNOWN_INT_NOTINT_NOTBOOLEAN
-            }
-
-            return null
-        }
+        fun byChar(ch: Char) = mappedChars[ch]?: throw IllegalArgumentException("unknown char $ch")
     }
 }
