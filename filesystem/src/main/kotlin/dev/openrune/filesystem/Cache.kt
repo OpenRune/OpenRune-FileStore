@@ -63,13 +63,9 @@ interface Cache {
     fun close()
 
     companion object {
-        fun load(location : Path, live: Boolean): Cache {
-            val loader = if (live) MemoryCache else FileCache
-            return loader.load(location.toFile().absolutePath)
-        }
 
         fun load(location : Path): Cache {
-            return load(location,true)
+            return FileCache.load(location.toFile().absolutePath)
         }
 
     }
