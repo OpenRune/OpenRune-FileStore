@@ -44,7 +44,7 @@ class ConfigTest {
                 val builder = Builder(type = TaskType.BUILD, cacheLoc).revision(REV)
                 builder.registerRSCM(File(ConfigTest::class.java.classLoader.getResource("mappings")!!.toURI()))
                 builder.extraTasks(*tasks.toTypedArray()).build().initialize()
-                cache = Cache.load(cacheLoc.toPath(), false)
+                cache = Cache.load(cacheLoc.toPath())
                 CacheManager.init(OsrsCacheProvider(cache))
             }
         }
