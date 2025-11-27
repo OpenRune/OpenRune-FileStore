@@ -2,72 +2,53 @@ package dev.openrune.definition.constants
 
 import java.io.File
 
-
-/**
- * Composite provider that can handle multiple formats
- */
 class CompositeMappingProvider(providers: List<MappingProvider>) : MappingProvider {
+    override val mappings: MutableMap<String, MutableMap<String, Int>> = mutableMapOf()
+
     private val _providers = providers.toMutableList()
-    
+
     val providers: List<MappingProvider> get() = _providers.toList()
-    
-    override fun load(mappingsDir: File): Map<String, Int> {
-        val allMappings = mutableMapOf<String, Int>()
-        
+
+    override fun load(vararg mappings: File) {
+        this.mappings.clear()
+
         _providers.forEach { provider ->
-            allMappings.putAll(provider.load(mappingsDir))
+            provider.load(*mappings)
+            provider.mappings.forEach { (table, entries) ->
+                val tableMappings = this.mappings.getOrPut(table) { mutableMapOf() }
+                tableMappings.putAll(entries)
+            }
         }
-        
-        return allMappings
     }
-    
-    override fun getSupportedExtensions(): List<String> {
-        return _providers.flatMap { it.getSupportedExtensions() }
-    }
-    
-    override fun getSubTypes(filePrefix: String): Set<String> {
-        return _providers.flatMap { it.getSubTypes(filePrefix) }.toSet()
-    }
-    
-    /**
-     * Add a provider to this composite
-     */
+
+    override fun getSupportedExtensions(): List<String> =
+        _providers.flatMap { it.getSupportedExtensions() }
+
     fun addProvider(provider: MappingProvider) {
+        if (_providers.any { it::class.java == provider::class.java }) return
         _providers.add(provider)
     }
-    
-    /**
-     * Remove a provider by class type
-     */
+
+    fun replaceProviders(providers: List<MappingProvider>) {
+        _providers.clear()
+        _providers.addAll(providers)
+    }
+
     fun removeProvider(providerClass: Class<out MappingProvider>) {
         _providers.removeAll { it::class.java == providerClass }
     }
-    
-    /**
-     * Remove a specific provider instance
-     */
+
     fun removeProvider(provider: MappingProvider) {
         _providers.remove(provider)
     }
-    
-    /**
-     * Clear all providers
-     */
+
     fun clearProviders() {
         _providers.clear()
     }
-    
-    /**
-     * Check if this composite contains a specific provider type
-     */
-    fun containsProvider(providerClass: Class<out MappingProvider>): Boolean {
-        return _providers.any { it::class.java == providerClass }
-    }
-    
-    /**
-     * Get providers of a specific type
-     */
-    fun <T : MappingProvider> getProvidersOfType(providerClass: Class<T>): List<T> {
-        return _providers.filterIsInstance(providerClass)
-    }
-} 
+
+    fun containsProvider(providerClass: Class<out MappingProvider>): Boolean =
+        _providers.any { it::class.java == providerClass }
+
+    fun <T : MappingProvider> getProvidersOfType(providerClass: Class<T>): List<T> =
+        _providers.filterIsInstance(providerClass)
+}

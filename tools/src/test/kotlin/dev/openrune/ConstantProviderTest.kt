@@ -1,7 +1,6 @@
 package dev.openrune
 
 import dev.openrune.definition.constants.ConstantProvider
-import dev.openrune.definition.constants.ConstantProvider.subtype
 import dev.openrune.definition.constants.impl.RSCMProvider
 import dev.openrune.definition.constants.impl.SymProvider
 import org.junit.jupiter.api.*
@@ -23,7 +22,7 @@ class ConstantProviderTest {
     fun resetProvider() {
         ConstantProvider.resetToDefaults()
         ConstantProvider.mappings = emptyMap()
-        ConstantProvider.rscmTypes.clear()
+        ConstantProvider.types.clear()
     }
     
     @Test
@@ -89,11 +88,6 @@ class ConstantProviderTest {
         assertEquals(7812, ConstantProvider.getMapping("test_complex_sym.hiscore_setapi"))
         assertEquals(253952, ConstantProvider.getMapping("test_complex_sym.clan_setting_options_list:clan_setting_title"))
 
-        // Test sub-type access using .subtype(index) method - should return type names
-        assertEquals("string", ConstantProvider.getMapping("test_complex_sym.clan_setting_options_list:clan_setting_title").subtype(0))
-        assertEquals("int", ConstantProvider.getMapping("test_complex_sym.clan_setting_options_list:clan_setting_option").subtype(0))
-        assertEquals("graphic", ConstantProvider.getMapping("test_complex_sym.clan_setting_options_list:clan_setting_option").subtype(2))
-
         // Test individual sub-types (explicitly defined)
         assertEquals(253969, ConstantProvider.getMapping("test_complex_sym.clan_setting_options_list:clan_setting_option:0"))
         assertEquals(253970, ConstantProvider.getMapping("test_complex_sym.clan_setting_options_list:clan_setting_option:1"))
@@ -103,17 +97,7 @@ class ConstantProviderTest {
         assertEquals(253984, ConstantProvider.getMapping("test_complex_sym.clan_setting_options_list:clan_setting_entry_height"))
         assertEquals(254000, ConstantProvider.getMapping("test_complex_sym.clan_setting_options_list:clan_setting_mobile_entry_height"))
         assertEquals(254016, ConstantProvider.getMapping("test_complex_sym.clan_setting_options_list:clan_setting_icon_size"))
-        
-        // Test that simple types return their type name for subtype(0) access
-        assertEquals("int", ConstantProvider.getMapping("test_complex_sym.hiscore_setapi").subtype(0))
-        assertEquals("string", ConstantProvider.getMapping("test_complex_sym.clan_setting_options_list:clan_setting_title").subtype(0))
-        
-        // Test that simple types return "unknown" for invalid indices
-        assertEquals("unknown", ConstantProvider.getMapping("test_complex_sym.hiscore_setapi").subtype(1))
-        assertEquals("unknown", ConstantProvider.getMapping("test_complex_sym.clan_setting_options_list:clan_setting_title").subtype(1))
-        
-        // Test that entries without type information return "unknown"
-        assertEquals("unknown", ConstantProvider.getMapping("test_complex_sym.clan_setting_options_list:clan_setting_mobile_entry_height").subtype(0))
+
     }
 
     @Test
@@ -192,17 +176,17 @@ class ConstantProviderTest {
     }
 
     @Test
-    fun `test rscmTypes population`() {
+    fun `test types population`() {
         ConstantProvider.load(testDir)
         
         // Should contain all file types
-        assertTrue(ConstantProvider.rscmTypes.contains("test_rscm_v1"))
-        assertTrue(ConstantProvider.rscmTypes.contains("test_rscm_v2"))
-        assertTrue(ConstantProvider.rscmTypes.contains("test_sym"))
-        assertTrue(ConstantProvider.rscmTypes.contains("test_complex_sym"))
+        assertTrue(ConstantProvider.types.contains("test_rscm_v1"))
+        assertTrue(ConstantProvider.types.contains("test_rscm_v2"))
+        assertTrue(ConstantProvider.types.contains("test_sym"))
+        assertTrue(ConstantProvider.types.contains("test_complex_sym"))
 
         // Should not contain duplicates
-        assertEquals(ConstantProvider.rscmTypes.size, ConstantProvider.rscmTypes.distinct().size)
+        assertEquals(ConstantProvider.types.size, ConstantProvider.types.distinct().size)
     }
     
     @Test

@@ -22,32 +22,33 @@ import java.io.File
  * - Base type: baseType.key -> value (removes _v1, _v2, etc. suffixes)
  */
 class SymProvider : MappingProvider {
+    override val mappings: MutableMap<String, MutableMap<String, Int>> = emptyMap<String, MutableMap<String, Int>>().toMutableMap()
+
     
-    // Store type information for complex types
-    private val typeInfo = mutableMapOf<String, String>()
-    
-    override fun load(mappingsDir: File): Map<String, Int> {
+    override fun load(vararg mappings: File) {
+        require(mappings.isNotEmpty()) { "You need at least one mapping file" }
+        val mappingsDir = mappings.first()
+        
         require(mappingsDir.exists() && mappingsDir.isDirectory) {
             "Mappings directory does not exist or is not a directory: ${mappingsDir.absolutePath}"
         }
-        
-        val allMappings = mutableMapOf<String, Int>()
-        
+
+
         mappingsDir.listFiles { _, name -> name.endsWith(".sym") }?.forEach { file ->
             try {
-                processSymFile(file, allMappings)
+                processSymFile(file)
             } catch (e: Exception) {
                 throw IllegalArgumentException("Failed to process Sym file: ${file.name}", e)
             }
         }
         
-        return allMappings
+        return
     }
     
-    private fun processSymFile(file: File, mappings: MutableMap<String, Int>) {
+    private fun processSymFile(file: File) {
         val fullType = file.nameWithoutExtension
-        val baseType = extractBaseType(fullType)
-        
+
+        mappings[fullType] = emptyMap<String, Int>().toMutableMap()
         file.readLines()
             .filter { it.isNotBlank() }
             .forEachIndexed { lineNumber, line ->
@@ -55,16 +56,8 @@ class SymProvider : MappingProvider {
                     val (key, value, typeInfo) = parseSymLine(line, lineNumber + 1)
                     val cleanKey = key.trim()
                     val cleanValue = value.trim().toInt()
-                    
-                    // Store mappings with both full type and base type prefixes
-                    mappings["${fullType}.${cleanKey}"] = cleanValue
-                    mappings["${baseType}.${cleanKey}"] = cleanValue
-                    
-                    if (typeInfo != null) {
-                        this.typeInfo["${fullType}.${cleanKey}"] = typeInfo
-                        this.typeInfo["${baseType}.${cleanKey}"] = typeInfo
-                    }
 
+                    mappings[fullType]!!["${fullType}.${cleanKey}"] = cleanValue
                 } catch (e: Exception) {
                     throw IllegalArgumentException(
                         "Failed to parse line ${lineNumber + 1} in ${file.name}: $line", e
@@ -87,9 +80,5 @@ class SymProvider : MappingProvider {
     }
     
     override fun getSupportedExtensions(): List<String> = listOf(".sym")
-    
-    /**
-     * Get type information for a mapping key
-     */
-    fun getTypeInfo(key: String): String? = typeInfo[key]
+
 }

@@ -6,7 +6,7 @@ import java.io.File
  * Interface for different mapping file formats
  */
 interface MappingProvider {
-    fun load(mappingsDir: File): Map<String, Int>
+    val mappings : MutableMap<String, MutableMap<String, Int>>
+    fun load(vararg mappings: File)
     fun getSupportedExtensions(): List<String>
-    fun getSubTypes(filePrefix: String): Set<String> = emptySet()
 }

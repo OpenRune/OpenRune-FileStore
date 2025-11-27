@@ -365,7 +365,7 @@ class PackConfig(
 
 
     private fun processRSCMModifier(input: String): String {
-        val allowedPrefixes = ConstantProvider.rscmTypes
+        val allowedPrefixes = ConstantProvider.types
         val output = StringBuilder()
         var debugNameAdded = false
 

@@ -16,32 +16,26 @@ import java.io.File
  * Also tracks sub-types for files that contain sub-property definitions.
  */
 class RSCMProvider : MappingProvider {
-    private val subTypesByFile = mutableMapOf<String, MutableSet<String>>()
+    override val mappings: MutableMap<String, MutableMap<String, Int>> = emptyMap<String, MutableMap<String, Int>>().toMutableMap()
 
-    override fun load(mappingsDir: File): Map<String, Int> {
+    override fun load(vararg mappings: File) {
+        require(mappings.isNotEmpty()) { "You need at least one mapping file" }
+        val mappingsDir = mappings.first()
+        
         require(mappingsDir.exists() && mappingsDir.isDirectory) {
             "Mappings directory does not exist or is not a directory: ${mappingsDir.absolutePath}"
         }
-        
-        val allMappings = mutableMapOf<String, Int>()
-        subTypesByFile.clear()
 
         mappingsDir.listFiles { _, name -> name.endsWith(".rscm") }?.forEach { file ->
             try {
-                processRSCMFile(file, allMappings)
+                processRSCMFile(file)
             } catch (e: Exception) {
                 throw IllegalArgumentException("Failed to process RSCM file: ${file.name}", e)
             }
         }
-
-        return allMappings
     }
 
-    override fun getSubTypes(filePrefix: String): Set<String> {
-        return subTypesByFile[filePrefix] ?: emptySet()
-    }
-
-    private fun processRSCMFile(file: File, mappings: MutableMap<String, Int>) {
+    private fun processRSCMFile(file: File) {
         val fullType = file.nameWithoutExtension
         val baseType = extractBaseType(fullType)
         val lines = file.readLines().filter { it.isNotBlank() }
@@ -55,6 +49,8 @@ class RSCMProvider : MappingProvider {
         // Track sub-types for this file
         val fileSubTypes = mutableSetOf<String>()
 
+        mappings[fullType] = emptyMap<String, Int>().toMutableMap()
+
         lines.forEachIndexed { lineNumber, line ->
             try {
                 val (key, value) = when (format) {
@@ -62,20 +58,12 @@ class RSCMProvider : MappingProvider {
                     RSCMFormat.V2 -> parseRSCMV2Line(line, lineNumber + 1, fileSubTypes)
                 }
 
-                // Store mappings with both full type and base type prefixes
-                mappings["${fullType}.${key}"] = value
-                mappings["${baseType}.${key}"] = value
+                mappings[fullType]?.put("${fullType}.${key}",value)
             } catch (e: Exception) {
                 throw IllegalArgumentException(
                     "Failed to parse line ${lineNumber + 1} in ${file.name}: $line", e
                 )
             }
-        }
-
-        // Store sub-types for this file
-        if (fileSubTypes.isNotEmpty()) {
-            subTypesByFile[fullType] = fileSubTypes
-            subTypesByFile[baseType] = fileSubTypes
         }
     }
 
