@@ -147,21 +147,21 @@ class DBRowBuilder(private val tableColumns: MutableMap<Int, DBColumnType>, priv
     }
 
     private fun validate(id: Int) {
-        val values: Array<Any> = columns[id]!!
-        val columnType = tableColumns[id]!!
-        val types: Array<VarType> = columnType.types
-
-        if (values.size > types.size) {
-            val varType = types[0]
-            val homozygousTypes = types.isNotEmpty() && types.all { it == varType }
-
-            //if it is mixed vartypes or defaults are set we do not resize.
-            require(homozygousTypes && columnType.values == null) {
-                "'$rowRscmName' on column $id. Dynamically resizing of varTypes is only allowed with homozygous arrays" +
-                        " that do not have set defaults. Expected ${types.size} columns, but found ${values.size}."
-            }
-            tableColumns[id] = DBColumnType(Array(values.size) { varType }, null, columnType.rscmName)
-        }
+//        val values: Array<Any> = columns[id]!!
+//        val columnType = tableColumns[id]!!
+//        val types: Array<VarType> = columnType.types
+//
+//        if (values.size > types.size) {
+//            val varType = types[0]
+//            val homozygousTypes = types.isNotEmpty() && types.all { it == varType }
+//
+//            //if it is mixed vartypes or defaults are set we do not resize.
+//            require(homozygousTypes && columnType.values == null) {
+//                "'$rowRscmName' on column $id. Dynamically resizing of varTypes is only allowed with homozygous arrays" +
+//                        " that do not have set defaults. Expected ${types.size} columns, but found ${values.size}."
+//            }
+//            tableColumns[id] = DBColumnType(Array(values.size) { varType }, null, columnType.rscmName)
+//        }
     }
 
     fun build(): DBRow {
