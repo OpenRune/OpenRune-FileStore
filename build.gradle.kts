@@ -6,7 +6,7 @@ plugins {
 }
 
 val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "D:\\openrune-hosting"
-val buildNumber = "2.3.2"
+val buildNumber = "2.3.3"
 
 
 
