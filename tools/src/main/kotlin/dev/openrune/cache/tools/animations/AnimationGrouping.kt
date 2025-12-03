@@ -153,7 +153,7 @@ internal class AnimationGrouping {
 
 fun main() = runBlocking {
     val time = measureTimeMillis {
-        val cache = Cache.load(Path.of("E:\\RSPS\\Hazy\\HazyGameServer\\data\\cache"), false)
+        val cache = Cache.load(Path.of("E:\\RSPS\\Hazy\\HazyGameServer\\data\\cache"))
         AnimationGrouping().generate(cache)
     }
     println("Time To Dump: ${time} ms")
