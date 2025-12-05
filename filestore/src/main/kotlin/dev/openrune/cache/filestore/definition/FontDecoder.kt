@@ -31,7 +31,7 @@ class FontDecoder(private val cache: Cache) {
             )
 
             val fontData = cache.data(FONTS, archive, 0, null) ?: return@forEach
-            fonts[archive] = codec.loadData(archive, fontData)
+            fonts[archive] = codec.loadData(archive,fontData)
 
             // Reset SpriteData arrays after usage
             SpriteData.xOffsets = intArrayOf()

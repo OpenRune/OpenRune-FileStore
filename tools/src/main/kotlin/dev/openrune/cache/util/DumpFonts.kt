@@ -45,7 +45,7 @@ class DumpFonts(private val cache: Cache, private val dumpLocation: File) {
             val topBearing = font.topBearings[i]
             val height = font.heights[i]
             val width = font.widths[i]
-            val advance = font.advances[i]
+            val advance = font.glyphAdvances?.get(i)
             val leftBearing = font.leftBearings[i]
             val pixels = font.pixels[i]
 
@@ -53,10 +53,10 @@ class DumpFonts(private val cache: Cache, private val dumpLocation: File) {
             val allDefault = topBearing == 0 && height == 0 && width == 0 && advance == 0 && leftBearing == 0 && isEmptyPixels
 
             if (allDefault) null
-            else FontJson.Glyph(i, topBearing, height, width, advance, leftBearing, pixels)
+            else FontJson.Glyph(i, topBearing, height, width, advance!!, leftBearing, pixels)
         }
 
-        val fontJson = FontJson(font.ascent, font.maxAscent, font.maxDescent, glyphs)
+        val fontJson = FontJson(font.ascent!!, font.maxAscent, font.maxDescent, glyphs)
 
         val json = GsonBuilder()
             .setPrettyPrinting()

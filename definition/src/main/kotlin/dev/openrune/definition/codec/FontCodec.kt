@@ -17,14 +17,69 @@ class FontCodec(
 ) : DefinitionCodec<FontType> {
 
     override fun FontType.read(opcode: Int, buffer: ByteBuf) {
-        this.leftBearings = leftBearingsSprite
-        this.topBearings = topBearingsSprite
-        this.widths = widthsSprite
-        this.heights = heightsSprite
-        this.spritePalette = spritePaletteSprite
-        readMetrics(buffer.array())
-        this.pixels = pixelsSprite
+        val glyphAdvances = IntArray(256)
+        for (i in glyphAdvances.indices) {
+            glyphAdvances[i] = buffer.readUnsignedByte().toInt()
+        }
+        this.glyphAdvances = glyphAdvances
 
+        if (buffer.readableBytes() == Byte.SIZE_BYTES) {
+            val ascent = buffer.readUnsignedByte().toInt()
+            this.ascent = ascent
+            return
+        }
+
+        val glyphHeights = IntArray(256)
+        for (i in glyphHeights.indices) {
+            glyphHeights[i] = buffer.readUnsignedByte().toInt()
+        }
+
+        val bearingY = IntArray(256)
+        for (i in bearingY.indices) {
+            bearingY[i] = buffer.readUnsignedByte().toInt()
+        }
+
+        val rightKern = Array(256) { ByteArray(glyphHeights[it]) }
+        for (i in rightKern.indices) {
+            var kern: Byte = 0
+            for (j in rightKern[i].indices) {
+                kern = (kern + buffer.readByte()).toByte()
+                rightKern[i][j] = kern
+            }
+        }
+
+        var tmpPos = 0
+        val leftKern = Array(256) { ByteArray(glyphHeights[it]) }
+        for (i in leftKern.indices) {
+            var kern: Byte = 0
+            for (j in leftKern[i].indices) {
+                kern = (kern + buffer.getByte(tmpPos++)).toByte()
+                leftKern[i][j] = kern
+            }
+        }
+
+        val kerning = ByteArray(65536)
+        for (leftGlyph in 0 until 256) {
+            if (leftGlyph == 32 || leftGlyph == 160) {
+                continue
+            }
+            for (rightGlyph in 0 until 256) {
+                val computed =
+                    computeKerning(
+                        rightKern,
+                        leftKern,
+                        bearingY,
+                        glyphAdvances,
+                        glyphHeights,
+                        leftGlyph,
+                        rightGlyph,
+                    )
+                kerning[(leftGlyph shl 8) or rightGlyph] = computed.toByte()
+            }
+        }
+        this.kerning = kerning
+
+        this.ascent = glyphHeights[32] + bearingY[32]
         var minTopBearing = Int.MAX_VALUE
         var maxBottomBearing = Int.MIN_VALUE
 
@@ -38,105 +93,44 @@ class FontCodec(
             }
         }
 
-        maxAscent = ascent - minTopBearing
-        maxDescent = maxBottomBearing - ascent
-    }
 
-    private fun FontType.readMetrics(data: ByteArray) {
-        advances = IntArray(256)
-        var index = 0
-        if (data.size == 257) {
-            for (i in advances.indices) {
-                advances[i] = data[i].toInt() and 0xFF
-            }
-            ascent = data[256].toInt() and 0xFF
-        } else {
-            for (i in 0 until 256) {
-                advances[i] = data[index++].toInt() and 0xFF
-            }
-            val charWidth = IntArray(256)
-            val charHeights = IntArray(256)
+        maxAscent = ascent!! - minTopBearing
+        maxDescent = maxBottomBearing - ascent!!
 
-            for (i in 0 until 256) {
-                charWidth[i] = data[index++].toInt() and 0xFF
-            }
-            for (i in 0 until 256) {
-                charHeights[i] = data[index++].toInt() and 0xFF
-            }
-
-            val charBitmapWidth = Array(256) { ByteArray(charWidth[it]) }
-            for (i in 0 until 256) {
-                var sum = 0
-                for (j in charBitmapWidth[i].indices) {
-                    sum += data[index++]
-                    charBitmapWidth[i][j] = sum.toByte()
-                }
-            }
-
-            val charBitmapHeights = Array(256) { ByteArray(charWidth[it]) }
-            for (i in 0 until 256) {
-                var sum: Byte = 0
-                for (j in charBitmapHeights[i].indices) {
-                    sum = (sum + data[index++]).toByte()
-                    charBitmapHeights[i][j] = sum
-                }
-            }
-
-            kerning = ByteArray(65536)
-            for (i in 0 until 256) {
-                if (i != 32 && i != 160) {
-                    for (j in 0 until 256) {
-                        if (j != 32 && j != 160) {
-                            kerning[j + (i shl 8)] = computeKerning(
-                                charBitmapWidth,
-                                charBitmapHeights,
-                                charHeights,
-                                advances,
-                                charWidth,
-                                i,
-                                j
-                            ).toByte()
-                        }
-                    }
-                }
-            }
-
-            ascent = charHeights[32] + charWidth[32]
-        }
     }
 
     private fun computeKerning(
-        firstGlyphs: Array<ByteArray>,
-        secondGlyphs: Array<ByteArray>,
-        firstWidths: IntArray,
-        secondHeights: IntArray,
-        secondWidths: IntArray,
-        firstIndex: Int,
-        secondIndex: Int
+        rightKern: Array<ByteArray>,
+        leftKern: Array<ByteArray>,
+        bearingY: IntArray,
+        width: IntArray,
+        height: IntArray,
+        leftGlyph: Int,
+        rightGlyph: Int,
     ): Int {
-        val firstStart = firstWidths[firstIndex]
-        val firstEnd = firstStart + secondHeights[firstIndex]
-        val secondStart = secondWidths[secondIndex]
-        val secondEnd = secondStart + secondHeights[secondIndex]
-        val commonStart = maxOf(firstStart, secondStart)
-        val commonEnd = minOf(firstEnd, secondEnd)
+        val minY1 = bearingY[leftGlyph]
+        val maxY1 = minY1 + height[leftGlyph]
+        val minY2 = bearingY[rightGlyph]
+        val maxY2 = minY2 + height[rightGlyph]
 
-        var minimum = firstWidths[firstIndex].coerceAtMost(secondWidths[secondIndex])
-        val firstArray = firstGlyphs[firstIndex]
-        val secondArray = secondGlyphs[secondIndex]
+        val minY = minY1.coerceAtLeast(minY2)
+        val maxY = maxY1.coerceAtMost(maxY2)
 
-        var firstArrayIndex = commonStart - firstStart
-        var secondArrayIndex = commonStart - secondStart
+        var kern = width[leftGlyph].coerceAtMost(width[rightGlyph])
+        val leftGlyphKern = leftKern[leftGlyph]
+        val rightGlyphKern = rightKern[rightGlyph]
 
-        for (i in commonStart until commonEnd) {
-            val combinedValue =
-                (firstArray[firstArrayIndex++].toInt() and 0xFF) + (secondArray[secondArrayIndex++].toInt() and 0xFF)
-            if (combinedValue < minimum) {
-                minimum = combinedValue
+        var y1 = minY - minY1
+        var y2 = minY - minY2
+
+        for (i in minY until maxY) {
+            val total = leftGlyphKern[y1++].toInt() + rightGlyphKern[y2++].toInt()
+            if (total < kern) {
+                kern = total
             }
         }
 
-        return -minimum
+        return -kern
     }
 
     override fun ByteBuf.encode(definition: FontType) {
@@ -144,7 +138,7 @@ class FontCodec(
     }
 
     override fun createDefinition() = FontType(
-        0, intArrayOf(), intArrayOf(), intArrayOf(), intArrayOf(), intArrayOf(), arrayOf(),
+        0, intArrayOf(), intArrayOf(), intArrayOf(), intArrayOf(), arrayOf(),
     )
 
     override fun readLoop(definition: FontType, buffer: ByteBuf) {
