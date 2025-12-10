@@ -1,16 +1,15 @@
 package dev.openrune.cache.tools.iftype.dsl.impl
 
-import dev.openrune.cache.tools.iftype.dsl.InterfaceComponent
-import dev.openrune.definition.type.widget.ComponentType
-import dev.openrune.definition.type.widget.toJagexColor
+import dev.openrune.cache.tools.iftype.dsl.BaseComponent
+import dev.openrune.cache.tools.iftype.dsl.toJagexColor
+import dev.openrune.definition.type.widget.ComponentTypeBuilder
 import java.awt.Color
 
 object Line {
 
     fun applyLine(name: String, bld: LineComponent) = bld.apply(name)
 
-    open class LineComponent : InterfaceComponent() {
-
+    open class LineComponent : BaseComponent() {
         var lineWidth: Int = 1
         var color: Int = 0
         var lineDirection: Boolean = false
@@ -31,15 +30,14 @@ object Line {
             this.lineDirection = bld()
         }
 
-        fun apply(componentName : String): ComponentType {
-            val component = ComponentType()
-            applyTo(component)
-            component.type = 9
-            component.lineWidth = lineWidth
-            component.color = color
-            component.lineDirection = lineDirection
-            component.name = componentName
-            return component
+        fun apply(componentName : String): ComponentTypeBuilder {
+            return ComponentTypeBuilder(componentName).apply {
+                applyCommonProperties(this)
+                type = 9
+                lineWid = this@LineComponent.lineWidth
+                colour1 = this@LineComponent.color
+                lineDirection = this@LineComponent.lineDirection
+            }
         }
 
     }

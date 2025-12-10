@@ -58,6 +58,11 @@ fun ByteBuf.readShortSmartSub(): Int {
     }
 }
 
+public fun ByteBuf.readUnsignedShortOrNull(): Int? {
+    val value = readUnsignedShort()
+    return if (value == 65535) null else value
+}
+
 // 0 terminated string.
 fun ByteBuf.readString(): String {
     val sb = StringBuilder()

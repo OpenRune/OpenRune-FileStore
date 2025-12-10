@@ -1,12 +1,13 @@
 package dev.openrune.cache.tools.iftype.dsl.impl
 
-import dev.openrune.cache.tools.iftype.dsl.InterfaceComponent
-import dev.openrune.definition.type.widget.AccessMask
-import dev.openrune.definition.type.widget.ComponentType
-import dev.openrune.definition.type.widget.toJagexColor
+import dev.openrune.cache.tools.iftype.dsl.BaseComponent
+import dev.openrune.cache.tools.iftype.dsl.setOption
+import dev.openrune.cache.tools.iftype.dsl.toJagexColor
+import dev.openrune.definition.type.widget.ComponentTypeBuilder
+import dev.openrune.definition.type.widget.IfEvent
 import java.awt.Color
 
-enum class Alignment(val value: Int) {
+enum class TextAlignment(val value: Int) {
     LEFT(0),
     CENTER(1),
     RIGHT(2);
@@ -24,15 +25,17 @@ object Text {
 
     fun applyText(componentName: String, bld: TextComponent) = bld.apply(componentName)
 
-    open class TextComponent : InterfaceComponent() {
-
+    open class TextComponent : BaseComponent() {
         var text: String = ""
         var font: FontType = FontType.FONT_REGULAR
         var lineHeight: Int = 0
-        var xAllignment: Int = Alignment.CENTER.value
-        var yAllignment: Int = Alignment.CENTER.value
+        var xAllignment: Int = TextAlignment.CENTER.value
+        var yAllignment: Int = TextAlignment.CENTER.value
         var textShadowed: Boolean = true
         var color: Int = 0
+        private val options = mutableListOf<String>()
+        private var hoverNormalColor: Color? = null
+        private var hoverHoverColor: Color? = null
 
         fun display(bld: () -> String) {
             text = bld()
@@ -70,41 +73,51 @@ object Text {
             color = value.toJagexColor()
         }
 
-        fun verticalAlignment(bld: () -> Alignment) {
+        fun verticalAlignment(bld: () -> TextAlignment) {
             yAllignment = bld().value
         }
 
-        fun horizontalAlignment(bld: () -> Alignment) {
+        fun horizontalAlignment(bld: () -> TextAlignment) {
             xAllignment = bld().value
         }
 
         fun addOption(option: String, addAccessMask: Boolean = true) {
+            options.add(option)
             if (addAccessMask) {
-                accessMask = AccessMask.CLICK_OP1.value
+                events = (events ?: 0) or IfEvent.DeprecatedOp1.bitmask.toInt()
             }
-            setOption(0, option)
         }
 
         fun effectHover(colorNormal: Color, colorHover: Color) {
-            onMouseOverListener = arrayOf(45, "component:self", colorNormal.toJagexColor())
-            onMouseLeaveListener = arrayOf(45, "component:self", colorHover.toJagexColor())
+            hoverNormalColor = colorNormal
+            hoverHoverColor = colorHover
         }
 
-        fun apply(componentName : String): ComponentType {
-            val component = ComponentType()
-            applyTo(component)
-            component.type = 4
-            component.text = text
-            component.font = font.value
-            component.lineHeight = lineHeight
-            component.xAllignment = xAllignment
-            component.yAllignment = yAllignment
-            component.textShadowed = textShadowed
-            component.color = color
-            component.name = componentName
-            return component
+        fun apply(componentName : String): ComponentTypeBuilder {
+            return ComponentTypeBuilder(componentName).apply {
+                applyCommonProperties(this)
+                type = 4
+                text = this@TextComponent.text
+                textFont = this@TextComponent.font.value
+                textLineHeight = this@TextComponent.lineHeight
+                textAlignH = this@TextComponent.xAllignment
+                textAlignV = this@TextComponent.yAllignment
+                textShadow = this@TextComponent.textShadowed
+                colour1 = this@TextComponent.color
+                
+                // Apply options
+                this@TextComponent.options.forEachIndexed { index, option ->
+                    setOption(index, option)
+                }
+                
+                // Apply hover effect
+                this@TextComponent.hoverNormalColor?.let { normal ->
+                    this@TextComponent.hoverHoverColor?.let { hover ->
+                        onMouseOver = arrayOf(45, "component:self", normal.toJagexColor())
+                        onMouseLeave = arrayOf(45, "component:self", hover.toJagexColor())
+                    }
+                }
+            }
         }
-
-
     }
 }

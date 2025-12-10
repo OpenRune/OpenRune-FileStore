@@ -1,20 +1,20 @@
 package dev.openrune.cache.tools.iftype.dsl.impl
 
-import dev.openrune.cache.tools.iftype.dsl.InterfaceComponent
-import dev.openrune.definition.type.widget.AccessMask
-import dev.openrune.definition.type.widget.ComponentType
-import dev.openrune.definition.type.widget.toJagexColor
+import dev.openrune.cache.tools.iftype.dsl.BaseComponent
+import dev.openrune.cache.tools.iftype.dsl.setOption
+import dev.openrune.cache.tools.iftype.dsl.toJagexColor
+import dev.openrune.definition.type.widget.ComponentTypeBuilder
+import dev.openrune.definition.type.widget.IfEvent
 import java.awt.Color
 
 object Graphic {
 
-    fun applyGraphic(name: String, bld: GraphicComponent) : ComponentType {
+    fun applyGraphic(name: String, bld: GraphicComponent) : ComponentTypeBuilder {
         require(bld.spriteId != -1) { "spriteId must be set to a valid value before applying GraphicComponent." }
         return bld.apply(name)
     }
 
-    open class GraphicComponent : InterfaceComponent() {
-
+    open class GraphicComponent : BaseComponent() {
         var spriteId: Int = -1
         var textureId: Int = 0
         var spriteTiling: Boolean = false
@@ -23,6 +23,10 @@ object Graphic {
         var flippedVertically: Boolean = false
         var flippedHorizontally: Boolean = false
         var opacity: Int = 0
+        private val options = mutableListOf<String>()
+        private var hoverHoverSprite: Int? = null
+        private var hoverNormalSprite: Int? = null
+        private var hoverComponent: String = "component:self"
 
         fun spriteId(bld: () -> Int) {
             val value = bld()
@@ -65,35 +69,44 @@ object Graphic {
         }
 
         fun addOption(option: String, addAccessMask: Boolean = true) {
+            options.add(option)
             if (addAccessMask) {
-                accessMask = AccessMask.CLICK_OP1.value
+                events = (events ?: 0) or IfEvent.DeprecatedOp1.bitmask.toInt()
             }
-            setOption(0, option)
         }
 
         fun effectHover(hover: Int, normal: Int, component: String = "component:self") {
-            onMouseOverListener = arrayOf(44, component, hover)
-            onMouseLeaveListener = arrayOf(44, component, normal)
+            hoverHoverSprite = hover
+            hoverNormalSprite = normal
+            hoverComponent = component
         }
 
-        fun apply(componentName : String): ComponentType {
-            val component = ComponentType()
-            applyTo(component)
-            component.type = 5
-            component.spriteId = spriteId
-            component.textureId = textureId
-            component.spriteTiling = spriteTiling
-            component.borderType = borderType
-            component.shadowColor = shadowColor
-            component.flippedVertically = flippedVertically
-            component.flippedHorizontally = flippedHorizontally
-            component.opacity = opacity
-            component.xMode = xMode
-            component.yMode = yMode
-            component.contentType = contentType
-            component.isIf3 = isIf3
-            component.name = componentName
-            return component
+        fun apply(componentName : String): ComponentTypeBuilder {
+            return ComponentTypeBuilder(componentName).apply {
+                applyCommonProperties(this)
+                type = 5
+                graphic = this@GraphicComponent.spriteId
+                angle2d = this@GraphicComponent.textureId
+                tiling = this@GraphicComponent.spriteTiling
+                outline = this@GraphicComponent.borderType
+                graphicShadow = this@GraphicComponent.shadowColor
+                vFlip = this@GraphicComponent.flippedVertically
+                hFlip = this@GraphicComponent.flippedHorizontally
+                trans1 = this@GraphicComponent.opacity
+                
+                // Apply options
+                this@GraphicComponent.options.forEachIndexed { index, option ->
+                    setOption(index, option)
+                }
+                
+                // Apply hover effect
+                this@GraphicComponent.hoverHoverSprite?.let { hover ->
+                    this@GraphicComponent.hoverNormalSprite?.let { normal ->
+                        onMouseOver = arrayOf(44, this@GraphicComponent.hoverComponent, hover)
+                        onMouseLeave = arrayOf(44, this@GraphicComponent.hoverComponent, normal)
+                    }
+                }
+            }
         }
 
     }

@@ -1,14 +1,13 @@
 package dev.openrune.cache.tools.iftype.dsl.impl
 
-import dev.openrune.cache.tools.iftype.dsl.InterfaceComponent
-import dev.openrune.definition.type.widget.ComponentType
+import dev.openrune.cache.tools.iftype.dsl.BaseComponent
+import dev.openrune.definition.type.widget.ComponentTypeBuilder
 
 object Model {
 
     fun applyModel(name: String, bld: ModelComponent) = bld.apply(name)
 
-    open class ModelComponent : InterfaceComponent() {
-
+    open class ModelComponent : BaseComponent() {
         var modelId: Int = -1
         var offsetX2d: Int = 0
         var offsetY2d: Int = 0
@@ -60,22 +59,21 @@ object Model {
             orthogonal = bld()
         }
 
-        fun apply(componentName : String): ComponentType {
-            val component = ComponentType()
-            applyTo(component)
-            component.type = 6
-            component.modelId = modelId
-            component.offsetX2d = offsetX2d
-            component.offsetY2d = offsetY2d
-            component.rotationX = rotationX
-            component.rotationZ = rotationZ
-            component.rotationY = rotationY
-            component.modelZoom = modelZoom
-            component.animation = animation
-            component.modelHeightOverride = modelHeightOverride
-            component.orthogonal = orthogonal
-            component.name = componentName
-            return component
+        fun apply(componentName : String): ComponentTypeBuilder {
+            return ComponentTypeBuilder(componentName).apply {
+                applyCommonProperties(this)
+                type = 6
+                model = this@ModelComponent.modelId
+                modelX = this@ModelComponent.offsetX2d
+                modelY = this@ModelComponent.offsetY2d
+                modelAngleX = this@ModelComponent.rotationX
+                modelAngleZ = this@ModelComponent.rotationZ
+                modelAngleY = this@ModelComponent.rotationY
+                modelZoom = this@ModelComponent.modelZoom
+                modelAnim = this@ModelComponent.animation
+                modelObjWidth = this@ModelComponent.modelHeightOverride
+                modelOrthog = this@ModelComponent.orthogonal
+            }
         }
 
     }

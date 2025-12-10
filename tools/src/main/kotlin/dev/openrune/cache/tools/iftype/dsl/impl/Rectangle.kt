@@ -1,16 +1,15 @@
 package dev.openrune.cache.tools.iftype.dsl.impl
 
-import dev.openrune.cache.tools.iftype.dsl.InterfaceComponent
-import dev.openrune.definition.type.widget.ComponentType
-import dev.openrune.definition.type.widget.toJagexColor
+import dev.openrune.cache.tools.iftype.dsl.BaseComponent
+import dev.openrune.cache.tools.iftype.dsl.toJagexColor
+import dev.openrune.definition.type.widget.ComponentTypeBuilder
 import java.awt.Color
 
 object Rectangle {
 
     fun applyRectangle(name: String, bld: RectangleComponent) = bld.apply(name)
 
-    open class RectangleComponent : InterfaceComponent() {
-
+    open class RectangleComponent : BaseComponent() {
         var color: Int = 0
         var filled: Boolean = false
         var opacity: Int = 0
@@ -33,15 +32,14 @@ object Rectangle {
             this.filled = bld()
         }
 
-        fun apply(componentName : String): ComponentType {
-            val component = ComponentType()
-            applyTo(component)
-            component.type = 3
-            component.color = color
-            component.filled = filled
-            component.opacity = opacity
-            component.name = componentName
-            return component
+        fun apply(componentName : String): ComponentTypeBuilder {
+            return ComponentTypeBuilder(componentName).apply {
+                applyCommonProperties(this)
+                type = 3
+                colour1 = this@RectangleComponent.color
+                fill = this@RectangleComponent.filled
+                trans1 = this@RectangleComponent.opacity
+            }
         }
 
     }
