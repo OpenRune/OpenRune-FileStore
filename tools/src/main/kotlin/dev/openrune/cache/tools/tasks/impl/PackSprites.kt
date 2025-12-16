@@ -9,7 +9,7 @@ import dev.openrune.cache.tools.tasks.impl.sprites.SpriteManifest
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
-import dev.openrune.filesystem.Cache
+import dev.openrune.filesystem.WritableCache
 import io.netty.buffer.Unpooled
 import java.awt.image.BufferedImage
 import java.io.File
@@ -39,7 +39,7 @@ class PackSprites(
     }
     private var manifest: Map<String, SpriteManifest> = emptyMap()
 
-    override fun init(cache: Cache) {
+    override fun init(cache: WritableCache) {
         val files = getFiles(spritesDirectory, "png","PNG")
         val alreadyPacked = mutableListOf<String>()
         val progress = progress("Packing OSRS Sprites", files.filter { it.extension.contains("png",true) }.size)
@@ -60,7 +60,7 @@ class PackSprites(
         progress.close()
     }
 
-    private fun processSpriteFile(spriteFile: File, alreadyPacked: MutableList<String>, cache: Cache) {
+    private fun processSpriteFile(spriteFile: File, alreadyPacked: MutableList<String>, cache: WritableCache) {
         val fileName = spriteFile.nameWithoutExtension.lowercase()
         manifest[fileName.lowercase()]?.let { data ->
             if (data.atlas != null) {
@@ -89,7 +89,7 @@ class PackSprites(
 
     }
 
-    private fun handleUnNamedSprite(spriteFile: File, cache: Cache) {
+    private fun handleUnNamedSprite(spriteFile: File, cache: WritableCache) {
         if (spriteFile.name.matches(Regex("^[_0-9]+\\.png$", RegexOption.IGNORE_CASE))) {
             val (group, index) = spriteFile.nameWithoutExtension.split("_").let {
                 it[0].toInt() to it.getOrElse(1) { "0" }.toInt()

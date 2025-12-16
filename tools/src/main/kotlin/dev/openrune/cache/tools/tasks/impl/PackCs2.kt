@@ -15,7 +15,7 @@ import dev.openrune.clientscript.compiler.ClientScripts
 import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.GameValGroupTypes.IFTYPES
 import dev.openrune.definition.type.DBTableType
-import dev.openrune.filesystem.Cache
+import dev.openrune.filesystem.WritableCache
 import java.io.File
 import java.util.*
 
@@ -29,7 +29,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
         "openrune-gameval-hashes-${cs2Dir.name}.properties"
     )
 
-    override fun init(cache: Cache) {
+    override fun init(cache: WritableCache) {
         try {
             val library = (cache as CacheDelegate).library
             val configFile = File(cs2Dir, "neptune.toml")
@@ -65,7 +65,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
         }
     }
 
-    private fun collectValsToUpdate(cache: Cache, savedVals: Map<Int, Int>): Map<Int, Int> {
+    private fun collectValsToUpdate(cache: WritableCache, savedVals: Map<Int, Int>): Map<Int, Int> {
         val currentVals = collectCurrentValCrcs(cache)
         val toUpdate = mutableMapOf<Int, Int>()
 
@@ -78,7 +78,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
         return toUpdate
     }
 
-    private fun collectCurrentValCrcs(cache: Cache): Map<Int, Int> = mapOf(
+    private fun collectCurrentValCrcs(cache: WritableCache): Map<Int, Int> = mapOf(
         GameValGroupTypes.OBJTYPES.id to cache.crc(GAMEVALS, GameValGroupTypes.OBJTYPES.id),
         GameValGroupTypes.LOCTYPES.id to cache.crc(GAMEVALS, GameValGroupTypes.LOCTYPES.id),
         GameValGroupTypes.NPCTYPES.id to cache.crc(GAMEVALS, GameValGroupTypes.NPCTYPES.id),
@@ -99,7 +99,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
             key.toString().toInt() to value.toString().toInt()
         }
     }
-    private fun saveCurrentVals(cache: Cache) {
+    private fun saveCurrentVals(cache: WritableCache) {
         val props = Properties()
         collectCurrentValCrcs(cache).forEach { (group, crc) ->
             props[group.toString()] = crc.toString()
@@ -110,7 +110,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
         }
     }
 
-    fun dumpCacheVals(basePath : File,cache: Cache) {
+    fun dumpCacheVals(basePath : File,cache: WritableCache) {
         symDumper(basePath,cache,"obj", GameValGroupTypes.OBJTYPES)
         symDumper(basePath,cache,"loc", GameValGroupTypes.LOCTYPES)
         symDumper(basePath,cache,"npc", GameValGroupTypes.NPCTYPES)
@@ -123,7 +123,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
         symDumperDBTables(basePath,cache)
     }
 
-    private fun symDumper(basePath: File,cache: Cache, name: String, group: GameValGroupTypes) {
+    private fun symDumper(basePath: File, cache: WritableCache, name: String, group: GameValGroupTypes) {
         if (!valsToUpdate.containsKey(group.id)) return
         if (group == GameValGroupTypes.TABLETYPES) return
 
@@ -131,7 +131,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
         File(basePath, "$name.sym").writeText(transformed.joinToString("\n") + "\n")
     }
 
-    private fun symDumperDBTables(basePath: File, cache: Cache) {
+    private fun symDumperDBTables(basePath: File, cache: WritableCache) {
         if (!valsToUpdate.keys.any { it == GameValGroupTypes.TABLETYPES.id || it == GameValGroupTypes.ROWTYPES.id }) return
 
         val dbTableTypes = mutableMapOf<Int, DBTableType>()
@@ -175,7 +175,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
         File(basePath, "dbcolumn.sym").writeText(dbColumns.joinToString("\n") + "\n")
     }
 
-    private fun symDumperInterface(basePath: File, cache: Cache) {
+    private fun symDumperInterface(basePath: File, cache: WritableCache) {
         if (!valsToUpdate.containsKey(IFTYPES.id)) return
 
         val infTypes = GameValHandler.readGameVal(IFTYPES, cache)

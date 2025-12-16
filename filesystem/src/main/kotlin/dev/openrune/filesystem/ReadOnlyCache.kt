@@ -201,36 +201,6 @@ abstract class ReadOnlyCache(
 
     override fun lastFileId(indexId: Int, archive: Int) = files.getOrNull(indexId)?.getOrNull(archive)?.lastOrNull() ?: -1
 
-    override fun write(index: Int, archive: Int, file: Int, data: ByteArray, xteas: IntArray?) {
-        throw UnsupportedOperationException("Read only cache.")
-    }
-
-    override fun write(index: Int, archive: Int, data: ByteArray, xteas: IntArray?) {
-        throw UnsupportedOperationException("Read only cache.")
-    }
-
-    override fun write(index: Int, archive: String, data: ByteArray, xteas: IntArray?) {
-        throw UnsupportedOperationException("Read only cache.")
-    }
-
-    override fun createIndex(
-        compressionType: Compression,
-        version: Int,
-        revision: Int,
-        named: Boolean,
-        whirlpool: Boolean,
-        lengths: Boolean,
-        checksums: Boolean,
-        writeReferenceTable: Boolean,
-        id: Int
-    ) {
-        throw UnsupportedOperationException("Read only cache.")
-    }
-
-    override fun update(): Boolean {
-        return false
-    }
-
     override fun close() {
     }
 

@@ -3,10 +3,10 @@ package dev.openrune.cache
 import com.displee.cache.CacheLibrary
 import com.displee.compress.CompressionType
 import com.github.michaelbull.logging.InlineLogger
-import dev.openrune.filesystem.Cache
+import dev.openrune.filesystem.WritableCache
 import dev.openrune.filesystem.Compression
 
-class CacheDelegate(val library: CacheLibrary) : Cache {
+class CacheDelegate(val library: CacheLibrary) : WritableCache {
 
     constructor(directory: String) : this(timed(directory))
 

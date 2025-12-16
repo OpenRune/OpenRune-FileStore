@@ -14,6 +14,7 @@ import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.toArray
 import dev.openrune.definition.util.writeString
 import dev.openrune.filesystem.Cache
+import dev.openrune.filesystem.WritableCache
 import io.netty.buffer.Unpooled
 import readCacheRevision
 
@@ -128,7 +129,7 @@ object GameValHandler {
         return elements
     }
 
-    fun encodeGameVals(type: GameValGroupTypes, values: List<GameValElement>, cache: Cache, cacheRevision : Int = -1) {
+    fun encodeGameVals(type: GameValGroupTypes, values: List<GameValElement>, cache: WritableCache, cacheRevision : Int = -1) {
 
         var type = type
 

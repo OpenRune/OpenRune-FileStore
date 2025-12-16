@@ -4,14 +4,14 @@ import dev.openrune.cache.MAPS
 import dev.openrune.cache.util.XteaLoader
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.progress
-import dev.openrune.filesystem.Cache
+import dev.openrune.filesystem.WritableCache
 import java.io.File
 
 /*
  * Removes Xteas Encryption from the maps
  */
 class RemoveXteas(private val xteaLocation : File) : CacheTask() {
-    override fun init(cache: Cache) {
+    override fun init(cache: WritableCache) {
         XteaLoader.load(xteaLocation)
         var mapCount = 0
         for (x in 0..256) {

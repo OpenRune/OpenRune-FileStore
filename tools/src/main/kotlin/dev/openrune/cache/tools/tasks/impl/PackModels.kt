@@ -6,7 +6,7 @@ import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.decompressGzipToBytes
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
-import dev.openrune.filesystem.Cache
+import dev.openrune.filesystem.WritableCache
 import java.io.File
 import java.nio.file.Files
 
@@ -15,7 +15,7 @@ class PackModels(
     private val modelDirectory: File,
     private val rscmMappingPrefix: String = "models."
 ) : CacheTask() {
-    override fun init(cache: Cache) {
+    override fun init(cache: WritableCache) {
         val modelFiles = getFiles(modelDirectory, "gz", "dat")
         val modelSize = modelFiles.size
         val progressModels = progress("Packing Models", modelSize)

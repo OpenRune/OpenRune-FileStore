@@ -8,7 +8,7 @@ import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.decompressGzipToBytes
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
-import dev.openrune.filesystem.Cache
+import dev.openrune.filesystem.WritableCache
 import java.io.File
 import java.nio.file.Files
 import kotlin.random.Random
@@ -20,7 +20,7 @@ enum class XteaType {
 }
 
 class PackMaps(private val mapsDirectory: File, private val xteaLocation: File = File("xteas.json"), private val xteaType: XteaType = XteaType.NO_KEYS) : CacheTask() {
-    override fun init(cache: Cache) {
+    override fun init(cache: WritableCache) {
         val encodeXteas = xteaType != XteaType.NO_KEYS
 
         if (encodeXteas && !xteaLocation.exists()) {
@@ -87,7 +87,7 @@ class PackMaps(private val mapsDirectory: File, private val xteaLocation: File =
         }
     }
 
-    fun packMap(cache: Cache, regionX : Int, regionY : Int, tileData : ByteArray, objData : ByteArray, keys : IntArray?) {
+    fun packMap(cache: WritableCache, regionX : Int, regionY : Int, tileData : ByteArray, objData : ByteArray, keys : IntArray?) {
         val mapArchiveName = "m" + regionX + "_" + regionY
         val landArchiveName = "l" + regionX + "_" + regionY
 

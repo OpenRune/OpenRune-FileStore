@@ -21,7 +21,7 @@ import dev.openrune.cache.util.progress
 import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.definition.codec.*
-import dev.openrune.filesystem.Cache
+import dev.openrune.filesystem.WritableCache
 import io.netty.buffer.Unpooled
 import java.io.File
 import java.lang.reflect.Modifier
@@ -217,7 +217,7 @@ class PackConfig(
     internal val logger = InlineLogger()
 
     @OptIn(InternalAPI::class)
-    override fun init(cache: Cache) {
+    override fun init(cache: WritableCache) {
         val size = getFiles(directory, "toml").size
         val progress = progress("Packing Configs", size)
         if (size != 0) {
@@ -255,7 +255,7 @@ class PackConfig(
         packType: PackType,
         def : Definition,
         codec: DefinitionCodec<T>,
-        cache: Cache,
+        cache: WritableCache,
         inherit : Int,
         debugName : String
     ) {
@@ -303,7 +303,7 @@ class PackConfig(
         codec: DefinitionCodec<T>,
         archive: Int,
         index : Int,
-        cache: Cache
+        cache: WritableCache
     ): T? {
         val data = cache.data(index, archive, inherit)
         return data?.let { codec.loadData(inherit, data) }

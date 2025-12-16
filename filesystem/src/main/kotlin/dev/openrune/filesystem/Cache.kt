@@ -12,18 +12,6 @@ interface Cache {
 
     fun exists(id : Int): Boolean
 
-    fun createIndex(
-        compressionType: Compression = Compression.GZIP,
-        version: Int = 6,
-        revision: Int = 0,
-        named: Boolean = false,
-        whirlpool: Boolean = false,
-        lengths: Boolean = false,
-        checksums: Boolean = false,
-        writeReferenceTable: Boolean = true,
-        id: Int = if (indices().isEmpty()) 0 else indexCount() + 1
-    )
-
     fun indices(): IntArray
 
     fun sector(index: Int, archive: Int): ByteArray?
@@ -55,14 +43,6 @@ interface Cache {
     fun crc(index: Int): Int
 
     fun crc(index: Int, archive: Int): Int
-
-    fun write(index: Int, archive: Int, file: Int, data: ByteArray, xteas: IntArray? = null)
-
-    fun write(index: Int, archive: Int, data: ByteArray, xteas: IntArray? = null)
-
-    fun write(index: Int, archive: String, data: ByteArray, xteas: IntArray? = null)
-
-    fun update(): Boolean
 
     fun close()
 

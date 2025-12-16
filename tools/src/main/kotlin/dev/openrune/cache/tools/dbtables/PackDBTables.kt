@@ -16,7 +16,7 @@ import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.type.DBTableType
 import dev.openrune.definition.util.toArray
-import dev.openrune.filesystem.Cache
+import dev.openrune.filesystem.WritableCache
 import io.netty.buffer.Unpooled
 import kotlin.collections.set
 
@@ -25,7 +25,7 @@ class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
     private val rowCodec = DBRowCodec()
     private val tableCodec = DBTableCodec()
 
-    override fun init(cache: Cache) {
+    override fun init(cache: WritableCache) {
         val library = (cache as CacheDelegate).library
         val progress = progress("Packing DB Tables", tables.size)
 

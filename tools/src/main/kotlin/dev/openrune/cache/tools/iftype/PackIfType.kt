@@ -10,13 +10,13 @@ import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.util.toArray
-import dev.openrune.filesystem.Cache
+import dev.openrune.filesystem.WritableCache
 import io.netty.buffer.Unpooled
 
 class PackIfType(
     private val interfaces : List<InterfaceType>
 ) : CacheTask() {
-    override fun init(cache: Cache) {
+    override fun init(cache: WritableCache) {
         val modelSize = interfaces.size
         val progressInterfaces = progress("Packing iftype's", modelSize)
         interfaces.forEach {
@@ -27,7 +27,7 @@ class PackIfType(
 
     }
 
-    private fun packInterface(cache: Cache, inf: InterfaceType) {
+    private fun packInterface(cache: WritableCache, inf: InterfaceType) {
         val codec = ComponentDecoder(cache)
         val archive = Archive(inf.id)
 
