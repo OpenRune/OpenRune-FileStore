@@ -6,50 +6,60 @@ import dev.openrune.definition.opcode.toGetterSetter
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 
-fun <T, R> DefinitionOpcodeListActions(
-    opcode: Int,
-    type: OpcodeType<R>,
-    getter: (T) -> List<R?>?,
-    setter: (T, List<R?>) -> Unit,
-    expectedSize: Int
-): DefinitionOpcode<T> = DefinitionOpcode(
-    opcode = opcode,
-    decode = { buf, def, _ ->
-        val count = buf.readUnsignedByte().toInt()
-        val list = MutableList<R?>(expectedSize) { null }
-        repeat(count) {
-            val index = buf.readUnsignedByte().toInt()
-            require(index in 0 until expectedSize) { "Index $index out of bounds for list of size $expectedSize" }
-            list[index] = type.read(buf)
-        }
-        setter(def, list)
-    },
-    encode = { buf, def ->
-        val list = getter(def) ?: return@DefinitionOpcode
-        val nonNullItems = list.withIndex().filter { it.index in 0 until expectedSize && it.value != null }
-        buf.writeByte(nonNullItems.size)
-        for ((index, value) in nonNullItems) {
-            buf.writeByte(index)
-            type.write(buf, value!!)
-        }
-    },
-    shouldEncode = { def ->
-        getter(def)?.any { it != null } == true
+/**
+ * Creates multiple opcodes where each opcode directly maps to a list index.
+ * Format: opcode, string value (where opcode - range.first = index)
+ * Decode: list[opcode - range.first] = buf.readString()
+ * Encode: for each non-null item, write (range.first + index), then string value
+ * Example: range 30..34 maps opcodes 30-34 to indices 0-4
+ */
+fun <T> DefinitionOpcodeListActions(
+    opcodeRange: IntRange,
+    getter: (T) -> List<String?>?,
+    setter: (T, List<String?>) -> Unit
+): List<DefinitionOpcode<T>> {
+    val listSize = opcodeRange.last - opcodeRange.first + 1
+    return opcodeRange.map { opcode ->
+        val index = opcode - opcodeRange.first
+        DefinitionOpcode(
+            opcode = opcode,
+            decode = { buf, def, _ ->
+                val value = OpcodeType.STRING.read(buf)
+                val existing = getter(def) ?: emptyList()
+                val currentList = ArrayList<String?>(listSize).apply {
+                    addAll(existing)
+                    repeat(listSize - existing.size) { add(null) }
+                }
+                currentList[index] = value
+                setter(def, currentList)
+            },
+            encode = { buf, def ->
+                getter(def)?.getOrNull(index)?.let { item ->
+                    OpcodeType.STRING.write(buf, item)
+                }
+            },
+            shouldEncode = { def ->
+                getter(def)?.getOrNull(index) != null
+            }
+        )
     }
-)
+}
 
-fun <T, R> DefinitionOpcodeListActions(
-    opcode: Int,
-    type: OpcodeType<R>,
-    property: KProperty1<T, List<R?>?>,
-    expectedSize: Int,
-    customSetter: ((T, List<R?>) -> Unit)? = null
-): DefinitionOpcode<T> {
+/**
+ * Creates multiple opcodes where each opcode directly maps to a list index.
+ * Format: opcode, string value (where opcode - range.first = index)
+ * Example: range 30..34 maps opcodes 30-34 to indices 0-4
+ */
+fun <T> DefinitionOpcodeListActions(
+    opcodeRange: IntRange,
+    property: KProperty1<T, List<String?>?>,
+    customSetter: ((T, List<String?>) -> Unit)? = null
+): List<DefinitionOpcode<T>> {
     val getter = { obj: T -> property.get(obj) }
     val setter = when {
-        property is KMutableProperty1<T, List<R?>?> -> { obj: T, value: List<R?> -> property.set(obj, value) }
-        customSetter != null -> { obj: T, value: List<R?> -> customSetter(obj, value) }
+        property is KMutableProperty1<T, List<String?>?> -> { obj: T, value: List<String?> -> property.set(obj, value) }
+        customSetter != null -> customSetter
         else -> error("Property ${property.name} is not mutable and no customSetter was provided.")
     }
-    return DefinitionOpcodeListActions(opcode, type, getter, setter, expectedSize)
+    return DefinitionOpcodeListActions(opcodeRange, getter, setter)
 }

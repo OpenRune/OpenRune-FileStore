@@ -1,5 +1,6 @@
 package dev.openrune.definition.opcode
 
+import io.netty.buffer.ByteBuf
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 
@@ -47,6 +48,28 @@ fun <T, R> DefinitionOpcode(
         getter(def)?.let { type.write(buf, it) }
     },
     shouldEncode = { getter(it) != null }
+)
+
+fun <T, R> IgnoreOpcode(
+    opcode: Int,
+    type: OpcodeType<R>
+): DefinitionOpcode<T> = DefinitionOpcode(
+    opcode = opcode,
+    decode = { buf, _, _ ->
+        type.read(buf)
+    },
+    encode = { _, _ -> },
+    shouldEncode = { false }
+)
+
+fun <T> IgnoreOpcode(
+    opcode: Int,
+    decode: (ByteBuf) -> Unit
+): DefinitionOpcode<T> = DefinitionOpcode(
+    opcode = opcode,
+    decode = { buf, _, _ -> decode(buf) },
+    encode = { _, _ -> },
+    shouldEncode = { false }
 )
 
 fun <T, R> DefinitionOpcode(

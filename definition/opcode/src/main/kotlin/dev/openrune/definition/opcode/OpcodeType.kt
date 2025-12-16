@@ -1,7 +1,10 @@
 package dev.openrune.definition.opcode
 
+import dev.openrune.definition.util.readNullableLargeSmart
 import io.netty.buffer.ByteBuf
 import dev.openrune.definition.util.readString
+import dev.openrune.definition.util.writeNullableLargeSmartCorrect
+import dev.openrune.definition.util.writeSmart
 import dev.openrune.definition.util.writeString
 import kotlin.reflect.KClass
 
@@ -73,6 +76,21 @@ sealed class OpcodeType<T>(
         }
     })
 
+    data object NULLABLE_LARGE_SMART : OpcodeType<Int>(object : BufferSerializer<Int> {
+        override fun read(buf: ByteBuf): Int = buf.readNullableLargeSmart()
+
+        override fun write(buf: ByteBuf, value: Int) {
+            buf.writeSmart(value)
+        }
+    })
+
+    data object UBYTE : OpcodeType<Int>(object : BufferSerializer<Int> {
+        override fun read(buf: ByteBuf): Int = buf.readUnsignedByte().toInt()
+        override fun write(buf: ByteBuf, value: Int) {
+            buf.writeByte(value)
+        }
+    })
+
     data object BYTE : OpcodeType<Int>(object : BufferSerializer<Int> {
         override fun read(buf: ByteBuf): Int = buf.readByte().toInt()
         override fun write(buf: ByteBuf, value: Int) {
@@ -112,6 +130,14 @@ sealed class OpcodeType<T>(
         override fun read(buf: ByteBuf): Boolean = buf.readBoolean()
         override fun write(buf: ByteBuf, value: Boolean) {
             buf.writeBoolean(value)
+        }
+    })
+
+    data object UMEDIUM : OpcodeType<Int>(object : BufferSerializer<Int> {
+        override fun read(buf: ByteBuf): Int = buf.readUnsignedMedium()
+
+        override fun write(buf: ByteBuf, value: Int) {
+            buf.writeMedium(value)
         }
     })
 

@@ -1,49 +1,45 @@
 package dev.openrune.cache
 
 import dev.openrune.OsrsCacheProvider
-import dev.openrune.cache.filestore.definition.ModelDecoder
-import dev.openrune.cache.gameval.GameValHandler
-import dev.openrune.cache.gameval.GameValHandler.elementAs
-import dev.openrune.cache.gameval.impl.Interface
-import dev.openrune.cache.tools.Builder
-import dev.openrune.cache.tools.tasks.CacheTask
-import dev.openrune.cache.tools.tasks.TaskType
-import dev.openrune.cache.tools.tasks.impl.defs.PackConfig
-import dev.openrune.definition.GameValGroupTypes
-import dev.openrune.definition.GameValGroupTypes.TABLETYPES
+import dev.openrune.cache.filestore.definition.ConfigDefinitionDecoder
+import dev.openrune.definition.codec.new.AreaCodecNew
+import dev.openrune.definition.type.AreaType
 import dev.openrune.filesystem.Cache
-import java.io.File
 import java.nio.file.Path
-import java.util.Arrays
 
 
 fun main() {
+    val cache = Cache.load(Path.of("C:\\Users\\chris\\Desktop\\Alter\\data\\cache"))
 
-    //val builder = Builder(type = TaskType.FRESH_INSTALL, revision = 232, File("C:\\Users\\Home\\Desktop\\New folder"))
-    //builder.extraTasks().build().initialize()
+    val areaType3: MutableMap<Int, AreaType> = emptyMap<Int, AreaType>().toMutableMap()
+    OsrsCacheProvider.AreaDecoder().load(cache, areaType3)
 
-    val cache = Cache.load(Path.of("C:\\Users\\Home\\Desktop\\New folder"))
+    val areaType: MutableMap<Int, AreaType> = emptyMap<Int, AreaType>().toMutableMap()
+    OsrsCacheProvider.AreaDecoder().load(cache, areaType)
 
-    CacheManager.init(OsrsCacheProvider(cache,232))
+    val areaType2: MutableMap<Int, AreaType> = emptyMap<Int, AreaType>().toMutableMap()
+    OsrsCacheProvider.AreaDecoderNew().load(cache, areaType2)
 
-    val models = ModelDecoder(cache)
+    // Compare the maps
+    println("AreaDecoder size: ${areaType.size}")
+    println("AreaDecoderNew size: ${areaType2.size}")
 
-    var count = 0
-    cache.archives(MODELS).forEach {
-        val model = models.getModel(it)
-        if (model?.faceZOffsets != null) {
-            println(Arrays.toString(model!!.faceZOffsets))
-            count++
+    val allIds = (areaType.keys + areaType2.keys).sorted()
+    var differences = 0
+
+    for (id in allIds) {
+        val oldArea = areaType[id]
+        val newArea = areaType2[id]
+
+        if (oldArea?.hashCode() != newArea?.hashCode() || oldArea != newArea) {
+            println("ID $id differs")
+            differences++
         }
     }
-    println("ON TOTAL: $count")
 
-//    println(CacheManager.getItem(995).toString())
-//    println(CacheManager.getObject(10060).toString())
-//
-//    val interfacesNew = GameValHandler.readGameVal(GameValGroupTypes.VARCS, cache)
-//    interfacesNew.forEach {
-//        println(it.toFullString())
-//    }
-
+    if (differences == 0 && areaType.keys == areaType2.keys) {
+        println("\nSUCCESS: All data is 1:1 identical!")
+    } else {
+        println("\nFAILED: $differences differences found")
+    }
 }

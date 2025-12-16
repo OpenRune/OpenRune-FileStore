@@ -20,9 +20,9 @@ abstract class OpcodeDefinitionCodec<T : Definition> : DefinitionCodec<T> {
     }
 
     override fun T.read(opcode: Int, buffer: ByteBuf) {
-        val defOpcode = definitionCodec.registeredOpcodes.firstOrNull { it.attachedOpcodes.toList().contains(opcode) }
+        val defOpcode = definitionCodec.getOpcode(opcode)
             ?: error("Unknown opcode $opcode for ${this::class.simpleName}")
-        defOpcode.decode(opcode,buffer, this)
+        defOpcode.decode(opcode, buffer, this)
     }
 
     override fun ByteBuf.encode(definition: T) {
@@ -35,4 +35,5 @@ abstract class OpcodeDefinitionCodec<T : Definition> : DefinitionCodec<T> {
         writeByte(0)
     }
 
+    abstract override fun createDefinition(): T
 }

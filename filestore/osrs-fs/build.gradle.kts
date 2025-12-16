@@ -3,4 +3,5 @@ dependencies {
     implementation(project(":filesystem"))
     implementation(project(":filestore"))
     implementation(project(":definition"))
+    implementation(project(":definition:opcode"))
 }
