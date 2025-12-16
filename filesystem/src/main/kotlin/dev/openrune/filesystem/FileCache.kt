@@ -51,6 +51,15 @@ class FileCache(
         return files[matchingIndex]
     }
 
+    override fun fileData(index: Int, archive: Int, xtea: IntArray?): Array<ByteArray?>? {
+        val hash = index + (archive shl 6)
+        val files = dataCache.getOrPut(hash) {
+            val indexRaf = indexes[index] ?: return null
+            fileData(context, main, length, indexRaf, index, archive, xtea) ?: return null
+        }
+        return files
+    }
+
     override fun crc(index: Int): Int {
         TODO("Not yet implemented")
     }

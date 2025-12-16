@@ -44,6 +44,10 @@ interface Cache {
 
     fun lastFileId(indexId: Int, archive: Int): Int
 
+    fun fileData(index: Int, archive: Int): Array<ByteArray?>? = fileData(index, archive, null)
+
+    fun fileData(index: Int, archive: Int, xtea: IntArray?): Array<ByteArray?>?
+
     fun data(index: Int, archive: Int, file: Int = 0, xtea: IntArray? = null): ByteArray?
 
     fun data(index: Int, name: String, xtea: IntArray? = null) = data(index, archiveId(index, name), xtea = xtea)

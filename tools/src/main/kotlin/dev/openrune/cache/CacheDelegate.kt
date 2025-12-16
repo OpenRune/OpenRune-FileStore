@@ -48,6 +48,14 @@ class CacheDelegate(val library: CacheLibrary) : Cache {
     override fun fileCount(indexId: Int, archiveId: Int) = library.index(indexId).archive(archiveId)?.fileIds()?.size ?: 0
 
     override fun lastFileId(indexId: Int, archive: Int) = library.index(indexId).archive(archive)?.last()?.id ?: -1
+    
+    override fun fileData(
+        index: Int,
+        archive: Int,
+        xtea: IntArray?
+    ): Array<ByteArray?>? {
+        return library.index(index).archive(archive, xtea)?.files()?.map { file -> file.data }?.toTypedArray()
+    }
 
     override fun data(index: Int, archive: Int, file: Int, xtea: IntArray?) = library.data(index, archive, file, xtea)
 
