@@ -9,6 +9,7 @@ import dev.openrune.cache.filestore.definition.DefinitionTransform
 import dev.openrune.definition.type.*
 import dev.openrune.definition.codec.*
 import dev.openrune.definition.codec.new.AreaCodecNew
+import dev.openrune.definition.codec.ObjectCodecNew
 import readCacheRevision
 import java.nio.BufferUnderflowException
 
@@ -59,6 +60,7 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
 
     class AreaDecoderNew : ConfigDefinitionDecoder<AreaType>(AreaCodecNew(), AREA)
     class AreaDecoder : ConfigDefinitionDecoder<AreaType>(AreaCodec(), AREA)
+    class ObjectDecoderNew(cacheRevision: Int) : ConfigDefinitionDecoder<ObjectType>(ObjectCodecNew(cacheRevision), OBJECT)
     class DBRowDecoder : ConfigDefinitionDecoder<DBRowType>(DBRowCodec(), DBROW)
     class DBTableDecoder : ConfigDefinitionDecoder<DBTableType>(DBTableCodec(), DBTABLE)
     class EnumDecoder : ConfigDefinitionDecoder<EnumType>(EnumCodec(), ENUM)

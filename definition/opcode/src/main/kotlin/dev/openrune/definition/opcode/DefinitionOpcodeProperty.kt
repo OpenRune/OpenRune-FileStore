@@ -1,5 +1,6 @@
 package dev.openrune.definition.opcode
 
+import dev.openrune.definition.Definition
 import io.netty.buffer.ByteBuf
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
@@ -37,18 +38,51 @@ fun <T, R> DefinitionOpcode(
     opcode: Int,
     type: OpcodeType<R>,
     getter: (T) -> R?,
+    setter: (T, R) -> Unit,
+    createDefault: (() -> T)? = null
+): DefinitionOpcode<T> {
+    val defaultPropertyValue = createDefault?.let { getter(it()) }
+    return DefinitionOpcode(
+        opcode,
+        decode = { buf, def, _ ->
+            val value = type.read(buf)
+            setter(def, value)
+        },
+        encode = { buf, def ->
+            getter(def)?.let { type.write(buf, it) }
+        },
+        shouldEncode = if (defaultPropertyValue != null) {
+            { def -> val value = getter(def); value != null && value != defaultPropertyValue }
+        } else {
+            { getter(it) != null }
+        }
+    )
+}
+
+fun <T : Definition, R> OpcodeDefinitionCodec<T>.DefinitionOpcode(
+    opcode: Int,
+    type: OpcodeType<R>,
+    getter: (T) -> R?,
     setter: (T, R) -> Unit
-): DefinitionOpcode<T> = DefinitionOpcode(
-    opcode,
-    decode = { buf, def, _ ->
-        val value = type.read(buf)
-        setter(def, value)
-    },
-    encode = { buf, def ->
-        getter(def)?.let { type.write(buf, it) }
-    },
-    shouldEncode = { getter(it) != null }
-)
+): DefinitionOpcode<T> {
+    val defaultInstance = createDefinition()
+    val defaultPropertyValue = getter(defaultInstance)
+    return DefinitionOpcode(
+        opcode,
+        decode = { buf, def, _ ->
+            val value = type.read(buf)
+            setter(def, value)
+        },
+        encode = { buf, def ->
+            getter(def)?.let { type.write(buf, it) }
+        },
+        shouldEncode = if (defaultPropertyValue != null) {
+            { def -> val value = getter(def); value != null && value != defaultPropertyValue }
+        } else {
+            { getter(it) != null }
+        }
+    )
+}
 
 fun <T, R> IgnoreOpcode(
     opcode: Int,
@@ -75,18 +109,120 @@ fun <T> IgnoreOpcode(
 fun <T, R> DefinitionOpcode(
     opcode: Int,
     type: OpcodeType<R>,
-    property: KMutableProperty1<T, R?>
+    property: KMutableProperty1<T, R?>,
+    createDefault: (() -> T)? = null
 ): DefinitionOpcode<T> {
     val (getter, setter) = property.toGetterSetter()
-    return DefinitionOpcode(opcode, type, getter, setter)
+    return DefinitionOpcode(opcode, type, getter, setter, createDefault)
 }
 
 fun <T, R> DefinitionOpcode(
     opcode: Int,
     type: OpcodeType<R>,
     property: KProperty1<T, R?>,
+    customSetter: ((T, R) -> Unit)? = null,
+    createDefault: (() -> T)? = null
+): DefinitionOpcode<T> {
+    val (getter, setter) = property.toGetterSetter(customSetter)
+    return DefinitionOpcode(opcode, type, getter, setter, createDefault)
+}
+
+fun <T : Definition, R> OpcodeDefinitionCodec<T>.DefinitionOpcode(
+    opcode: Int,
+    type: OpcodeType<R>,
+    property: KMutableProperty1<T, R?>
+): DefinitionOpcode<T> {
+    val (getter, setter) = property.toGetterSetter()
+    val defaultInstance = createDefinition()
+    val defaultPropertyValue = getter(defaultInstance)
+    return DefinitionOpcode(
+        opcode,
+        decode = { buf, def, _ ->
+            val value = type.read(buf)
+            setter(def, value)
+        },
+        encode = { buf, def ->
+            getter(def)?.let { type.write(buf, it) }
+        },
+        shouldEncode = if (defaultPropertyValue != null) {
+            { def -> val value = getter(def); value != null && value != defaultPropertyValue }
+        } else {
+            { getter(it) != null }
+        }
+    )
+}
+
+fun <T : Definition, R> OpcodeDefinitionCodec<T>.DefinitionOpcode(
+    opcode: Int,
+    type: OpcodeType<R>,
+    property: KProperty1<T, R?>,
     customSetter: ((T, R) -> Unit)? = null
 ): DefinitionOpcode<T> {
     val (getter, setter) = property.toGetterSetter(customSetter)
-    return DefinitionOpcode(opcode, type, getter, setter)
+    val defaultInstance = createDefinition()
+    val defaultPropertyValue = getter(defaultInstance)
+    return DefinitionOpcode(
+        opcode,
+        decode = { buf, def, _ ->
+            val value = type.read(buf)
+            setter(def, value)
+        },
+        encode = { buf, def ->
+            getter(def)?.let { type.write(buf, it) }
+        },
+        shouldEncode = if (defaultPropertyValue != null) {
+            { def -> val value = getter(def); value != null && value != defaultPropertyValue }
+        } else {
+            { getter(it) != null }
+        }
+    )
+}
+
+fun <T : Definition> OpcodeDefinitionCodec<T>.DefinitionOpcode(
+    opcode: Int,
+    property: KMutableProperty1<T, Boolean>
+): DefinitionOpcode<T> {
+    val defaultInstance = createDefinition()
+    val defaultValue = property.get(defaultInstance)
+    return DefinitionOpcode(
+        opcode,
+        decode = { _, def, _ ->
+            property.set(def, true)
+        },
+        encode = { _, _ -> },
+        shouldEncode = { property.get(it) != defaultValue }
+    )
+}
+
+fun <T : Definition> OpcodeDefinitionCodec<T>.DefinitionOpcode(
+    opcode: Int,
+    property: KMutableProperty1<T, Boolean>,
+    setValue: Boolean
+): DefinitionOpcode<T> {
+    val defaultInstance = createDefinition()
+    val defaultValue = property.get(defaultInstance)
+    return DefinitionOpcode(
+        opcode,
+        decode = { _, def, _ ->
+            property.set(def, setValue)
+        },
+        encode = { _, _ -> },
+        shouldEncode = { property.get(it) == setValue }
+    )
+}
+
+fun <T : Definition> OpcodeDefinitionCodec<T>.DefinitionOpcode(
+    opcode: Int,
+    property: KMutableProperty1<T, Int>,
+    setValue: Int,
+    encodeWhen: Int
+): DefinitionOpcode<T> {
+    return DefinitionOpcode(
+        opcode,
+        decode = { _, def, _ ->
+            property.set(def, setValue)
+        },
+        encode = { _, _ -> },
+        shouldEncode = { property.get(it) == encodeWhen }
+    )
 }
