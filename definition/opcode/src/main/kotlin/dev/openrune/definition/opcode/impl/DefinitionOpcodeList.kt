@@ -15,10 +15,8 @@ fun <T, R> DefinitionOpcodeList(
     opcode,
     decode = { buf, def, _ ->
         val count = buf.readUnsignedByte().toInt()
-        val list = buildList<R>(count) {
-            repeat(count) {
-                add(type.read(buf))
-            }
+        val list = MutableList<R>(count) {
+            type.read(buf)
         }
         setter(def, list)
     },

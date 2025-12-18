@@ -46,6 +46,9 @@ class SequenceCodecNew(private val revision: Int) : OpcodeDefinitionCodec<Sequen
                 for (i in 0 until frameCount) {
                     def.frameIDs!![i] += buf.readUnsignedShort() shl 16
                 }
+                if (def.id == 13575) {
+                    println("FRAMEIDSsssssssssssssssssss: " + def.frameIDs!!.size)
+                }
             },
             encode = { buf, def ->
                 val frameIDs = def.frameIDs

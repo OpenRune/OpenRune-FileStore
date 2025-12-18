@@ -95,6 +95,7 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     class HitSplatDecoder : ConfigDefinitionDecoder<HitSplatType>(HitSplatCodec(), HITSPLAT)
     class ItemDecoder : ConfigDefinitionDecoder<ItemType>(ItemCodec(), ITEM)
     class NPCDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<NpcType>(NPCCodec(cacheRevision), NPC)
+
     class ObjectDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<ObjectType>(ObjectCodec(cacheRevision), OBJECT)
 
     class OverlayDecoder : ConfigDefinitionDecoder<OverlayType>(

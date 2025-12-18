@@ -16,9 +16,6 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                 models = MutableList(length) { 0 }
                 for (count in 0 until length) {
                     models!![count] = buffer.readUnsignedShort()
-                    if (models!![count] == 65535) {
-                        models!![count] = -1
-                    }
                 }
             }
 
@@ -38,9 +35,6 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             18 -> category = buffer.readUnsignedShort()
             in 30..34 -> {
                 actions[opcode - 30] = buffer.readString()
-                if (actions[opcode - 30].equals("Hidden", true)) {
-                    actions[opcode - 30] = null
-                }
             }
 
             40 -> readColours(buffer)

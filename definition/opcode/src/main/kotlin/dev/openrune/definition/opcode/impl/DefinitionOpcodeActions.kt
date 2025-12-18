@@ -22,8 +22,8 @@ fun <T> DefinitionOpcodeListActions(
     return opcodeRange.map { opcode ->
         val index = opcode - opcodeRange.first
         DefinitionOpcode(
-            opcode = opcode,
-            decode = { buf, def, _ ->
+    opcode = opcode,
+    decode = { buf, def, _ ->
                 val value = OpcodeType.STRING.read(buf)
                 val existing = getter(def) ?: emptyList()
                 val currentList = ArrayList<String?>(listSize).apply {
@@ -32,13 +32,13 @@ fun <T> DefinitionOpcodeListActions(
                 }
                 currentList[index] = value
                 setter(def, currentList)
-            },
-            encode = { buf, def ->
+    },
+    encode = { buf, def ->
                 getter(def)?.getOrNull(index)?.let { item ->
                     OpcodeType.STRING.write(buf, item)
-                }
-            },
-            shouldEncode = { def ->
+        }
+    },
+    shouldEncode = { def ->
                 getter(def)?.getOrNull(index) != null
             }
         )

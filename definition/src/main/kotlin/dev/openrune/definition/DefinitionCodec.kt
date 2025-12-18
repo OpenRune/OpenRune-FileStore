@@ -48,7 +48,7 @@ interface DefinitionCodec<T : Definition> {
             try {
                 readLoop(definition, reader)
             }catch (e: Exception) {
-                //error("Unable to decode ${definition.javaClass.simpleName} [$id]")
+                error("Unable to decode ${definition.javaClass.simpleName} [$id]")
             }
         }
         return definition

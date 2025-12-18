@@ -150,6 +150,7 @@ fun main() {
         outputDir, gson
     ) && allTestsPassed
 
+
     println("\n" + "=".repeat(50))
     if (allTestsPassed) {
         println("✅ ALL TESTS PASSED!")
@@ -204,7 +205,43 @@ inline fun <T : Definition> testCodec(
         
         if (!compare(oldDef, newDef)) {
             println("  ID $id: Data differs")
+            // Print actual differences (limit to first 10 for readability)
+            val oldFields = oldDef::class.java.declaredFields
+            val diffFields = mutableListOf<String>()
+            for (field in oldFields) {
+                if (java.lang.reflect.Modifier.isStatic(field.modifiers)) continue
+                field.isAccessible = true
+                val oldValue = field.get(oldDef)
+                val newValue = try {
+                    newDef::class.java.getDeclaredField(field.name).apply { isAccessible = true }.get(newDef)
+                } catch (e: Exception) {
+                    null
+                }
+                if (oldValue != newValue) {
+                    val oldStr = when {
+                        oldValue is Collection<*> -> "${oldValue.javaClass.simpleName}(${oldValue.size})"
+                        oldValue is Map<*, *> -> "${oldValue.javaClass.simpleName}(${oldValue.size})"
+                        else -> oldValue?.toString()
+                    }
+                    val newStr = when {
+                        newValue is Collection<*> -> "${newValue.javaClass.simpleName}(${newValue.size})"
+                        newValue is Map<*, *> -> "${newValue.javaClass.simpleName}(${newValue.size})"
+                        else -> newValue?.toString()
+                    }
+                    diffFields.add("    ${field.name}: old=$oldStr, new=$newStr")
+                }
+            }
+            if (diffFields.isNotEmpty()) {
+                diffFields.take(10).forEach { println(it) }
+                if (diffFields.size > 10) {
+                    println("    ... and ${diffFields.size - 10} more differences")
+                }
+            }
             differences++
+            if (differences >= 20) {
+                println("  ... (stopping after 20 differences)")
+                break
+            }
         }
     }
     
