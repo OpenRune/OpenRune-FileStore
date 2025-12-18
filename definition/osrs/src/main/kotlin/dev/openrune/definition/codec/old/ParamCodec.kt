@@ -1,10 +1,10 @@
-package dev.openrune.definition.codec
+package dev.openrune.definition.codec.old
 
-import dev.openrune.definition.util.readString
-import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.ParamType
 import dev.openrune.definition.util.VarType
+import dev.openrune.definition.util.readString
+import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
 
 class ParamCodec : DefinitionCodec<ParamType> {
@@ -12,7 +12,7 @@ class ParamCodec : DefinitionCodec<ParamType> {
         when (opcode) {
             1 -> {
                 val idx = buffer.readUnsignedByte().toInt()
-                type = VarType.byChar(idx.toChar())
+                type = VarType.Companion.byChar(idx.toChar())
             }
 
             2 -> defaultInt = buffer.readInt()

@@ -1,9 +1,9 @@
-package dev.openrune.definition.codec
+package dev.openrune.definition.codec.old
 
 import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.type.WorldEntityType
 import dev.openrune.definition.type.WorldInteractMode
 import dev.openrune.definition.type.WorldInteractTarget
-import dev.openrune.definition.type.WorldEntityType
 import dev.openrune.definition.util.readNullableLargeSmart
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeNullableLargeSmartCorrect
@@ -24,13 +24,12 @@ class WorldEntityCodec : DefinitionCodec<WorldEntityType> {
             14 -> active = true
             in 15..19 -> {
                 val index = opcode - 15
-                val str = buffer.readString()
-                options[index] = if (str.equals("Hidden", ignoreCase = true)) null else str
+                options[index] = buffer.readString()
                 active = true
             }
             20 -> buffer.readUnsignedShort()
-            23 -> interactTarget = WorldInteractTarget.fromId(buffer.readUnsignedByte().toInt())
-            24 -> interactContentsMode = WorldInteractMode.fromId(buffer.readUnsignedByte().toInt())
+            23 -> interactTarget = WorldInteractTarget.Companion.fromId(buffer.readUnsignedByte().toInt())
+            24 -> interactContentsMode = WorldInteractMode.Companion.fromId(buffer.readUnsignedByte().toInt())
             25 -> anim = buffer.readUnsignedShort()
             26 -> minimapIcon = buffer.readNullableLargeSmart()
             27 -> rgb = buffer.readUnsignedShort()

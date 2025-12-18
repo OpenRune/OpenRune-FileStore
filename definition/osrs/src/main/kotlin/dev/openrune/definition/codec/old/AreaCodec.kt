@@ -1,8 +1,11 @@
-package dev.openrune.definition.codec
+package dev.openrune.definition.codec.old
 
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.AreaType
-import dev.openrune.definition.util.*
+import dev.openrune.definition.util.readNullableLargeSmart
+import dev.openrune.definition.util.readString
+import dev.openrune.definition.util.writeSmart
+import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
 
 class AreaCodec : DefinitionCodec<AreaType> {

@@ -43,12 +43,12 @@ interface DefinitionCodec<T : Definition> {
     fun loadData(id: Int, data: ByteArray?): T {
         val definition = createDefinition()
         definition.id = id
-        if(data != null && data.size > 0) {
+        if(data != null && data.isNotEmpty()) {
             val reader = Unpooled.wrappedBuffer(data)
             try {
                 readLoop(definition, reader)
             }catch (e: Exception) {
-                error("Unable to decode ${definition.javaClass.simpleName} [$id]")
+                //error("Unable to decode ${definition.javaClass.simpleName} [$id]")
             }
         }
         return definition

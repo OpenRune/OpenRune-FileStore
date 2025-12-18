@@ -213,6 +213,22 @@ fun <T : Definition> OpcodeDefinitionCodec<T>.DefinitionOpcode(
 
 fun <T : Definition> OpcodeDefinitionCodec<T>.DefinitionOpcode(
     opcode: Int,
+    property: KMutableProperty1<T, Boolean>,
+    setValue: Boolean,
+    encodeWhen: Boolean
+): DefinitionOpcode<T> {
+    return DefinitionOpcode(
+        opcode,
+        decode = { _, def, _ ->
+            property.set(def, setValue)
+        },
+        encode = { _, _ -> },
+        shouldEncode = { property.get(it) == encodeWhen }
+    )
+}
+
+fun <T : Definition> OpcodeDefinitionCodec<T>.DefinitionOpcode(
+    opcode: Int,
     property: KMutableProperty1<T, Int>,
     setValue: Int,
     encodeWhen: Int
@@ -224,5 +240,49 @@ fun <T : Definition> OpcodeDefinitionCodec<T>.DefinitionOpcode(
         },
         encode = { _, _ -> },
         shouldEncode = { property.get(it) == encodeWhen }
+    )
+}
+
+fun <T : Definition> OpcodeDefinitionCodec<T>.DefinitionOpcode(
+    opcode: Int,
+    property: KMutableProperty1<T, Int>,
+    setValue: Int
+): DefinitionOpcode<T> {
+    val defaultInstance = createDefinition()
+    val defaultValue = property.get(defaultInstance)
+    return DefinitionOpcode(
+        opcode,
+        decode = { _, def, _ ->
+            property.set(def, setValue)
+        },
+        encode = { _, _ -> },
+        shouldEncode = { property.get(it) != defaultValue }
+    )
+}
+
+fun <T : Definition, R> OpcodeDefinitionCodec<T>.DefinitionOpcode(
+    opcode: Int,
+    type: OpcodeType<R>,
+    property: KMutableProperty1<T, R>,
+    readOnly: Boolean = false
+): DefinitionOpcode<T> {
+    val getter = { obj: T -> property.get(obj) }
+    val setter = { obj: T, value: R -> property.set(obj, value) }
+    val defaultInstance = createDefinition()
+    val defaultPropertyValue = getter(defaultInstance)
+    return DefinitionOpcode(
+        opcode,
+        decode = { buf, def, _ ->
+            val value = type.read(buf)
+            setter(def, value)
+        },
+        encode = { buf, def ->
+            type.write(buf, getter(def))
+        },
+        shouldEncode = if (readOnly) {
+            { false }
+        } else {
+            { def -> getter(def) != defaultPropertyValue }
+        }
     )
 }

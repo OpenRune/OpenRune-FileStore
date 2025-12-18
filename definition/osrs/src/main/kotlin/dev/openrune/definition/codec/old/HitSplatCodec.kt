@@ -1,21 +1,22 @@
-package dev.openrune.definition.codec
+package dev.openrune.definition.codec.old
 
-import dev.openrune.definition.util.readShortSmart
-import dev.openrune.definition.util.readString
-import dev.openrune.definition.util.writePrefixedString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.HitSplatType
+import dev.openrune.definition.util.readNullableLargeSmart
+import dev.openrune.definition.util.readString
+import dev.openrune.definition.util.writeNullableLargeSmartCorrect
+import dev.openrune.definition.util.writePrefixedString
 import io.netty.buffer.ByteBuf
 
 class HitSplatCodec : DefinitionCodec<HitSplatType> {
     override fun HitSplatType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
-            1 -> font = buffer.readShortSmart()
+            1 -> font = buffer.readNullableLargeSmart()
             2 -> textColour = buffer.readUnsignedMedium()
-            3 -> icon = buffer.readShortSmart()
-            4 -> left = buffer.readShortSmart()
-            5 -> middle = buffer.readShortSmart()
-            6 -> right = buffer.readShortSmart()
+            3 -> icon = buffer.readNullableLargeSmart()
+            4 -> left = buffer.readNullableLargeSmart()
+            5 -> middle = buffer.readNullableLargeSmart()
+            6 -> right = buffer.readNullableLargeSmart()
             7 -> offsetX = buffer.readUnsignedShort()
             8 -> amount = buffer.readString()
             9 -> duration = buffer.readUnsignedShort()
@@ -31,7 +32,7 @@ class HitSplatCodec : DefinitionCodec<HitSplatType> {
     override fun ByteBuf.encode(definition: HitSplatType) {
         if (definition.font != -1) {
             writeByte(1)
-            writeShort(definition.font)
+            writeNullableLargeSmartCorrect(definition.font)
         }
         if (definition.textColour != 16777215) {
             writeByte(2)
@@ -39,19 +40,19 @@ class HitSplatCodec : DefinitionCodec<HitSplatType> {
         }
         if (definition.icon != -1) {
             writeByte(3)
-            writeShort(definition.icon)
+            writeNullableLargeSmartCorrect(definition.icon)
         }
         if (definition.left != -1) {
             writeByte(4)
-            writeShort(definition.left)
+            writeNullableLargeSmartCorrect(definition.left)
         }
         if (definition.middle != -1) {
             writeByte(5)
-            writeShort(definition.middle)
+            writeNullableLargeSmartCorrect(definition.middle)
         }
         if (definition.right != -1) {
             writeByte(6)
-            writeShort(definition.right)
+            writeNullableLargeSmartCorrect(definition.right)
         }
         if (definition.offsetX != 0) {
             writeByte(7)

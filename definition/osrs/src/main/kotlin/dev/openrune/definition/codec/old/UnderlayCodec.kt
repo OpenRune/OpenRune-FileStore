@@ -1,4 +1,4 @@
-package dev.openrune.definition.codec
+package dev.openrune.definition.codec.old
 
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.UnderlayType
@@ -9,7 +9,6 @@ class UnderlayCodec : DefinitionCodec<UnderlayType> {
         if (opcode == 1) {
             rgb = buffer.readUnsignedMedium()
         }
-        setHsl(rgb)
     }
 
     override fun ByteBuf.encode(definition: UnderlayType) {

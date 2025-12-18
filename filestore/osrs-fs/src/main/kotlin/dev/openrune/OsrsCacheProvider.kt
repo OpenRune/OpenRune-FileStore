@@ -8,8 +8,22 @@ import dev.openrune.cache.filestore.definition.DefinitionDecoder
 import dev.openrune.cache.filestore.definition.DefinitionTransform
 import dev.openrune.definition.type.*
 import dev.openrune.definition.codec.*
-import dev.openrune.definition.codec.new.AreaCodecNew
-import dev.openrune.definition.codec.ObjectCodecNew
+import dev.openrune.definition.codec.new.*
+import dev.openrune.definition.codec.old.AreaCodec
+import dev.openrune.definition.codec.old.InventoryCodec
+import dev.openrune.definition.codec.ObjectCodec
+import dev.openrune.definition.codec.old.HealthBarCodec
+import dev.openrune.definition.codec.old.HitSplatCodec
+import dev.openrune.definition.codec.old.IdentityKitCodec
+import dev.openrune.definition.codec.old.OverlayCodec
+import dev.openrune.definition.codec.old.ParamCodec
+import dev.openrune.definition.codec.old.SequenceCodec
+import dev.openrune.definition.codec.old.SpotAnimCodec
+import dev.openrune.definition.codec.old.StructCodec
+import dev.openrune.definition.codec.old.UnderlayCodec
+import dev.openrune.definition.codec.old.VarClientCodec
+import dev.openrune.definition.codec.old.VarCodec
+import dev.openrune.definition.codec.old.WorldEntityCodec
 import readCacheRevision
 import java.nio.BufferUnderflowException
 
@@ -60,7 +74,20 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
 
     class AreaDecoderNew : ConfigDefinitionDecoder<AreaType>(AreaCodecNew(), AREA)
     class AreaDecoder : ConfigDefinitionDecoder<AreaType>(AreaCodec(), AREA)
-    class ObjectDecoderNew(cacheRevision: Int) : ConfigDefinitionDecoder<ObjectType>(ObjectCodecNew(cacheRevision), OBJECT)
+    class HealthBarDecoderNew : ConfigDefinitionDecoder<HealthBarType>(HealthBarCodecNew(), HEALTHBAR)
+    class HitSplatDecoderNew : ConfigDefinitionDecoder<HitSplatType>(HitSplatCodecNew(), HITSPLAT)
+    class StructDecoderNew : ConfigDefinitionDecoder<StructType>(StructCodecNew(), STRUCT)
+    class VarDecoderNew : ConfigDefinitionDecoder<VarpType>(VarCodecNew(), VARPLAYER)
+    class VarClientDecoderNew : ConfigDefinitionDecoder<VarClientType>(VarClientCodecNew(), VARCLIENT)
+    class ParamDecoderNew : ConfigDefinitionDecoder<ParamType>(ParamCodecNew(), PARAMS)
+    class InventoryDecoderNew : ConfigDefinitionDecoder<InventoryType>(InventoryCodecNew(), INV)
+    class UnderlayDecoderNew : ConfigDefinitionDecoder<UnderlayType>(UnderlayCodecNew(), UNDERLAY,
+        DefinitionTransform { id, definition -> definition.setHsl(definition.rgb) })
+    class OverlayDecoderNew : ConfigDefinitionDecoder<OverlayType>(OverlayCodecNew(), OVERLAY,
+        DefinitionTransform { id, definition -> definition.calculateHsl() })
+    class SpotAnimDecoderNew : ConfigDefinitionDecoder<SpotAnimType>(SpotAnimCodecNew(), SPOTANIM)
+    class IdentityKitDecoderNew : ConfigDefinitionDecoder<IdentityKitType>(IdentityKitCodecNew(), IDENTKIT)
+    class WorldEntityDecoderNew : ConfigDefinitionDecoder<WorldEntityType>(WorldEntityCodecNew(), WORLDENTITY)
     class DBRowDecoder : ConfigDefinitionDecoder<DBRowType>(DBRowCodec(), DBROW)
     class DBTableDecoder : ConfigDefinitionDecoder<DBTableType>(DBTableCodec(), DBTABLE)
     class EnumDecoder : ConfigDefinitionDecoder<EnumType>(EnumCodec(), ENUM)
@@ -70,12 +97,15 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     class NPCDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<NpcType>(NPCCodec(cacheRevision), NPC)
     class ObjectDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<ObjectType>(ObjectCodec(cacheRevision), OBJECT)
 
-    class OverlayDecoder : ConfigDefinitionDecoder<OverlayType>(OverlayCodec(), OVERLAY,
+    class OverlayDecoder : ConfigDefinitionDecoder<OverlayType>(
+        OverlayCodec(), OVERLAY,
         DefinitionTransform { id, definition -> definition.calculateHsl() })
     class ParamDecoder : ConfigDefinitionDecoder<ParamType>(ParamCodec(), PARAMS)
     class SequenceDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<SequenceType>(SequenceCodec(cacheRevision), SEQUENCE)
+    class SequenceDecoderNew(cacheRevision: Int) : ConfigDefinitionDecoder<SequenceType>(SequenceCodecNew(cacheRevision), SEQUENCE)
     class StructDecoder : ConfigDefinitionDecoder<StructType>(StructCodec(), STRUCT)
-    class UnderlayDecoder : ConfigDefinitionDecoder<UnderlayType>(UnderlayCodec(), UNDERLAY)
+    class UnderlayDecoder : ConfigDefinitionDecoder<UnderlayType>(UnderlayCodec(), UNDERLAY,
+        DefinitionTransform { id, definition -> definition.setHsl(definition.rgb) })
     class VarBitDecoder : ConfigDefinitionDecoder<VarBitType>(VarBitCodec(), VARBIT)
     class VarDecoder : ConfigDefinitionDecoder<VarpType>(VarCodec(), VARPLAYER)
     class IdentityKitDecoder : ConfigDefinitionDecoder<IdentityKitType>(IdentityKitCodec(), IDENTKIT)

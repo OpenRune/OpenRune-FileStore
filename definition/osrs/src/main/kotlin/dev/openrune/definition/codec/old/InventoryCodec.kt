@@ -1,4 +1,4 @@
-package dev.openrune.definition.codec
+package dev.openrune.definition.codec.old
 
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.InventoryType

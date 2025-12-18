@@ -1,76 +1,218 @@
 package dev.openrune.cache
 
+import com.google.gson.GsonBuilder
 import dev.openrune.OsrsCacheProvider
-import dev.openrune.definition.type.AreaType
-import dev.openrune.definition.type.ObjectType
+import dev.openrune.definition.Definition
+import dev.openrune.definition.type.*
 import dev.openrune.filesystem.Cache
+import java.io.File
 import java.nio.file.Path
-
 
 fun main() {
     val cache = Cache.load(Path.of("C:\\Users\\chris\\Desktop\\Alter\\data\\cache"))
+    val cacheRevision = 235
+    val outputDir = File("codec_diff_output").apply { mkdirs() }
+    val gson = GsonBuilder().setPrettyPrinting().create()
+
+    // Warmup
+    println("Warming up JVM...")
+    repeat(3) {
+        OsrsCacheProvider.AreaDecoder().load(cache, mutableMapOf())
+        OsrsCacheProvider.AreaDecoderNew().load(cache, mutableMapOf())
+    }
+    println("Warmup complete\n")
+
+    var allTestsPassed = true
 
     // Area test
-    println("=== Testing AreaCodec ===")
-    val areaType: MutableMap<Int, AreaType> = emptyMap<Int, AreaType>().toMutableMap()
-    OsrsCacheProvider.AreaDecoder().load(cache, areaType)
+    allTestsPassed = testCodec<AreaType>(
+        "AreaCodec", "area",
+        { map -> OsrsCacheProvider.AreaDecoder().load(cache, map) },
+        { map -> OsrsCacheProvider.AreaDecoderNew().load(cache, map) },
+        { old, new -> old == new },
+        outputDir, gson
+    ) && allTestsPassed
 
-    val areaType2: MutableMap<Int, AreaType> = emptyMap<Int, AreaType>().toMutableMap()
-    OsrsCacheProvider.AreaDecoderNew().load(cache, areaType2)
+    // Struct test
+    allTestsPassed = testCodec<StructType>(
+        "StructCodec", "struct",
+        { map -> OsrsCacheProvider.StructDecoder().load(cache, map) },
+        { map -> OsrsCacheProvider.StructDecoderNew().load(cache, map) },
+        { old, new -> old == new },
+        outputDir, gson
+    ) && allTestsPassed
 
-    println("AreaDecoder size: ${areaType.size}")
-    println("AreaDecoderNew size: ${areaType2.size}")
+    // Var test
+    allTestsPassed = testCodec<VarpType>(
+        "VarCodec", "var",
+        { map -> OsrsCacheProvider.VarDecoder().load(cache, map) },
+        { map -> OsrsCacheProvider.VarDecoderNew().load(cache, map) },
+        { old, new -> old == new },
+        outputDir, gson
+    ) && allTestsPassed
 
-    val allAreaIds = (areaType.keys + areaType2.keys).sorted()
-    var areaDifferences = 0
+    // VarClient test
+    allTestsPassed = testCodec<VarClientType>(
+        "VarClientCodec", "varclient",
+        { map -> OsrsCacheProvider.VarClientDecoder().load(cache, map) },
+        { map -> OsrsCacheProvider.VarClientDecoderNew().load(cache, map) },
+        { old, new -> old == new },
+        outputDir, gson
+    ) && allTestsPassed
 
-    for (id in allAreaIds) {
-        val oldArea = areaType[id]
-        val newArea = areaType2[id]
+    // Param test
+    allTestsPassed = testCodec<ParamType>(
+        "ParamCodec", "param",
+        { map -> OsrsCacheProvider.ParamDecoder().load(cache, map) },
+        { map -> OsrsCacheProvider.ParamDecoderNew().load(cache, map) },
+        { old, new -> old == new },
+        outputDir, gson
+    ) && allTestsPassed
 
-        if (oldArea?.hashCode() != newArea?.hashCode() || oldArea != newArea) {
-            println("Area ID $id differs")
-            areaDifferences++
+    // Inventory test
+    allTestsPassed = testCodec<InventoryType>(
+        "InventoryCodec", "inventory",
+        { map -> OsrsCacheProvider.InventoryDecoder().load(cache, map) },
+        { map -> OsrsCacheProvider.InventoryDecoderNew().load(cache, map) },
+        { old, new -> old == new },
+        outputDir, gson
+    ) && allTestsPassed
+
+    // HealthBar test
+    allTestsPassed = testCodec<HealthBarType>(
+        "HealthBarCodec", "healthbar",
+        { map -> OsrsCacheProvider.HealthBarDecoder().load(cache, map) },
+        { map -> OsrsCacheProvider.HealthBarDecoderNew().load(cache, map) },
+        { old, new -> old == new },
+        outputDir, gson
+    ) && allTestsPassed
+
+    // Underlay test
+    allTestsPassed = testCodec<UnderlayType>(
+        "UnderlayCodec", "underlay",
+        { map -> OsrsCacheProvider.UnderlayDecoder().load(cache, map) },
+        { map -> OsrsCacheProvider.UnderlayDecoderNew().load(cache, map) },
+        { old, new -> old == new },
+        outputDir, gson
+    ) && allTestsPassed
+
+    // Overlay test
+    allTestsPassed = testCodec<OverlayType>(
+        "OverlayCodec", "overlay",
+        { map -> OsrsCacheProvider.OverlayDecoder().load(cache, map) },
+        { map -> OsrsCacheProvider.OverlayDecoderNew().load(cache, map) },
+        { old, new -> old == new },
+        outputDir, gson
+    ) && allTestsPassed
+
+    // HitSplat test
+    allTestsPassed = testCodec<HitSplatType>(
+        "HitSplatCodec", "hitsplat",
+        { map -> OsrsCacheProvider.HitSplatDecoder().load(cache, map) },
+        { map -> OsrsCacheProvider.HitSplatDecoderNew().load(cache, map) },
+        { old, new -> old == new },
+        outputDir, gson
+    ) && allTestsPassed
+
+    // SpotAnim test
+    allTestsPassed = testCodec<SpotAnimType>(
+        "SpotAnimCodec", "spotanim",
+        { map -> OsrsCacheProvider.SpotAnimDecoder().load(cache, map) },
+        { map -> OsrsCacheProvider.SpotAnimDecoderNew().load(cache, map) },
+        { old, new -> old == new },
+        outputDir, gson
+    ) && allTestsPassed
+
+    // IdentityKit test
+    allTestsPassed = testCodec<IdentityKitType>(
+        "IdentityKitCodec", "identitykit",
+        { map -> OsrsCacheProvider.IdentityKitDecoder().load(cache, map) },
+        { map -> OsrsCacheProvider.IdentityKitDecoderNew().load(cache, map) },
+        { old, new -> old == new },
+        outputDir, gson
+    ) && allTestsPassed
+
+    // WorldEntity test
+    allTestsPassed = testCodec<WorldEntityType>(
+        "WorldEntityCodec", "worldentity",
+        { map -> OsrsCacheProvider.WorldEntityDecoder().load(cache, map) },
+        { map -> OsrsCacheProvider.WorldEntityDecoderNew().load(cache, map) },
+        { old, new -> old == new },
+        outputDir, gson
+    ) && allTestsPassed
+
+    // Sequence test
+    allTestsPassed = testCodec<SequenceType>(
+        "SequenceCodec", "sequence",
+        { map -> OsrsCacheProvider.SequenceDecoder(cacheRevision).load(cache, map) },
+        { map -> OsrsCacheProvider.SequenceDecoderNew(cacheRevision).load(cache, map) },
+        { old, new -> old == new },
+        outputDir, gson
+    ) && allTestsPassed
+
+    println("\n" + "=".repeat(50))
+    if (allTestsPassed) {
+        println("✅ ALL TESTS PASSED!")
+    } else {
+        println("❌ SOME TESTS FAILED!")
+    }
+    println("JSON files saved to: ${outputDir.absolutePath}")
+    println("=".repeat(50))
+}
+
+inline fun <T : Definition> testCodec(
+    codecName: String,
+    filePrefix: String,
+    loadOld: (MutableMap<Int, T>) -> Unit,
+    loadNew: (MutableMap<Int, T>) -> Unit,
+    compare: (T, T) -> Boolean,
+    outputDir: File,
+    gson: com.google.gson.Gson
+): Boolean {
+    println("=== Testing $codecName ===")
+    
+    val oldMap = mutableMapOf<Int, T>()
+    val newMap = mutableMapOf<Int, T>()
+    
+    loadOld(oldMap)
+    loadNew(newMap)
+    
+    println("Old size: ${oldMap.size}")
+    println("New size: ${newMap.size}")
+    
+    // Serialize to JSON - sort by ID for cleaner diffs
+    val oldJson = oldMap.toSortedMap().values.toList()
+    val newJson = newMap.toSortedMap().values.toList()
+    
+    File(outputDir, "${filePrefix}_old.json").writeText(gson.toJson(oldJson))
+    File(outputDir, "${filePrefix}_new.json").writeText(gson.toJson(newJson))
+    
+    println("  Saved to ${filePrefix}_old.json and ${filePrefix}_new.json")
+    
+    val allIds = (oldMap.keys + newMap.keys).sorted()
+    var differences = 0
+    
+    for (id in allIds) {
+        val oldDef = oldMap[id]
+        val newDef = newMap[id]
+        
+        if (oldDef == null || newDef == null) {
+            println("  ID $id: Missing in one of the maps")
+            differences++
+            continue
+        }
+        
+        if (!compare(oldDef, newDef)) {
+            println("  ID $id: Data differs")
+            differences++
         }
     }
-
-    if (areaDifferences == 0 && areaType.keys == areaType2.keys) {
-        println("SUCCESS: All Area data is 1:1 identical!")
+    
+    if (differences == 0 && oldMap.keys == newMap.keys) {
+        println("✅ SUCCESS: All $codecName data is 1:1 identical!\n")
+        return true
     } else {
-        println("FAILED: $areaDifferences Area differences found")
-    }
-
-    // Object test
-    println("\n=== Testing ObjectCodec ===")
-
-    val objectType11: MutableMap<Int, ObjectType> = emptyMap<Int, ObjectType>().toMutableMap()
-    OsrsCacheProvider.ObjectDecoder(235).load(cache, objectType11)
-
-    val objectType: MutableMap<Int, ObjectType> = emptyMap<Int, ObjectType>().toMutableMap()
-    OsrsCacheProvider.ObjectDecoder(235).load(cache, objectType)
-
-    val objectType2: MutableMap<Int, ObjectType> = emptyMap<Int, ObjectType>().toMutableMap()
-    OsrsCacheProvider.ObjectDecoderNew(235).load(cache, objectType2)
-
-    println("ObjectDecoder size: ${objectType.size}")
-    println("ObjectDecoderNew size: ${objectType2.size}")
-
-    val allObjectIds = (objectType.keys + objectType2.keys).sorted()
-    var objectDifferences = 0
-
-    for (id in allObjectIds) {
-        val oldObject = objectType[id]
-        val newObject = objectType2[id]
-
-        if (oldObject?.hashCode() != newObject?.hashCode() || oldObject != newObject) {
-            println("Object ID $id differs")
-            objectDifferences++
-        }
-    }
-
-    if (objectDifferences == 0 && objectType.keys == objectType2.keys) {
-        println("SUCCESS: All Object data is 1:1 identical!")
-    } else {
-        println("FAILED: $objectDifferences Object differences found")
+        println("❌ FAILED: $differences $codecName differences found\n")
+        return false
     }
 }

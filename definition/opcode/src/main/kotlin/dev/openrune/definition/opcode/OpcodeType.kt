@@ -3,7 +3,10 @@ package dev.openrune.definition.opcode
 import dev.openrune.definition.util.readNullableLargeSmart
 import io.netty.buffer.ByteBuf
 import dev.openrune.definition.util.readString
+import dev.openrune.definition.util.readShortSmart
 import dev.openrune.definition.util.writeNullableLargeSmartCorrect
+import dev.openrune.definition.util.writePrefixedString
+import dev.openrune.definition.util.writeShortSmart
 import dev.openrune.definition.util.writeSmart
 import dev.openrune.definition.util.writeString
 import kotlin.reflect.KClass
@@ -76,11 +79,20 @@ sealed class OpcodeType<T>(
         }
     })
 
+    data object PREFIXED_STRING : OpcodeType<String>(object : BufferSerializer<String> {
+        override fun read(buf: ByteBuf): String = buf.readString()
+
+        override fun write(buf: ByteBuf, value: String) {
+            buf.writePrefixedString(value)
+        }
+    })
+
+
     data object NULLABLE_LARGE_SMART : OpcodeType<Int>(object : BufferSerializer<Int> {
         override fun read(buf: ByteBuf): Int = buf.readNullableLargeSmart()
 
         override fun write(buf: ByteBuf, value: Int) {
-            buf.writeSmart(value)
+            buf.writeNullableLargeSmartCorrect(value)
         }
     })
 
@@ -138,6 +150,14 @@ sealed class OpcodeType<T>(
 
         override fun write(buf: ByteBuf, value: Int) {
             buf.writeMedium(value)
+        }
+    })
+
+    data object SHORT_SMART : OpcodeType<Int>(object : BufferSerializer<Int> {
+        override fun read(buf: ByteBuf): Int = buf.readShortSmart()
+
+        override fun write(buf: ByteBuf, value: Int) {
+            buf.writeShortSmart(value)
         }
     })
 

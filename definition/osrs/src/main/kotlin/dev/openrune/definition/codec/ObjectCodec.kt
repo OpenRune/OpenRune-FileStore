@@ -1,12 +1,11 @@
 package dev.openrune.definition.codec
 
 import com.github.michaelbull.logging.InlineLogger
-import dev.openrune.definition.util.readString
-import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.type.ObjectType
-import dev.openrune.definition.util.writeByte
+import dev.openrune.definition.util.readString
+import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
 import java.util.stream.IntStream
 import kotlin.streams.toList
