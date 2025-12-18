@@ -22,6 +22,18 @@ class OpcodeList<T> {
         }
     }
 
+    fun addIfRevisionBefore(cacheRevision: Int, revision: Int, opcode: DefinitionOpcode<T>) {
+        if (cacheRevision < revision) {
+            add(opcode)
+        }
+    }
+
+    fun addIfRevisionAfter(cacheRevision: Int, revision: Int, opcode: DefinitionOpcode<T>) {
+        if (cacheRevision >= revision) {
+            add(opcode)
+        }
+    }
+
     fun addAll(newOpcodes: List<DefinitionOpcode<T>>) {
         for (opcode in newOpcodes) {
             add(opcode)

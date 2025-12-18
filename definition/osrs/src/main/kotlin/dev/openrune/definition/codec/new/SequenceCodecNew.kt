@@ -12,19 +12,16 @@ import io.netty.buffer.ByteBuf
 
 class SequenceCodecNew(private val revision: Int) : OpcodeDefinitionCodec<SequenceType>() {
 
-    private val frameSoundOpcode: Int
     private val skeletalIdOpcode: Int
     private val skeletalSoundOpcode: Int
     private val skeletalRangeOpcode: Int
 
     init {
         if (revision < 226) {
-            frameSoundOpcode = 13
             skeletalIdOpcode = 14
             skeletalSoundOpcode = 15
             skeletalRangeOpcode = 16
         } else {
-            frameSoundOpcode = -1
             skeletalIdOpcode = 13
             skeletalSoundOpcode = 14
             skeletalRangeOpcode = 15
@@ -135,26 +132,24 @@ class SequenceCodecNew(private val revision: Int) : OpcodeDefinitionCodec<Sequen
             shouldEncode = { it.chatFrameIds != null }
         ))
 
-        if (frameSoundOpcode != -1) {
-            add(DefinitionOpcode(frameSoundOpcode,
-                decode = { buf, def, _ ->
-                    val count = buf.readUnsignedByte().toInt()
-                    def.soundEffects = MutableList(count) { null }
-                    for (i in 0 until count) {
-                        def.soundEffects[i] = def.readSounds(buf, revision)
+        addIfRevisionBefore(revision, 226, DefinitionOpcode(13,
+            decode = { buf, def, _ ->
+                val count = buf.readUnsignedByte().toInt()
+                def.soundEffects = MutableList(count) { null }
+                for (i in 0 until count) {
+                    def.soundEffects[i] = def.readSounds(buf, revision)
+                }
+            },
+            encode = { buf, def ->
+                if (def.soundEffects.isNotEmpty()) {
+                    buf.writeByte(def.soundEffects.size)
+                    def.soundEffects.forEach {
+                        it!!.writeSound(buf, revision)
                     }
-                },
-                encode = { buf, def ->
-                    if (def.soundEffects.isNotEmpty()) {
-                        buf.writeByte(def.soundEffects.size)
-                        def.soundEffects.forEach {
-                            it!!.writeSound(buf, revision)
-                        }
-                    }
-                },
-                shouldEncode = { it.soundEffects.isNotEmpty() }
-            ))
-        }
+                }
+            },
+            shouldEncode = { it.soundEffects.isNotEmpty() }
+        ))
 
         add(DefinitionOpcode(skeletalIdOpcode, OpcodeType.INT, SequenceType::skeletalId))
 
@@ -193,9 +188,7 @@ class SequenceCodecNew(private val revision: Int) : OpcodeDefinitionCodec<Sequen
             shouldEncode = { it.rangeBegin != 0 || it.rangeEnd != 0 }
         ))
 
-        if (revision >= 226) {
-            add(DefinitionOpcode(16, OpcodeType.BYTE, SequenceType::verticalOffset))
-        }
+        addIfRevisionAfter(revision, 226, DefinitionOpcode(16, OpcodeType.BYTE, SequenceType::verticalOffset))
 
         add(DefinitionOpcode(17,
             decode = { buf, def, _ ->
