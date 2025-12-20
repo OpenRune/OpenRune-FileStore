@@ -19,16 +19,10 @@ class ItemCodec : DefinitionCodec<ItemType> {
             6 -> yan2d = buffer.readUnsignedShort()
             7 -> {
                 xOffset2d = buffer.readUnsignedShort()
-                if (xOffset2d > 32767) {
-                    xOffset2d -= 65536
-                }
             }
 
             8 -> {
                 yOffset2d = buffer.readUnsignedShort()
-                if (yOffset2d > 32767) {
-                    yOffset2d -= 65536;
-                }
             }
 
             11 -> stacks = 1

@@ -48,6 +48,7 @@ interface DefinitionCodec<T : Definition> {
             try {
                 readLoop(definition, reader)
             }catch (e: Exception) {
+                e.printStackTrace()
                 error("Unable to decode ${definition.javaClass.simpleName} [$id]")
             }
         }

@@ -25,11 +25,11 @@ import dev.openrune.definition.codec.old.AreaCodec
 import dev.openrune.definition.codec.old.InventoryCodec
 import dev.openrune.definition.codec.ObjectCodec
 import dev.openrune.definition.codec.old.HealthBarCodec
-import dev.openrune.definition.codec.old.HitSplatCodec
+import dev.openrune.definition.codec.HitSplatCodec
 import dev.openrune.definition.codec.old.IdentityKitCodec
 import dev.openrune.definition.codec.old.OverlayCodec
 import dev.openrune.definition.codec.old.ParamCodec
-import dev.openrune.definition.codec.old.SequenceCodec
+import dev.openrune.definition.codec.SequenceCodec
 import dev.openrune.definition.codec.old.SpotAnimCodec
 import dev.openrune.definition.codec.old.VarClientCodec
 import dev.openrune.definition.codec.old.VarCodec

@@ -13,11 +13,11 @@ import dev.openrune.definition.codec.old.AreaCodec
 import dev.openrune.definition.codec.old.InventoryCodec
 import dev.openrune.definition.codec.ObjectCodec
 import dev.openrune.definition.codec.old.HealthBarCodec
-import dev.openrune.definition.codec.old.HitSplatCodec
+import dev.openrune.definition.codec.HitSplatCodec
 import dev.openrune.definition.codec.old.IdentityKitCodec
 import dev.openrune.definition.codec.old.OverlayCodec
 import dev.openrune.definition.codec.old.ParamCodec
-import dev.openrune.definition.codec.old.SequenceCodec
+import dev.openrune.definition.codec.SequenceCodec
 import dev.openrune.definition.codec.old.SpotAnimCodec
 import dev.openrune.definition.codec.old.StructCodec
 import dev.openrune.definition.codec.old.UnderlayCodec
@@ -75,7 +75,6 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     class AreaDecoderNew : ConfigDefinitionDecoder<AreaType>(AreaCodecNew(), AREA)
     class AreaDecoder : ConfigDefinitionDecoder<AreaType>(AreaCodec(), AREA)
     class HealthBarDecoderNew : ConfigDefinitionDecoder<HealthBarType>(HealthBarCodecNew(), HEALTHBAR)
-    class HitSplatDecoderNew : ConfigDefinitionDecoder<HitSplatType>(HitSplatCodecNew(), HITSPLAT)
     class StructDecoderNew : ConfigDefinitionDecoder<StructType>(StructCodecNew(), STRUCT)
     class VarDecoderNew : ConfigDefinitionDecoder<VarpType>(VarCodecNew(), VARPLAYER)
     class VarClientDecoderNew : ConfigDefinitionDecoder<VarClientType>(VarClientCodecNew(), VARCLIENT)
@@ -103,7 +102,6 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
         DefinitionTransform { id, definition -> definition.calculateHsl() })
     class ParamDecoder : ConfigDefinitionDecoder<ParamType>(ParamCodec(), PARAMS)
     class SequenceDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<SequenceType>(SequenceCodec(cacheRevision), SEQUENCE)
-    class SequenceDecoderNew(cacheRevision: Int) : ConfigDefinitionDecoder<SequenceType>(SequenceCodecNew(cacheRevision), SEQUENCE)
     class StructDecoder : ConfigDefinitionDecoder<StructType>(StructCodec(), STRUCT)
     class UnderlayDecoder : ConfigDefinitionDecoder<UnderlayType>(UnderlayCodec(), UNDERLAY,
         DefinitionTransform { id, definition -> definition.setHsl(definition.rgb) })

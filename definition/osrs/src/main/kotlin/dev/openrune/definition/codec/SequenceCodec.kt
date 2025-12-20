@@ -1,4 +1,4 @@
-package dev.openrune.definition.codec.old
+package dev.openrune.definition.codec
 
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.SequenceType
