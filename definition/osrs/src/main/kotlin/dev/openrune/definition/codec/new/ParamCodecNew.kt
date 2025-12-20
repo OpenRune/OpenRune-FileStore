@@ -19,7 +19,7 @@ class ParamCodecNew : OpcodeDefinitionCodec<ParamType>() {
 
         add(DefinitionOpcode(2, OpcodeType.INT, ParamType::defaultInt, readOnly = true))
         add(DefinitionOpcode(3, OpcodeType.INT, ParamType::defaultInt))
-        add(DefinitionOpcode(4, ParamType::isMembers, setValue = false, encodeWhen = true))
+        add(DefinitionOpcode(4, ParamType::isMembers, setValue = false, encodeWhen = false))
         add(DefinitionOpcode(5, OpcodeType.STRING, ParamType::defaultString))
     }
 

@@ -56,8 +56,34 @@ class AreaCodecNew : OpcodeDefinitionCodec<AreaType>() {
                     buf.readByte().toInt()
                 }
             },
-            encode = { _, _ -> },
-            shouldEncode = { true })
+            encode = { buf, def ->
+                val field1933 = def.field1933 ?: error("AreaType.field1933 is null but opcode 15 was selected for encoding.")
+
+                val length = when {
+                    def.field1948.isNotEmpty() -> def.field1948.size
+                    else -> field1933.size / 2
+                }
+
+                buf.writeByte(length)
+                for (i in 0 until (length * 2)) {
+                    buf.writeShort(field1933.getOrNull(i) ?: 0)
+                }
+
+                buf.writeInt(0)
+
+                val subLength = def.field1930.size
+                buf.writeByte(subLength)
+                for (i in 0 until subLength) {
+                    buf.writeInt(def.field1930[i])
+                }
+
+                for (i in 0 until length) {
+                    buf.writeByte(def.field1948.getOrNull(i) ?: 0)
+                }
+            },
+            shouldEncode = { def ->
+                def.field1933 != null && (def.field1933!!.isNotEmpty() || def.field1930.isNotEmpty() || def.field1948.isNotEmpty())
+            })
         )
 
         add(IgnoreOpcode(16, OpcodeType.BYTE))

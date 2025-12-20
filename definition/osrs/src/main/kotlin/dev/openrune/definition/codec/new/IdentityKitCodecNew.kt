@@ -17,9 +17,9 @@ class IdentityKitCodecNew : OpcodeDefinitionCodec<IdentityKitType>() {
         add(DefinitionOpcode(3, IdentityKitType::nonSelectable, setValue = true))
         add(DefinitionOpcodeColours(40, IdentityKitType::originalColours, IdentityKitType::modifiedColours))
         add(DefinitionOpcodeTextures(41, IdentityKitType::originalTextureColours, IdentityKitType::modifiedTextureColours))
-        
-        (60..70).forEach { opcode ->
-            val index = opcode - 60
+
+        (0 until 4).forEach { index ->
+            val opcode = 60 + index
             add(DefinitionOpcode(
                 opcode = opcode,
                 decode = { buf, def, _ ->
