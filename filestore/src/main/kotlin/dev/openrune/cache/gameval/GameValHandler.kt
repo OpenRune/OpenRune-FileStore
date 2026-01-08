@@ -188,10 +188,10 @@ object GameValHandler {
                         element.elementAs<Interface>()?.let { inf ->
                             writeString(standardizeGamevalName(inf.name))
                             inf.components.sortedBy { it.id }.forEach {
-                                writeByte(it.id)
+                                writeShort(it.id)
                                 writeString(standardizeGamevalName(it.name))
                             }
-                            writeByte(0xFFFF)
+                            writeShort(0xFFFF)
                         }
                     }
                     cache.write(GAMEVALS, type.id, element.id, writer.toArray())
