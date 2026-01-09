@@ -19,7 +19,7 @@ import dev.openrune.filesystem.Cache
 import java.io.File
 import java.util.*
 
-class PackCs2(private val cs2Dir: File) : CacheTask() {
+class PackCs2(private val cs2Dir: File, private val rev : Int = 230) : CacheTask() {
 
     override val priority: TaskPriority get() = TaskPriority.VERY_LAST
 
@@ -42,7 +42,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
             valsToUpdate = collectValsToUpdate(cache, savedVals)
             dumpCacheVals(File(cs2Dir,"symbols"),cache)
 
-            val scripts = ClientScripts.compileTask(configFile.toPath(), 230)
+            val scripts = ClientScripts.compileTask(configFile.toPath(), rev)
             val progress = progress("Packing Cs2 Scripts", scripts.size)
 
             scripts.forEach { script ->
@@ -118,6 +118,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
         symDumper(basePath,cache,"varbit", GameValGroupTypes.VARBITTYPES)
         symDumper(basePath,cache,"seq", GameValGroupTypes.SEQTYPES)
         symDumper(basePath,cache,"dbrow", GameValGroupTypes.ROWTYPES)
+        symDumper(basePath,cache,"varc", GameValGroupTypes.VARCS)
 
         symDumperInterface(basePath,cache)
         symDumperDBTables(basePath,cache)

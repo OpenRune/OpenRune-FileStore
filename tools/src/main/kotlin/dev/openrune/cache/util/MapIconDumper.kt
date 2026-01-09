@@ -5,7 +5,7 @@ import dev.openrune.OsrsCacheProvider
 import dev.openrune.cache.gameval.GameValHandler
 import dev.openrune.cache.gameval.GameValHandler.lookup
 import dev.openrune.definition.GameValGroupTypes
-import dev.openrune.definition.type.AreaType
+import dev.openrune.definition.type.MapElementType
 import dev.openrune.filesystem.Cache
 import java.io.File
 
@@ -38,7 +38,7 @@ fun main() {
     val cache = Cache.load(File("C:\\Users\\Home\\Desktop\\Alter-feature-support-231\\Alter-feature-support-231\\data\\cache").toPath())
     CacheManager.init(OsrsCacheProvider(cache,234))
 
-    val area: MutableMap<Int, AreaType> = mutableMapOf()
+    val area: MutableMap<Int, MapElementType> = mutableMapOf()
     val enum: MutableMap<Int, EnumType> = mutableMapOf()
     val objectGameVals = GameValHandler.readGameVal(GameValGroupTypes.LOCTYPES, cache)
     OsrsCacheProvider.AreaDecoder().load(cache, area)
@@ -53,7 +53,7 @@ fun main() {
 
 fun writeMapFunctionData(
     objectGameVals: List<GameValElement>,
-    area: MutableMap<Int, AreaType>,
+    area: MutableMap<Int, MapElementType>,
     enum: MutableMap<Int, EnumType>
 ) {
     val objectsByMapArea = CacheManager.getObjects()

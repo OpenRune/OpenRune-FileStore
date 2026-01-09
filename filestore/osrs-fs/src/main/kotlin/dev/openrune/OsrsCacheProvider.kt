@@ -56,7 +56,7 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
         }
     }
 
-    class AreaDecoder : ConfigDefinitionDecoder<AreaType>(AreaCodec(), AREA)
+    class AreaDecoder : ConfigDefinitionDecoder<MapElementType>(MapElementCodec(), MAP_ELEMENT)
     class DBRowDecoder : ConfigDefinitionDecoder<DBRowType>(DBRowCodec(), DBROW)
     class DBTableDecoder : ConfigDefinitionDecoder<DBTableType>(DBTableCodec(), DBTABLE)
     class EnumDecoder : ConfigDefinitionDecoder<EnumType>(EnumCodec(), ENUM)
@@ -78,10 +78,20 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     class InventoryDecoder : ConfigDefinitionDecoder<InventoryType>(InventoryCodec(), INV)
     class SpotAnimDecoder : ConfigDefinitionDecoder<SpotAnimType>(SpotAnimCodec(), SPOTANIM)
     class VarClientDecoder : ConfigDefinitionDecoder<VarClientType>(VarClientCodec(), VARCLIENT)
-    class WorldEntityDecoder : ConfigDefinitionDecoder<WorldEntityType>(WorldEntityCodec(), WORLDENTITY)
+    class WorldEntityDecoder : ConfigDefinitionDecoder<WorldEntityType>(WorldEntityCodec(), WORLD_ENTITY)
+    class BugTemplateDecoder : ConfigDefinitionDecoder<BugTemplateType>(BugTemplateCodec(), BUGTEMPLATE)
+    class StringVectorDecoder : ConfigDefinitionDecoder<StringVectorType>(StringVectorCodec(), STRINGVECTOR)
+    class VarClanDecoder() : ConfigDefinitionDecoder<VarClanType>(VarClanCodec(), VAR_CLAN)
+    class VarClanSettingDecoder() : ConfigDefinitionDecoder<VarClanSettingsType>(VarClanSettingCodec(), VAR_CLAN_SETTINGS)
 
     class TextureDecoder(cacheRevision: Int) : DefinitionDecoder<TextureType>(TEXTURES, TextureCodec(cacheRevision)) {
         override fun getArchive(id: Int) = 0
         override fun getFile(id: Int) = id
     }
+
+    class WorldMapAreasDecoder(cacheRevision: Int) : DefinitionDecoder<WorldMapAreaType>(WORLDMAPAREAS, WorldMapAreaCodec(cacheRevision)) {
+        override fun getArchive(id: Int) = 0
+        override fun getFile(id: Int) = id
+    }
+
 }

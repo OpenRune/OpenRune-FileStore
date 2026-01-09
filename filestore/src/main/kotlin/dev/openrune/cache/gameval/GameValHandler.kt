@@ -28,12 +28,36 @@ object GameValHandler {
     inline fun <reified T : GameValElement> List<GameValElement>.lookupAs(id: Int): T? =
         filterIsInstance<T>().firstOrNull { it.id == id }
 
-    fun readGameVal(type: GameValGroupTypes, cache: Cache, cacheRevision : Int = -1): List<GameValElement> {
+    private fun assertNoDuplicateGameValKeys(
+        type: GameValGroupTypes,
+        elements: List<GameValElement>
+    ) {
+        val seen = mutableSetOf<String>()
+
+        elements.forEach { element ->
+            val key = element.name
+            if (!seen.add(key)) {
+                error(
+                    "Duplicate GameVal key detected for type '${type}': '${element.name} (${element.id})'"
+                )
+            }
+        }
+    }
+
+    fun readGameVal(
+        type: GameValGroupTypes,
+        cache: Cache,
+        cacheRevision: Int = -1
+    ): List<GameValElement> {
 
         var type = type
 
         if (type.revision != -1) {
-            val rev = if (cacheRevision == -1) readCacheRevision(cache,"${type.name} is unsupported in this revision") else cacheRevision
+            val rev =
+                if (cacheRevision == -1)
+                    readCacheRevision(cache, "${type.name} is unsupported in this revision")
+                else cacheRevision
+
             if (rev < type.revision) {
                 error("${type.name} is unsupported in this revision")
             }
@@ -45,11 +69,13 @@ object GameValHandler {
             }
         }
 
-        return cache.files(GAMEVALS, type.id).flatMap { file ->
+        val elements = cache.files(GAMEVALS, type.id).flatMap { file ->
             val archive = type.id
             val data = cache.data(GAMEVALS, archive, file)
             unpackGameVal(type, file, data)
         }
+
+        return elements
     }
 
     fun unpackGameVal(type: GameValGroupTypes, id: Int, bytes: ByteArray?): List<GameValElement> {
@@ -129,6 +155,8 @@ object GameValHandler {
     }
 
     fun encodeGameVals(type: GameValGroupTypes, values: List<GameValElement>, cache: Cache, cacheRevision : Int = -1) {
+
+        assertNoDuplicateGameValKeys(type,values)
 
         var type = type
 

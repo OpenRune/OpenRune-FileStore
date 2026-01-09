@@ -195,11 +195,12 @@ class PackConfig(
 
         registerPackType(VARBIT, VarBitCodec::class, "varbit",GameValGroupTypes.VARBITTYPES, kType = typeOf<List<VarBitType>>())
 
-        registerPackType(AREA, AreaCodec::class, "area", tomlMapper = tomlMapper {
-            addDecoder<AreaType> { content , def: AreaType ->
+        registerPackType(MAP_ELEMENT, MapElementCodec::class, "mapelement", tomlMapper = tomlMapper {
+            addDecoder<MapElementType> { content, def: MapElementType ->
                 def.options.fromOptions(def.id,def.name,"option", content)
             }
-        }, kType = typeOf<List<AreaType>>())
+        }, kType = typeOf<List<MapElementType>>())
+
 
         registerPackType(HEALTHBAR, HealthBarCodec::class, "health", kType = typeOf<List<HealthBarType>>())
         registerPackType(HITSPLAT, HitSplatCodec::class, "hitsplat", kType = typeOf<List<HitSplatType>>())
