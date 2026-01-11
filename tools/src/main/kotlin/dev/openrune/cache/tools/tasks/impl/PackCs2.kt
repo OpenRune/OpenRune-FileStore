@@ -6,6 +6,7 @@ import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.GAMEVALS
 import dev.openrune.cache.gameval.GameValHandler
 import dev.openrune.cache.gameval.GameValHandler.elementAs
+import dev.openrune.cache.gameval.GameValHandler.lookup
 import dev.openrune.cache.gameval.impl.Interface
 import dev.openrune.cache.gameval.impl.Table
 import dev.openrune.cache.tools.TaskPriority
@@ -179,7 +180,7 @@ class PackCs2(private val cs2Dir: File, private val rev : Int = 230) : CacheTask
     private fun symDumperInterface(basePath: File, cache: Cache) {
         if (!valsToUpdate.containsKey(IFTYPES.id)) return
 
-        val infTypes = GameValHandler.readGameVal(IFTYPES, cache)
+        val infTypes = GameValHandler.readGameVal(IFTYPES, cache,rev)
 
         val interfaceTypes = infTypes.map { "${it.id}\t${it.name}" }
         File(basePath, "interface.sym").writeText(interfaceTypes.joinToString("\n") + "\n")

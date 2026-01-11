@@ -14,7 +14,7 @@ dependencies {
 
     implementation("org.slf4j:slf4j-simple:2.0.3")
     implementation("cc.ekblad:4koma:1.2.2-openrune")
-    implementation("me.filby:clientscript-compiler:0.0.3-openrune")
+    implementation("me.filby:clientscript-compiler:0.0.2-openrune")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.7.0")

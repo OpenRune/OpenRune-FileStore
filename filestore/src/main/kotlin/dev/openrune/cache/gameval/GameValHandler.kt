@@ -53,18 +53,18 @@ object GameValHandler {
         var type = type
 
         if (type.revision != -1) {
-            val rev =
-                if (cacheRevision == -1)
-                    readCacheRevision(cache, "${type.name} is unsupported in this revision")
-                else cacheRevision
-
+            val rev = if (cacheRevision == -1) readCacheRevision(cache,"${type.name} is unsupported in this revision") else cacheRevision
             if (rev < type.revision) {
-                error("${type.name} is unsupported in this revision")
+                logger.info {
+                    "Skipping GameVal group '${type.name}' (id=${type.id}): " +
+                            "requires cache revision ${type.revision}, but cache revision is $rev"
+                }
             }
         }
 
+
         if (type == IFTYPES) {
-            if (cache.files(GAMEVALS, type.id).isEmpty()) {
+            if (cache.files(GAMEVALS, IFTYPES.id).isEmpty()) {
                 type = IFTYPES_V2
             }
         }
@@ -158,22 +158,30 @@ object GameValHandler {
 
         assertNoDuplicateGameValKeys(type,values)
 
-        var type = type
+        var resolvedType = type
 
-        if (type.revision != -1) {
-            val rev = if (cacheRevision == -1) readCacheRevision(cache,"${type.name} is unsupported in this revision") else cacheRevision
-            if (rev < type.revision) {
-                error("${type.name} is unsupported in this revision")
+        if (resolvedType == IFTYPES) {
+            if (cache.files(GAMEVALS, resolvedType.id).isEmpty()) {
+                resolvedType = IFTYPES_V2
             }
         }
 
-        if (type == IFTYPES) {
-            if (cache.files(GAMEVALS, type.id).isEmpty()) {
-                type = IFTYPES_V2
+        if (resolvedType.revision != -1) {
+
+            val rev = if (cacheRevision == -1) readCacheRevision(cache, "${resolvedType.name} is unsupported in this revision")
+            else cacheRevision
+
+            if (rev < resolvedType.revision) {
+                logger.info {
+                    "Skipping encoding of GameVal group '${resolvedType.name}' " +
+                     "(requires rev ${resolvedType.revision}, cache rev=$rev)"
+                }
+                return
             }
         }
 
-        when (type) {
+
+        when (resolvedType) {
             TABLETYPES -> {
                 values.forEach { element ->
                     element.elementAs<Table>()?.let { table ->
@@ -198,7 +206,7 @@ object GameValHandler {
                         element.elementAs<Interface>()?.let { inf ->
                             writeString(standardizeGamevalName(inf.name))
                             inf.components.sortedBy { it.id }.forEach {
-                                writeShort(it.id and 0xFFFF)
+                                writeByte(it.id and 0xFFFF)
                                 writeString(standardizeGamevalName(it.name))
                             }
                             writeByte(0xFF)
