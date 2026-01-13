@@ -129,7 +129,7 @@ class PackCs2(private val cs2Dir: File, private val rev : Int = 230) : CacheTask
         if (!valsToUpdate.containsKey(group.id)) return
         if (group == GameValGroupTypes.TABLETYPES) return
 
-        val transformed = GameValHandler.readGameVal(group, cache).map { "${it.id}\t${it.name}" }
+        val transformed = GameValHandler.readGameVal(group, cache,rev).map { "${it.id}\t${it.name}" }
         File(basePath, "$name.sym").writeText(transformed.joinToString("\n") + "\n")
     }
 
