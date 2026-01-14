@@ -28,28 +28,54 @@ object GameValHandler {
     inline fun <reified T : GameValElement> List<GameValElement>.lookupAs(id: Int): T? =
         filterIsInstance<T>().firstOrNull { it.id == id }
 
-    fun readGameVal(type: GameValGroupTypes, cache: Cache, cacheRevision : Int = -1): List<GameValElement> {
+    private fun assertNoDuplicateGameValKeys(
+        type: GameValGroupTypes,
+        elements: List<GameValElement>
+    ) {
+        val seen = mutableSetOf<String>()
+
+        elements.forEach { element ->
+            val key = element.name
+            if (!seen.add(key)) {
+                error(
+                    "Duplicate GameVal key detected for type '${type}': '${element.name} (${element.id})'"
+                )
+            }
+        }
+    }
+
+    fun readGameVal(
+        type: GameValGroupTypes,
+        cache: Cache,
+        cacheRevision: Int = -1
+    ): List<GameValElement> {
 
         var type = type
 
         if (type.revision != -1) {
             val rev = if (cacheRevision == -1) readCacheRevision(cache,"${type.name} is unsupported in this revision") else cacheRevision
             if (rev < type.revision) {
-                error("${type.name} is unsupported in this revision")
+                logger.info {
+                    "Skipping GameVal group '${type.name}' (id=${type.id}): " +
+                            "requires cache revision ${type.revision}, but cache revision is $rev"
+                }
             }
         }
 
+
         if (type == IFTYPES) {
-            if (cache.files(GAMEVALS, type.id).isEmpty()) {
+            if (cache.files(GAMEVALS, IFTYPES.id).isEmpty()) {
                 type = IFTYPES_V2
             }
         }
 
-        return cache.files(GAMEVALS, type.id).flatMap { file ->
+        val elements = cache.files(GAMEVALS, type.id).flatMap { file ->
             val archive = type.id
             val data = cache.data(GAMEVALS, archive, file)
             unpackGameVal(type, file, data)
         }
+
+        return elements
     }
 
     fun unpackGameVal(type: GameValGroupTypes, id: Int, bytes: ByteArray?): List<GameValElement> {
@@ -130,22 +156,32 @@ object GameValHandler {
 
     fun encodeGameVals(type: GameValGroupTypes, values: List<GameValElement>, cache: Cache, cacheRevision : Int = -1) {
 
-        var type = type
+        assertNoDuplicateGameValKeys(type,values)
 
-        if (type.revision != -1) {
-            val rev = if (cacheRevision == -1) readCacheRevision(cache,"${type.name} is unsupported in this revision") else cacheRevision
-            if (rev < type.revision) {
-                error("${type.name} is unsupported in this revision")
+        var resolvedType = type
+
+        if (resolvedType == IFTYPES) {
+            if (cache.files(GAMEVALS, resolvedType.id).isEmpty()) {
+                resolvedType = IFTYPES_V2
             }
         }
 
-        if (type == IFTYPES) {
-            if (cache.files(GAMEVALS, type.id).isEmpty()) {
-                type = IFTYPES_V2
+        if (resolvedType.revision != -1) {
+
+            val rev = if (cacheRevision == -1) readCacheRevision(cache, "${resolvedType.name} is unsupported in this revision")
+            else cacheRevision
+
+            if (rev < resolvedType.revision) {
+                logger.info {
+                    "Skipping encoding of GameVal group '${resolvedType.name}' " +
+                     "(requires rev ${resolvedType.revision}, cache rev=$rev)"
+                }
+                return
             }
         }
 
-        when (type) {
+
+        when (resolvedType) {
             TABLETYPES -> {
                 values.forEach { element ->
                     element.elementAs<Table>()?.let { table ->
@@ -170,7 +206,7 @@ object GameValHandler {
                         element.elementAs<Interface>()?.let { inf ->
                             writeString(standardizeGamevalName(inf.name))
                             inf.components.sortedBy { it.id }.forEach {
-                                writeShort(it.id and 0xFFFF)
+                                writeByte(it.id and 0xFFFF)
                                 writeString(standardizeGamevalName(it.name))
                             }
                             writeByte(0xFF)

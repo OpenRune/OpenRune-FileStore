@@ -24,12 +24,31 @@ object ConstantProvider {
     fun load(provider: MappingProvider) {
         val timeNs = measureNanoTime {
             provider.assertHasMappings()
+            provider.assertNoDuplicateKeys()
             this.provider = provider
             mappings = provider.mappings
             refreshTypes(provider)
         }
         val timeLog = if (timeNs < 1_000_000) "$timeNs ns" else "${timeNs / 1_000_000} ms"
         logger.info { "Loaded provider '${provider::class.simpleName}' with ${mappings.size} tables in $timeLog" }
+    }
+
+    private fun MappingProvider.assertNoDuplicateKeys() {
+        mappings.forEach { (table, entries) ->
+            val duplicates = entries
+                .keys
+                .groupingBy { it }
+                .eachCount()
+                .filter { it.value > 1 }
+
+            if (duplicates.isNotEmpty()) {
+                error(
+                    "Duplicate keys detected in mapping table '$table': ${
+                        duplicates.keys.joinToString(", ")
+                    }"
+                )
+            }
+        }
     }
 
     fun load(mappingsDir: File, provider: MappingProvider) {

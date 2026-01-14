@@ -6,6 +6,7 @@ import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.GAMEVALS
 import dev.openrune.cache.gameval.GameValHandler
 import dev.openrune.cache.gameval.GameValHandler.elementAs
+import dev.openrune.cache.gameval.GameValHandler.lookup
 import dev.openrune.cache.gameval.impl.Interface
 import dev.openrune.cache.gameval.impl.Table
 import dev.openrune.cache.tools.TaskPriority
@@ -19,7 +20,7 @@ import dev.openrune.filesystem.Cache
 import java.io.File
 import java.util.*
 
-class PackCs2(private val cs2Dir: File) : CacheTask() {
+class PackCs2(private val cs2Dir: File, private val rev : Int = 230) : CacheTask() {
 
     override val priority: TaskPriority get() = TaskPriority.VERY_LAST
 
@@ -42,7 +43,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
             valsToUpdate = collectValsToUpdate(cache, savedVals)
             dumpCacheVals(File(cs2Dir,"symbols"),cache)
 
-            val scripts = ClientScripts.compileTask(configFile.toPath(), 230)
+            val scripts = ClientScripts.compileTask(configFile.toPath(), rev)
             val progress = progress("Packing Cs2 Scripts", scripts.size)
 
             scripts.forEach { script ->
@@ -118,6 +119,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
         symDumper(basePath,cache,"varbit", GameValGroupTypes.VARBITTYPES)
         symDumper(basePath,cache,"seq", GameValGroupTypes.SEQTYPES)
         symDumper(basePath,cache,"dbrow", GameValGroupTypes.ROWTYPES)
+        symDumper(basePath,cache,"varc", GameValGroupTypes.VARCS)
 
         symDumperInterface(basePath,cache)
         symDumperDBTables(basePath,cache)
@@ -127,7 +129,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
         if (!valsToUpdate.containsKey(group.id)) return
         if (group == GameValGroupTypes.TABLETYPES) return
 
-        val transformed = GameValHandler.readGameVal(group, cache).map { "${it.id}\t${it.name}" }
+        val transformed = GameValHandler.readGameVal(group, cache,rev).map { "${it.id}\t${it.name}" }
         File(basePath, "$name.sym").writeText(transformed.joinToString("\n") + "\n")
     }
 
@@ -178,7 +180,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
     private fun symDumperInterface(basePath: File, cache: Cache) {
         if (!valsToUpdate.containsKey(IFTYPES.id)) return
 
-        val infTypes = GameValHandler.readGameVal(IFTYPES, cache)
+        val infTypes = GameValHandler.readGameVal(IFTYPES, cache,rev)
 
         val interfaceTypes = infTypes.map { "${it.id}\t${it.name}" }
         File(basePath, "interface.sym").writeText(interfaceTypes.joinToString("\n") + "\n")

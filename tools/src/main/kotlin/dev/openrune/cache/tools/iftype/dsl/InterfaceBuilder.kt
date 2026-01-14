@@ -113,26 +113,20 @@ data class Grid(
         namePrefix: String,
         component: ComponentTypeBuilder
     ): List<ComponentTypeBuilder> {
-        val components = mutableListOf<ComponentTypeBuilder>()
 
-        repeat(count) { index ->
+        val baseX = component.x ?: 0
+        val baseY = component.y ?: 0
+
+        return List(count) { index ->
             val row = index / rowSize
             val col = index % rowSize
-            val width = if (additive) widthCom + padX else widthCom - padX
-            val height = if (additive) heightCom + padY else heightCom - padY
-            val offsetX = col * width
-            val offsetY = row * height
 
-            val com = ComponentTypeBuilder("${namePrefix}_$index").apply {
+            ComponentTypeBuilder("${namePrefix}_$index").apply {
                 copyFrom(component)
-                x = (component.x ?: 0) + offsetX
-                y = (component.y ?: 0) + offsetY
+                x = baseX + col * padX
+                y = baseY + row * padY
             }
-
-            components.add(com)
         }
-
-        return components
     }
 
 }

@@ -9,7 +9,7 @@ enum class VarType(val id: Int, val ch: Char, val baseType: BaseVarType) {
     CURSOR(5, '@', BaseVarType.INTEGER),
     SEQ(6, 'A', BaseVarType.INTEGER),
     COLOUR(7, 'C', BaseVarType.INTEGER),
-    LOC_SHAPE(8, 'H', BaseVarType.INTEGER),
+    LOCSHAPE(8, 'H', BaseVarType.INTEGER),
     COMPONENT(9, 'I', BaseVarType.INTEGER),
     IDKIT(10, 'K', BaseVarType.INTEGER),
     MIDI(11, 'M', BaseVarType.INTEGER),

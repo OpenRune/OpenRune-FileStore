@@ -110,6 +110,7 @@ class ComponentDecoder(private val cache: Cache) {
                     types[file] = read(combinedId, Unpooled.wrappedBuffer(data),componentName)
                 }
             }
+
             components[group] = InterfaceType(
                 types.toMap(),
                 group,
@@ -632,36 +633,39 @@ class ComponentDecoder(private val cache: Cache) {
             data.writeBoolean(draggableBehavior)
             data.writeString(targetVerb)
 
-            encodeHook(onLoad, data)
-            encodeHook(onMouseOver, data)
-            encodeHook(onMouseLeave, data)
-            encodeHook(onTargetLeave, data)
-            encodeHook(onTargetEnter, data)
-            encodeHook(onVarTransmit, data)
-            encodeHook(onInvTransmit, data)
-            encodeHook(onStatTransmit, data)
-            encodeHook(onTimer, data)
-            encodeHook(onOp, data)
-            encodeHook(onMouseRepeat, data)
-            encodeHook(onClick, data)
-            encodeHook(onClickRepeat, data)
-            encodeHook(onRelease, data)
-            encodeHook(onHold, data)
-            encodeHook(onDrag, data)
-            encodeHook(onDragComplete, data)
-            encodeHook(onScrollWheel, data)
+            encodeHook(onLoad, data,internalId)
+            encodeHook(onMouseOver, data,internalId)
+            encodeHook(onMouseLeave, data,internalId)
+            encodeHook(onTargetLeave, data,internalId)
+            encodeHook(onTargetEnter, data,internalId)
+            encodeHook(onVarTransmit, data,internalId)
+            encodeHook(onInvTransmit, data,internalId)
+            encodeHook(onStatTransmit, data,internalId)
+            encodeHook(onTimer, data,internalId)
+            encodeHook(onOp, data,internalId)
+            encodeHook(onMouseRepeat, data,internalId)
+            encodeHook(onClick, data,internalId)
+            encodeHook(onClickRepeat, data,internalId)
+            encodeHook(onRelease, data,internalId)
+            encodeHook(onHold, data,internalId)
+            encodeHook(onDrag, data,internalId)
+            encodeHook(onDragComplete, data,internalId)
+            encodeHook(onScrollWheel, data,internalId)
             encodeHookTransmitList(onVarTransmitList, data)
             encodeHookTransmitList(onInvTransmitList, data)
             encodeHookTransmitList(onStatTransmitList, data)
         }
 
-    public fun encodeHook(values: Array<Any>?, data: ByteBuf) {
+    public fun encodeHook(values: Array<Any>?, data: ByteBuf, packed : Int?) {
         data.writeByte(values?.size ?: 0)
         if (values == null) {
             return
         }
         for (i in values.indices) {
-            val value = values[i]
+            var value = values[i]
+            if (value is String && value.contains("component") && packed != null) {
+                value = packed
+            }
             when (value) {
                 is Int -> {
                     data.writeByte(0)

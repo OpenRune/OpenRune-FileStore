@@ -1,13 +1,13 @@
 package dev.openrune.definition.codec
 
 import dev.openrune.definition.DefinitionCodec
-import dev.openrune.definition.type.AreaType
+import dev.openrune.definition.type.MapElementType
 import dev.openrune.definition.util.*
 import io.netty.buffer.ByteBuf
 
-class AreaCodec : DefinitionCodec<AreaType> {
+class MapElementCodec : DefinitionCodec<MapElementType> {
 
-    override fun AreaType.read(opcode: Int, buffer: ByteBuf) {
+    override fun MapElementType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> sprite1 = buffer.readNullableLargeSmart()
             2 -> sprite2 = buffer.readNullableLargeSmart()
@@ -65,7 +65,7 @@ class AreaCodec : DefinitionCodec<AreaType> {
         }
     }
 
-    override fun ByteBuf.encode(definition: AreaType) {
+    override fun ByteBuf.encode(definition: MapElementType) {
 
         if (definition.sprite1 != -1) {
             writeByte(1)
@@ -124,5 +124,5 @@ class AreaCodec : DefinitionCodec<AreaType> {
         writeByte(0)
     }
 
-    override fun createDefinition() = AreaType()
+    override fun createDefinition() = MapElementType()
 }

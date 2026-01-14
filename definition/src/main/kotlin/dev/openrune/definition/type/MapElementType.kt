@@ -2,7 +2,7 @@ package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
 
-data class AreaType(
+data class MapElementType(
     override var id: Int = -1,
 
     var sprite1: Int = -1,
