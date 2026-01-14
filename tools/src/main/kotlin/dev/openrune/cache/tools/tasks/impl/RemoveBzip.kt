@@ -1,10 +1,10 @@
 package dev.openrune.cache.tools.tasks.impl
 
-import com.displee.compress.CompressionType
 import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.progress
 import dev.openrune.filesystem.Cache
+import org.openrs2.cache.Js5CompressionType
 
 /*
  * Removes Bzip2 Compression and replaces it with Gzip.
@@ -18,23 +18,20 @@ class RemoveBzip : CacheTask() {
         //for the first step loop through and flag the files.
         var indices = 0
         var archives = 0
-        val targetType = CompressionType.GZIP
-        val compressor = library.compressors.get(targetType)
+        val targetType = Js5CompressionType.GZIP
         for (index in library.indices()) {
             if (index.version == 0) { //empty index
                 continue
             }
-            if (index.compressionType == CompressionType.BZIP2) {
+            if (index.compressionType == Js5CompressionType.BZIP2) {
                 index.compressionType = targetType
-                index.compressor = compressor
                 index.flag()
                 indices++
             }
             for (archiveId in index.archiveIds()) {
                 val archive = index.archive(archiveId) ?: continue
-                if (archive.compressionType == CompressionType.BZIP2) {
+                if (archive.compressionType == Js5CompressionType.BZIP2) {
                     archive.compressionType = targetType
-                    archive.compressor = compressor
                     archive.flag()
                     archives++
                 }

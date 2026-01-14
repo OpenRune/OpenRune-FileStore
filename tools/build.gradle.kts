@@ -10,6 +10,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("commons-io:commons-io:2.15.1")
     implementation(project(":cache"))
+    implementation("dev.or2.openrs2:cache:1.0.0-openrune")
+
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
 
     implementation("org.slf4j:slf4j-simple:2.0.3")

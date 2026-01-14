@@ -1,16 +1,16 @@
 package dev.openrune.cache
 
 import com.displee.cache.CacheLibrary
-import com.displee.compress.CompressionType
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.filesystem.Cache
 import dev.openrune.filesystem.Compression
+import org.openrs2.cache.Js5CompressionType
 
 class CacheDelegate(val library: CacheLibrary) : Cache {
 
     constructor(directory: String) : this(timed(directory))
 
-    override val versionTable: ByteArray = library.generateUkeys()
+    override val versionTable: ByteArray = library.generateUkeys().array()
 
     override fun indexCount() = library.indices().size
 
@@ -19,11 +19,14 @@ class CacheDelegate(val library: CacheLibrary) : Cache {
     override fun indices() = library.indices().map { it.id }.toIntArray()
 
     override fun sector(index: Int, archive: Int): ByteArray? {
-        return if (index == 255) {
-            library.index255
-        } else {
-            library.index(index)
-        }?.readArchiveSector(archive)?.data
+        try {
+            val read = library.store.read(index, archive)
+            val decompressed = ByteArray(read.readableBytes())
+            read.readBytes(decompressed)
+            return decompressed
+        } catch (e: Exception) {
+            return null
+        }
     }
 
     override fun archives(index: Int) = library.index(index).archiveIds()
@@ -77,7 +80,7 @@ class CacheDelegate(val library: CacheLibrary) : Cache {
         id: Int
     ) {
         library.createIndex(
-            CompressionType.valueOf(compressionType.name),
+            Js5CompressionType.valueOf(compressionType.name),
             version,
             revision,
             named,
