@@ -8,7 +8,11 @@ plugins {
 val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "D:\\openrune-hosting"
 val buildNumber = "2.3.5"
 
-
+repositories {
+    mavenCentral()
+    maven("https://raw.githubusercontent.com/OpenRune/hosting/master")
+    maven("https://jitpack.io")
+}
 
 subprojects {
     apply(plugin = "kotlin")
