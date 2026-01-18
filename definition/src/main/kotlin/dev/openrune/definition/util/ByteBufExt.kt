@@ -219,7 +219,7 @@ fun ByteBuf.writeColumnValues(values: Array<Any>?, types: Array<VarType>) {
                             else -> error("Expected Boolean or Number for BOOLEAN type, got ${value.javaClass.simpleName}")
                         }
                         else -> (value as? Number)?.toInt()
-                            ?: error("Expected Number for type ${type.name}, got ${value.javaClass.simpleName}")
+                            ?: error("Expected Number for type ${type.name}, got ${value.javaClass.simpleName}: ${value.debugString()}")
                     }
                     writeInt(intValue)
                 }
@@ -230,6 +230,20 @@ fun ByteBuf.writeColumnValues(values: Array<Any>?, types: Array<VarType>) {
             }
         }
     }
+}
+
+fun Any?.debugString(): String = when (this) {
+    null -> "null"
+    is IntArray -> contentToString()
+    is LongArray -> contentToString()
+    is DoubleArray -> contentToString()
+    is FloatArray -> contentToString()
+    is BooleanArray -> contentToString()
+    is CharArray -> contentToString()
+    is ByteArray -> contentToString()
+    is ShortArray -> contentToString()
+    is Array<*> -> contentToString()
+    else -> toString()
 }
 
 fun ByteBuf.readColumnValues(types: Array<VarType>): Array<Any> {
