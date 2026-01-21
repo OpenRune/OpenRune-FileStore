@@ -59,7 +59,9 @@ data class NpcType(
     var magic : Int = 1,
     var footprintSize : Int = -1,
     var canHideForOverlap : Boolean = false,
-    var overlapTintHSL : Int = 39188
+    var overlapTintHSL : Int = 39188,
+    var readyAnimDuringAnim : Boolean = false,
+    var unknown147 : Boolean = true
     ) : Definition, Transforms, Recolourable, Parameterized {
 
     var examine : String = ""

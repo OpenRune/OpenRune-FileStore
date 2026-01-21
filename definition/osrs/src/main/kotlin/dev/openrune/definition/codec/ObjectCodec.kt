@@ -119,6 +119,7 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
             }
             90 -> delayAnimationUpdate = true
             95 -> soundVisibility = buffer.readUnsignedByte().toInt()
+            96 -> thickness = buffer.readUnsignedByte().toInt()
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Object [${opcode}]" }
         }
