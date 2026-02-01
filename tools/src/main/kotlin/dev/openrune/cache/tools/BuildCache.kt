@@ -53,17 +53,9 @@ class BuildCache(
                 }
             }
 
-            val hours = time / 3600000
-            val minutes = (time % 3600000) / 60000
-            val seconds = (time % 60000) / 1000
 
-            val timeString = buildString {
-                if (hours > 0) append("${hours}h ")
-                if (minutes > 0) append("${minutes}m ")
-                if (seconds > 0) append("${seconds}s")
-            }
 
-            logger.info { "Tasks Finished In: $timeString" }
+            logger.info { "Tasks Finished In: ${formatTime(time)}" }
             logger.info { "Cleaning Up..." }
 
             library.update()
@@ -75,11 +67,23 @@ class BuildCache(
                 file.copyTo(File(tempLocation, file.name), overwrite = true)
             }
 
-            logger.info { "Build finished in ${time}ms" }
+            logger.info { "Build finished in ${formatTime(time)}" }
         } catch (ex: Exception) {
             ex.printStackTrace()
         } finally {
             tempLocation.deleteRecursively()
+        }
+    }
+
+    fun formatTime(time : Long) : String {
+        val hours = time / 3600000
+        val minutes = (time % 3600000) / 60000
+        val seconds = (time % 60000) / 1000
+
+        return buildString {
+            if (hours > 0) append("${hours}h ")
+            if (minutes > 0) append("${minutes}m ")
+            if (seconds > 0) append("${seconds}s")
         }
     }
 

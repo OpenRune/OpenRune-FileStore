@@ -2,6 +2,7 @@ package dev.openrune.cache.tools.tasks.impl.defs
 
 import com.github.michaelbull.logging.InlineLogger
 import cc.ekblad.toml.TomlMapper
+import cc.ekblad.toml.decode
 import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.serialization.from
 import cc.ekblad.toml.tomlMapper
@@ -213,44 +214,80 @@ class PackConfig(
         registerPackType(VARCLIENT, VarClientCodec::class, "varclient", kType = typeOf<List<VarClientType>>())
 
     }
+    data class DefToPack(
+        val fileName: String,
+        val tableKey: String,
+        val definition: Definition,
+        val raw: Map<String, Any>,
+        val packType: PackType
+    )
 
 
     internal val logger = InlineLogger()
 
     @OptIn(InternalAPI::class)
     override fun init(cache: Cache) {
-        val size = getFiles(directory, "toml").size
-        val progress = progress("Packing Configs", size)
-        if (size != 0) {
-            getFiles(directory, "toml").forEach {
-                progress.extraMessage = it.name
+        val files = getFiles(directory, "toml")
 
+        data class DefToPack(
+            val fileName: String,
+            val tableKey: String,
+            val definition: Definition,
+            val raw: Map<String, Any>,
+            val packType: PackType
+        )
 
-                val document = TomlValue.from(processDocumentChanges(it.readText()))
-                document.properties.forEach { prop ->
-                    val packType: PackType? = packTypes[prop.key]
-                    packType?.let {
-                        val decodedDefinitions : List<Definition> = packType.tomlMapper.decode(packType.kType, prop.value)
-                        val decodedDefinitionsRaw : List<Map<String, Any>> = packType.tomlMapper.decode(prop.value)
-                        val codecInstance = createCodecInstance(packType)
-                        decodedDefinitions.forEachIndexed { index, definition ->
-                            val def = decodedDefinitionsRaw[index]
-                            val inherit = def["inherit"]?.toString()?.toIntOrNull() ?: -1
-                            val debugName = def["debugName"]?.toString() ?: ""
-                            try {
-                                packDefinition(packType, definition, codecInstance,cache,inherit,debugName)
-                            }catch (e : Exception) {
-                                println("Unable to pack ${packType.name} with ID ${definition.id} due to an error: ${e.message}")
-                            }
-                        }
-                    }
+        val definitionsToPack = mutableListOf<DefToPack>()
+
+        files.forEach { file ->
+            val document = TomlValue.from(processDocumentChanges(file.readText()))
+            document.properties.forEach { prop ->
+                val packType = packTypes[prop.key] ?: return@forEach
+
+                val decodedDefinitions: List<Definition> = packType.tomlMapper.decode(packType.kType, prop.value)
+                val decodedDefinitionsRaw: List<Map<String, Any>> = packType.tomlMapper.decode(prop.value)
+
+                decodedDefinitions.zip(decodedDefinitionsRaw).forEach { (definition, defRaw) ->
+                    val serverOnly = defRaw["isServerOnly"]?.toString()?.toBoolean() ?: false
+                    if (serverOnly && !serverPass) return@forEach
+
+                    definitionsToPack += DefToPack(file.name, prop.key, definition, defRaw, packType)
                 }
-
-                progress.step()
             }
-            progress.close()
+        }
+
+        if (definitionsToPack.isEmpty()) return
+
+        val progress = progress("Packing Configs", definitionsToPack.size)
+
+        definitionsToPack.forEach { entry ->
+            val inherit = entry.raw["inherit"]?.toString()?.toIntOrNull() ?: -1
+            val debugName = entry.raw["debugName"]?.toString() ?: ""
+
+            progress.extraMessage = "${entry.fileName.replace(".toml","")} (${entry.definition.id})"
+
+            try {
+                val codecInstance = createCodecInstance(entry.packType)
+                packDefinition(entry.packType, entry.definition, codecInstance, cache, inherit, debugName)
+            } catch (e: Exception) {
+                println("Unable to pack ${entry.packType.name} with ID ${entry.definition.id} due to an error: ${e.message}")
+            }
+
+            progress.step()
+        }
+
+        progress.close()
+    }
+
+    @OptIn(InternalAPI::class)
+    fun <T : Definition> PackType.decodeWithRaw(propValue: String): List<Pair<T, Map<String, Any>>> {
+        val rawList: List<Map<String, Any>> = this.tomlMapper.decode(propValue)
+        return rawList.map { raw ->
+            val def: T = this.tomlMapper.decode(this.kType, raw as TomlValue)
+            def to raw
         }
     }
+
 
     private fun <T : Definition> packDefinition(
         packType: PackType,

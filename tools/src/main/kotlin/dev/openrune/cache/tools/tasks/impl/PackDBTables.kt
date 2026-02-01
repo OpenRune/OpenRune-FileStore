@@ -74,6 +74,7 @@ class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
 
             progress.step()
         }
+        progress.close()
     }
 
     private fun DBTable.toDbTableType(): DBTableType {
