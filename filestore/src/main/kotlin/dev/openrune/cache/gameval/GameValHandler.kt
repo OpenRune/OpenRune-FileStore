@@ -32,18 +32,19 @@ object GameValHandler {
         type: GameValGroupTypes,
         elements: List<GameValElement>
     ) {
-        val seen = mutableSetOf<String>()
+        val seen = mutableMapOf<String, Int>()
 
         elements.forEach { element ->
-            val key = element.name
-            if (!seen.add(key)) {
+            val previousId = seen.putIfAbsent(element.name, element.id)
+
+            if (previousId != null && previousId != element.id) {
                 error(
-                    "Duplicate GameVal key detected for type '${type}': '${element.name} (${element.id})'"
+                    "Duplicate GameVal key detected for type '$type': " +
+                            "'${element.name}' previously mapped to $previousId, now to ${element.id}"
                 )
             }
         }
     }
-
     fun readGameVal(
         type: GameValGroupTypes,
         cache: Cache,

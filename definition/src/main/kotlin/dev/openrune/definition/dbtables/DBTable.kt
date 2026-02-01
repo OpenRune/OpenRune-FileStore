@@ -10,7 +10,8 @@ data class DBTable(
     val tableId: Int,
     val rscmName: String? = null,
     val columns: Map<Int, DBColumnType>,
-    val rows: List<DBRow>
+    val rows: List<DBRow>,
+    val serverOnly : Boolean = false
 )
 
 data class DBRow(
@@ -30,24 +31,24 @@ data class DBRow(
     }
 }
 
-fun dbTable(tableId: String, block: DBTableBuilder.() -> Unit): DBTable {
+fun dbTable(tableId: String, serverOnly : Boolean = false,block: DBTableBuilder.() -> Unit): DBTable {
     val rscmId = ConstantProvider.getMapping(tableId) ?: error("Invalid RSCM mapping for tableId: $tableId")
     val rscmName = tableId.substringAfter(".")
 
-    return DBTableBuilder(rscmName,rscmId).apply(block).build()
+    return DBTableBuilder(rscmName,rscmId,serverOnly = serverOnly).apply(block).build()
 }
 
-fun dbTable(tableId: Int, block: DBTableBuilder.() -> Unit): DBTable {
-    return DBTableBuilder(tableId).apply(block).build()
+fun dbTable(tableId: Int, serverOnly : Boolean = false,block: DBTableBuilder.() -> Unit): DBTable {
+    return DBTableBuilder(tableId,serverOnly = serverOnly).apply(block).build()
 }
 
 val tableNames: MutableMap<Int, String> = mutableMapOf()
 val columnNames: MutableMap<Int, String> = mutableMapOf()
 val rowNames: MutableMap<Int, String> = mutableMapOf()
 
-class DBTableBuilder(private val tableId: Int, private val tableRscmName: String? = null) {
+class DBTableBuilder(private val tableId: Int, private val tableRscmName: String? = null,private var serverOnly : Boolean = false) {
 
-    constructor(name: String, tableId: Int) : this(tableId, name) {
+    constructor(name: String, tableId: Int,serverOnly: Boolean = false) : this(tableId, name,serverOnly) {
         tableNames[tableId] = name
     }
 
@@ -70,6 +71,14 @@ class DBTableBuilder(private val tableId: Int, private val tableRscmName: String
     fun VarType.count(count: Int): Array<VarType> = Array(count) { this }
 
 
+    /**
+     * Sets whether this task is server-only.
+     *
+     * @param state `true` to mark the task as server-only, `false` to mark it as not server-only.
+     */
+    fun serverOnly(state: Boolean) {
+        serverOnly = state
+    }
 
     /**
      * Column with optional name and optional values.
@@ -122,7 +131,7 @@ class DBTableBuilder(private val tableId: Int, private val tableRscmName: String
     }
 
     fun build(): DBTable {
-        return DBTable(tableId, tableRscmName, columns, rows)
+        return DBTable(tableId, tableRscmName, columns, rows,serverOnly)
     }
 }
 

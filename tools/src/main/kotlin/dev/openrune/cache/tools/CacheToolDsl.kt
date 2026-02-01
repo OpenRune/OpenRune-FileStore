@@ -16,6 +16,7 @@ class CacheToolDsl {
     var taskType: TaskType? = null
     var revision: Int? = null
     private var cache: File? = null
+    private var serverCache: File? = null
 
     private val addedTasks = mutableListOf<CacheTask>()
     private val removedTasks = mutableListOf<CacheTask>()
@@ -31,6 +32,10 @@ class CacheToolDsl {
 
     fun cache(path: String) {
         cache = File(path)
+    }
+
+    fun serverCache(path: String) {
+        serverCache = File(path)
     }
 
     fun revision(revision: Int) {
@@ -75,6 +80,7 @@ class CacheToolDsl {
             type = type,
             revision = revision,
             cacheLocation = cacheLocation,
+            serverCacheLocation = serverCache,
             extraTasks = cleanedTasks
         )
     }

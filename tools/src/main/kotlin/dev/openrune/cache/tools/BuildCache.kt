@@ -11,68 +11,83 @@ import java.nio.ByteBuffer
 import kotlin.system.measureTimeMillis
 
 class BuildCache(
-    private val input: File,
-    private val output: File = input,
-    private val tempLocation: File = File(output, "temp"),
+    private val cacheLocation: File,
+    private val tempLocation: File = File(cacheLocation, "temp"),
     val tasks: MutableList<CacheTask> = mutableListOf(),
     var revision: Int = -1,
+    var serverPass: Boolean = false
 ) {
 
     private val logger = InlineLogger()
 
+    /**
+     * Entry point to build the cache.
+     * Builds LIVE cache first, then optionally copies to SERVER cache.
+     */
     fun initialize() {
+        runBuild(cacheLocation, tempLocation,serverPass)
+    }
+
+    /**
+     * Main cache build routine.
+     * Handles temp backup, running tasks, rebuilding, and safe file replacement.
+     */
+    private fun runBuild(outputDir: File, temp: File, serverPass : Boolean) {
+        temp.deleteRecursively()
+        temp.mkdirs()
+
         try {
+            outputDir.listFiles { f -> f.extension in listOf("dat", "idx") }
+                ?.forEach { file ->
+                    file.copyTo(File(temp, file.name), overwrite = true)
+                }
 
-            input.listFiles { file -> file.extension in listOf("dat", "idx") }?.forEach { file ->
-                file.copyTo(File(tempLocation, file.name), overwrite = true)
-            }
-
-            val library = CacheLibrary(input.absolutePath)
+            val library = CacheLibrary(outputDir.absolutePath)
 
             if (revision == -1) {
                 val data = library.data(CLIENTSCRIPT, "version.dat")
-                    ?: error("version.dat is missing. Unable to detect cache revision — set it manually via .revision(id).")
-
+                    ?: error("version.dat missing – set revision manually.")
                 revision = readCacheRevision(
                     ByteBuffer.wrap(data),
-                    "version.dat is larger than expected. Unable to detect cache revision — set it manually via .revision(id)."
+                    "version.dat is invalid – set revision manually."
                 )
             }
 
-            logger.info { "Building Cache (revision: ${revision}) (Tasks: ${tasks.joinToString(", ") { it.javaClass.simpleName }})" }
+            logger.info {
+                "Building ${if (serverPass) "Server " else ""}Cache (revision=$revision, tasks=${tasks.joinToString { it.javaClass.simpleName }})"
+            }
 
             val time = measureTimeMillis {
                 tasks.forEach { task ->
                     task.revision = revision
+                    task.serverPass = serverPass
                     task.init(CacheDelegate(library))
                 }
             }
 
-            val hours = time / 3600000
-            val minutes = (time % 3600000) / 60000
-            val seconds = (time % 60000) / 1000
-
-            val timeString = buildString {
-                if (hours > 0) append("${hours}h ")
-                if (minutes > 0) append("${minutes}m ")
-                if (seconds > 0) append("${seconds}s")
-            }
-
-            logger.info { "Tasks Finished In: $timeString" }
-            logger.info { "Cleaning Up..." }
-
             library.update()
-            library.rebuild(File(tempLocation, "rebuilt"))
+            library.rebuild(File(temp, "rebuilt"))
             library.close()
 
-            File(tempLocation, "rebuilt").listFiles { file -> file.extension in listOf("dat", "idx") }?.forEach { file ->
-                file.copyTo(File(tempLocation, file.name), overwrite = true)
-            }
+            // Replace rebuilt files safely
+            File(temp, "rebuilt")
+                .listFiles { f -> f.extension in listOf("dat", "idx") }
+                ?.forEach { rebuilt ->
+                    replaceFile(rebuilt, File(outputDir, rebuilt.name))
+                }
 
-        } catch (ex: Exception) {
-            println("Error occurred during initialization: ${ex.message}")
+            logger.info { "Build finished in ${time}ms" }
         } finally {
-            tempLocation.deleteRecursively()
+            temp.deleteRecursively()
         }
     }
+
+    private fun replaceFile(src: File, dst: File) {
+        if (dst.exists() && !dst.delete()) {
+            error("Failed to delete locked file: ${dst.absolutePath}")
+        }
+        src.copyTo(dst)
+    }
+
+
 }

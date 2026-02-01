@@ -5,7 +5,7 @@ plugins {
     id("maven-publish")
 }
 
-val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "D:\\openrune-hosting"
+val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "D:\\OpenRune\\openrune-hosting"
 val buildNumber = "2.3.6"
 
 
