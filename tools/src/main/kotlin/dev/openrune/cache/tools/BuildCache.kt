@@ -76,6 +76,8 @@ class BuildCache(
             }
 
             logger.info { "Build finished in ${time}ms" }
+        } catch (ex: Exception) {
+            ex.printStackTrace()
         } finally {
             tempLocation.deleteRecursively()
         }
