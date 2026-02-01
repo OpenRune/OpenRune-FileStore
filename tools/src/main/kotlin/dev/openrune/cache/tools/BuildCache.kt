@@ -20,29 +20,17 @@ class BuildCache(
 
     private val logger = InlineLogger()
 
-    /**
-     * Entry point to build the cache.
-     * Builds LIVE cache first, then optionally copies to SERVER cache.
-     */
     fun initialize() {
-        runBuild(cacheLocation, tempLocation,serverPass)
-    }
-
-    /**
-     * Main cache build routine.
-     * Handles temp backup, running tasks, rebuilding, and safe file replacement.
-     */
-    private fun runBuild(outputDir: File, temp: File, serverPass : Boolean) {
-        temp.deleteRecursively()
-        temp.mkdirs()
+        tempLocation.deleteRecursively()
+        tempLocation.mkdirs()
 
         try {
-            outputDir.listFiles { f -> f.extension in listOf("dat", "idx") }
+            cacheLocation.listFiles { f -> f.extension in listOf("dat", "idx") }
                 ?.forEach { file ->
-                    file.copyTo(File(temp, file.name), overwrite = true)
+                    file.copyTo(File(tempLocation, file.name), overwrite = true)
                 }
 
-            val library = CacheLibrary(outputDir.absolutePath)
+            val library = CacheLibrary(cacheLocation.absolutePath)
 
             if (revision == -1) {
                 val data = library.data(CLIENTSCRIPT, "version.dat")
@@ -65,29 +53,32 @@ class BuildCache(
                 }
             }
 
+            val hours = time / 3600000
+            val minutes = (time % 3600000) / 60000
+            val seconds = (time % 60000) / 1000
+
+            val timeString = buildString {
+                if (hours > 0) append("${hours}h ")
+                if (minutes > 0) append("${minutes}m ")
+                if (seconds > 0) append("${seconds}s")
+            }
+
+            logger.info { "Tasks Finished In: $timeString" }
+            logger.info { "Cleaning Up..." }
+
             library.update()
-            library.rebuild(File(temp, "rebuilt"))
+            library.rebuild(File(tempLocation, "rebuilt"))
             library.close()
 
-            // Replace rebuilt files safely
-            File(temp, "rebuilt")
-                .listFiles { f -> f.extension in listOf("dat", "idx") }
-                ?.forEach { rebuilt ->
-                    replaceFile(rebuilt, File(outputDir, rebuilt.name))
-                }
+
+            File(tempLocation, "rebuilt").listFiles { file -> file.extension in listOf("dat", "idx") }?.forEach { file ->
+                file.copyTo(File(tempLocation, file.name), overwrite = true)
+            }
 
             logger.info { "Build finished in ${time}ms" }
         } finally {
-            temp.deleteRecursively()
+            tempLocation.deleteRecursively()
         }
     }
-
-    private fun replaceFile(src: File, dst: File) {
-        if (dst.exists() && !dst.delete()) {
-            error("Failed to delete locked file: ${dst.absolutePath}")
-        }
-        src.copyTo(dst)
-    }
-
 
 }
