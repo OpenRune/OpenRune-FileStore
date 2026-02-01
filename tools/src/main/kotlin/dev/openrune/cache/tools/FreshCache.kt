@@ -13,8 +13,8 @@ import java.util.zip.ZipInputStream
 import kotlin.system.measureTimeMillis
 
 class FreshCache(
-    private val downloadLocation: File,
-    private val output: File = downloadLocation,
+    private val cacheOutput: File,
+    private val serverOutput: File? = null,
     val tasks: MutableList<CacheTask> = mutableListOf(),
     val revision: Int = -1,
     val subRev: Int = -1,
@@ -27,10 +27,9 @@ class FreshCache(
         val time = measureTimeMillis {
 
             logger.info { "Downloading Cache (revision=$revision, Tasks: ${tasks.joinToString(", ") { it.javaClass.simpleName }})" }
-            logger.info { "Getting Xteas..." }
 
-            OpenRS2.downloadKeysByRevision(revision = revision, directory = downloadLocation,environment = cacheEnvironment, subRev = subRev)
-            OpenRS2.downloadCacheByRevision(revision = revision, directory = downloadLocation, environment = cacheEnvironment,subRev = subRev,listener = downloadListener)
+            OpenRS2.downloadKeysByRevision(revision = revision, directory = cacheOutput,environment = cacheEnvironment, subRev = subRev)
+            OpenRS2.downloadCacheByRevision(revision = revision, directory = cacheOutput, environment = cacheEnvironment,subRev = subRev,listener = downloadListener)
         }
         val hours = time / 3600000
         val minutes = (time % 3600000) / 60000
@@ -88,26 +87,21 @@ class FreshCache(
 
         override fun onFinished() {
             progressBar?.close()
-            val zipLoc = File(downloadLocation, "disk.zip")
+            val zipLoc = File(cacheOutput, "disk.zip")
             try {
-                logger.info { "Starting unzip of ${zipLoc.absolutePath} to $downloadLocation" }
 
-                val success = unzip(zipLoc, downloadLocation)
+                val success = unzip(zipLoc, cacheOutput)
                 if (success) {
-                    logger.info { "Cache downloaded and unzipped successfully." }
+                    zipLoc.delete()
                     if (tasks.isNotEmpty()) {
                         BuildCache(
-                            input = downloadLocation,
-                            output = output,
-                            tempLocation = File(output, "temp"),
+                            cacheLocation = cacheOutput,
                             tasks = tasks,
-                            revision
+                            revision = revision
                         ).initialize()
                     }
-                    zipLoc.delete()
                 } else {
-                    logger.error { "Failed to unzip ${zipLoc.absolutePath} to $downloadLocation" }
-                    error("Error Unzipping: Check logs for details")
+                    logger.error { "Failed to unzip ${zipLoc.absolutePath} to $cacheOutput" }
                 }
             } catch (e: Exception) {
                 logger.error(e) { "Exception while unzipping ${zipLoc.absolutePath}" }

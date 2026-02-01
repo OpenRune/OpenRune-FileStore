@@ -10,9 +10,10 @@ import java.io.File
 class CacheTool(
     val type: TaskType,
     val revision: Int,
-    val subRevision : Int = -1,
+    val subRevision: Int = -1,
     val cacheEnvironment: CacheEnvironment = CacheEnvironment.LIVE,
     val cacheLocation: File,
+    val serverCacheLocation: File? = null,
     val extraTasks: List<CacheTask> = emptyList()
 ) {
     private val logger = InlineLogger()
@@ -28,26 +29,40 @@ class CacheTool(
 
     fun initialize() {
         if (cacheLocation == DEFAULT_PATH) {
-            logger.info { "Using Default path of [${DEFAULT_PATH.absolutePath}]" }
+            logger.info { "Using default path: ${DEFAULT_PATH.absolutePath}" }
         }
 
-        val sortedTasks = extraTasks.sortedBy { it.priority.priorityValue }
+        val sortedTasks = extraTasks
+            .sortedBy { it.priority.priorityValue }
+            .filter { !(it.serverTaskOnly && type != TaskType.SERVER_CACHE_BUILD) }
+
+        if (type == TaskType.SERVER_CACHE_BUILD) {
+            val serverDir = serverCacheLocation ?: error("Please define serverCacheLocation for SERVER_CACHE_BUILD")
+            if (!serverDir.exists()) serverDir.mkdirs()
+
+            cacheLocation.listFiles()?.forEach { file ->
+                file.copyTo(File(serverDir, file.name), overwrite = true)
+            }
+        }
 
         when (type) {
-            TaskType.BUILD -> {
+            TaskType.BUILD, TaskType.SERVER_CACHE_BUILD -> {
                 BuildCache(
-                    input = cacheLocation,
+                    cacheLocation = if (type == TaskType.BUILD) cacheLocation else serverCacheLocation!!,
+                    serverPass = type == TaskType.SERVER_CACHE_BUILD,
                     tasks = sortedTasks.toMutableList(),
-                    revision = revision,
+                    revision = revision
                 ).initialize()
             }
+
             TaskType.FRESH_INSTALL -> {
-                if (revision == -1) {
-                   error("Unable to detect cache revision — set it manually via .revision(id).")
-                }
-                File(cacheLocation,"xteas.json").delete()
+                require(revision != -1) { "Unable to detect cache revision — set it manually via .revision(id)." }
+
+                File(cacheLocation, "xteas.json").delete()
+
                 FreshCache(
-                    downloadLocation = cacheLocation,
+                    cacheOutput = cacheLocation,
+                    serverOutput = serverCacheLocation,
                     tasks = sortedTasks.toMutableList(),
                     revision = revision,
                     subRev = subRevision,

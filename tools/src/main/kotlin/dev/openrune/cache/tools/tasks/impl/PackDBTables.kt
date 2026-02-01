@@ -1,4 +1,4 @@
-package dev.openrune.cache.tools.dbtables
+package dev.openrune.cache.tools.tasks.impl
 
 import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.DBROW
@@ -11,14 +11,15 @@ import dev.openrune.cache.util.progress
 import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.codec.DBRowCodec
 import dev.openrune.definition.codec.DBTableCodec
-import dev.openrune.definition.dbtables.*
+import dev.openrune.definition.dbtables.DBTable
 import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.type.DBTableType
 import dev.openrune.definition.util.toArray
 import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled
-import kotlin.collections.set
+import kotlin.collections.forEach
+import kotlin.collections.iterator
 
 class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
 
@@ -27,12 +28,16 @@ class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
 
     override fun init(cache: Cache) {
         val library = (cache as CacheDelegate).library
-        val progress = progress("Packing DB Tables", tables.size)
+
 
         val dbtableArchive = library.index(2).archive(DBTABLE) ?: return
         val dbrowArchive = library.index(2).archive(DBROW) ?: return
 
-        tables.forEach { table ->
+        val tablesToPack = tables.filter { table -> table.serverOnly == serverPass }
+        if (tablesToPack.isEmpty()) return
+        val progress = progress("Packing DB Tables", tablesToPack.size)
+
+        tablesToPack.forEach { table ->
             try {
                 val tableType = table.toDbTableType()
                 val rowTypes = table.toDbRowTypes()
@@ -42,7 +47,7 @@ class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
                 with(tableCodec) { writer.encode(tableType) }
                 dbtableArchive.add(tableType.id, writer.toArray())
 
-                CacheTool.addGameValMapping(
+                CacheTool.Companion.addGameValMapping(
                     GameValGroupTypes.TABLETYPES,
                     Table(
                         table.rscmName ?: "table_${table.tableId}",
@@ -57,7 +62,10 @@ class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
 
                     val rowRscmName = rowType.rscmName ?: "row_${rowType.id}"
 
-                    CacheTool.addGameValMapping(GameValGroupTypes.ROWTYPES, GameValElement(rowRscmName, rowType.id))
+                    CacheTool.Companion.addGameValMapping(
+                        GameValGroupTypes.ROWTYPES,
+                        GameValElement(rowRscmName, rowType.id)
+                    )
                     dbrowArchive.add(rowType.id, writer1.toArray())
                 }
             }catch (e : Exception) {
@@ -66,6 +74,7 @@ class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
 
             progress.step()
         }
+        progress.close()
     }
 
     private fun DBTable.toDbTableType(): DBTableType {
