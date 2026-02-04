@@ -54,7 +54,7 @@ data class ObjectType(
     var delayAnimationUpdate: Boolean = false,
     var impenetrable: Boolean = true,
     var soundVisibility : Int = 2,
-    var thickness : Int = 0,
+    var rasie : Int = 0,
     override var originalColours: MutableList<Int>? = null,
     override var modifiedColours: MutableList<Int>? = null,
     override var originalTextureColours: MutableList<Int>? = null,

@@ -124,7 +124,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             130 -> readyAnimDuringAnim = true
             145 -> canHideForOverlap = true
             146 -> overlapTintHSL = buffer.readUnsignedShort()
-            147 -> unknown147 = false
+            147 -> zbuf = false
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Npcs [${opcode}]" }
         }

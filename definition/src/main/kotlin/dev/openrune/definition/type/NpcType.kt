@@ -61,7 +61,7 @@ data class NpcType(
     var canHideForOverlap : Boolean = false,
     var overlapTintHSL : Int = 39188,
     var readyAnimDuringAnim : Boolean = false,
-    var unknown147 : Boolean = true
+    var zbuf : Boolean = true
     ) : Definition, Transforms, Recolourable, Parameterized {
 
     var examine : String = ""

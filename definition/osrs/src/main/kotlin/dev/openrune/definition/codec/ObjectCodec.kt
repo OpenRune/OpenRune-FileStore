@@ -6,7 +6,6 @@ import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.type.ObjectType
-import dev.openrune.definition.util.writeByte
 import io.netty.buffer.ByteBuf
 import java.util.stream.IntStream
 import kotlin.streams.toList
@@ -119,7 +118,7 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
             }
             90 -> delayAnimationUpdate = true
             95 -> soundVisibility = buffer.readUnsignedByte().toInt()
-            96 -> thickness = buffer.readUnsignedByte().toInt()
+            96 -> rasie = buffer.readUnsignedByte().toInt()
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Object [${opcode}]" }
         }
