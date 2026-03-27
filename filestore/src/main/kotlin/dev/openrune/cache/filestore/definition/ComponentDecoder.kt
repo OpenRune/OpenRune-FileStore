@@ -6,6 +6,7 @@ import dev.openrune.cache.gameval.GameValHandler.lookup
 import dev.openrune.cache.gameval.GameValHandler.lookupAs
 import dev.openrune.cache.gameval.impl.Interface
 import dev.openrune.definition.GameValGroupTypes
+import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.type.widget.ComponentType
 import dev.openrune.definition.type.widget.ComponentTypeBuilder
 import dev.openrune.definition.util.TextUtil
@@ -90,7 +91,10 @@ public data class InterfaceType(
 
 }
 
-class ComponentDecoder(private val cache: Cache) {
+class ComponentDecoder(
+    private val cache: Cache,
+    private val revision: Int = -1
+) {
 
     val gamevals = GameValHandler.readGameVal(GameValGroupTypes.IFTYPES,cache)
 
@@ -180,7 +184,11 @@ class ComponentDecoder(private val cache: Cache) {
 
             if (type == 6) {
                 modelKind = 1
-                model = data.readUnsignedShortOrNull()
+                model = if (supportsExtendedComponentModels()) {
+                    data.readInt()
+                } else {
+                    data.readUnsignedShortOrNull()
+                }
 
                 modelX = data.readShort().toInt()
                 modelY = data.readShort().toInt()
@@ -352,10 +360,18 @@ class ComponentDecoder(private val cache: Cache) {
 
             if (type == 6) {
                 modelKind = 1
-                model = data.readUnsignedShortOrNull()
+                model = if (supportsExtendedComponentModels()) {
+                    data.readInt()
+                } else {
+                    data.readUnsignedShortOrNull()
+                }
 
                 secondaryModelKind = 1
-                secondaryModel = data.readUnsignedShortOrNull()
+                secondaryModel = if (supportsExtendedComponentModels()) {
+                    data.readInt()
+                } else {
+                    data.readUnsignedShortOrNull()
+                }
 
                 modelAnim = data.readUnsignedShortOrNull()
                 secondaryModelAnim = data.readUnsignedShortOrNull()
@@ -521,8 +537,13 @@ class ComponentDecoder(private val cache: Cache) {
             }
 
             if (type == 6) {
-                data.writeShort(model)
-                data.writeShort(secondaryModel)
+                if (supportsExtendedComponentModels()) {
+                    data.writeInt(model)
+                    data.writeInt(secondaryModel)
+                } else {
+                    data.writeShort(model)
+                    data.writeShort(secondaryModel)
+                }
                 data.writeShort(modelAnim)
                 data.writeShort(secondaryModelAnim)
                 data.writeShort(modelZoom)
@@ -580,7 +601,11 @@ class ComponentDecoder(private val cache: Cache) {
             }
 
             if (type == 6) {
-                data.writeShort(model)
+                if (supportsExtendedComponentModels()) {
+                    data.writeInt(model)
+                } else {
+                    data.writeShort(model)
+                }
                 data.writeShort(modelX)
                 data.writeShort(modelY)
                 data.writeShort(modelAngleX)
@@ -691,5 +716,7 @@ class ComponentDecoder(private val cache: Cache) {
             data.writeInt(values[i])
         }
     }
+
+    private fun supportsExtendedComponentModels(): Boolean = revisionIsOrAfter(revision, 237)
 
 }

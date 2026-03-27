@@ -1,6 +1,7 @@
 package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
+import dev.openrune.definition.EntityOpsDefinition
 import dev.openrune.definition.Parameterized
 import dev.openrune.definition.Recolourable
 
@@ -36,7 +37,7 @@ data class ItemType(
     var contrast: Int = 0,
     var countCo: MutableList<Int>? = null,
     var countObj: MutableList<Int>? = null,
-    var options: MutableList<String?> = mutableListOf(null, null, "Take", null, null),
+    var options : EntityOpsDefinition = EntityOpsDefinition().op(2, "Take"),
     var interfaceOptions: MutableList<String?> = mutableListOf(null, null, null, null, "Drop"),
     var maleModel0: Int = -1,
     var maleModel1: Int = -1,

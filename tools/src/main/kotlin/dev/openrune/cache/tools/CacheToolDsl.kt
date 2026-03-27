@@ -62,7 +62,7 @@ class CacheToolDsl {
 
         if (type == TaskType.FRESH_INSTALL) {
             val xteasFile = File(cacheLocation, "xteas.json")
-            if (removedTasks.none { it is RemoveXteas}) {
+            if ((revision < 237) && removedTasks.none { it is RemoveXteas }) {
                 addedTasks += RemoveXteas(xteasFile)
             }
             if (removedTasks.none { it is RemoveBzip }) {

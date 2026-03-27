@@ -1,6 +1,7 @@
 package dev.openrune.definition.codec
 
 import com.github.michaelbull.logging.InlineLogger
+import dev.openrune.definition.EntityOpsLoader
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
@@ -11,6 +12,7 @@ import java.util.stream.IntStream
 import kotlin.streams.toList
 
 class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
+    private val entityOpsLoader = EntityOpsLoader(revision)
 
     override fun ObjectType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
@@ -41,6 +43,27 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
                     }
                 }
             }
+            6 -> {
+                val length: Int = buffer.readUnsignedByte().toInt()
+                if (length > 0) {
+                    objectTypes = MutableList(length) { 0 }
+                    objectModels = MutableList(length) { 0 }
+                    (0 until length).forEach {
+                        objectModels!![it] = buffer.readInt()
+                        objectTypes!![it] = buffer.readUnsignedByte().toInt()
+                    }
+                }
+            }
+            7 -> {
+                val length: Int = buffer.readUnsignedByte().toInt()
+                if (length > 0) {
+                    objectTypes = null
+                    objectModels = MutableList(length) { 0 }
+                    (0 until length).forEach {
+                        objectModels!![it] = buffer.readInt()
+                    }
+                }
+            }
 
             14 -> sizeX = buffer.readUnsignedByte().toInt()
             15 -> sizeY = buffer.readUnsignedByte().toInt()
@@ -65,9 +88,7 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
             28 -> decorDisplacement = buffer.readUnsignedByte().toInt()
             29 -> ambient = buffer.readByte().toInt()
             39 -> contrast = buffer.readByte().toInt()
-            in 30..34 -> {
-                actions[opcode - 30] = buffer.readString()
-            }
+            in 30..34 -> entityOpsLoader.decodeBaseOp(actions, buffer, opcode - 30)
 
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
@@ -119,6 +140,9 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
             90 -> delayAnimationUpdate = true
             95 -> soundVisibility = buffer.readUnsignedByte().toInt()
             96 -> rasie = buffer.readUnsignedByte().toInt()
+            100 -> entityOpsLoader.decodeSubOp(actions, buffer)
+            101 -> entityOpsLoader.decodeConditionalOp(actions, buffer)
+            102 -> entityOpsLoader.decodeConditionalSubOp(actions, buffer)
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Object [${opcode}]" }
         }
@@ -127,20 +151,28 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
     override fun ByteBuf.encode(definition: ObjectType) {
         if (definition.objectModels != null) {
             if (definition.objectTypes != null) {
-                writeByte(1)
+                writeByte(if (entityOpsLoader.supportsExtendedEntityOps()) 6 else 1)
                 writeByte(definition.objectModels!!.size)
                 if (definition.objectModels!!.isNotEmpty()) {
                     for (i in 0 until definition.objectModels!!.size) {
-                        writeShort(definition.objectModels!![i])
+                        if (entityOpsLoader.supportsExtendedEntityOps()) {
+                            writeInt(definition.objectModels!![i])
+                        } else {
+                            writeShort(definition.objectModels!![i])
+                        }
                         writeByte(definition.objectTypes!![i])
                     }
                 }
             } else {
-                writeByte(5)
+                writeByte(if (entityOpsLoader.supportsExtendedEntityOps()) 7 else 5)
                 writeByte(definition.objectModels!!.size)
                 if (definition.objectModels!!.isNotEmpty()) {
                     for (i in 0 until definition.objectModels!!.size) {
-                        writeShort(definition.objectModels!![i])
+                        if (entityOpsLoader.supportsExtendedEntityOps()) {
+                            writeInt(definition.objectModels!![i])
+                        } else {
+                            writeShort(definition.objectModels!![i])
+                        }
                     }
                 }
             }
@@ -203,15 +235,8 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
         writeByte(definition.contrast / 25)
 
 
-        val actions = definition.actions.map { if (it == "null") null else it }
-        if (actions.any { it != null }) {
-            for (i in actions.indices) {
-                if (actions[i] == null) {
-                    continue
-                }
-                writeByte(30 + i)
-                writeString(actions[i]!!)
-            }
+        definition.actions.ops.forEachIndexed { index, action ->
+            entityOpsLoader.encodeBaseOp(this, index, action)
         }
 
         definition.writeColoursTextures(this)
@@ -338,6 +363,18 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
         }
 
 
+
+        if (entityOpsLoader.supportsExtendedEntityOps()) {
+            definition.actions.subOps.forEachIndexed { index, subOps ->
+                entityOpsLoader.encodeSubOpsOpcode(this, 100, index, subOps)
+            }
+            definition.actions.conditionalOps.forEachIndexed { index, conditionalOps ->
+                entityOpsLoader.encodeConditionalOpsOpcode(this, 101, index, conditionalOps)
+            }
+            definition.actions.conditionalSubOps.forEachIndexed { index, conditionalSubOps ->
+                entityOpsLoader.encodeConditionalSubOpsOpcode(this, 102, index, conditionalSubOps)
+            }
+        }
 
         definition.writeTransforms(this, 77,92)
         definition.writeParameters(this)

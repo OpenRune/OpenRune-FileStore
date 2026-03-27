@@ -9,5 +9,5 @@ data class ParamType(
     var isMembers: Boolean = true,
     var defaultInt: Int = 0,
     var defaultString: String? = null,
-
-    ) : Definition
+    var defaultLong: Long = 0L
+) : Definition

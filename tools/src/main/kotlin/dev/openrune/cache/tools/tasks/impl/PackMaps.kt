@@ -21,7 +21,11 @@ enum class XteaType {
 
 class PackMaps(private val mapsDirectory: File, private val xteaLocation: File = File("xteas.json"), private val xteaType: XteaType = XteaType.NO_KEYS) : CacheTask() {
     override fun init(cache: Cache) {
-        val encodeXteas = xteaType != XteaType.NO_KEYS
+        val supportsMapXteas = revision < 237
+        if (!supportsMapXteas && xteaType != XteaType.NO_KEYS) {
+            error("XTEA map packing is deprecated on revision 237+. Use XteaType.NO_KEYS for PackMaps.")
+        }
+        val encodeXteas = supportsMapXteas && xteaType != XteaType.NO_KEYS
 
         if (encodeXteas && !xteaLocation.exists()) {
             logger.info { "Unable to find Xteas File at $xteaLocation" }
@@ -64,11 +68,11 @@ class PackMaps(private val mapsDirectory: File, private val xteaLocation: File =
                             XteaType.RANDOM_KEYS -> generateRandomIntArray()
                         }
 
-                        if (keys != null) {
+                        if (encodeXteas && keys != null) {
                             XteaLoader.xteas[regionId]!!.key = keys
                         }
 
-                        packMap(cache,loc[0].toInt(), loc[1].toInt(), tileData, objData,keys)
+                        packMap(cache,loc[0].toInt(), loc[1].toInt(), tileData, objData, if (encodeXteas) keys else null)
                     } else {
                         println("MISSING MAP FILE: $objectFile")
                     }
@@ -92,7 +96,11 @@ class PackMaps(private val mapsDirectory: File, private val xteaLocation: File =
         val landArchiveName = "l" + regionX + "_" + regionY
 
         cache.write(MAPS, mapArchiveName, tileData)
-        cache.write(MAPS, landArchiveName, objData,keys)
+        if (revision >= 237) {
+            cache.write(MAPS, landArchiveName, objData)
+        } else {
+            cache.write(MAPS, landArchiveName, objData, keys)
+        }
     }
 
     fun generateRandomIntArray(): IntArray {

@@ -17,9 +17,14 @@ interface Parameterized {
         }
         val params: MutableMap<String, Any> = mutableMapOf()
         for (i in 0 until length) {
-            val string = buffer.readUnsignedBoolean()
+            val type = buffer.readUnsignedByte().toInt()
             val id = buffer.readUnsignedMedium()
-            params[id.toString()] = if (string) buffer.readString() else buffer.readInt()
+            params[id.toString()] = when(type) {
+                0 -> buffer.readString()
+                1 -> buffer.readLong()
+                2 -> buffer.readInt()
+                else -> error("Unsupported Type: ${type}")
+            }
         }
         this.params = params
     }
@@ -29,20 +34,32 @@ interface Parameterized {
 
         writer.writeByte(249)
         writer.writeByte(params.size)
-        for ((id, value) in params) {
-            val isString = value is String
-            writer.writeByte(if (isString) 1 else 0)
-            writer.writeMedium(id.toInt())
+
+        for ((id, rawValue) in params) {
+            val value = when (rawValue) {
+                is Number -> if (rawValue.toLong() in Int.MIN_VALUE..Int.MAX_VALUE) rawValue.toInt() else rawValue.toLong()
+                else -> rawValue
+            }
 
             when (value) {
-                is String -> writer.writeString(value)
-                is Int -> writer.writeInt(value)
-                is Long -> {
-                    require(value in Int.MIN_VALUE..Int.MAX_VALUE) {
-                        "Long value $value is out of Int range for id $id"
-                    }
-                    writer.writeInt(value.toInt())
+                is String -> {
+                    writer.writeByte(0)
+                    writer.writeMedium(id.toInt())
+                    writer.writeString(value)
                 }
+
+                is Int -> {
+                    writer.writeByte(2)
+                    writer.writeMedium(id.toInt())
+                    writer.writeInt(value)
+                }
+
+                is Long -> {
+                    writer.writeByte(1)
+                    writer.writeMedium(id.toInt())
+                    writer.writeLong(value)
+                }
+
                 else -> error("Unsupported parameter type for id $id: ${value::class}")
             }
         }

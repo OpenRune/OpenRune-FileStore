@@ -5,6 +5,7 @@ import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.CLIENTSCRIPT
 import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.tools.tasks.CacheTask
+import dev.openrune.cache.tools.tasks.impl.RemoveXteas
 import readCacheRevision
 import java.io.File
 import java.nio.ByteBuffer
@@ -43,6 +44,12 @@ class BuildCache(
 
             logger.info {
                 "Building ${if (serverPass) "Server " else ""}Cache (revision=$revision, tasks=${tasks.joinToString { it.javaClass.simpleName }})"
+            }
+
+            if (revision >= 237 && tasks.any { it is RemoveXteas }) {
+                logger.warn {
+                    "RemoveXteas is deprecated for revision 237+ and will be ignored by modern map packing."
+                }
             }
 
             val time = measureTimeMillis {
