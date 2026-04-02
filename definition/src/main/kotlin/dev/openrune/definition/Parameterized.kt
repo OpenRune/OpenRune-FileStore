@@ -20,9 +20,9 @@ interface Parameterized {
             val type = buffer.readUnsignedByte().toInt()
             val id = buffer.readUnsignedMedium()
             params[id.toString()] = when(type) {
-                0 -> buffer.readString()
-                1 -> buffer.readLong()
-                2 -> buffer.readInt()
+                0 -> buffer.readInt()
+                1 -> buffer.readString()
+                2 -> buffer.readLong()
                 else -> error("Unsupported Type: ${type}")
             }
         }
@@ -42,24 +42,25 @@ interface Parameterized {
             }
 
             when (value) {
-                is String -> {
-                    writer.writeByte(0)
-                    writer.writeMedium(id.toInt())
-                    writer.writeString(value)
-                }
 
                 is Int -> {
-                    writer.writeByte(2)
+                    writer.writeByte(0)
                     writer.writeMedium(id.toInt())
                     writer.writeInt(value)
                 }
 
-                is Long -> {
+                is String -> {
                     writer.writeByte(1)
+                    writer.writeMedium(id.toInt())
+                    writer.writeString(value)
+                }
+
+                is Long -> {
+                    writer.writeByte(2)
                     writer.writeMedium(id.toInt())
                     writer.writeLong(value)
                 }
-
+                
                 else -> error("Unsupported parameter type for id $id: ${value::class}")
             }
         }
