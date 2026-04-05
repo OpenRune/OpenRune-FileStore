@@ -92,14 +92,16 @@ class PackMaps(private val mapsDirectory: File, private val xteaLocation: File =
     }
 
     fun packMap(cache: Cache, regionX : Int, regionY : Int, tileData : ByteArray, objData : ByteArray, keys : IntArray?) {
-        val mapArchiveName = "m" + regionX + "_" + regionY
-        val landArchiveName = "l" + regionX + "_" + regionY
+        if (revision < 237) {
+            val mapArchiveName = "m" + regionX + "_" + regionY
+            val landArchiveName = "l" + regionX + "_" + regionY
 
-        cache.write(MAPS, mapArchiveName, tileData)
-        if (revision >= 237) {
-            cache.write(MAPS, landArchiveName, objData)
-        } else {
+            cache.write(MAPS, mapArchiveName, tileData)
             cache.write(MAPS, landArchiveName, objData, keys)
+        } else {
+            val groupId = (regionX shl 8) or (regionY and 0xFF)
+            cache.write(MAPS, groupId, 0, tileData)
+            cache.write(MAPS, groupId, 1, objData)
         }
     }
 
