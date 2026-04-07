@@ -7,7 +7,7 @@ import io.netty.buffer.ByteBuf
 class VarBitCodec : DefinitionCodec<VarBitType> {
     override fun VarBitType.read(opcode: Int, buffer: ByteBuf) {
         if (opcode == 1) {
-            varp = buffer.readShort().toInt()
+            varp = buffer.readUnsignedShort()
             startBit = buffer.readUnsignedByte().toInt()
             endBit = buffer.readUnsignedByte().toInt()
         }
