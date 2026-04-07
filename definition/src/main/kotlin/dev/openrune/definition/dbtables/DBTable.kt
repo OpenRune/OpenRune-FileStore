@@ -4,7 +4,7 @@ import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.type.DBTableType
-import dev.openrune.definition.util.VarType
+import dev.openrune.definition.util.CacheVarLiteral
 
 data class DBTable(
     val tableId: Int,
@@ -56,7 +56,7 @@ class DBTableBuilder(private val tableId: Int, private val tableRscmName: String
     private val rows = mutableListOf<DBRow>()
 
     /**
-     * Creates an array containing this [VarType] repeated [count] times.
+     * Creates an array containing this [CacheVarLiteral] repeated [count] times.
      *
      * Useful when defining table columns that store multiple values of the same type.
      *
@@ -66,9 +66,9 @@ class DBTableBuilder(private val tableId: Int, private val tableRscmName: String
      * ```
      *
      * @param count The number of times to repeat this type.
-     * @return An array of [VarType] with size [count], each entry equal to this type.
+     * @return An array of [CacheVarLiteral] with size [count], each entry equal to this type.
      */
-    fun VarType.count(count: Int): Array<VarType> = Array(count) { this }
+    fun CacheVarLiteral.count(count: Int): Array<CacheVarLiteral> = Array(count) { this }
 
 
     /**
@@ -84,12 +84,12 @@ class DBTableBuilder(private val tableId: Int, private val tableRscmName: String
      * Column with optional name and optional values.
      * Supports single or multiple VarTypes.
      */
-    fun column(name: String = "", id: Int, vararg types: VarType) {
+    fun column(name: String = "", id: Int, vararg types: CacheVarLiteral) {
         if (name.isNotEmpty()) columnNames[id] = name
         columns[id] = DBColumnType(Array(types.size) { i -> types[i] }, null, name)
     }
 
-    fun column(name: String, id: Int, types: Array<VarType>, values: Array<Any>? = null) {
+    fun column(name: String, id: Int, types: Array<CacheVarLiteral>, values: Array<Any>? = null) {
         if(values != null) {
             require(values.size == types.size) {
                 "When providing default values for DBTable '${tableRscmName}', you must supply exactly one default for each column type."
@@ -99,7 +99,7 @@ class DBTableBuilder(private val tableId: Int, private val tableRscmName: String
         columns[id] = DBColumnType(types, values, name)
     }
 
-    fun column(id: Int, types: Array<VarType>, values: Array<Any>? = null) {
+    fun column(id: Int, types: Array<CacheVarLiteral>, values: Array<Any>? = null) {
         if(values != null) {
             require(values.size == types.size) {
                 "$tableRscmName has invalid default values: provided ${values.size}, " +

@@ -34,7 +34,7 @@ class PackIfType(
     }
 
     private fun packInterface(cache: Cache,cacheLibrary: CacheLibrary, inf: InterfaceType) {
-        val codec = ComponentDecoder(cache)
+        val codec = ComponentDecoder(cache, revision)
         val archive = Archive(inf.id)
 
         val components = emptyList<Interface.InterfaceComponent>().toMutableList()

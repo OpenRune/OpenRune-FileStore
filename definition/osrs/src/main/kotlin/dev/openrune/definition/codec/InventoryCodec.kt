@@ -9,6 +9,10 @@ class InventoryCodec : DefinitionCodec<InventoryType> {
         if (opcode == 2) {
             size = buffer.readUnsignedShort()
         }
+        when(opcode) {
+            2 -> size = buffer.readUnsignedShort()
+            249 -> readParameters(buffer)
+        }
     }
 
     override fun ByteBuf.encode(definition: InventoryType) {
@@ -16,6 +20,9 @@ class InventoryCodec : DefinitionCodec<InventoryType> {
             writeByte(2)
             writeShort(definition.size)
         }
+
+        definition.writeParameters(this)
+
         writeByte(0)
     }
 

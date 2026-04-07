@@ -1,0 +1,165 @@
+package dev.openrune.definition.util
+
+typealias VarType = BaseVarType
+
+class CacheVarLiteral(
+    val id: Int,
+    val ch: Char,
+    val baseType: BaseVarType = BaseVarType.INTEGER,
+    val name: String
+) {
+    companion object {
+
+        private val registry = mutableMapOf<String, CacheVarLiteral>()
+        private fun register(literal: CacheVarLiteral): CacheVarLiteral {
+            registry[literal.name] = literal
+            return literal
+        }
+
+        fun registerExternal(id: Int, ch: Char, type: BaseVarType = BaseVarType.INTEGER, name: String) =
+            register(CacheVarLiteral(id, ch, type, name))
+
+        private val byId: Map<Int, CacheVarLiteral> by lazy { registry.values.associateBy { it.id } }
+        private val byChar: Map<Char, CacheVarLiteral> by lazy { registry.values.associateBy { it.ch } }
+
+        operator fun get(id: Int): CacheVarLiteral = byId[id] ?: error("Error finding CacheVarLiteral: $id")
+        fun byID(id: Int) = get(id)
+
+        fun getChar(ch: Char): CacheVarLiteral = byChar[ch] ?: error("Error finding CacheVarLiteral: $ch")
+        fun byChar(ch: Char) = getChar(ch)
+
+        // Expose the maps if needed
+        val mappedIds: Map<Int, CacheVarLiteral> get() = byId
+        val mappedChars: Map<Char, CacheVarLiteral> get() = byChar
+
+        val INT = register(CacheVarLiteral(0, 'i', name = "INT"))
+        val BOOLEAN = register(CacheVarLiteral(1, '1', name = "BOOLEAN"))
+        val HASH32 = register(CacheVarLiteral(2, '2', name = "HASH32"))
+        val QUEST = register(CacheVarLiteral(3, ':', name = "QUEST"))
+        val QUESTHELP = register(CacheVarLiteral(4, ';', name = "QUESTHELP"))
+        val CURSOR = register(CacheVarLiteral(5, '@', name = "CURSOR"))
+        val SEQ = register(CacheVarLiteral(6, 'A', name = "SEQ"))
+        val COLOUR = register(CacheVarLiteral(7, 'C', name = "COLOUR"))
+        val LOCSHAPE = register(CacheVarLiteral(8, 'H', name = "LOCSHAPE"))
+        val COMPONENT = register(CacheVarLiteral(9, 'I', name = "COMPONENT"))
+        val IDKIT = register(CacheVarLiteral(10, 'K', name = "IDKIT"))
+        val MIDI = register(CacheVarLiteral(11, 'M', name = "MIDI"))
+        val NPC_MODE = register(CacheVarLiteral(12, 'N', name = "NPC_MODE"))
+        val NAMEDOBJ = register(CacheVarLiteral(13, 'O', name = "NAMEDOBJ"))
+        val SYNTH = register(CacheVarLiteral(14, 'P', name = "SYNTH"))
+        val AI_QUEUE = register(CacheVarLiteral(15, 'Q', name = "AI_QUEUE"))
+        val AREA = register(CacheVarLiteral(16, 'R', name = "AREA"))
+        val STAT = register(CacheVarLiteral(17, 'S', name = "STAT"))
+        val NPC_STAT = register(CacheVarLiteral(18, 'T', name = "NPC_STAT"))
+        val WRITEINV = register(CacheVarLiteral(19, 'V', name = "WRITEINV"))
+        val MESH = register(CacheVarLiteral(20, '^', name = "MESH"))
+        val MAPAREA = register(CacheVarLiteral(21, '`', name = "MAPAREA"))
+        val COORDGRID = register(CacheVarLiteral(22, 'c', name = "COORDGRID"))
+        val GRAPHIC = register(CacheVarLiteral(23, 'd', name = "GRAPHIC"))
+        val CHATPHRASE = register(CacheVarLiteral(24, 'e', name = "CHATPHRASE"))
+        val FONTMETRICS = register(CacheVarLiteral(25, 'f', name = "FONTMETRICS"))
+        val ENUM = register(CacheVarLiteral(26, 'g', name = "ENUM"))
+        val HUNT = register(CacheVarLiteral(27, 'h', name = "HUNT"))
+        val JINGLE = register(CacheVarLiteral(28, 'j', name = "JINGLE"))
+        val CHATCAT = register(CacheVarLiteral(29, 'k', name = "CHATCAT"))
+        val LOC = register(CacheVarLiteral(30, 'l', name = "LOC"))
+        val MODEL = register(CacheVarLiteral(31, 'm', name = "MODEL"))
+        val NPC = register(CacheVarLiteral(32, 'n', name = "NPC"))
+        val OBJ = register(CacheVarLiteral(33, 'o', name = "OBJ"))
+        val PLAYER_UID = register(CacheVarLiteral(34, 'p', name = "PLAYER_UID"))
+        val REGION_UID = register(CacheVarLiteral(35, 'r', BaseVarType.LONG, name = "REGION_UID"))
+        val STRING = register(CacheVarLiteral(36, 's', BaseVarType.STRING, name = "STRING"))
+        val SPOTANIM = register(CacheVarLiteral(37, 't', name = "SPOTANIM"))
+        val NPC_UID = register(CacheVarLiteral(38, 'u', name = "NPC_UID"))
+        val INV = register(CacheVarLiteral(39, 'v', name = "INV"))
+        val TEXTURE = register(CacheVarLiteral(40, 'x', name = "TEXTURE"))
+        val CATEGORY = register(CacheVarLiteral(41, 'y', name = "CATEGORY"))
+        val CHAR = register(CacheVarLiteral(42, 'z', name = "CHAR"))
+        val LASER = register(CacheVarLiteral(43, '|', name = "LASER"))
+        val BAS = register(CacheVarLiteral(44, '€', name = "BAS"))
+        val CONTROLLER = register(CacheVarLiteral(45, 'ƒ', name = "CONTROLLER"))
+        val COLLISION_GEOMETRY = register(CacheVarLiteral(46, '‡', name = "COLLISION_GEOMETRY"))
+        val PHYSICS_MODEL = register(CacheVarLiteral(47, '‰', name = "PHYSICS_MODEL"))
+        val PHYSICS_CONTROL_MODIFIER = register(CacheVarLiteral(48, 'Š', name = "PHYSICS_CONTROL_MODIFIER"))
+        val CLANHASH = register(CacheVarLiteral(49, 'Œ', BaseVarType.LONG, name = "CLANHASH"))
+        val CUTSCENE = register(CacheVarLiteral(51, 'š', name = "CUTSCENE"))
+        val ITEMCODE = register(CacheVarLiteral(53, '¡', name = "ITEMCODE"))
+        val PVPKILLS = register(CacheVarLiteral(54, '¢', name = "PVPKILLS"))
+        val MAPSCENEICON = register(CacheVarLiteral(55, '£', name = "MAPSCENEICON"))
+        val CLANFORUMQFC = register(CacheVarLiteral(56, '§', BaseVarType.LONG, name = "CLANFORUMQFC"))
+        val VORBIS = register(CacheVarLiteral(57, '«', name = "VORBIS"))
+        val VERIFY_OBJECT = register(CacheVarLiteral(58, '®', name = "VERIFY_OBJECT"))
+        val MAPELEMENT = register(CacheVarLiteral(59, 'µ', name = "MAPELEMENT"))
+        val CATEGORYTYPE = register(CacheVarLiteral(60, '¶', name = "CATEGORYTYPE"))
+        val SOCIAL_NETWORK = register(CacheVarLiteral(61, 'Æ', name = "SOCIAL_NETWORK"))
+        val HITMARK = register(CacheVarLiteral(62, '×', name = "HITMARK"))
+        val PACKAGE = register(CacheVarLiteral(63, 'Þ', name = "PACKAGE"))
+        val PARTICLE_EFFECTOR = register(CacheVarLiteral(64, 'á', name = "PARTICLE_EFFECTOR"))
+        val CONTROLLER_UID = register(CacheVarLiteral(65, 'æ', name = "CONTROLLER_UID"))
+        val PARTICLE_EMITTER = register(CacheVarLiteral(66, 'é', name = "PARTICLE_EMITTER"))
+        val PLOGTYPE = register(CacheVarLiteral(67, 'í', name = "PLOGTYPE"))
+        val UNSIGNED_INT = register(CacheVarLiteral(68, 'î', name = "UNSIGNED_INT"))
+        val SKYBOX = register(CacheVarLiteral(69, 'ó', name = "SKYBOX"))
+        val SKYDECOR = register(CacheVarLiteral(70, 'ú', name = "SKYDECOR"))
+        val HASH64 = register(CacheVarLiteral(71, 'û', BaseVarType.LONG, name = "HASH64"))
+        val INPUTTYPE = register(CacheVarLiteral(72, 'Î', name = "INPUTTYPE"))
+        val STRUCT = register(CacheVarLiteral(73, 'J', name = "STRUCT"))
+        val DBROW = register(CacheVarLiteral(74, 'Ð', name = "DBROW"))
+        val STORABLELABEL = register(CacheVarLiteral(75, '¤', name = "STORABLELABEL"))
+        val STORABLEPROC = register(CacheVarLiteral(76, '¥', name = "STORABLEPROC"))
+        val GAMELOGEVENT = register(CacheVarLiteral(77, 'è', name = "GAMELOGEVENT"))
+        val ANIMATIONCLIP = register(CacheVarLiteral(78, '¹', name = "ANIMATIONCLIP"))
+        val SKELETON = register(CacheVarLiteral(79, '°', name = "SKELETON"))
+        val REGIONVISIBILITY = register(CacheVarLiteral(80, 'ì', name = "REGIONVISIBILITY"))
+        val FMODHANDLE = register(CacheVarLiteral(81, 'ë', name = "FMODHANDLE"))
+        val REGION_ALLOWLOGIN = register(CacheVarLiteral(83, 'þ', name = "REGION_ALLOWLOGIN"))
+        val REGION_INFO = register(CacheVarLiteral(84, 'ý', name = "REGION_INFO"))
+        val REGION_INFO_FAILURE = register(CacheVarLiteral(85, 'ÿ', name = "REGION_INFO_FAILURE"))
+        val SERVER_ACCOUNT_CREATION_STEP = register(CacheVarLiteral(86, 'õ', name = "SERVER_ACCOUNT_CREATION_STEP"))
+        val CLIENT_ACCOUNT_CREATION_STEP = register(CacheVarLiteral(87, 'ô', name = "CLIENT_ACCOUNT_CREATION_STEP"))
+        val LOBBY_ACCOUNT_CREATION_STEP = register(CacheVarLiteral(88, 'ö', name = "LOBBY_ACCOUNT_CREATION_STEP"))
+        val GWC_PLATFORM = register(CacheVarLiteral(89, 'ò', name = "GWC_PLATFORM"))
+        val CURRENCY = register(CacheVarLiteral(90, 'Ü', name = "CURRENCY"))
+        val KEYBOARD_KEY = register(CacheVarLiteral(91, 'ù', name = "KEYBOARD_KEY"))
+        val MOUSEEVENT = register(CacheVarLiteral(92, 'ï', name = "MOUSEEVENT"))
+        val HEADBAR = register(CacheVarLiteral(93, '¯', name = "HEADBAR"))
+        val BUG_TEMPLATE = register(CacheVarLiteral(94, 'ê', name = "BUG_TEMPLATE"))
+        val BILLING_AUTH_FLAG = register(CacheVarLiteral(95, 'ð', name = "BILLING_AUTH_FLAG"))
+        val ACCOUNT_FEATURE_FLAG = register(CacheVarLiteral(96, 'å', name = "ACCOUNT_FEATURE_FLAG"))
+        val INTERFACE = register(CacheVarLiteral(97, 'a', name = "INTERFACE"))
+        val TOPLEVELINTERFACE = register(CacheVarLiteral(98, 'F', name = "TOPLEVELINTERFACE"))
+        val OVERLAYINTERFACE = register(CacheVarLiteral(99, 'L', name = "OVERLAYINTERFACE"))
+        val CLIENTINTERFACE = register(CacheVarLiteral(100, '©', name = "CLIENTINTERFACE"))
+        val MOVESPEED = register(CacheVarLiteral(101, 'Ý', name = "MOVESPEED"))
+        val MATERIAL = register(CacheVarLiteral(102, '¬', name = "MATERIAL"))
+        val SEQGROUP = register(CacheVarLiteral(103, 'ø', name = "SEQGROUP"))
+        val TEMP_HISCORE = register(CacheVarLiteral(104, 'ä', name = "TEMP_HISCORE"))
+        val TEMP_HISCORE_LENGTH_TYPE = register(CacheVarLiteral(105, 'ã', name = "TEMP_HISCORE_LENGTH_TYPE"))
+        val TEMP_HISCORE_DISPLAY_TYPE = register(CacheVarLiteral(106, 'â', name = "TEMP_HISCORE_DISPLAY_TYPE"))
+        val TEMP_HISCORE_CONTRIBUTE_RESULT = register(CacheVarLiteral(107, 'à', name = "TEMP_HISCORE_CONTRIBUTE_RESULT"))
+        val AUDIOGROUP = register(CacheVarLiteral(108, 'À', name = "AUDIOGROUP"))
+        val AUDIOMIXBUSS = register(CacheVarLiteral(109, 'Ò', name = "AUDIOMIXBUSS"))
+        val LONG = register(CacheVarLiteral(110, 'Ï', BaseVarType.LONG, name = "LONG"))
+        val CRM_CHANNEL = register(CacheVarLiteral(111, 'Ì', name = "CRM_CHANNEL"))
+        val HTTP_IMAGE = register(CacheVarLiteral(112, 'É', name = "HTTP_IMAGE"))
+        val POP_UP_DISPLAY_BEHAVIOUR = register(CacheVarLiteral(113, 'Ê', name = "POP_UP_DISPLAY_BEHAVIOUR"))
+        val POLL = register(CacheVarLiteral(114, '÷', name = "POLL"))
+        val MTXN_PACKAGE = register(CacheVarLiteral(115, '¼', BaseVarType.LONG, name = "MTXN_PACKAGE"))
+        val MTXN_PRICE_POINT = register(CacheVarLiteral(116, '½', BaseVarType.LONG, name = "MTXN_PRICE_POINT"))
+        val ENTITYOVERLAY = register(CacheVarLiteral(117, '-', name = "ENTITYOVERLAY"))
+        val DBTABLE = register(CacheVarLiteral(118, 'Ø', name = "DBTABLE"))
+
+        val COMPONENTARRAY = register(CacheVarLiteral(200, 'X', name = "COMPONENTARRAY"))
+        val INTARRAY = register(CacheVarLiteral(201, 'W', name = "INTARRAY"))
+        val LABEL = register(CacheVarLiteral(202, 'b', name = "LABEL"))
+        val QUEUE = register(CacheVarLiteral(203, 'B', name = "QUEUE"))
+        val TIMER = register(CacheVarLiteral(204, '4', name = "TIMER"))
+        val WEAKQUEUE = register(CacheVarLiteral(205, 'w', name = "WEAKQUEUE"))
+        val SOFTTIMER = register(CacheVarLiteral(206, 'q', name = "SOFTTIMER"))
+        val OBJVAR = register(CacheVarLiteral(207, '0', name = "OBJVAR"))
+        val WALKTRIGGER = register(CacheVarLiteral(208, '6', name = "WALKTRIGGER"))
+        val VARP = register(CacheVarLiteral(209, '7', name = "VARP"))
+
+        val STRINGVECTOR = register(CacheVarLiteral(-1, '¸', name = "STRINGVECTOR"))
+    }
+}

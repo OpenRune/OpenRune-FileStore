@@ -1,6 +1,7 @@
 package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
+import dev.openrune.definition.EntityOpsDefinition
 import dev.openrune.definition.Parameterized
 import dev.openrune.definition.Recolourable
 import dev.openrune.definition.Transforms
@@ -19,7 +20,7 @@ data class NpcType(
     var rotateBackAnim : Int = -1,
     var walkLeftAnim : Int = -1,
     var walkRightAnim : Int = -1,
-    var actions : MutableList<String?> = mutableListOf(null, null, null, null, null),
+    var actions : EntityOpsDefinition = EntityOpsDefinition(),
     override var originalColours: MutableList<Int>? = null,
     override var modifiedColours: MutableList<Int>? = null,
     override var originalTextureColours: MutableList<Int>? = null,
@@ -66,7 +67,8 @@ data class NpcType(
 
     var examine : String = ""
 
-    fun isAttackable(): Boolean = combatLevel > 0 && actions.any { it == "Attack" }
+    fun isAttackable(): Boolean = combatLevel > 0 && actions.ops.count { it?.text == "Attack" } != 0
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

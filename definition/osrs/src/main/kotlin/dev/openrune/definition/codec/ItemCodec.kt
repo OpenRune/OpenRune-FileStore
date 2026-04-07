@@ -1,13 +1,15 @@
 package dev.openrune.definition.codec
 
 import com.github.michaelbull.logging.InlineLogger
+import dev.openrune.definition.EntityOpsLoader
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.ItemType
 import io.netty.buffer.ByteBuf
 
-class ItemCodec : DefinitionCodec<ItemType> {
+class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
+    private val entityOpsLoader = EntityOpsLoader(revision)
 
     override fun ItemType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
@@ -49,7 +51,7 @@ class ItemCodec : DefinitionCodec<ItemType> {
 
             26 -> femaleModel1 = buffer.readUnsignedShort()
             27 -> appearanceOverride2 = buffer.readByte().toInt()
-            in 30..34 -> options[opcode - 30] = buffer.readString()
+            in 30..34 -> entityOpsLoader.decodeBaseOp(options, buffer, opcode - 30)
             in 35..39 -> interfaceOptions[opcode - 35] = buffer.readString()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
@@ -77,6 +79,23 @@ class ItemCodec : DefinitionCodec<ItemType> {
                     }
                 }
             }
+            44 -> inventoryModel = buffer.readInt()
+            45 -> {
+                maleModel0 = buffer.readInt()
+                maleOffset = buffer.readUnsignedByte().toInt()
+            }
+            46 -> maleModel1 = buffer.readInt()
+            47 -> maleModel2 = buffer.readInt()
+            48 -> {
+                femaleModel0 = buffer.readInt()
+                femaleOffset = buffer.readUnsignedByte().toInt()
+            }
+            49 -> femaleModel1 = buffer.readInt()
+            50 -> femaleModel2 = buffer.readInt()
+            51 -> maleHeadModel0 = buffer.readInt()
+            52 -> maleHeadModel1 = buffer.readInt()
+            53 -> femaleHeadModel0 = buffer.readInt()
+            54 -> femaleHeadModel1 = buffer.readInt()
 
             65 -> isTradeable = true
             75 -> weight = buffer.readUnsignedShort().toDouble()
@@ -109,6 +128,9 @@ class ItemCodec : DefinitionCodec<ItemType> {
             140 -> notedId = buffer.readUnsignedShort()
             148 -> placeholderLink = buffer.readUnsignedShort()
             149 -> placeholderTemplate = buffer.readUnsignedShort()
+            200 -> entityOpsLoader.decodeSubOp(options, buffer)
+            201 -> entityOpsLoader.decodeConditionalOp(options, buffer)
+            202 -> entityOpsLoader.decodeConditionalSubOp(options, buffer)
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Items [${opcode}]" }
         }
@@ -116,8 +138,13 @@ class ItemCodec : DefinitionCodec<ItemType> {
 
     override fun ByteBuf.encode(definition: ItemType) {
         if (definition.inventoryModel != 0) {
-            writeByte(1)
-            writeShort(definition.inventoryModel)
+            if (entityOpsLoader.supportsExtendedEntityOps()) {
+                writeByte(44)
+                writeInt(definition.inventoryModel)
+            } else {
+                writeByte(1)
+                writeShort(definition.inventoryModel)
+            }
         }
 
         if (!definition.name.equals("null", ignoreCase = true)) {
@@ -178,26 +205,47 @@ class ItemCodec : DefinitionCodec<ItemType> {
             writeByte(16)
         }
 
-        if (definition.maleModel0 != -1 || definition.maleOffset != 0) {
-            writeByte(23)
-            writeShort(definition.maleModel0)
-            writeByte(definition.maleOffset)
-        }
+        if (entityOpsLoader.supportsExtendedEntityOps()) {
+            if (definition.maleModel0 != -1 || definition.maleOffset != 0) {
+                writeByte(45)
+                writeInt(definition.maleModel0)
+                writeByte(definition.maleOffset)
+            }
+            if (definition.maleModel1 != -1) {
+                writeByte(46)
+                writeInt(definition.maleModel1)
+            }
+            if (definition.femaleModel0 != -1 || definition.femaleOffset != 0) {
+                writeByte(48)
+                writeInt(definition.femaleModel0)
+                writeByte(definition.femaleOffset)
+            }
+            if (definition.femaleModel1 != -1) {
+                writeByte(49)
+                writeInt(definition.femaleModel1)
+            }
+        } else {
+            if (definition.maleModel0 != -1 || definition.maleOffset != 0) {
+                writeByte(23)
+                writeShort(definition.maleModel0)
+                writeByte(definition.maleOffset)
+            }
 
-        if (definition.maleModel1 != -1) {
-            writeByte(24)
-            writeShort(definition.maleModel1)
-        }
+            if (definition.maleModel1 != -1) {
+                writeByte(24)
+                writeShort(definition.maleModel1)
+            }
 
-        if (definition.femaleModel0 != -1 || definition.femaleOffset != 0) {
-            writeByte(25)
-            writeShort(definition.femaleModel0)
-            writeByte(definition.femaleOffset)
-        }
+            if (definition.femaleModel0 != -1 || definition.femaleOffset != 0) {
+                writeByte(25)
+                writeShort(definition.femaleModel0)
+                writeByte(definition.femaleOffset)
+            }
 
-        if (definition.femaleModel1 != -1) {
-            writeByte(26)
-            writeShort(definition.femaleModel1)
+            if (definition.femaleModel1 != -1) {
+                writeByte(26)
+                writeShort(definition.femaleModel1)
+            }
         }
 
         if (definition.appearanceOverride2 != 0) {
@@ -205,14 +253,10 @@ class ItemCodec : DefinitionCodec<ItemType> {
             writeByte(definition.appearanceOverride2)
         }
 
-        val options = definition.options.map { if (it == "null") null else it }
-        if (options != mutableListOf(null, null, "Take", null, null)) {
-            for (i in options.indices) {
-                if (options[i] == null) {
-                    continue
-                }
-                writeByte(i + 30)
-                writeString(options[i]!!)
+        definition.options.ops.forEachIndexed { index, op ->
+            val isDefaultTake = index == 2 && op?.text == "Take"
+            if (!isDefaultTake) {
+                entityOpsLoader.encodeBaseOp(this, index, op)
             }
         }
 
@@ -248,6 +292,18 @@ class ItemCodec : DefinitionCodec<ItemType> {
             }
         }
 
+        if (entityOpsLoader.supportsExtendedEntityOps()) {
+            definition.options.subOps.forEachIndexed { index, subOps ->
+                entityOpsLoader.encodeOpcode200SubOps(this, index, subOps)
+            }
+            definition.options.conditionalOps.forEachIndexed { index, conditionalOps ->
+                entityOpsLoader.encodeOpcode201ConditionalOps(this, index, conditionalOps)
+            }
+            definition.options.conditionalSubOps.forEachIndexed { index, conditionalSubOps ->
+                entityOpsLoader.encodeOpcode202ConditionalSubOps(this, index, conditionalSubOps)
+            }
+        }
+
         if (definition.isTradeable) {
             writeByte(65)
         }
@@ -257,34 +313,61 @@ class ItemCodec : DefinitionCodec<ItemType> {
             writeShort(definition.weight.toInt())
         }
 
-        if (definition.maleModel2 != -1) {
-            writeByte(78)
-            writeShort(definition.maleModel2)
-        }
+        if (entityOpsLoader.supportsExtendedEntityOps()) {
+            if (definition.maleModel2 != -1) {
+                writeByte(47)
+                writeInt(definition.maleModel2)
+            }
+            if (definition.femaleModel2 != -1) {
+                writeByte(50)
+                writeInt(definition.femaleModel2)
+            }
+            if (definition.maleHeadModel0 != -1) {
+                writeByte(51)
+                writeInt(definition.maleHeadModel0)
+            }
+            if (definition.maleHeadModel1 != -1) {
+                writeByte(52)
+                writeInt(definition.maleHeadModel1)
+            }
+            if (definition.femaleHeadModel0 != -1) {
+                writeByte(53)
+                writeInt(definition.femaleHeadModel0)
+            }
+            if (definition.femaleHeadModel1 != -1) {
+                writeByte(54)
+                writeInt(definition.femaleHeadModel1)
+            }
+        } else {
+            if (definition.maleModel2 != -1) {
+                writeByte(78)
+                writeShort(definition.maleModel2)
+            }
 
-        if (definition.femaleModel2 != -1) {
-            writeByte(79)
-            writeShort(definition.femaleModel2)
-        }
+            if (definition.femaleModel2 != -1) {
+                writeByte(79)
+                writeShort(definition.femaleModel2)
+            }
 
-        if (definition.maleHeadModel0 != -1) {
-            writeByte(90)
-            writeShort(definition.maleHeadModel0)
-        }
+            if (definition.maleHeadModel0 != -1) {
+                writeByte(90)
+                writeShort(definition.maleHeadModel0)
+            }
 
-        if (definition.femaleHeadModel0 != -1) {
-            writeByte(91)
-            writeShort(definition.femaleHeadModel0)
-        }
+            if (definition.femaleHeadModel0 != -1) {
+                writeByte(91)
+                writeShort(definition.femaleHeadModel0)
+            }
 
-        if (definition.maleHeadModel1 != -1) {
-            writeByte(92)
-            writeShort(definition.maleHeadModel1)
-        }
+            if (definition.maleHeadModel1 != -1) {
+                writeByte(92)
+                writeShort(definition.maleHeadModel1)
+            }
 
-        if (definition.femaleHeadModel1 != -1) {
-            writeByte(93)
-            writeShort(definition.femaleHeadModel1)
+            if (definition.femaleHeadModel1 != -1) {
+                writeByte(93)
+                writeShort(definition.femaleHeadModel1)
+            }
         }
 
         if (definition.category != -1) {

@@ -1,6 +1,7 @@
 package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
+import dev.openrune.definition.EntityOpsDefinition
 import dev.openrune.definition.Parameterized
 import dev.openrune.definition.Recolourable
 import dev.openrune.definition.Transforms
@@ -26,7 +27,7 @@ data class ObjectType(
     var varbitId: Int = -1,
     var ambient: Int = 0,
     var contrast: Int = 0,
-    var actions: MutableList<String?> = mutableListOf(null, null, null, null, null),
+    var actions: EntityOpsDefinition = EntityOpsDefinition(),
     var solid: Int = 2,
     var mapSceneID: Int = -1,
     var clipMask: Int = 0,
@@ -65,18 +66,20 @@ data class ObjectType(
     override var params: MutableMap<String, Any>? = null
 ) : Definition, Transforms, Recolourable, Parameterized {
 
-    fun hasActions() = actions.any { it != null }
+    private fun actionAt(index: Int): String? = actions.ops.getOrNull(index)?.text
+
+    fun hasActions() = actions.ops.any { it != null }
 
     fun hasOption(vararg searchOptions: String): Boolean {
         return searchOptions.any { option ->
-            actions.any { it.equals(option, ignoreCase = true) }
+            actions.ops.any { it?.text.equals(option, ignoreCase = true) }
         }
     }
 
     fun getOption(vararg searchOptions: String): Int {
         searchOptions.forEach {
-            actions.forEachIndexed { index, option ->
-                if (it.equals(option, ignoreCase = true)) return index + 1
+            actions.ops.forEachIndexed { index, option ->
+                if (it.equals(option?.text, ignoreCase = true)) return index + 1
             }
         }
         return -1
@@ -96,9 +99,9 @@ data class ObjectType(
                         def.modifiedColours == modifiedColours &&
                         def.isRotated == isRotated &&
                         def.actions != actions &&
-                        def.actions.indices.all { i ->
-                            val s1 = def.actions[i]
-                            val s2 = actions[i]
+                        (0..4).all { i ->
+                            val s1 = def.actionAt(i)
+                            val s2 = actionAt(i)
                             (s1 == s2) || (
                                     ("open".equals(s1, ignoreCase = true) && "close".equals(s2, ignoreCase = true)) ||
                                             ("close".equals(s1, ignoreCase = true) && "open".equals(s2, ignoreCase = true))

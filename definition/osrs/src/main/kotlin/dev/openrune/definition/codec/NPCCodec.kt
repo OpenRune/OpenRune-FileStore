@@ -2,6 +2,7 @@ package dev.openrune.definition.codec
 
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.EntityOpsLoader
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.revisionIsOrBefore
 import dev.openrune.definition.type.NpcType
@@ -9,6 +10,8 @@ import dev.openrune.definition.util.*
 import io.netty.buffer.ByteBuf
 
 class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
+    private val entityOpsLoader = EntityOpsLoader(revision)
+
     override fun NpcType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
@@ -36,13 +39,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             }
 
             18 -> category = buffer.readUnsignedShort()
-            in 30..34 -> {
-                actions[opcode - 30] = buffer.readString()
-                if (actions[opcode - 30].equals("Hidden", true)) {
-                    actions[opcode - 30] = null
-                }
-            }
-
+            in 30..34 -> entityOpsLoader.decodeBaseOp(actions, buffer, opcode - 30)
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
             60 -> {
@@ -50,6 +47,20 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                 chatheadModels = MutableList(length) { 0 }
                 (0 until length).forEach {
                     chatheadModels!![it] = buffer.readUnsignedShort()
+                }
+            }
+            61 -> {
+                val length: Int = buffer.readUnsignedByte().toInt()
+                models = MutableList(length) { 0 }
+                (0 until length).forEach {
+                    models!![it] = buffer.readInt()
+                }
+            }
+            62 -> {
+                val length: Int = buffer.readUnsignedByte().toInt()
+                chatheadModels = MutableList(length) { 0 }
+                (0 until length).forEach {
+                    chatheadModels!![it] = buffer.readInt()
                 }
             }
             74 -> attack = buffer.readUnsignedShort()
@@ -132,10 +143,18 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
 
     override fun ByteBuf.encode(definition: NpcType) {
         if (definition.models != null && definition.models!!.isNotEmpty()) {
-            writeByte(1)
-            writeByte(definition.models!!.size)
-            for (i in definition.models!!.indices) {
-                writeShort(definition.models!![i])
+            if (entityOpsLoader.supportsExtendedEntityOps()) {
+                writeByte(61)
+                writeByte(definition.models!!.size)
+                for (i in definition.models!!.indices) {
+                    writeInt(definition.models!![i])
+                }
+            } else {
+                writeByte(1)
+                writeByte(definition.models!!.size)
+                for (i in definition.models!!.indices) {
+                    writeShort(definition.models!![i])
+                }
             }
         }
 
@@ -182,26 +201,25 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             writeShort(definition.category)
         }
 
-        val actions = definition.actions.map { if (it == "null") null else it }
-
-        if (actions.any { it != null }) {
-            for (i in actions.indices) {
-                if (actions[i] == null) {
-                    continue
-                }
-
-                writeByte(30 + i)
-                writeString(actions[i]!!)
-            }
+        definition.actions.ops.forEachIndexed { index, op ->
+            entityOpsLoader.encodeAction(this, index, op!!.text)
         }
 
         definition.writeColoursTextures(this)
 
         if (definition.chatheadModels != null) {
-            writeByte(60)
-            writeByte(definition.chatheadModels!!.size)
-            for (i in definition.chatheadModels!!.indices) {
-                writeShort(definition.chatheadModels!![i])
+            if (entityOpsLoader.supportsExtendedEntityOps()) {
+                writeByte(62)
+                writeByte(definition.chatheadModels!!.size)
+                for (i in definition.chatheadModels!!.indices) {
+                    writeInt(definition.chatheadModels!![i])
+                }
+            } else {
+                writeByte(60)
+                writeByte(definition.chatheadModels!!.size)
+                for (i in definition.chatheadModels!!.indices) {
+                    writeShort(definition.chatheadModels!![i])
+                }
             }
         }
         if(definition.attack != 1) {
@@ -359,7 +377,6 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             writeByte(146)
             writeShort(definition.overlapTintHSL)
         }
-
 
         definition.writeParameters(this)
 
