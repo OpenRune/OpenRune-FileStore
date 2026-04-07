@@ -6,9 +6,6 @@ import io.netty.buffer.ByteBuf
 
 class InventoryCodec : DefinitionCodec<InventoryType> {
     override fun InventoryType.read(opcode: Int, buffer: ByteBuf) {
-        if (opcode == 2) {
-            size = buffer.readUnsignedShort()
-        }
         when(opcode) {
             2 -> size = buffer.readUnsignedShort()
             249 -> readParameters(buffer)

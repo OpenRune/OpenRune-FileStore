@@ -23,6 +23,7 @@ import dev.openrune.cache.util.progress
 import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.definition.codec.*
+import dev.openrune.definition.util.CacheVarLiteral
 import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled
 import java.io.File
@@ -278,6 +279,11 @@ class PackConfig(
         registerPackType(ENUM, EnumCodec::class, "enum", tomlMapper =  tomlMapper {
             addDecoder<EnumType> { content , def: EnumType ->
 
+                val keyLiteral = (content["keyVarType"] as? TomlValue.String)?.value
+                val valueLiteral = (content["valueVarType"] as? TomlValue.String)?.value
+                keyLiteral?.let { def.keyType = CacheVarLiteral.byName(it) }
+                valueLiteral?.let { def.valueType = CacheVarLiteral.byName(it) }
+
                 if (content.containsKey("clear")) {
                     def.values.clear()
                 }
@@ -320,7 +326,11 @@ class PackConfig(
         registerPackType(INV, InventoryCodec::class, "inventory",GameValGroupTypes.INVTYPES, kType = typeOf<List<InventoryType>>())
         registerPackType(OVERLAY, OverlayCodec::class, "overlay", kType = typeOf<List<OverlayType>>())
         registerPackType(UNDERLAY, OverlayCodec::class, "underlay", kType = typeOf<List<UnderlayType>>())
-        registerPackType(PARAMS, ParamCodec::class, "params", kType = typeOf<List<ParamType>>())
+        registerPackType(PARAMS, ParamCodec::class, "params", tomlMapper = tomlMapper {
+            addDecoder<ParamType> { content, def: ParamType ->
+                (content["varType"] as? TomlValue.String)?.value?.let { def.type = CacheVarLiteral.byName(it) }
+            }
+        }, kType = typeOf<List<ParamType>>())
         registerPackType(VARPLAYER, VarCodec::class, "varp",GameValGroupTypes.VARPTYPES, kType = typeOf<List<VarpType>>())
         registerPackType(VARCLIENT, VarClientCodec::class, "varclient", kType = typeOf<List<VarClientType>>())
 
@@ -492,7 +502,37 @@ class PackConfig(
             updated = updated.replace(Regex("%${Regex.escape(key)}%", RegexOption.IGNORE_CASE), value)
         }
 
-        return processRSCMModifier(updated)
+        return normalizeLegacyVarLiteralKeys(processRSCMModifier(updated))
+    }
+
+    private fun normalizeLegacyVarLiteralKeys(input: String): String {
+        val out = StringBuilder()
+        var currentTable: String? = null
+
+        input.lines().forEach { line ->
+            val trimmed = line.trim()
+            if (trimmed.startsWith("[[") && trimmed.endsWith("]]")) {
+                currentTable = trimmed.removePrefix("[[").removeSuffix("]]").trim()
+                out.appendLine(line)
+                return@forEach
+            }
+
+            var modified = line
+            when (currentTable) {
+                "params" -> {
+                    modified = modified.replace(Regex("""^(\s*)type(\s*=)"""), "$1varType$2")
+                }
+                "enum" -> {
+                    modified = modified.replace(Regex("""^(\s*)keyType(\s*=)"""), "$1keyVarType$2")
+                    modified = modified.replace(Regex("""^(\s*)valueType(\s*=)"""), "$1valueVarType$2")
+                    modified = modified.replace(Regex("""^(\s*)keyLit(\s*=)"""), "$1keyVarType$2")
+                    modified = modified.replace(Regex("""^(\s*)valueLit(\s*=)"""), "$1valueVarType$2")
+                }
+            }
+            out.appendLine(modified)
+        }
+
+        return out.toString()
     }
 
     private fun parseInlineTableString(input: String): List<Pair<String, String>> =

@@ -21,12 +21,15 @@ class CacheVarLiteral(
 
         private val byId: Map<Int, CacheVarLiteral> by lazy { registry.values.associateBy { it.id } }
         private val byChar: Map<Char, CacheVarLiteral> by lazy { registry.values.associateBy { it.ch } }
+        private val byName: Map<String, CacheVarLiteral> by lazy { registry.values.associateBy { it.name.uppercase() } }
 
         operator fun get(id: Int): CacheVarLiteral = byId[id] ?: error("Error finding CacheVarLiteral: $id")
         fun byID(id: Int) = get(id)
 
         fun getChar(ch: Char): CacheVarLiteral = byChar[ch] ?: error("Error finding CacheVarLiteral: $ch")
         fun byChar(ch: Char) = getChar(ch)
+        fun byName(name: String): CacheVarLiteral =
+            byName[name.uppercase()] ?: error("Error finding CacheVarLiteral by name: $name")
 
         val mappedIds: Map<Int, CacheVarLiteral> get() = byId
         val mappedChars: Map<Char, CacheVarLiteral> get() = byChar
