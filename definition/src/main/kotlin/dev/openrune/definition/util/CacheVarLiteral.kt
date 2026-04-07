@@ -1,6 +1,6 @@
 package dev.openrune.definition.util
 
-typealias VarType = BaseVarType
+typealias VarType = CacheVarLiteral
 
 class CacheVarLiteral(
     val id: Int,
@@ -28,7 +28,6 @@ class CacheVarLiteral(
         fun getChar(ch: Char): CacheVarLiteral = byChar[ch] ?: error("Error finding CacheVarLiteral: $ch")
         fun byChar(ch: Char) = getChar(ch)
 
-        // Expose the maps if needed
         val mappedIds: Map<Int, CacheVarLiteral> get() = byId
         val mappedChars: Map<Char, CacheVarLiteral> get() = byChar
 
