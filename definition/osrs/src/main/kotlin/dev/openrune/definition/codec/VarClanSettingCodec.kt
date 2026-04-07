@@ -3,10 +3,8 @@ package dev.openrune.definition.codec
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
-import dev.openrune.definition.type.ParamType
 import dev.openrune.definition.type.VarClanSettingsType
-import dev.openrune.definition.type.VarClanType
-import dev.openrune.definition.util.VarType
+import dev.openrune.definition.util.CacheVarLiteral
 import io.netty.buffer.ByteBuf
 
 class VarClanSettingCodec : DefinitionCodec<VarClanSettingsType> {
@@ -14,7 +12,7 @@ class VarClanSettingCodec : DefinitionCodec<VarClanSettingsType> {
         when (opcode) {
             1 -> {
                 val idx = buffer.readUnsignedByte().toInt()
-                type = VarType.byChar(idx.toChar())
+                type = CacheVarLiteral.byChar(idx.toChar())
             }
 
             2 -> lifetime = buffer.readUnsignedByte().toInt()

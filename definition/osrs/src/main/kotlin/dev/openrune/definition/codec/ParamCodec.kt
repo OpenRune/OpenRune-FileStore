@@ -5,7 +5,7 @@ import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.type.ParamType
-import dev.openrune.definition.util.VarType
+import dev.openrune.definition.util.CacheVarLiteral
 import io.netty.buffer.ByteBuf
 
 class ParamCodec(val rev : Int) : DefinitionCodec<ParamType> {
@@ -13,14 +13,14 @@ class ParamCodec(val rev : Int) : DefinitionCodec<ParamType> {
         when (opcode) {
             1 -> {
                 val idx = buffer.readUnsignedByte().toInt()
-                type = VarType.byChar(idx.toChar())
+                type = CacheVarLiteral.byChar(idx.toChar())
             }
 
             2 -> defaultInt = buffer.readInt()
             4 -> isMembers = false
             5 -> defaultString = buffer.readString()
             7 -> defaultLong = buffer.readLong()
-            8 -> type = VarType.byID(buffer.readUnsignedByte().toInt())
+            8 -> type = CacheVarLiteral.byID(buffer.readUnsignedByte().toInt())
         }
     }
 

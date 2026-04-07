@@ -198,7 +198,7 @@ fun ByteBuf.writeVarInt(value: Int): ByteBuf {
     return this
 }
 
-fun ByteBuf.writeColumnValues(values: Array<Any>?, types: Array<VarType>) {
+fun ByteBuf.writeColumnValues(values: Array<Any>?, types: Array<CacheVarLiteral>) {
     requireNotNull(values) { "Values array cannot be null" }
 
     val fieldCount = values.size / types.size
@@ -213,7 +213,7 @@ fun ByteBuf.writeColumnValues(values: Array<Any>?, types: Array<VarType>) {
             when (type.baseType) {
                 BaseVarType.INTEGER -> {
                     val intValue = when (type) {
-                        VarType.BOOLEAN -> when (value) {
+                        CacheVarLiteral.BOOLEAN -> when (value) {
                             is Boolean -> if (value) 1 else 0
                             is Number -> value.toInt()
                             else -> error("Expected Boolean or Number for BOOLEAN type, got ${value.javaClass.simpleName}")
@@ -246,14 +246,14 @@ fun Any?.debugString(): String = when (this) {
     else -> toString()
 }
 
-fun ByteBuf.readColumnValues(types: Array<VarType>): Array<Any> {
+fun ByteBuf.readColumnValues(types: Array<CacheVarLiteral>): Array<Any> {
     val fieldCount = readUnsignedShortSmart()
     val values = arrayOfNulls<Any>(fieldCount * types.size)
     for (fieldIndex in 0 until fieldCount) {
         for (typeIndex in types.indices) {
             val type = types[typeIndex]
             val valuesIndex = fieldIndex * types.size + typeIndex
-            values[valuesIndex] = if (type == VarType.STRING) readString() else readInt()
+            values[valuesIndex] = if (type == CacheVarLiteral.STRING) readString() else readInt()
         }
     }
     return values.requireNoNulls()

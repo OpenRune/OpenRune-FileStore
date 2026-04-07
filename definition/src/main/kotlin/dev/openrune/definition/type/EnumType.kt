@@ -1,12 +1,12 @@
 package dev.openrune.definition.type
 
 import dev.openrune.definition.Definition
-import dev.openrune.definition.util.VarType
+import dev.openrune.definition.util.CacheVarLiteral
 
 data class EnumType(
     override var id: Int = -1,
-    var keyType: VarType = VarType.INT,
-    var valueType: VarType = VarType.INT,
+    var keyType: CacheVarLiteral = CacheVarLiteral.INT,
+    var valueType: CacheVarLiteral = CacheVarLiteral.INT,
     var defaultInt: Int = 0,
     var defaultString: String = "",
     val values: MutableMap<String, Any> = HashMap()
