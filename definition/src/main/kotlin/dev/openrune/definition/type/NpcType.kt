@@ -25,8 +25,9 @@ data class NpcType(
     override var modifiedColours: MutableList<Int>? = null,
     override var originalTextureColours: MutableList<Int>? = null,
     override var modifiedTextureColours: MutableList<Int>? = null,
-    override var varbit: Int = -1,
-    override var varp: Int = -1,
+    override var multiVarBit: Int = -1,
+    override var multiVarp: Int = -1,
+    override var multiDefault: Int = -1,
     override var transforms: MutableList<Int>? = null,
     var isMinimapVisible : Boolean = true,
     var combatLevel : Int = -1,
@@ -93,8 +94,9 @@ data class NpcType(
         if (modifiedColours != other.modifiedColours) return false
         if (originalTextureColours != other.originalTextureColours) return false
         if (modifiedTextureColours != other.modifiedTextureColours) return false
-        if (varbit != other.varbit) return false
-        if (varp != other.varp) return false
+        if (multiVarBit != other.multiVarBit) return false
+        if (multiVarp != other.multiVarp) return false
+        if (multiDefault != other.multiDefault) return false
         if (transforms != other.transforms) return false
         if (isMinimapVisible != other.isMinimapVisible) return false
         if (combatLevel != other.combatLevel) return false
@@ -150,8 +152,9 @@ data class NpcType(
         result = 31 * result + (modifiedColours?.hashCode() ?: 0)
         result = 31 * result + (originalTextureColours?.hashCode() ?: 0)
         result = 31 * result + (modifiedTextureColours?.hashCode() ?: 0)
-        result = 31 * result + varbit
-        result = 31 * result + varp
+        result = 31 * result + multiVarBit
+        result = 31 * result + multiVarp
+        result = 31 * result + multiDefault
         result = 31 * result + (transforms?.hashCode() ?: 0)
         result = 31 * result + isMinimapVisible.hashCode()
         result = 31 * result + combatLevel

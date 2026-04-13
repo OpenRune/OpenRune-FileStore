@@ -19,9 +19,9 @@ class CacheVarLiteral(
         fun registerExternal(id: Int, ch: Char, type: BaseVarType = BaseVarType.INTEGER, name: String) =
             register(CacheVarLiteral(id, ch, type, name))
 
-        private val byId: Map<Int, CacheVarLiteral> by lazy { registry.values.associateBy { it.id } }
-        private val byChar: Map<Char, CacheVarLiteral> by lazy { registry.values.associateBy { it.ch } }
-        private val byName: Map<String, CacheVarLiteral> by lazy { registry.values.associateBy { it.name.uppercase() } }
+        private val byId get() = registry.values.associateBy { it.id }
+        private val byChar get() = registry.values.associateBy { it.ch }
+        private val byName get() = registry.values.associateBy { it.name.uppercase() }
 
         operator fun get(id: Int): CacheVarLiteral = byId[id] ?: error("Error finding CacheVarLiteral: $id")
         fun byID(id: Int) = get(id)

@@ -228,12 +228,12 @@ class PackConfig(
                     }
                 }
                 (content["params"] as? TomlValue.Map)?.properties?.forEach { (key, value) ->
-                    val param = ItemParam.entries.find { it.formattedName == key } ?: return@forEach
+                    val param = ItemParam.entries.find { it.formattedName == key }
                     def.params?.remove(key)
 
-                    val paramId = param.id.toString()
+                    val paramId = key
 
-                    if (param.isSkillParam) {
+                    if (param?.isSkillParam == true) {
                         val skillList = (value as? TomlValue.List)?.elements?.toList() ?: error("Expected a list for skill param '$paramId'.")
 
                         require(skillList.size >= 2) {
@@ -255,7 +255,7 @@ class PackConfig(
                         }
                     } else {
                         val tomlValue = when (value) {
-                            is TomlValue.Integer -> value.value.toString()
+                            is TomlValue.Integer -> value.value.toInt()
                             is TomlValue.String -> value.value
                             else -> ""
                         }
@@ -279,7 +279,7 @@ class PackConfig(
         registerPackType(ENUM, EnumCodec::class, "enum", tomlMapper =  tomlMapper {
             addDecoder<EnumType> { content , def: EnumType ->
 
-                val keyLiteral = (content["keyVarType"] as? TomlValue.String)?.value
+                val keyLiteral = (content["type"] as? TomlValue.String)?.value
                 val valueLiteral = (content["valueVarType"] as? TomlValue.String)?.value
                 keyLiteral?.let { def.keyType = CacheVarLiteral.byName(it) }
                 valueLiteral?.let { def.valueType = CacheVarLiteral.byName(it) }
@@ -308,6 +308,20 @@ class PackConfig(
         registerPackType(NPC, NPCCodec::class, "npc",GameValGroupTypes.NPCTYPES, tomlMapper = tomlMapper {
             addDecoder<NpcType> { content , def: NpcType ->
                 def.actions.fromOptions(def.id,def.name,"option", content)
+
+                (content["params"] as? TomlValue.Map)?.properties?.forEach { (key, value) ->
+                    def.params?.remove(key)
+
+                    val paramId = key
+
+                    val tomlValue = when (value) {
+                        is TomlValue.Integer -> value.value.toInt()
+                        is TomlValue.String -> value.value
+                        else -> ""
+                    }
+
+                    def.params?.put(paramId, tomlValue)
+                }
             }
         }, kType = typeOf<List<NpcType>>())
 

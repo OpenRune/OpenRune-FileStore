@@ -60,8 +60,9 @@ data class ObjectType(
     override var modifiedColours: MutableList<Int>? = null,
     override var originalTextureColours: MutableList<Int>? = null,
     override var modifiedTextureColours: MutableList<Int>? = null,
-    override var varbit: Int = -1,
-    override var varp: Int = -1,
+    override var multiVarBit: Int = -1,
+    override var multiVarp: Int = -1,
+    override var multiDefault: Int = -1,
     override var transforms: MutableList<Int>? = null,
     override var params: MutableMap<String, Any>? = null
 ) : Definition, Transforms, Recolourable, Parameterized {

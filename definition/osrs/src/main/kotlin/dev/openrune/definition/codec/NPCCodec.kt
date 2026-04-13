@@ -202,7 +202,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
         }
 
         definition.actions.ops.forEachIndexed { index, op ->
-            entityOpsLoader.encodeAction(this, index, op!!.text)
+            entityOpsLoader.encodeBaseOp(this, index, op)
         }
 
         definition.writeColoursTextures(this)
