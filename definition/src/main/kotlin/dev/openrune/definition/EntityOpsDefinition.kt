@@ -17,6 +17,8 @@ class EntityOpsDefinition {
         ops[index] = Op(text)
     }
 
+    fun getOpOrNull(index: Int): String? = ops.getOrNull(index)?.text
+
     fun subOp(index: Int, subID: Int, text: String) = apply {
         subOps.ensureSize(index) { mutableListOf() }
         subOps[index] += SubOp(text, subID)
@@ -28,6 +30,11 @@ class EntityOpsDefinition {
         list.removeIf { it.subID == subID }
         list += SubOp(text, subID)
     }
+
+    fun getSubOpsOrEmpty(index: Int): List<SubOp> = subOps.getOrNull(index).orEmpty()
+
+    fun getSubOpOrNull(index: Int, subID: Int): SubOp? =
+        subOps.getOrNull(index)?.firstOrNull { it.subID == subID }
 
     fun conditionalOp(
         index: Int,
@@ -52,6 +59,8 @@ class EntityOpsDefinition {
         conditionalOps.ensureSize(index) { mutableListOf() }
         conditionalOps[index] += ConditionalOp(text, varpID, varbitID, min, max)
     }
+
+    fun getConditionalOpsOrEmpty(index: Int): List<ConditionalOp> = conditionalOps.getOrNull(index).orEmpty()
 
     fun conditionalSubOp(
         index: Int,
@@ -85,7 +94,75 @@ class EntityOpsDefinition {
         list += ConditionalSubOp(text, subID, varpID, varbitID, min, max)
     }
 
-    /* ---------- Models ---------- */
+    fun getConditionalSubOpsOrEmpty(index: Int): Map<Int, List<ConditionalSubOp>> =
+        conditionalSubOps.getOrNull(index).orEmpty()
+
+    fun getConditionalSubOpsBySubIdOrEmpty(index: Int, subID: Int): List<ConditionalSubOp> =
+        conditionalSubOps.getOrNull(index)?.get(subID).orEmpty()
+
+    /**
+     * Structural equality for merge/patch logic. Reference equality is not enough: decoded TOML
+     * often allocates a fresh empty [EntityOpsDefinition] that must compare equal to another empty instance.
+     */
+    fun contentEquals(other: EntityOpsDefinition): Boolean {
+        if (!opsContentEquals(ops, other.ops)) return false
+        if (!subOpsContentEquals(subOps, other.subOps)) return false
+        if (!conditionalOpsContentEquals(conditionalOps, other.conditionalOps)) return false
+        if (!conditionalSubOpsContentEquals(conditionalSubOps, other.conditionalSubOps)) return false
+        return true
+    }
+
+    private fun opsContentEquals(a: List<Op?>, b: List<Op?>): Boolean {
+        val n = maxOf(a.size, b.size)
+        for (i in 0 until n) {
+            if (a.getOrNull(i) != b.getOrNull(i)) return false
+        }
+        return true
+    }
+
+    private fun subOpsContentEquals(
+        a: List<MutableList<SubOp>>,
+        b: List<MutableList<SubOp>>
+    ): Boolean {
+        val n = maxOf(a.size, b.size)
+        for (i in 0 until n) {
+            val la = a.getOrNull(i)?.sortedBy { it.subID }.orEmpty()
+            val lb = b.getOrNull(i)?.sortedBy { it.subID }.orEmpty()
+            if (la != lb) return false
+        }
+        return true
+    }
+
+    private fun conditionalOpsContentEquals(
+        a: List<MutableList<ConditionalOp>>,
+        b: List<MutableList<ConditionalOp>>
+    ): Boolean {
+        val n = maxOf(a.size, b.size)
+        for (i in 0 until n) {
+            val la = a.getOrNull(i).orEmpty()
+            val lb = b.getOrNull(i).orEmpty()
+            if (la != lb) return false
+        }
+        return true
+    }
+
+    private fun conditionalSubOpsContentEquals(
+        a: List<MutableMap<Int, MutableList<ConditionalSubOp>>>,
+        b: List<MutableMap<Int, MutableList<ConditionalSubOp>>>
+    ): Boolean {
+        val n = maxOf(a.size, b.size)
+        for (i in 0 until n) {
+            val ma = a.getOrNull(i).orEmpty()
+            val mb = b.getOrNull(i).orEmpty()
+            if (ma.keys != mb.keys) return false
+            for (k in ma.keys) {
+                val la = ma[k].orEmpty()
+                val lb = mb[k].orEmpty()
+                if (la != lb) return false
+            }
+        }
+        return true
+    }
 
     data class Op(val text: String)
 

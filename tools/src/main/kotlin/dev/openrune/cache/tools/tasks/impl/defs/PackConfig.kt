@@ -482,23 +482,35 @@ class PackConfig(
         return data?.let { codec.loadData(inherit, data) }
     }
 
-    private fun <T : Definition> mergeDefinitions(baseDef: T, inheritedDef: T, codec: DefinitionCodec<T>): T {
+    /**
+     * Merges [childDef] onto [parentDef] (call site passes parent from cache first, then child from TOML).
+     * A field from the child replaces the parent's value only when the child differs from both the parent
+     * and the codec default. Mutable nested types like [EntityOpsDefinition] must compare by content, not
+     * reference, or an "empty" child instance wrongly overwrites a non-empty parent.
+     */
+    private fun <T : Definition> mergeDefinitions(parentDef: T, childDef: T, codec: DefinitionCodec<T>): T {
         val defaultDef = codec.createDefinition()
 
         defaultDef::class.java.declaredFields.forEach { field ->
             if (!Modifier.isStatic(field.modifiers)) {
                 field.isAccessible = true
-                val baseValue = field.get(baseDef)
-                val inheritedValue = field.get(inheritedDef)
+                val parentValue = field.get(parentDef)
+                val childValue = field.get(childDef)
                 val defaultValue = field.get(defaultDef)
 
-                if (inheritedValue != baseValue && inheritedValue != defaultValue) {
-                    field.set(baseDef, inheritedValue)
+                if (!mergeFieldValuesEqual(childValue, parentValue) && !mergeFieldValuesEqual(childValue, defaultValue)) {
+                    field.set(parentDef, childValue)
                 }
             }
         }
 
-        return baseDef
+        return parentDef
+    }
+
+    private fun mergeFieldValuesEqual(a: Any?, b: Any?): Boolean {
+        if (a === b) return true
+        if (a is EntityOpsDefinition && b is EntityOpsDefinition) return a.contentEquals(b)
+        return a == b
     }
 
     private fun processDocumentChanges(content: String): String {

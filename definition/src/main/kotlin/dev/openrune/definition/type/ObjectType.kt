@@ -24,7 +24,6 @@ data class ObjectType(
     var nonFlatShading: Boolean = false,
     var interactive: Int = -1,
     var animationId: Int = -1,
-    var varbitId: Int = -1,
     var ambient: Int = 0,
     var contrast: Int = 0,
     var actions: EntityOpsDefinition = EntityOpsDefinition(),

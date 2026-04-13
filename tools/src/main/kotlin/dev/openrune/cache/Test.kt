@@ -22,28 +22,10 @@ fun main() {
     //val builder = Builder(type = TaskType.FRESH_INSTALL, revision = 232, File("C:\\Users\\Home\\Desktop\\New folder"))
     //builder.extraTasks().build().initialize()
 
-    val cache = Cache.load(Path.of("C:\\Users\\Home\\Desktop\\New folder"))
+    val cache = Cache.load(Path.of("C:\\Users\\chris\\Desktop\\cache-oldschool-live-en-b233-2025-09-10-10-45-05-openrs2#2293\\cache"))
 
-    CacheManager.init(OsrsCacheProvider(cache,232))
+    CacheManager.init(OsrsCacheProvider(cache,233))
 
-    val models = ModelDecoder(cache)
-
-    var count = 0
-    cache.archives(MODELS).forEach {
-        val model = models.getModel(it)
-        if (model?.faceZOffsets != null) {
-            println(Arrays.toString(model!!.faceZOffsets))
-            count++
-        }
-    }
-    println("ON TOTAL: $count")
-
-//    println(CacheManager.getItem(995).toString())
-//    println(CacheManager.getObject(10060).toString())
-//
-//    val interfacesNew = GameValHandler.readGameVal(GameValGroupTypes.VARCS, cache)
-//    interfacesNew.forEach {
-//        println(it.toFullString())
-//    }
+    println(CacheManager.getNpc(3029))
 
 }

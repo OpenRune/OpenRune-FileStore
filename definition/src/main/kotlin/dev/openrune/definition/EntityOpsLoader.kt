@@ -9,43 +9,18 @@ class EntityOpsLoader(private val revision: Int) {
     fun supportsExtendedEntityOps(): Boolean = revisionIsOrAfter(revision, EXTENDED_ENTITY_OPS_REVISION)
 
     fun decodeBaseOp(ops: EntityOpsDefinition, buffer: ByteBuf, index: Int) {
-        if (supportsExtendedEntityOps()) {
-            decodeOp(ops, buffer, index)
-        } else {
-            ops.setOp(index, buffer.readString())
-        }
-    }
-
-    fun decodeBaseOp(actions: MutableList<String?>, buffer: ByteBuf, index: Int) {
         val text = buffer.readString()
-        actions[index] = if (text.equals("Hidden", ignoreCase = true)) null else text
+        if (!text.equals("Hidden", ignoreCase = true)) {
+            ops.setOp(index, text)
+        }
     }
 
     fun encodeBaseOp(buffer: ByteBuf, index: Int, op: EntityOpsDefinition.Op?) {
         if (op == null) {
             return
         }
-        if (supportsExtendedEntityOps()) {
-            encodeOp(buffer, index, op)
-        } else {
-            buffer.writeByte(index + 30)
-            buffer.writeString(op.text)
-        }
-    }
-
-    fun encodeAction(buffer: ByteBuf, index: Int, action: String?) {
-        if (action == null || action == "null") {
-            return
-        }
         buffer.writeByte(index + 30)
-        buffer.writeString(action)
-    }
-
-    fun decodeOp(ops: EntityOpsDefinition, buffer: ByteBuf, index: Int) {
-        val text = buffer.readString()
-        if (!text.equals("Hidden", ignoreCase = true)) {
-            ops.setOp(index, text)
-        }
+        buffer.writeString(op.text)
     }
 
     fun decodeSubOp(ops: EntityOpsDefinition, buffer: ByteBuf) {
@@ -83,14 +58,6 @@ class EntityOpsLoader(private val revision: Int) {
         ops.setConditionalSubOp(index, subID, text, varp, varb, min, max)
     }
 
-    fun encodeOp(buffer: ByteBuf, index: Int, op: EntityOpsDefinition.Op?) {
-        if (op == null) {
-            return
-        }
-        buffer.writeByte(index + 30)
-        buffer.writeString(op.text)
-    }
-
     fun encodeSubOpsOpcode(
         buffer: ByteBuf,
         opcode: Int,
@@ -103,12 +70,10 @@ class EntityOpsLoader(private val revision: Int) {
 
         buffer.writeByte(opcode)
         buffer.writeByte(index)
-        subOps
-            .sortedBy { it.subID }
-            .forEach { subOp ->
-                buffer.writeByte(subOp.subID + 1)
-                buffer.writeString(subOp.text)
-            }
+        subOps.sortedBy { it.subID }.forEach { subOp ->
+            buffer.writeByte(subOp.subID + 1)
+            buffer.writeString(subOp.text)
+        }
         buffer.writeByte(0)
     }
 
@@ -143,29 +108,27 @@ class EntityOpsLoader(private val revision: Int) {
             return
         }
 
-        conditionalSubOps
-            .toSortedMap()
-            .forEach { (_, entries) ->
-                entries.forEach { op ->
-                    buffer.writeByte(opcode)
-                    buffer.writeByte(index)
-                    buffer.writeShort(op.subID)
-                    buffer.writeShort(op.varpID)
-                    buffer.writeShort(op.varbitID)
-                    buffer.writeInt(op.minValue)
-                    buffer.writeInt(op.maxValue)
-                    buffer.writeString(op.text)
-                }
+        conditionalSubOps.toSortedMap().forEach { (_, entries) ->
+            entries.forEach { op ->
+                buffer.writeByte(opcode)
+                buffer.writeByte(index)
+                buffer.writeShort(op.subID)
+                buffer.writeShort(op.varpID)
+                buffer.writeShort(op.varbitID)
+                buffer.writeInt(op.minValue)
+                buffer.writeInt(op.maxValue)
+                buffer.writeString(op.text)
             }
+        }
     }
 
-    fun encodeOpcode200SubOps(buffer: ByteBuf, index: Int, subOps: MutableList<EntityOpsDefinition.SubOp>?) =
+    fun encodeOpcodeSubOps(buffer: ByteBuf, index: Int, subOps: MutableList<EntityOpsDefinition.SubOp>?) =
         encodeSubOpsOpcode(buffer, 200, index, subOps)
 
-    fun encodeOpcode201ConditionalOps(buffer: ByteBuf, index: Int, conditionalOps: MutableList<EntityOpsDefinition.ConditionalOp>?) =
+    fun encodeOpcodeConditionalOps(buffer: ByteBuf, index: Int, conditionalOps: MutableList<EntityOpsDefinition.ConditionalOp>?) =
         encodeConditionalOpsOpcode(buffer, 201, index, conditionalOps)
 
-    fun encodeOpcode202ConditionalSubOps(
+    fun encodeOpcodeConditionalSubOps(
         buffer: ByteBuf,
         index: Int,
         conditionalSubOps: MutableMap<Int, MutableList<EntityOpsDefinition.ConditionalSubOp>>?

@@ -294,13 +294,13 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
 
         if (entityOpsLoader.supportsExtendedEntityOps()) {
             definition.options.subOps.forEachIndexed { index, subOps ->
-                entityOpsLoader.encodeOpcode200SubOps(this, index, subOps)
+                entityOpsLoader.encodeOpcodeSubOps(this, index, subOps)
             }
             definition.options.conditionalOps.forEachIndexed { index, conditionalOps ->
-                entityOpsLoader.encodeOpcode201ConditionalOps(this, index, conditionalOps)
+                entityOpsLoader.encodeOpcodeConditionalOps(this, index, conditionalOps)
             }
             definition.options.conditionalSubOps.forEachIndexed { index, conditionalSubOps ->
-                entityOpsLoader.encodeOpcode202ConditionalSubOps(this, index, conditionalSubOps)
+                entityOpsLoader.encodeOpcodeConditionalSubOps(this, index, conditionalSubOps)
             }
         }
 
