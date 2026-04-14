@@ -1,9 +1,9 @@
 package dev.openrune
 
-import cc.ekblad.toml.decode
-import cc.ekblad.toml.model.TomlValue
-import cc.ekblad.toml.serialization.from
-import cc.ekblad.toml.util.InternalAPI
+import dev.openrune.toml.decode
+import dev.openrune.toml.model.TomlValue
+import dev.openrune.toml.serialization.from
+import dev.openrune.toml.util.InternalAPI
 import dev.openrune.cache.tools.tasks.impl.defs.PackConfig
 import dev.openrune.definition.codec.ItemCodec
 import dev.openrune.definition.type.ItemType

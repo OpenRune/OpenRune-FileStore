@@ -1,7 +1,9 @@
 package dev.openrune.definition.type
 
+import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
 
+@RsTableHeaders("health")
 data class HealthBarType(
     override var id: Int = -1,
     var int1: Int = 255,

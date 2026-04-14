@@ -6,3 +6,13 @@ include("filestore", "filestore:r718-fs", "filestore:osrs-fs")
 
 include("tools")
 include("displee")
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        mavenCentral()
+        mavenLocal()
+        maven("https://raw.githubusercontent.com/OpenRune/hosting/master")
+        maven("https://jitpack.io")
+    }
+}

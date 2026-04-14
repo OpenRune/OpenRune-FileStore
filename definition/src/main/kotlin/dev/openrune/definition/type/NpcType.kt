@@ -1,11 +1,19 @@
 package dev.openrune.definition.type
 
+import dev.openrune.toml.rsconfig.RsTableHeaders
+import dev.openrune.toml.serialization.TomlField
 import dev.openrune.definition.Definition
 import dev.openrune.definition.EntityOpsDefinition
 import dev.openrune.definition.Parameterized
 import dev.openrune.definition.Recolourable
 import dev.openrune.definition.Transforms
+import dev.openrune.seralizer.NpcTypeOptionsTableHook
+import dev.openrune.seralizer.ParamSerializer
 
+@RsTableHeaders(
+    "npc",
+    rowPostDecode = NpcTypeOptionsTableHook::class,
+)
 data class NpcType(
     override var id: Int = -1,
     var name: String = "null",
@@ -51,7 +59,8 @@ data class NpcType(
     var crawlBackSequence : Int = -1,
     var crawlRightSequence : Int = -1,
     var crawlLeftSequence : Int = -1,
-    override var params: MutableMap<String, Any>? = null,
+    @param:TomlField(serializer = ParamSerializer::class)
+    override var params: MutableMap<Int, Any>? = null,
     var height: Int = -1,
     var attack : Int = 1,
     var defence : Int = 1,

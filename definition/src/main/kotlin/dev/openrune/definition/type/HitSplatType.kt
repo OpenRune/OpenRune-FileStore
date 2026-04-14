@@ -1,8 +1,10 @@
 package dev.openrune.definition.type
 
+import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
 import dev.openrune.definition.Transforms
 
+@RsTableHeaders("hitsplat")
 data class HitSplatType(
     override var id: Int = -1,
     var font: Int = -1,

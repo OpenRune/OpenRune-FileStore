@@ -1,10 +1,18 @@
 package dev.openrune.definition.type
 
+import dev.openrune.toml.rsconfig.RsTableHeaders
+import dev.openrune.toml.serialization.TomlField
 import dev.openrune.definition.Definition
 import dev.openrune.definition.EntityOpsDefinition
 import dev.openrune.definition.Parameterized
 import dev.openrune.definition.Recolourable
+import dev.openrune.seralizer.ItemTypeOptionsTableHook
+import dev.openrune.seralizer.ParamSerializer
 
+@RsTableHeaders(
+    "item",
+    rowPostDecode = ItemTypeOptionsTableHook::class,
+)
 data class ItemType(
     override var id: Int = -1,
     var name: String = "null",
@@ -13,7 +21,8 @@ data class ItemType(
     override var modifiedColours: MutableList<Int>? = null,
     override var originalTextureColours: MutableList<Int>? = null,
     override var modifiedTextureColours: MutableList<Int>? = null,
-    override var params: MutableMap<String, Any>? = null,
+    @param:TomlField(serializer = ParamSerializer::class)
+    override var params: MutableMap<Int, Any>? = null,
     var resizeX: Int = 128,
     var resizeY: Int = 128,
     var resizeZ: Int = 128,

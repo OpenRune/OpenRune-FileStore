@@ -1,7 +1,7 @@
 package dev.openrune.cache.tools.tasks.impl
 
-import cc.ekblad.toml.decode
-import cc.ekblad.toml.tomlMapper
+import dev.openrune.toml.decode
+import dev.openrune.toml.tomlMapper
 import dev.openrune.cache.SPRITES
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.sprites.Sprite

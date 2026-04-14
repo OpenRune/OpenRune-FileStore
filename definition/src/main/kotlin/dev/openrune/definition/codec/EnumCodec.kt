@@ -19,9 +19,9 @@ class EnumCodec : DefinitionCodec<EnumType> {
                 for (i in 0 until count) {
                     val key = buffer.readInt()
                     if (opcode == 5) {
-                        values[key.toString()] = buffer.readString()
+                        values[key] = buffer.readString()
                     } else {
-                        values[key.toString()] = buffer.readInt()
+                        values[key] = buffer.readInt()
                     }
                 }
             }

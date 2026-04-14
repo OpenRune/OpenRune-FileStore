@@ -8,13 +8,13 @@ import io.netty.buffer.ByteBuf
 
 interface Parameterized {
 
-    var params: MutableMap<String, Any>?
+    var params: MutableMap<Int, Any>?
 
     fun readParameters(buffer: ByteBuf) {
         val length = buffer.readUnsignedByte().toInt()
         if (length == 0) return
 
-        val params = mutableMapOf<String, Any>()
+        val params = mutableMapOf<Int, Any>()
 
         repeat(length) {
             val type = buffer.readUnsignedByte().toInt()
@@ -26,7 +26,7 @@ interface Parameterized {
                 else -> buffer.readInt()
             }
 
-            params[id.toString()] = value
+            params[id] = value
         }
 
         this.params = params
@@ -38,10 +38,7 @@ interface Parameterized {
         writer.writeByte(249)
         writer.writeByte(params.size)
 
-        for ((idStr, value) in params) {
-            val id = idStr.toIntOrNull() ?: error("Invalid param id (not an Int): '$idStr'")
-
-
+        for ((id, value) in params) {
             when (value) {
                 is Int -> {
                     writer.writeByte(0)
