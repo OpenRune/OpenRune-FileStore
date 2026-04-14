@@ -255,10 +255,12 @@ class PackConfig(
                         }
                     } else {
                         val tomlValue = when (value) {
+                            is TomlValue.Bool -> if (value.value) 1 else 0
                             is TomlValue.Integer -> value.value.toInt()
                             is TomlValue.String -> value.value
                             else -> ""
                         }
+
                         def.params?.put(paramId, tomlValue)
                     }
                 }
@@ -315,6 +317,7 @@ class PackConfig(
                     val paramId = key
 
                     val tomlValue = when (value) {
+                        is TomlValue.Bool -> if (value.value) 1 else 0
                         is TomlValue.Integer -> value.value.toInt()
                         is TomlValue.String -> value.value
                         else -> ""
@@ -497,9 +500,18 @@ class PackConfig(
                 val parentValue = field.get(parentDef)
                 val childValue = field.get(childDef)
                 val defaultValue = field.get(defaultDef)
+                val differsFromParent = !mergeFieldValuesEqual(childValue, parentValue)
+                val differsFromDefault = !mergeFieldValuesEqual(childValue, defaultValue)
 
-                if (!mergeFieldValuesEqual(childValue, parentValue) && !mergeFieldValuesEqual(childValue, defaultValue)) {
-                    field.set(parentDef, childValue)
+                if (differsFromParent && differsFromDefault) {
+                    if (field.name == "params" && parentValue is Map<*, *> && childValue is Map<*, *>) {
+                        val mergedParams = parentValue.toMutableMap().apply {
+                            putAll(childValue)
+                        }
+                        field.set(parentDef, mergedParams)
+                    } else {
+                        field.set(parentDef, childValue)
+                    }
                 }
             }
         }
@@ -509,6 +521,8 @@ class PackConfig(
 
     private fun mergeFieldValuesEqual(a: Any?, b: Any?): Boolean {
         if (a === b) return true
+        if ((a == null && b is Map<*, *> && b.isEmpty()) || (b == null && a is Map<*, *> && a.isEmpty())) return true
+        if ((a == null && b is Collection<*> && b.isEmpty()) || (b == null && a is Collection<*> && a.isEmpty())) return true
         if (a is EntityOpsDefinition && b is EntityOpsDefinition) return a.contentEquals(b)
         return a == b
     }

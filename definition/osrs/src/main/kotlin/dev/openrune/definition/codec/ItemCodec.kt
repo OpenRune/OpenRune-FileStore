@@ -279,8 +279,8 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
         }
 
         definition.subops?.forEachIndexed { opId, subopArray ->
-            writeByte(43)
             if (subopArray != null) {
+                writeByte(43)
                 writeByte(opId)
                 subopArray.forEachIndexed { subopId, op ->
                     if (op != null) {
