@@ -13,7 +13,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
 
     implementation("org.slf4j:slf4j-simple:2.0.3")
-    implementation("cc.ekblad:4koma:1.2.2-openrune")
+    implementation("dev.or2:toml-rsconfig:1.0")
+
     implementation("me.filby:clientscript-compiler:0.0.2-openrune")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")

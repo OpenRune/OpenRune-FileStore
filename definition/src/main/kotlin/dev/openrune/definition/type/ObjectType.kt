@@ -1,12 +1,20 @@
 package dev.openrune.definition.type
 
+import dev.openrune.toml.rsconfig.RsTableHeaders
+import dev.openrune.toml.serialization.TomlField
 import dev.openrune.definition.Definition
 import dev.openrune.definition.EntityOpsDefinition
 import dev.openrune.definition.Parameterized
 import dev.openrune.definition.Recolourable
 import dev.openrune.definition.Transforms
+import dev.openrune.seralizer.ObjectTypeOptionsTableHook
+import dev.openrune.seralizer.ParamSerializer
 import kotlin.math.abs
 
+@RsTableHeaders(
+    "object",
+    rowPostDecode = ObjectTypeOptionsTableHook::class,
+)
 data class ObjectType(
     override var id: Int = -1,
     var name: String = "null",
@@ -63,7 +71,8 @@ data class ObjectType(
     override var multiVarp: Int = -1,
     override var multiDefault: Int = -1,
     override var transforms: MutableList<Int>? = null,
-    override var params: MutableMap<String, Any>? = null
+    @param:TomlField(serializer = ParamSerializer::class)
+    override var params: MutableMap<Int, Any>? = null,
 ) : Definition, Transforms, Recolourable, Parameterized {
 
     private fun actionAt(index: Int): String? = actions.ops.getOrNull(index)?.text

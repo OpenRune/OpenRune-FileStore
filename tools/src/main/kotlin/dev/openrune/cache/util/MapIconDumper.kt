@@ -80,7 +80,7 @@ fun writeMapFunctionData(
         val areaType = area[mapId] ?: return@forEach
         if (!areaType.renderOnMinimap) return@forEach
 
-        val defaultName = realNameEnum.values[areaType.category.toString()]?.toString() ?: "Unknown"
+        val defaultName = realNameEnum.values[areaType.category]?.toString() ?: "Unknown"
         var categoryName = defaultName
         var customName: String? = null
 

@@ -11,19 +11,19 @@ import dev.openrune.definition.opcode.PropertyChain
 fun <T, R> DefinitionOpcodeParams(
     opcode: Int,
     propertyChain: PropertyChain<T, R>
-): DefinitionOpcode<T> where R : Map<String, Any?>? {
+): DefinitionOpcode<T> where R : Map<Int, Any?>? {
     val (getter, setter) = propertyChain.toGetterSetter()
     @Suppress("UNCHECKED_CAST")
     return definitionOpcodeParams(
         opcode,
-        getter as (T) -> Map<String, Any?>?,
-        setter as (T, Map<String, Any?>?) -> Unit
+        getter as (T) -> Map<Int, Any?>?,
+        setter as (T, Map<Int, Any?>?) -> Unit
     )
 }
 
 fun <T> DefinitionOpcodeParams(
     opcode: Int,
-    property: KMutableProperty1<T, MutableMap<String, Any>?>
+    property: KMutableProperty1<T, MutableMap<Int, Any>?>
 ): DefinitionOpcode<T> = definitionOpcodeParams(
     opcode,
     { def -> property.get(def) },
@@ -36,8 +36,8 @@ fun <T> DefinitionOpcodeParams(
 // Core function unifying encoding and decoding logic
 private fun <T> definitionOpcodeParams(
     opcode: Int,
-    getter: (T) -> Map<String, Any?>?,
-    setter: (T, Map<String, Any?>?) -> Unit
+    getter: (T) -> Map<Int, Any?>?,
+    setter: (T, Map<Int, Any?>?) -> Unit
 ): DefinitionOpcode<T> = DefinitionOpcode(
 
     opcode,
@@ -49,7 +49,7 @@ private fun <T> definitionOpcodeParams(
             return@DefinitionOpcode
         }
 
-        val params = mutableMapOf<String, Any?>()
+        val params = mutableMapOf<Int, Any?>()
 
         repeat(length) {
             val type = buf.readUnsignedByte().toInt()
@@ -61,7 +61,7 @@ private fun <T> definitionOpcodeParams(
                 else -> buf.readInt()
             }
 
-            params[id.toString()] = value
+            params[id] = value
         }
 
         setter(def, params)
@@ -74,9 +74,7 @@ private fun <T> definitionOpcodeParams(
         buf.writeByte(opcode)
         buf.writeByte(params.size)
 
-        for ((idStr, value) in params) {
-            val id = idStr.toIntOrNull()
-                ?: error("Invalid param id (not an Int): '$idStr'")
+        for ((id, value) in params) {
 
             require(id in 0..0xFFFFFF) {
                 "Param id out of range (0..16777215): $id"
