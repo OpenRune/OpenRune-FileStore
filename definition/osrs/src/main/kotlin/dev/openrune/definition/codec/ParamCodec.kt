@@ -31,7 +31,7 @@ class ParamCodec(val rev : Int) : DefinitionCodec<ParamType> {
             writeByte(value)
         }
         if(definition.defaultInt != 0) {
-            writeByte(3)
+            writeByte(2)
             writeInt(definition.defaultInt)
         }
         if(definition.isMembers) {
