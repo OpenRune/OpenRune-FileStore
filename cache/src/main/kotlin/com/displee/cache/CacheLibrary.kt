@@ -265,10 +265,8 @@ open class CacheLibrary(val path: String, val clearDataAfterUpdate: Boolean = fa
 
     fun rebuild(directory: File) {
         File(directory.path).mkdirs()
-        File(directory.path, "$CACHE_FILE_NAME.idx255").createNewFile()
-        File(directory.path, "$CACHE_FILE_NAME.dat2").createNewFile()
+
         val indicesSize = indices.size
-        val newLibrary = CacheLibrary(directory.path)
         val newStore = DiskStore.create(Path.of(directory.path))
         for (index in indices) {
             if (index == null) {
@@ -278,7 +276,7 @@ open class CacheLibrary(val path: String, val clearDataAfterUpdate: Boolean = fa
             print("\rBuilding index $id/$indicesSize...")
             try {
                 val archiveSector = store.read(255, id)
-                val newIndex = newStore.create(id)
+                newStore.create(id)
                 for (i in index.archiveIds()) { //only write referenced archives
                     val data = store.read(id, i)//TODO crash patch?
                     newStore.write(id, i, data)
@@ -288,7 +286,6 @@ open class CacheLibrary(val path: String, val clearDataAfterUpdate: Boolean = fa
                 continue
             }
         }
-        newLibrary.close()
         println("\rFinished building $indicesSize indices.")
     }
 
