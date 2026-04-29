@@ -22,6 +22,7 @@ enum class CacheEnvironment {
 data class Builder(
     var type: TaskType,
     var cacheLocation : File = DEFAULT_PATH,
+    var serverCacheLocation: File? = null,
     var extraTasks: Array<CacheTask> = emptyArray()
 ) {
 
@@ -52,6 +53,8 @@ data class Builder(
 
     fun cacheLocation(cacheLocation: File) = apply { this.cacheLocation = cacheLocation }
 
+    fun serverCacheLocation(serverCacheLocation: File?) = apply { this.serverCacheLocation = serverCacheLocation }
+
     fun build() : CacheTool {
 
         val tasks = extraTasks.toMutableList()
@@ -62,6 +65,6 @@ data class Builder(
 
         tasks.add(PackGameVals())
 
-        return CacheTool(type,revision,subRevision,environment,cacheLocation, tasks)
+        return CacheTool(type, revision, subRevision, environment, cacheLocation, serverCacheLocation, tasks)
     }
 }

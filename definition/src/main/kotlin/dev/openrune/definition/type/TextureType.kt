@@ -1,11 +1,13 @@
 package dev.openrune.definition.type
 
+import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
 import dev.openrune.definition.game.render.util.JagexColor
 import kotlin.math.pow
 
 val DEFAULT_TEXTURE_SIZE = 128
 
+@RsTableHeaders("texture")
 data class TextureType(
     override var id: Int = -1,
     var isTransparent : Boolean = false,

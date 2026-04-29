@@ -1,10 +1,12 @@
 package dev.openrune.definition.type
 
+import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
 import dev.openrune.definition.Sound
 import dev.openrune.definition.SoundData
 import kotlin.math.ceil
 
+@RsTableHeaders("animation")
 data class SequenceType(
     override var id: Int = -1,
     var frameIDs: MutableList<Int>? = null,

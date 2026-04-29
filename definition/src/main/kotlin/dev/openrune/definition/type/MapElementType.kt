@@ -1,7 +1,13 @@
 package dev.openrune.definition.type
 
+import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
+import dev.openrune.seralizer.MapElementTypeOptionsTableHook
 
+@RsTableHeaders(
+    "mapelement",
+    rowPostDecode = MapElementTypeOptionsTableHook::class,
+)
 data class MapElementType(
     override var id: Int = -1,
 

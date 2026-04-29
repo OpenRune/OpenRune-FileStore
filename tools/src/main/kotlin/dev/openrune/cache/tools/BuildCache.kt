@@ -5,74 +5,93 @@ import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.CLIENTSCRIPT
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.filesystem.Cache
+import dev.openrune.cache.tools.tasks.impl.RemoveXteas
 import readCacheRevision
 import java.io.File
 import java.nio.ByteBuffer
 import kotlin.system.measureTimeMillis
 
 class BuildCache(
-    private val input: File,
-    private val output: File = input,
-    private val tempLocation: File = File(output, "temp"),
+    private val cacheLocation: File,
+    private val tempLocation: File = File(cacheLocation, "temp"),
     val tasks: MutableList<CacheTask> = mutableListOf(),
     var revision: Int = -1,
+    var serverPass: Boolean = false
 ) {
 
     private val logger = InlineLogger()
 
     fun initialize() {
+        tempLocation.deleteRecursively()
+        tempLocation.mkdirs()
+
         try {
+            cacheLocation.listFiles { f -> f.extension in listOf("dat", "idx") }
+                ?.forEach { file ->
+                    file.copyTo(File(tempLocation, file.name), overwrite = true)
+                }
 
-            input.listFiles { file -> file.extension in listOf("dat", "idx") }?.forEach { file ->
-                file.copyTo(File(tempLocation, file.name), overwrite = true)
-            }
-
-            val library = CacheLibrary(input.absolutePath)
+            val library = CacheLibrary(cacheLocation.absolutePath)
 
             if (revision == -1) {
                 val data = library.data(CLIENTSCRIPT, "version.dat")
-                    ?: error("version.dat is missing. Unable to detect cache revision — set it manually via .revision(id).")
-
+                    ?: error("version.dat missing – set revision manually.")
                 revision = readCacheRevision(
                     ByteBuffer.wrap(data),
-                    "version.dat is larger than expected. Unable to detect cache revision — set it manually via .revision(id)."
+                    "version.dat is invalid – set revision manually."
                 )
             }
 
-            logger.info { "Building Cache (revision: ${revision}) (Tasks: ${tasks.joinToString(", ") { it.javaClass.simpleName }})" }
+            logger.info {
+                "Building ${if (serverPass) "Server " else ""}Cache (revision=$revision, tasks=${tasks.joinToString { it.javaClass.simpleName }})"
+            }
+
+            if (revision >= 237 && tasks.any { it is RemoveXteas }) {
+                logger.warn {
+                    "RemoveXteas is deprecated for revision 237+ and will be ignored by modern map packing."
+                }
+            }
 
             val time = measureTimeMillis {
                 tasks.forEach { task ->
                     task.revision = revision
+                    task.serverPass = serverPass
                     task.init(Cache(library))
                 }
             }
 
-            val hours = time / 3600000
-            val minutes = (time % 3600000) / 60000
-            val seconds = (time % 60000) / 1000
 
-            val timeString = buildString {
-                if (hours > 0) append("${hours}h ")
-                if (minutes > 0) append("${minutes}m ")
-                if (seconds > 0) append("${seconds}s")
-            }
 
-            logger.info { "Tasks Finished In: $timeString" }
+            logger.info { "Tasks Finished In: ${formatTime(time)}" }
             logger.info { "Cleaning Up..." }
 
             library.update()
             library.rebuild(File(tempLocation, "rebuilt"))
             library.close()
 
+
             File(tempLocation, "rebuilt").listFiles { file -> file.extension in listOf("dat", "idx") }?.forEach { file ->
                 file.copyTo(File(tempLocation, file.name), overwrite = true)
             }
 
+            logger.info { "Build finished in ${formatTime(time)}" }
         } catch (ex: Exception) {
-            println("Error occurred during initialization: ${ex.message}")
+            ex.printStackTrace()
         } finally {
             tempLocation.deleteRecursively()
         }
     }
+
+    fun formatTime(time : Long) : String {
+        val hours = time / 3600000
+        val minutes = (time % 3600000) / 60000
+        val seconds = (time % 60000) / 1000
+
+        return buildString {
+            if (hours > 0) append("${hours}h ")
+            if (minutes > 0) append("${minutes}m ")
+            if (seconds > 0) append("${seconds}s")
+        }
+    }
+
 }

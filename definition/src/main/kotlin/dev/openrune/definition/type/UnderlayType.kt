@@ -1,7 +1,9 @@
 package dev.openrune.definition.type
 
+import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
 
+@RsTableHeaders("underlay")
 data class UnderlayType(
     override var id: Int = -1,
     var rgb: Int = 0

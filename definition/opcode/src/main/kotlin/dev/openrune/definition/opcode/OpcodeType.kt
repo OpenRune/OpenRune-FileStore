@@ -80,6 +80,14 @@ sealed class OpcodeType<T>(
         }
     })
 
+    data object LONG : OpcodeType<Long>(object : BufferSerializer<Long> {
+        override fun read(buf: ByteBuf): Long = buf.readLong()
+        override fun write(buf: ByteBuf, value: Long) {
+            buf.writeLong(value)
+        }
+    })
+
+
     data object SHORT : OpcodeType<Int>(object : BufferSerializer<Int> {
         override fun read(buf: ByteBuf): Int = buf.readShort().toInt()
         override fun write(buf: ByteBuf, value: Int) {

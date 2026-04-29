@@ -1,8 +1,10 @@
 package dev.openrune.definition.type
 
+import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
 import dev.openrune.definition.Recolourable
 
+@RsTableHeaders("graphics", "graphic")
 data class SpotAnimType(
     override var id: Int = -1,
     override var originalColours: MutableList<Int>? = null,

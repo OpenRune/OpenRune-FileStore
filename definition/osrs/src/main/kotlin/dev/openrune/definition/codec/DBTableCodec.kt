@@ -3,7 +3,7 @@ package dev.openrune.definition.codec
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBTableType
-import dev.openrune.definition.util.VarType
+import dev.openrune.definition.util.CacheVarLiteral
 import dev.openrune.definition.util.readColumnValues
 import dev.openrune.definition.util.readUnsignedShortSmart
 import dev.openrune.definition.util.writeColumnValues
@@ -21,7 +21,7 @@ class DBTableCodec : DefinitionCodec<DBTableType> {
                     val columnId = setting and 0x7F
                     val hasDefault = setting and 0x80 != 0
                     val columnTypes = Array(buffer.readUnsignedByte().toInt()) {
-                        VarType.byID(buffer.readUnsignedShortSmart())
+                        CacheVarLiteral.byID(buffer.readUnsignedShortSmart())
                     }
                     val defaultValues = if (hasDefault) buffer.readColumnValues(columnTypes) else null
                     columns[columnId] = DBColumnType(columnTypes, defaultValues)

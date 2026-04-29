@@ -5,14 +5,8 @@ plugins {
     id("maven-publish")
 }
 
-val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "D:\\openrune-hosting"
-val buildNumber = "2.3.5"
-
-repositories {
-    mavenCentral()
-    maven("https://raw.githubusercontent.com/OpenRune/hosting/master")
-    maven("https://jitpack.io")
-}
+val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "D:\\OpenRune\\openrune-hosting"
+val buildNumber = "2.4.2"
 
 subprojects {
     apply(plugin = "kotlin")
@@ -24,12 +18,6 @@ subprojects {
     version = buildNumber
 
     java.sourceCompatibility = JavaVersion.VERSION_11
-
-    repositories {
-        mavenCentral()
-        maven("https://raw.githubusercontent.com/OpenRune/hosting/master")
-        maven("https://jitpack.io")
-    }
 
     dependencies {
         implementation(kotlin("stdlib-jdk8"))

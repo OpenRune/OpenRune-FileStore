@@ -4,5 +4,14 @@ include("definition", "definition:osrs", "definition:r718", "definition:rs3", "d
 include("filestore", "filestore:r718-fs", "filestore:osrs-fs")
 
 include("tools")
-
 include("cache")
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        mavenCentral()
+        mavenLocal()
+        maven("https://raw.githubusercontent.com/OpenRune/hosting/master")
+        maven("https://jitpack.io")
+    }
+}

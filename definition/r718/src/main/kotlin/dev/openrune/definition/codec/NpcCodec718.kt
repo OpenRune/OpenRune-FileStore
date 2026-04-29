@@ -3,6 +3,7 @@ package dev.openrune.definition.codec
 import dev.openrune.definition.util.readBigSmart
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.EntityOpsLoader
 import dev.openrune.definition.type.NpcType
 import io.netty.buffer.ByteBuf
 
@@ -151,6 +152,9 @@ fun NpcType.getAnInt2862(): Int {
 }
 
 class NpcCodec718 : DefinitionCodec<NpcType> {
+
+    private val entityOpsLoader = EntityOpsLoader(1)
+
     override fun NpcType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
@@ -166,7 +170,7 @@ class NpcCodec718 : DefinitionCodec<NpcType> {
 
             2 -> name = buffer.readString()
             12 -> size = buffer.readUnsignedByte().toInt()
-            in 30..34 -> actions[-30 + opcode] = buffer.readString()
+            in 30..34 -> entityOpsLoader.decodeBaseOp(actions, buffer, opcode - 30)
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
             42 -> readColourPalette(buffer)
@@ -268,7 +272,7 @@ class NpcCodec718 : DefinitionCodec<NpcType> {
             141 -> renderPriority = 1
             142 -> setExtraProperty("mapFunction", buffer.readShort().toInt())
             143 -> setExtraProperty("invisiblePriority", true)
-            in 150..154 -> actions[opcode - 150] = buffer.readString()
+            in 150..154 -> entityOpsLoader.decodeBaseOp(actions, buffer, opcode - 150)
             155 -> {
                 setExtraProperty("hue", buffer.readByte().toInt().toByte())
                 setExtraProperty("saturation", buffer.readByte().toInt().toByte())

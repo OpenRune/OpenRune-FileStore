@@ -8,19 +8,27 @@ import io.netty.buffer.ByteBuf
 
 interface Parameterized {
 
-    var params: MutableMap<String, Any>?
+    var params: MutableMap<Int, Any>?
 
     fun readParameters(buffer: ByteBuf) {
         val length = buffer.readUnsignedByte().toInt()
-        if (length == 0) {
-            return
-        }
-        val params: MutableMap<String, Any> = mutableMapOf()
-        for (i in 0 until length) {
-            val string = buffer.readUnsignedBoolean()
+        if (length == 0) return
+
+        val params = mutableMapOf<Int, Any>()
+
+        repeat(length) {
+            val type = buffer.readUnsignedByte().toInt()
             val id = buffer.readUnsignedMedium()
-            params[id.toString()] = if (string) buffer.readString() else buffer.readInt()
+
+            val value: Any = when (type) {
+                1 -> buffer.readString()
+                2 -> buffer.readLong()
+                else -> buffer.readInt()
+            }
+
+            params[id] = value
         }
+
         this.params = params
     }
 
@@ -29,20 +37,27 @@ interface Parameterized {
 
         writer.writeByte(249)
         writer.writeByte(params.size)
-        for ((id, value) in params) {
-            val isString = value is String
-            writer.writeByte(if (isString) 1 else 0)
-            writer.writeMedium(id.toInt())
 
+        for ((id, value) in params) {
             when (value) {
-                is String -> writer.writeString(value)
-                is Int -> writer.writeInt(value)
-                is Long -> {
-                    require(value in Int.MIN_VALUE..Int.MAX_VALUE) {
-                        "Long value $value is out of Int range for id $id"
-                    }
-                    writer.writeInt(value.toInt())
+                is Int -> {
+                    writer.writeByte(0)
+                    writer.writeMedium(id)
+                    writer.writeInt(value)
                 }
+
+                is String -> {
+                    writer.writeByte(1)
+                    writer.writeMedium(id)
+                    writer.writeString(value)
+                }
+
+                is Long -> {
+                    writer.writeByte(2)
+                    writer.writeMedium(id)
+                    writer.writeLong(value)
+                }
+
                 else -> error("Unsupported parameter type for id $id: ${value::class}")
             }
         }

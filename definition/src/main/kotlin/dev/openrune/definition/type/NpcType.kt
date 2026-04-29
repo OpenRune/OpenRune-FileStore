@@ -1,10 +1,19 @@
 package dev.openrune.definition.type
 
+import dev.openrune.toml.rsconfig.RsTableHeaders
+import dev.openrune.toml.serialization.TomlField
 import dev.openrune.definition.Definition
+import dev.openrune.definition.EntityOpsDefinition
 import dev.openrune.definition.Parameterized
 import dev.openrune.definition.Recolourable
 import dev.openrune.definition.Transforms
+import dev.openrune.seralizer.NpcTypeOptionsTableHook
+import dev.openrune.seralizer.ParamSerializer
 
+@RsTableHeaders(
+    "npc",
+    rowPostDecode = NpcTypeOptionsTableHook::class,
+)
 data class NpcType(
     override var id: Int = -1,
     var name: String = "null",
@@ -19,13 +28,14 @@ data class NpcType(
     var rotateBackAnim : Int = -1,
     var walkLeftAnim : Int = -1,
     var walkRightAnim : Int = -1,
-    var actions : MutableList<String?> = mutableListOf(null, null, null, null, null),
+    var actions : EntityOpsDefinition = EntityOpsDefinition(),
     override var originalColours: MutableList<Int>? = null,
     override var modifiedColours: MutableList<Int>? = null,
     override var originalTextureColours: MutableList<Int>? = null,
     override var modifiedTextureColours: MutableList<Int>? = null,
-    override var varbit: Int = -1,
-    override var varp: Int = -1,
+    override var multiVarBit: Int = -1,
+    override var multiVarp: Int = -1,
+    override var multiDefault: Int = -1,
     override var transforms: MutableList<Int>? = null,
     var isMinimapVisible : Boolean = true,
     var combatLevel : Int = -1,
@@ -49,7 +59,8 @@ data class NpcType(
     var crawlBackSequence : Int = -1,
     var crawlRightSequence : Int = -1,
     var crawlLeftSequence : Int = -1,
-    override var params: MutableMap<String, Any>? = null,
+    @param:TomlField(serializer = ParamSerializer::class)
+    override var params: MutableMap<Int, Any>? = null,
     var height: Int = -1,
     var attack : Int = 1,
     var defence : Int = 1,
@@ -59,12 +70,15 @@ data class NpcType(
     var magic : Int = 1,
     var footprintSize : Int = -1,
     var canHideForOverlap : Boolean = false,
-    var overlapTintHSL : Int = 39188
+    var overlapTintHSL : Int = 39188,
+    var readyAnimDuringAnim : Boolean = false,
+    var zbuf : Boolean = true
     ) : Definition, Transforms, Recolourable, Parameterized {
 
     var examine : String = ""
 
-    fun isAttackable(): Boolean = combatLevel > 0 && actions.any { it == "Attack" }
+    fun isAttackable(): Boolean = combatLevel > 0 && actions.ops.count { it?.text == "Attack" } != 0
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -89,8 +103,9 @@ data class NpcType(
         if (modifiedColours != other.modifiedColours) return false
         if (originalTextureColours != other.originalTextureColours) return false
         if (modifiedTextureColours != other.modifiedTextureColours) return false
-        if (varbit != other.varbit) return false
-        if (varp != other.varp) return false
+        if (multiVarBit != other.multiVarBit) return false
+        if (multiVarp != other.multiVarp) return false
+        if (multiDefault != other.multiDefault) return false
         if (transforms != other.transforms) return false
         if (isMinimapVisible != other.isMinimapVisible) return false
         if (combatLevel != other.combatLevel) return false
@@ -146,8 +161,9 @@ data class NpcType(
         result = 31 * result + (modifiedColours?.hashCode() ?: 0)
         result = 31 * result + (originalTextureColours?.hashCode() ?: 0)
         result = 31 * result + (modifiedTextureColours?.hashCode() ?: 0)
-        result = 31 * result + varbit
-        result = 31 * result + varp
+        result = 31 * result + multiVarBit
+        result = 31 * result + multiVarp
+        result = 31 * result + multiDefault
         result = 31 * result + (transforms?.hashCode() ?: 0)
         result = 31 * result + isMinimapVisible.hashCode()
         result = 31 * result + combatLevel

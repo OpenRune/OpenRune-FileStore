@@ -5,8 +5,13 @@ class OpcodeList<T> {
     val registeredOpcodes: List<DefinitionOpcode<T>> get() = _opcodes
 
     fun add(opcode: DefinitionOpcode<T>) {
-        if (_opcodes.any { it.attachedOpcodes == opcode.attachedOpcodes }) {
-            error("Opcode ${opcode.attachedOpcodes} already exists in list!")
+        val overlap = _opcodes
+            .asSequence()
+            .flatMap { existing -> existing.attachedOpcodes.asSequence() }
+            .toSet()
+            .intersect(opcode.attachedOpcodes)
+        if (overlap.isNotEmpty()) {
+            error("Opcode(s) $overlap already exist in list!")
         }
 
         _opcodes.add(opcode)

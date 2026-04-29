@@ -1,70 +1,55 @@
 package dev.openrune.definition.opcode.impl
 
 import dev.openrune.definition.util.readSmart
+import dev.openrune.definition.util.readUnsignedShortOrNull
 import io.netty.buffer.ByteBuf
 import kotlin.reflect.KMutableProperty1
-import dev.openrune.definition.util.readUnsignedBoolean
-import dev.openrune.definition.util.readString
-import dev.openrune.definition.util.writeString
 import dev.openrune.definition.opcode.DefinitionOpcode
 
 fun <T> DefinitionOpcodeTransforms(
     opcodes: IntRange,
     transforms: KMutableProperty1<T, MutableList<Int>?>,
-    varbitValue: KMutableProperty1<T, Int>,
-    varpValue: KMutableProperty1<T, Int>,
+    multiVarBit: KMutableProperty1<T, Int>,
+    multiVarp: KMutableProperty1<T, Int>,
+    multiDefaultValue: KMutableProperty1<T, Int>? = null,
     extendedTransforms: Boolean = false
 ): DefinitionOpcode<T> = DefinitionOpcode(
     opcodes,
     decode = { buf, def, opcode ->
         val isLast = opcode == opcodes.last
-        var varbit = buf.readShort().toInt()
-        if (varbit == 65535) {
-            varbit = -1
+        val vb = buf.readUnsignedShortOrNull() ?: -1
+        val vp = buf.readUnsignedShortOrNull() ?: -1
+        val multiDefault = if (isLast) buf.readUnsignedShortOrNull() ?: -1 else -1
+        val count = if (extendedTransforms) buf.readSmart() else buf.readUnsignedByte().toInt()
+        val transformsValue = MutableList(count + 2) { -1 }
+        for (i in 0..count) {
+            transformsValue[i] = buf.readUnsignedShortOrNull() ?: -1
         }
-        var varp = buf.readShort().toInt()
-        if (varp == 65535) {
-            varp = -1
-        }
-        var last = -1
-        if (isLast) {
-            last = buf.readUnsignedShort()
-            if (last == 65535) {
-                last = -1
-            }
-        }
-        val length = if(extendedTransforms) buf.readSmart() else buf.readUnsignedByte().toInt()
-        val transformsValue = MutableList(length + 2) { -1 }
-        for (count in 0..length) {
-            transformsValue[count] = buf.readUnsignedShort()
-            if (transformsValue[count] == 65535) {
-                transformsValue[count] = -1
-            }
-        }
-        transformsValue[length + 1] = last
+        transformsValue[count + 1] = multiDefault
+        multiDefaultValue?.set(def, multiDefault)
 
         transforms.set(def, transformsValue)
-        varbitValue.set(def, varbit)
-        varpValue.set(def, varp)
+        multiVarBit.set(def, vb)
+        multiVarp.set(def, vp)
     },
     encode = { buf, def ->
-        val configIds = transforms.get(def)
-        val varbit = varbitValue.get(def)
-        val varp = varpValue.get(def)
-        if (configIds != null && (varbit != -1 || varp != -1)) {
-            val last = configIds.last()
-            val extended = last != -1
-            buf.writeByte(if (extended) opcodes.last() else opcodes.first())
-            buf.writeShort(varbit)
-            buf.writeShort(varp)
-
-            if (extended) {
-                buf.writeShort(last)
-            }
-            buf.writeByte(configIds.size - 2)
-            for (i in 0 until configIds.size - 1) {
-                buf.writeShort(configIds[i])
-            }
+        val ids = transforms.get(def)
+        val vb = multiVarBit.get(def)
+        val vp = multiVarp.get(def)
+        if (ids == null || (vb == -1 && vp == -1)) {
+            return@DefinitionOpcode
+        }
+        val last = multiDefaultValue?.get(def).takeUnless { it == -1 } ?: ids.last()
+        val hasDefault = last != -1
+        buf.writeByte(if (hasDefault) opcodes.last() else opcodes.first())
+        buf.writeShort(vb)
+        buf.writeShort(vp)
+        if (hasDefault) {
+            buf.writeShort(last)
+        }
+        buf.writeByte(ids.size - 2)
+        for (i in 0 until ids.size - 1) {
+            buf.writeShort(ids[i])
         }
     },
     skipByteEncode = true,

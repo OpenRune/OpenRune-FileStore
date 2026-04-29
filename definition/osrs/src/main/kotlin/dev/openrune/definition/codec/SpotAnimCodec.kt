@@ -1,16 +1,18 @@
 package dev.openrune.definition.codec
 
 import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.type.SpotAnimType
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
 
-class SpotAnimCodec : DefinitionCodec<SpotAnimType> {
+class SpotAnimCodec(val rev : Int) : DefinitionCodec<SpotAnimType> {
     override fun SpotAnimType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> modelId = buffer.readUnsignedShort()
             2 -> animationId = buffer.readUnsignedShort()
+            3 -> modelId = buffer.readInt()
             4 -> resizeX = buffer.readUnsignedShort()
             5 -> resizeY = buffer.readUnsignedShort()
             6 -> rotation = buffer.readUnsignedShort()
@@ -24,8 +26,13 @@ class SpotAnimCodec : DefinitionCodec<SpotAnimType> {
 
     override fun ByteBuf.encode(definition: SpotAnimType) {
         if (definition.modelId != 0) {
-            writeByte(1)
-            writeShort(definition.modelId)
+            if (revisionIsOrAfter(rev, 237)) {
+                writeByte(3)
+                writeInt(definition.modelId)
+            } else {
+                writeByte(1)
+                writeShort(definition.modelId)
+            }
         }
         if (definition.animationId != -1) {
             writeByte(2)

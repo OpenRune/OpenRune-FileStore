@@ -1,8 +1,10 @@
 package dev.openrune.definition.type
 
+import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
 import dev.openrune.definition.Transforms
 
+@RsTableHeaders("hitsplat")
 data class HitSplatType(
     override var id: Int = -1,
     var font: Int = -1,
@@ -18,8 +20,9 @@ data class HitSplatType(
     var fade: Int = -1,
     var comparisonType: Int = -1,
     var damageYOfset: Int = 0,
-    override var varbit: Int = -1,
-    override var varp: Int = -1,
+    override var multiVarBit: Int = -1,
+    override var multiVarp: Int = -1,
+    override var multiDefault: Int = -1,
     override var transforms: MutableList<Int>? = null,
 
 ) : Definition, Transforms

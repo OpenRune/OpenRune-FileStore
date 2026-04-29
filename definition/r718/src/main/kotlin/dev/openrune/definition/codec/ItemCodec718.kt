@@ -3,6 +3,7 @@ package dev.openrune.definition.codec
 import dev.openrune.definition.util.readBigSmart
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.EntityOpsLoader
 import dev.openrune.definition.type.ItemType
 import io.netty.buffer.ByteBuf
 
@@ -71,6 +72,9 @@ fun ItemType.getNoteTemplateId(): Int {
 }
 
 class ItemCodec718 : DefinitionCodec<ItemType> {
+
+    private val entityOpsLoader = EntityOpsLoader(1)
+
     override fun ItemType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> inventoryModel = buffer.readBigSmart()
@@ -90,7 +94,7 @@ class ItemCodec718 : DefinitionCodec<ItemType> {
             24 -> maleModel1 = buffer.readBigSmart()
             25 -> femaleModel0 = buffer.readBigSmart()
             26 -> femaleModel1 = buffer.readBigSmart()
-            in 30..34 -> options[opcode - 30] = buffer.readString()
+            in 30..34 -> entityOpsLoader.decodeBaseOp(options, buffer, opcode - 30)
             in 35..39 -> interfaceOptions[opcode - 35] = buffer.readString()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)

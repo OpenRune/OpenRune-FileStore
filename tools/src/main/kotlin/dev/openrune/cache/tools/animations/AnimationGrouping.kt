@@ -67,7 +67,7 @@ internal class AnimationGrouping {
 
         OsrsCacheProvider.SequenceDecoder(cacheRevision).load(cache, sequences)
         OsrsCacheProvider.NPCDecoder(cacheRevision).load(cache, npcs)
-        OsrsCacheProvider.SpotAnimDecoder().load(cache, graphics)
+        OsrsCacheProvider.SpotAnimDecoder(cacheRevision).load(cache, graphics)
         OsrsCacheProvider.ObjectDecoder(cacheRevision).load(cache, objects)
 
         frameMaps = FrameMapArchive.load(cache)
