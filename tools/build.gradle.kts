@@ -1,6 +1,5 @@
 dependencies {
     implementation(project(":filestore"))
-    implementation(project(":filesystem"))
     implementation(project(":definition"))
     implementation(project(":definition:osrs"))
     implementation(project(":filestore:osrs-fs"))
@@ -24,7 +23,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
 
-    testImplementation(project(":filesystem"))
+    testImplementation(project(":cache"))
 
 }
 
