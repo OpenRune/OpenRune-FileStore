@@ -2,7 +2,6 @@ package dev.openrune.cache.tools.tasks.impl
 
 import dev.openrune.OsrsCacheProvider
 import dev.openrune.cache.CLIENTSCRIPT
-import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.GAMEVALS
 import dev.openrune.cache.gameval.GameValHandler
 import dev.openrune.cache.gameval.GameValHandler.elementAs
@@ -32,7 +31,7 @@ class PackCs2(private val cs2Dir: File, private val rev : Int = 230) : CacheTask
 
     override fun init(cache: Cache) {
         try {
-            val library = (cache as CacheDelegate).library
+            val library = cache.library
             val configFile = File(cs2Dir, "neptune.toml")
             if (!configFile.exists()) {
                 println("Missing neptune cs2 setup.")

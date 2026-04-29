@@ -1,6 +1,6 @@
 dependencies {
     implementation(project(":definition:osrs"))
-    implementation(project(":filesystem"))
+    implementation(project(":cache"))
     implementation(project(":filestore"))
     implementation(project(":definition"))
 }

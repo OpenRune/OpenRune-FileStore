@@ -1,6 +1,5 @@
 package dev.openrune.cache.tools.tasks.impl
 
-import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.progress
 import dev.openrune.filesystem.Cache
@@ -12,7 +11,7 @@ import org.openrs2.cache.Js5CompressionType
  */
 class RemoveBzip : CacheTask() {
     override fun init(cache: Cache) {
-        val library = (cache as CacheDelegate).library
+        val library = cache.library
 
         val progress = progress("Removing Bzip, step:", 2)
         //for the first step loop through and flag the files.

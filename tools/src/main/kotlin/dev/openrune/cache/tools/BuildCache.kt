@@ -3,8 +3,8 @@ package dev.openrune.cache.tools
 import com.displee.cache.CacheLibrary
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.CLIENTSCRIPT
-import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.tools.tasks.CacheTask
+import dev.openrune.filesystem.Cache
 import readCacheRevision
 import java.io.File
 import java.nio.ByteBuffer
@@ -44,7 +44,7 @@ class BuildCache(
             val time = measureTimeMillis {
                 tasks.forEach { task ->
                     task.revision = revision
-                    task.init(CacheDelegate(library))
+                    task.init(Cache(library))
                 }
             }
 
