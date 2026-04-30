@@ -62,7 +62,6 @@ class CacheTool(
 
                 FreshCache(
                     cacheOutput = cacheLocation,
-                    serverOutput = serverCacheLocation,
                     tasks = sortedTasks.toMutableList(),
                     revision = revision,
                     subRev = subRevision,

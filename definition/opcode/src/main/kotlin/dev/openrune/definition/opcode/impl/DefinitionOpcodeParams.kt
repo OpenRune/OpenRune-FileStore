@@ -34,7 +34,7 @@ fun <T> DefinitionOpcodeParams(
 )
 
 // Core function unifying encoding and decoding logic
-private fun <T> definitionOpcodeParams(
+fun <T> definitionOpcodeParams(
     opcode: Int,
     getter: (T) -> Map<Int, Any?>?,
     setter: (T, Map<Int, Any?>?) -> Unit

@@ -72,16 +72,20 @@ object OpenRS2 {
         target: Int,
         directory: File,
         listener: DownloadListener?,
-        fileName: String
+        remoteFileName: String,
+        localFileName: String = remoteFileName
     ) {
         directory.mkdirs()
-        val url = if (fileName.endsWith(".zip")) {
-            "https://archive.openrs2.org/caches/runescape/$target/$fileName"
+
+        val url = "https://archive.openrs2.org/caches/runescape/$target/$remoteFileName"
+
+        val expectedLength = if (remoteFileName.endsWith(".zip")) {
+            allCaches.firstOrNull { it.id == target }?.size ?: -1
         } else {
-            "https://archive.openrs2.org/caches/runescape/$target/keys.json"
+            -1
         }
-        val expectedLength = if (fileName.endsWith(".zip")) allCaches.firstOrNull { it.id == target }?.size ?: -1 else -1
-        downloadFile(url, directory.resolve(fileName), expectedLength, listener)
+
+        downloadFile(url, directory.resolve(localFileName), expectedLength, listener)
     }
 
     private fun downloadFile(

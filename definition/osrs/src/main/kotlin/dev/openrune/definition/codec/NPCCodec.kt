@@ -188,7 +188,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             writeShort(definition.rotateRightAnim)
         }
 
-        if (definition.walkAnim != -1 || definition.rotateBackAnim != -1 || definition.walkLeftAnim != -1 || definition.walkRightAnim != -1) {
+        if (definition.walkAnim != -1 && definition.rotateBackAnim != -1 && definition.walkLeftAnim != -1 && definition.walkRightAnim != -1) {
             writeByte(17)
             writeShort(definition.walkAnim)
             writeShort(definition.rotateBackAnim)
