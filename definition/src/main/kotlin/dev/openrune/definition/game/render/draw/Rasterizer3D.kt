@@ -6,7 +6,7 @@ import dev.openrune.definition.type.TextureType
 import kotlin.math.cos
 import kotlin.math.sin
 
-class Rasterizer3D(
+open class Rasterizer3D(
     val textures : Map<Int,TextureType>,
     val sprites : Map<Int,SpriteType>
 ) : Rasterizer2D() {

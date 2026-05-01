@@ -95,29 +95,32 @@ class SpritePixels(
         return img
     }
 
-    private fun drawPixels(
-        rasterizerPixels: IntArray,
-        spritePixels: IntArray,
-        spriteOffset: Int,
-        rasterizerOffset: Int,
-        width: Int,
-        height: Int,
-        stride: Int,
-        extraOffset: Int
-    ) {
-        var srcIndex = spriteOffset
-        var destIndex = rasterizerOffset
+    companion object {
+        @JvmStatic
+        fun drawPixels(
+            rasterizerPixels: IntArray,
+            spritePixels: IntArray,
+            spriteOffset: Int,
+            rasterizerOffset: Int,
+            width: Int,
+            height: Int,
+            stride: Int,
+            extraOffset: Int
+        ) {
+            var srcIndex = spriteOffset
+            var destIndex = rasterizerOffset
 
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                val pixel = spritePixels[srcIndex++]
-                if (pixel != 0) {
-                    rasterizerPixels[destIndex] = pixel
+            for (y in 0 until height) {
+                for (x in 0 until width) {
+                    val pixel = spritePixels[srcIndex++]
+                    if (pixel != 0) {
+                        rasterizerPixels[destIndex] = pixel
+                    }
+                    destIndex++
                 }
-                destIndex++
+                destIndex += stride
+                srcIndex += extraOffset
             }
-            destIndex += stride
-            srcIndex += extraOffset
         }
     }
 

@@ -5,9 +5,9 @@ plugins {
     id("maven-publish")
 }
 
+//val buildDirectory = "/home/advo/Documents/GitHub/hosting/"
 val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "D:\\OpenRune\\openrune-hosting"
-val buildNumber = "2.4.3"
-
+val buildNumber = "2.4.4"
 
 subprojects {
     apply(plugin = "kotlin")
