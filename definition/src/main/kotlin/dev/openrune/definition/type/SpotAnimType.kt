@@ -14,6 +14,7 @@ data class SpotAnimType(
     var resizeY: Int = 128,
     var resizeX: Int = 128,
     var rotation: Int = 0,
+    var rotate : Boolean = true,
     var animationId: Int = -1,
     var modelId: Int = 0,
     var ambient: Int = 0,

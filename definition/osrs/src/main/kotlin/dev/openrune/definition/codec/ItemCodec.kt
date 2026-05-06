@@ -37,6 +37,7 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
             12 -> cost = buffer.readInt()
             13 -> equipSlot = buffer.readUnsignedByte().toInt()
             14 -> appearanceOverride1 = buffer.readUnsignedByte().toInt()
+            15 -> tradeable = false
             16 -> members = true
             23 -> {
                 maleModel0 = buffer.readUnsignedShort()
@@ -97,7 +98,7 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
             53 -> femaleHeadModel0 = buffer.readInt()
             54 -> femaleHeadModel1 = buffer.readInt()
 
-            65 -> isTradeable = true
+            65 -> stockMarket = true
             75 -> weight = buffer.readUnsignedShort().toDouble()
             78 -> maleModel2 = buffer.readUnsignedShort()
             79 -> femaleModel2 = buffer.readUnsignedShort()
@@ -199,6 +200,10 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
         if (definition.appearanceOverride1 != -1) {
             writeByte(14)
             writeByte(definition.appearanceOverride1)
+        }
+
+        if (!definition.tradeable) {
+            writeByte(15)
         }
 
         if (definition.members) {
@@ -304,7 +309,7 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
             }
         }
 
-        if (definition.isTradeable) {
+        if (definition.stockMarket) {
             writeByte(65)
         }
 

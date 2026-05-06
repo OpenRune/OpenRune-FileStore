@@ -3,6 +3,7 @@ package dev.openrune.cache.tools
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.tools.OpenRS2.findRevision
 import dev.openrune.cache.tools.tasks.CacheTask
+import dev.openrune.cache.tools.tasks.impl.RemoveXteas
 import dev.openrune.cache.util.progress
 import me.tongfei.progressbar.ProgressBar
 import java.io.File
@@ -89,6 +90,10 @@ class FreshCache(
     }
 
     private fun download(cacheDir: File) {
+        tasks.removeAll { task ->
+            revision >= 237 && task is RemoveXteas
+        }
+
         val time = measureTimeMillis {
             logger.info {
                 "Downloading Cache (revision=$revision, id=${revisionInfo.id}, Tasks=${
@@ -106,13 +111,15 @@ class FreshCache(
                 localFileName = "${revisionInfo.id}-disk.zip"
             )
 
-            OpenRS2.downloadByInternalID(
-                target = revisionInfo.id,
-                directory = cacheDir,
-                listener = downloadListener,
-                remoteFileName = "keys.json",
-                localFileName = "${revisionInfo.id}-xteas.json"
-            )
+            if (revision >= 237) {
+                OpenRS2.downloadByInternalID(
+                    target = revisionInfo.id,
+                    directory = cacheDir,
+                    listener = downloadListener,
+                    remoteFileName = "keys.json",
+                    localFileName = "${revisionInfo.id}-xteas.json"
+                )
+            }
         }
 
         val hours = time / 3600000
@@ -211,7 +218,9 @@ class FreshCache(
 
                 unzip(zip, cacheOutput)
 
-                xteas.copyTo(File(cacheOutput, "xteas.json"), overwrite = true)
+                if (revision >= 237) {
+                    xteas.copyTo(File(cacheOutput, "xteas.json"), overwrite = true)
+                }
 
                 runTasks()
             } catch (e: Exception) {

@@ -35,7 +35,8 @@ data class ItemType(
     var appearanceOverride2: Int = -1,
     var weight: Double = 0.0,
     var cost: Int = 1,
-    var isTradeable: Boolean = false,
+    var stockMarket: Boolean = false,
+    var tradeable: Boolean = true,
     var stacks: Int = 0,
     var inventoryModel: Int = 0,
     var members: Boolean = false,
@@ -155,7 +156,7 @@ data class ItemType(
         this.name = var2.name
         this.cost = 0
         this.members = false
-        this.isTradeable = false
+        this.stockMarket = false
     }
 
 }

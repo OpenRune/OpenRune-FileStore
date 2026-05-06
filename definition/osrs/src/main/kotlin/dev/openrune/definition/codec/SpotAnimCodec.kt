@@ -19,6 +19,7 @@ class SpotAnimCodec(val rev : Int) : DefinitionCodec<SpotAnimType> {
             7 -> ambient = buffer.readUnsignedByte().toInt()
             8 -> contrast = buffer.readUnsignedByte().toInt()
             9 -> debugName = buffer.readString()
+            10 -> rotate = false
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
         }

@@ -5,7 +5,10 @@ import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.EntityOpsLoader
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.revisionIsOrBefore
+import dev.openrune.definition.type.BgSound
+import dev.openrune.definition.type.BgSoundFade
 import dev.openrune.definition.type.NpcType
+import dev.openrune.definition.type.RandomSound
 import dev.openrune.definition.util.*
 import io.netty.buffer.ByteBuf
 
@@ -136,6 +139,42 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             145 -> canHideForOverlap = true
             146 -> overlapTintHSL = buffer.readUnsignedShort()
             147 -> zbuf = false
+            148 -> {
+                bgSound = BgSound(
+                    id = buffer.readUnsignedShort(),
+                    range = buffer.readUnsignedByte().toInt(),
+                    volume = buffer.readUnsignedByte().toInt()
+                )
+            }
+
+            149 -> {
+                val fade = bgSoundFade ?: BgSoundFade()
+                fade.dropoffEasing = buffer.readUnsignedByte().toInt()
+                bgSoundFade = fade
+            }
+
+            150 -> {
+                val fade = bgSoundFade ?: BgSoundFade()
+                fade.easeInType = buffer.readUnsignedByte().toInt()
+                fade.easeInDuration = buffer.readUnsignedShort()
+                fade.easeOutType = buffer.readUnsignedByte().toInt()
+                fade.easeOutDuration = buffer.readUnsignedShort()
+                bgSoundFade = fade
+            }
+
+            151 -> crossWorldSound = buffer.readUnsignedByte().toInt()
+
+            152 -> {
+                randomSound = RandomSound(
+                    minDelay = buffer.readUnsignedShort(),
+                    maxDelay = buffer.readUnsignedShort(),
+                    minVolume = buffer.readUnsignedByte().toInt(),
+                    maxVolume = buffer.readUnsignedByte().toInt(),
+                    soundIds = MutableList(buffer.readUnsignedByte().toInt()) {
+                        buffer.readUnsignedShort()
+                    }
+                )
+            }
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Npcs [${opcode}]" }
         }
@@ -364,7 +403,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
         }
 
         if (definition.footprintSize != -1) {
-            writeByte(127)
+            writeByte(126)
             writeShort(definition.footprintSize)
         }
 
@@ -376,6 +415,52 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
         if (definition.overlapTintHSL != 39188) {
             writeByte(146)
             writeShort(definition.overlapTintHSL)
+        }
+
+        if (!definition.zbuf) {
+            writeByte(147)
+        }
+
+        definition.bgSound?.let {
+            if (it.id != -1) {
+                writeByte(148)
+                writeShort(it.id)
+                writeByte(it.range)
+                writeByte(it.volume)
+            }
+        }
+
+        definition.bgSoundFade?.let {
+            if (it.dropoffEasing != 0) {
+                writeByte(149)
+                writeByte(it.dropoffEasing)
+            }
+
+            if (it.easeInDuration != 0 || it.easeOutDuration != 0) {
+                writeByte(150)
+                writeByte(it.easeInType)
+                writeShort(it.easeInDuration)
+                writeByte(it.easeOutType)
+                writeShort(it.easeOutDuration)
+            }
+        }
+
+        if (definition.crossWorldSound != 2) {
+            writeByte(151)
+            writeByte(definition.crossWorldSound)
+        }
+
+        definition.randomSound?.let {
+            if (it.soundIds.isNotEmpty()) {
+                writeByte(152)
+                writeShort(it.minDelay)
+                writeShort(it.maxDelay)
+                writeByte(it.minVolume)
+                writeByte(it.maxVolume)
+
+                writeByte(it.soundIds.size)
+                it.soundIds.forEach { id -> writeShort(id) }
+            }
         }
 
         definition.writeParameters(this)

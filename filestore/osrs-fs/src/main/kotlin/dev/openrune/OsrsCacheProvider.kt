@@ -61,6 +61,7 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     class DBTableDecoder : ConfigDefinitionDecoder<DBTableType>(DBTableCodec(), DBTABLE)
     class EnumDecoder : ConfigDefinitionDecoder<EnumType>(EnumCodec(), ENUM)
     class HealthBarDecoder : ConfigDefinitionDecoder<HealthBarType>(HealthBarCodec(), HEALTHBAR)
+    class AmbienceDecoder : ConfigDefinitionDecoder<AmbienceType>(AmbienceCodec(), AMBIENCE)
     class HitSplatDecoder : ConfigDefinitionDecoder<HitSplatType>(HitSplatCodec(), HITSPLAT)
     class ItemDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<ItemType>(ItemCodec(cacheRevision), ITEM)
     class NPCDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<NpcType>(NPCCodec(cacheRevision), NPC)

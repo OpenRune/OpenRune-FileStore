@@ -99,7 +99,7 @@ class ItemCodec718 : DefinitionCodec<ItemType> {
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
             42 -> setExtraProperty("colourPalette", readColourPalette(buffer))
-            65 -> isTradeable = true
+            65 -> stockMarket = true
             78 -> maleModel2 = buffer.readBigSmart()
             79 -> femaleModel2 = buffer.readBigSmart()
             90 -> maleHeadModel0 = buffer.readBigSmart()

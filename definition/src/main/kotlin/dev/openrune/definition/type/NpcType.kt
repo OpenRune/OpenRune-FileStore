@@ -72,7 +72,11 @@ data class NpcType(
     var canHideForOverlap : Boolean = false,
     var overlapTintHSL : Int = 39188,
     var readyAnimDuringAnim : Boolean = false,
-    var zbuf : Boolean = true
+    var zbuf : Boolean = true,
+    var bgSound: BgSound? = null,
+    var bgSoundFade: BgSoundFade? = null,
+    var crossWorldSound: Int = 2,
+    var randomSound: RandomSound? = null,
     ) : Definition, Transforms, Recolourable, Parameterized {
 
     var examine : String = ""

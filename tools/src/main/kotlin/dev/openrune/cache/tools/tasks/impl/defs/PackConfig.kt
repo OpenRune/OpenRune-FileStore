@@ -62,6 +62,7 @@ class PackConfig(
         registerPackType(VARBIT, VarBitCodec::class, "varbit", GameValGroupTypes.VARBITTYPES, kType = typeOf<List<VarBitType>>())
         registerPackType(MAP_ELEMENT, MapElementCodec::class, "mapelement", kType = typeOf<List<MapElementType>>())
         registerPackType(HEALTHBAR, HealthBarCodec::class, "health", kType = typeOf<List<HealthBarType>>())
+        registerPackType(AMBIENCE, AmbienceCodec::class, "ambience", kType = typeOf<List<AmbienceType>>())
         registerPackType(HITSPLAT, HitSplatCodec::class, "hitsplat", kType = typeOf<List<HitSplatType>>())
         registerPackType(IDENTKIT, IdentityKitCodec::class, "idk", kType = typeOf<List<IdentityKitType>>())
         registerPackType(INV, InventoryCodec::class, "inventory", GameValGroupTypes.INVTYPES, kType = typeOf<List<InventoryType>>())
