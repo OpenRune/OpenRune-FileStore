@@ -7,7 +7,7 @@ plugins {
 
 //val buildDirectory = "/home/advo/Documents/GitHub/hosting/"
 val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "D:\\OpenRune\\openrune-hosting"
-val buildNumber = "2.4.4"
+val buildNumber = "2.4.5"
 
 subprojects {
     apply(plugin = "kotlin")
