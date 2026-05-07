@@ -128,7 +128,7 @@ class PackMaps(
 
     private fun packPackFiles(cache: Cache, encodeXteas: Boolean) {
 
-        val packFiles = mapsDirectory.listFiles()?.filter { it.extension == "pack" } ?: return
+        val packFiles = getFiles(mapsDirectory, "pack")
 
         if (packFiles.isEmpty()) {
             return
@@ -218,12 +218,6 @@ class PackMaps(
                 mapBlock,
                 locsBlock,
                 if (encodeXteas) keys else null
-            )
-
-            println(
-                "Packed region $regionId " +
-                        "(${regionX}_${regionY}) " +
-                        "[tiles=${mapBlock.size}, locs=${locsBlock.size}]"
             )
         }
 

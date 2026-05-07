@@ -74,12 +74,13 @@ fun String.replaceLastLetter(newLetter: String): String {
  * @dir Base Dir
  * @typeList List of Extension names no '.'
  */
-fun getFiles(dir : File, vararg typeList : String) : List<File> {
-    if (dir.listFiles() == null) {
+fun getFiles(dir: File, vararg typeList: String): List<File> {
+    if (!dir.exists() || !dir.isDirectory) {
         println("Unable to find dir: $dir")
+        return emptyList()
     }
-    return FileUtils.listFiles(dir,typeList,true).toMutableList()
 
+    return FileUtils.listFiles(dir, typeList, true).toList()
 }
 fun getFilesNoFilter(dir : File) : List<File> = dir.listFiles()!!.toList()
 
