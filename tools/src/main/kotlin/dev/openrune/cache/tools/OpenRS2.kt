@@ -65,7 +65,7 @@ object OpenRS2 {
     ) {
         loadCaches()
         val info = findRevision(revision, subRev, type, environment)
-        downloadByInternalID(info.id, directory, listener, "xteas.json")
+        downloadByInternalID(info.id, directory, listener, "keys.json", "xteas.json")
     }
 
     fun downloadByInternalID(

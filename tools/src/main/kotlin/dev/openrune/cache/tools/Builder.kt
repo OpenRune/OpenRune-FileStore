@@ -60,7 +60,9 @@ data class Builder(
         val tasks = extraTasks.toMutableList()
         if (type == TaskType.FRESH_INSTALL) {
             if (removeBzip) tasks.add(0, RemoveBzip())
-            if (removeXteas) tasks.add(1, RemoveXteas(File(cacheLocation, "xteas.json")))
+            if (removeXteas && (revision < 0 || revision < RemoveXteas.OBSOLETE_FROM_REVISION)) {
+                tasks.add(1, RemoveXteas(File(cacheLocation, "xteas.json")))
+            }
         }
 
         tasks.add(PackGameVals())

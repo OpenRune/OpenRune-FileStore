@@ -2,9 +2,11 @@ package dev.openrune.cache.tools
 
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.TaskType
+import dev.openrune.cache.tools.cs2.PackCs2
 import dev.openrune.cache.tools.tasks.impl.PackGameVals
 import dev.openrune.cache.tools.tasks.impl.RemoveBzip
 import dev.openrune.cache.tools.tasks.impl.RemoveXteas
+import dev.openrune.cache.tools.cs2.UnpackDefaultCs2
 import dev.openrune.definition.constants.ConstantProvider
 import java.io.File
 
@@ -76,6 +78,8 @@ class CacheToolDsl {
 
         val cleanedTasks = finalTasks.filterNot { it is RemoveXteas || it is RemoveBzip }
 
+        validateCs2UnpackPackPairing(cleanedTasks)
+
         return CacheTool(
             type = type,
             revision = revision,
@@ -83,6 +87,23 @@ class CacheToolDsl {
             serverCacheLocation = serverCache,
             extraTasks = cleanedTasks
         )
+    }
+
+    private fun validateCs2UnpackPackPairing(tasks: List<CacheTask>) {
+        val packers = tasks.filterIsInstance<PackCs2>()
+        if (packers.isEmpty()) return
+        val unpackers = tasks.filterIsInstance<UnpackDefaultCs2>()
+        require(unpackers.isNotEmpty()) {
+            "PackCs2 requires UnpackDefaultCs2 in the same tasks { } block. Add +UnpackDefaultCs2(File(\"...\")) before PackCs2."
+        }
+        for (pack in packers) {
+            val packRoot = pack.cs2Root.canonicalFile
+            val ok = unpackers.any { it.cs2Root.canonicalFile == packRoot }
+            require(ok) {
+                "PackCs2(${pack.cs2Root}) requires UnpackDefaultCs2(File(\"${pack.cs2Root}\")) " +
+                    "(same CS2 directory)."
+            }
+        }
     }
 
     class TaskBuilder {

@@ -129,7 +129,6 @@ object GameValHandler {
                     if (child == 0xFFFF) break
                     
                     val componentName = data.readString()
-                    if (componentName.isEmpty()) break
 
                     components.add(InterfaceComponent(componentName, child, id))
                 }

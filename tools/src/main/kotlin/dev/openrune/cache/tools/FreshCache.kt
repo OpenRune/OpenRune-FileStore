@@ -46,8 +46,10 @@ class FreshCache(
 
             unzip(File(cacheDir, "$uuid-disk.zip"), cacheOutput)
 
-            File(cacheDir, "$uuid-xteas.json")
-                .copyTo(File(cacheOutput, "xteas.json"), overwrite = true)
+            val cachedXteas = File(cacheDir, "xteas.json")
+            if (cachedXteas.exists()) {
+                cachedXteas.copyTo(File(cacheOutput, "xteas.json"), overwrite = true)
+            }
 
             runTasks()
             return
@@ -57,15 +59,20 @@ class FreshCache(
     }
 
     private fun isCachePresent(dir: File, uuid: String): Boolean {
-        return File(dir, "$uuid-disk.zip").exists() &&
-                File(dir, "$uuid-xteas.json").exists()
+        val zip = File(dir, "$uuid-disk.zip")
+        if (!zip.exists()) return false
+        if (revision < 237) {
+            return File(dir, "xteas.json").exists()
+        }
+        return true
     }
 
     private fun isCacheValid(dir: File, uuid: String): Boolean {
         val zip = File(dir, "$uuid-disk.zip")
-        val xteas = File(dir, "$uuid-xteas.json")
+        val xteas = File(dir, "xteas.json")
 
-        if (!zip.exists() || !xteas.exists()) return false
+        if (!zip.exists()) return false
+        if (revision < 237 && !xteas.exists()) return false
         if (zip.length() < 1024) return false
 
         return isZipValid(zip)
@@ -91,7 +98,7 @@ class FreshCache(
 
     private fun download(cacheDir: File) {
         tasks.removeAll { task ->
-            revision >= 237 && task is RemoveXteas
+            revision >= RemoveXteas.OBSOLETE_FROM_REVISION && task is RemoveXteas
         }
 
         val time = measureTimeMillis {
@@ -111,13 +118,13 @@ class FreshCache(
                 localFileName = "${revisionInfo.id}-disk.zip"
             )
 
-            if (revision >= 237) {
+            if (revision < 237) {
                 OpenRS2.downloadByInternalID(
                     target = revisionInfo.id,
                     directory = cacheDir,
                     listener = downloadListener,
                     remoteFileName = "keys.json",
-                    localFileName = "${revisionInfo.id}-xteas.json"
+                    localFileName = "xteas.json"
                 )
             }
         }
@@ -175,6 +182,7 @@ class FreshCache(
     }
 
     private fun runTasks() {
+        tasks.removeAll { revision >= RemoveXteas.OBSOLETE_FROM_REVISION && it is RemoveXteas }
         if (tasks.isNotEmpty()) {
             BuildCache(
                 cacheLocation = cacheOutput,
@@ -188,6 +196,8 @@ class FreshCache(
 
         var progressBar: ProgressBar? = null
         private var completedDownloads = 0
+
+        private val expectedDownloads: Int get() = if (revision < 237) 2 else 1
 
         override fun onProgress(progress: Int, max: Long, current: Long) {
             if (progressBar == null) {
@@ -205,20 +215,20 @@ class FreshCache(
             progressBar?.close()
 
             completedDownloads++
-            if (completedDownloads < 2) return
+            if (completedDownloads < expectedDownloads) return
 
             val uuid = revisionInfo.id.toString()
             val cacheDir = CachePaths.cacheDir(GameType.OLDSCHOOL, revision)
 
             val zip = File(cacheDir, "$uuid-disk.zip")
-            val xteas = File(cacheDir, "$uuid-xteas.json")
+            val xteas = File(cacheDir, "xteas.json")
 
             try {
                 prepareWorkingDirectory()
 
                 unzip(zip, cacheOutput)
 
-                if (revision >= 237) {
+                if (xteas.exists()) {
                     xteas.copyTo(File(cacheOutput, "xteas.json"), overwrite = true)
                 }
 

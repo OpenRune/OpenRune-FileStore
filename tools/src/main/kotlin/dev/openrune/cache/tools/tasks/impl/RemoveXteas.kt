@@ -11,7 +11,15 @@ import java.io.File
  * Removes Xteas Encryption from the maps
  */
 class RemoveXteas(private val xteaLocation : File) : CacheTask() {
+    companion object {
+        /** At this revision and above, maps are not processed with [RemoveXteas]; [init] is a no-op. */
+        const val OBSOLETE_FROM_REVISION: Int = 237
+    }
+
     override fun init(cache: Cache) {
+        if (revision >= OBSOLETE_FROM_REVISION) {
+            return
+        }
         XteaLoader.load(xteaLocation)
         var mapCount = 0
         for (x in 0..256) {
