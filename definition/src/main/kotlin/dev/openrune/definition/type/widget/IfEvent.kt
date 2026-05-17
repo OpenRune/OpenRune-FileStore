@@ -31,6 +31,7 @@ enum class IfEvent(val bitmask: Long) {
     DragTarget(1L shl 20),
     Target(1L shl 21),
     CrmTarget(1L shl 22),
+    ScriptTrigger(1L shl 23),
     Op1(1L shl 32),
     Op2(1L shl 33),
     Op3(1L shl 34),

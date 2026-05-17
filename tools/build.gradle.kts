@@ -14,7 +14,7 @@ dependencies {
 
     // logback-classic: clientscript-compiler configureLogLevel() expects Logback LoggerContext (not slf4j-simple).
     implementation("ch.qos.logback:logback-classic:1.5.16")
-    implementation("dev.or2:toml-rsconfig:1.0")
+    implementation("dev.or2:toml-rsconfig:1.1")
 
     implementation("me.filby:clientscript-compiler:0.0.5-openrune")
 

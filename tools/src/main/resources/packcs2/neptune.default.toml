@@ -1,6 +1,6 @@
 name = "OpenRune-Cs2-Packer"
 client_version = 0
 sources = [".prelude/", "script/", "custom/"]
-symbols = ["symbols/"]
+symbols = ["symbols/","symbols_custom/"]
 libraries = ["script/"]
 excluded = ["pack/"]

@@ -3,12 +3,15 @@ package dev.openrune.cache.tools.tasks.impl
 import dev.openrune.toml.decode
 import dev.openrune.toml.tomlMapper
 import dev.openrune.cache.SPRITES
+import dev.openrune.cache.gameval.impl.Sprite as GameValSprite
+import dev.openrune.cache.tools.CacheTool
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.sprites.Sprite
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteManifest
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
+import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled
@@ -126,9 +129,9 @@ class PackSprites(
         manifest[fileName]?.let { data ->
 
             if (data.atlas != null) {
-                packFromAtlas(spriteFile, data)
+                packFromAtlas(spriteFile, data, fileName)
             } else {
-                packNamedSprite(spriteFile, data)
+                packNamedSprite(spriteFile, data, fileName)
             }
 
             alreadyPacked.add(spriteFile.name)
@@ -138,7 +141,8 @@ class PackSprites(
 
     private fun packFromAtlas(
         spriteFile: File,
-        data: SpriteManifest
+        data: SpriteManifest,
+        manifestKey: String
     ) {
         val atlas = data.atlas ?: return
 
@@ -159,11 +163,17 @@ class PackSprites(
                 index
             )
         }
+
+        CacheTool.addGameValMapping(
+            GameValGroupTypes.SPRITETYPES,
+            GameValSprite(manifestKey, -1, data.id)
+        )
     }
 
     private fun packNamedSprite(
         spriteFile: File,
-        data: SpriteManifest
+        data: SpriteManifest,
+        manifestKey: String
     ) {
         val image = loadImage(spriteFile)
 
@@ -179,6 +189,11 @@ class PackSprites(
             image.width,
             image.height,
             0
+        )
+
+        CacheTool.addGameValMapping(
+            GameValGroupTypes.SPRITETYPES,
+            GameValSprite(manifestKey, -1, data.id)
         )
     }
 

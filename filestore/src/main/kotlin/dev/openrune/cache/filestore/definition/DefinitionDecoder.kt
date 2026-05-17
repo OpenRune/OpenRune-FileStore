@@ -7,7 +7,7 @@ import dev.openrune.definition.DefinitionCodec
 import dev.openrune.filesystem.Cache
 import java.nio.BufferUnderflowException
 
-abstract class DefinitionDecoder<T : Definition>(val index: Int, private val codec: DefinitionCodec<T>, private var transform: DefinitionTransform<T>? = null) {
+abstract class DefinitionDecoder<T : Definition>(val index: Int, protected val codec: DefinitionCodec<T>, private var transform: DefinitionTransform<T>? = null) {
 
     open fun isRS2() : Boolean = false
 

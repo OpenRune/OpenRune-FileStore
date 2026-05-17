@@ -156,8 +156,6 @@ object GameValHandler {
 
     fun encodeGameVals(type: GameValGroupTypes, values: List<GameValElement>, cache: Cache, cacheRevision : Int = -1) {
 
-        assertNoDuplicateGameValKeys(type,values)
-
         var resolvedType = type
 
         if (resolvedType == IFTYPES) {
@@ -166,6 +164,7 @@ object GameValHandler {
             }
         }
 
+        assertNoDuplicateGameValKeys(resolvedType,values)
         if (resolvedType.revision != -1) {
 
             val rev = if (cacheRevision == -1) readCacheRevision(cache, "${resolvedType.name} is unsupported in this revision")
@@ -195,7 +194,7 @@ object GameValHandler {
                             writeByte(0)
                         }
 
-                        cache.write(GAMEVALS, type.id, table.id, writer.toArray())
+                        cache.write(GAMEVALS, resolvedType.id, table.id, writer.toArray())
                     }
                 }
             }
@@ -213,7 +212,7 @@ object GameValHandler {
                             writeByte(0)
                         }
                     }
-                    cache.write(GAMEVALS, type.id, element.id, writer.toArray())
+                    cache.write(GAMEVALS, resolvedType.id, element.id, writer.toArray())
                 }
             }
 
@@ -230,20 +229,20 @@ object GameValHandler {
                             writeShort(0xFFFF)
                         }
                     }
-                    cache.write(GAMEVALS, type.id, element.id, writer.toArray())
+                    cache.write(GAMEVALS, resolvedType.id, element.id, writer.toArray())
                 }
             }
 
             else -> {
                 values.forEach { element ->
-                    val data = when (type) {
+                    val data = when (resolvedType) {
                         SPRITETYPES -> element.elementAs<Sprite>()?.let { sprite ->
                             val base = if (sprite.index == -1) sprite.name else "${sprite.name},${sprite.index}"
                             standardizeGamevalName(base)
                         }
                         else -> element.elementAs<GameValElement>()?.name?.let(GameValHandler::standardizeGamevalName)
                     }
-                    data?.encodeToByteArray()?.let { cache.write(GAMEVALS, type.id, element.id, it) }
+                    data?.encodeToByteArray()?.let { cache.write(GAMEVALS, resolvedType.id, element.id, it) }
                 }
             }
         }

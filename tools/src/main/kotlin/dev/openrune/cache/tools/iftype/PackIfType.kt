@@ -42,9 +42,7 @@ class PackIfType(
         inf.components.toList().sortedBy { (_, component) -> component.component }.forEach { (_, component) ->
             val writer = Unpooled.buffer(4096)
             codec.encode(component, writer)
-
-            components.add(
-                Interface.InterfaceComponent(
+            components.add(Interface.InterfaceComponent(
                     component.internalName ?: "com_${component.component}",
                     component.component,
                     component.interfaceId
@@ -57,16 +55,6 @@ class PackIfType(
         CacheTool.addGameValMapping(GameValGroupTypes.IFTYPES, Interface(inf.internalName,inf.id,components))
         cacheLibrary.index(INTERFACES).add(archive)
         cacheLibrary.update()
-
-        val inf : MutableMap<Int, InterfaceType> = emptyMap<Int, InterfaceType>().toMutableMap()
-
-        codec.load(inf)
-
-        inf.forEach {
-            println(it)
-        }
-
-        println("Size:eeee ${cache.files(INTERFACES, 1200).size}")
 
     }
 

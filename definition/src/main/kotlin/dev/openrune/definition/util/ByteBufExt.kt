@@ -246,6 +246,13 @@ fun Any?.debugString(): String = when (this) {
     else -> toString()
 }
 
+fun ByteBuf.readDbCell(type: CacheVarLiteral): Any = when (type.baseType) {
+    BaseVarType.INTEGER -> readInt()
+    BaseVarType.LONG -> readLong()
+    BaseVarType.STRING -> readString()
+    BaseVarType.ARRAY -> error("Array Type ${type.name} is not yet defined in db row")
+}
+
 fun ByteBuf.readColumnValues(types: Array<CacheVarLiteral>): Array<Any> {
     val fieldCount = readUnsignedShortSmart()
     val values = arrayOfNulls<Any>(fieldCount * types.size)
@@ -253,7 +260,7 @@ fun ByteBuf.readColumnValues(types: Array<CacheVarLiteral>): Array<Any> {
         for (typeIndex in types.indices) {
             val type = types[typeIndex]
             val valuesIndex = fieldIndex * types.size + typeIndex
-            values[valuesIndex] = if (type == CacheVarLiteral.STRING) readString() else readInt()
+            values[valuesIndex] = readDbCell(type)
         }
     }
     return values.requireNoNulls()

@@ -213,8 +213,8 @@ fun generateDsl(table: DBTableType, rows: List<DBRowType>): String {
 
     for (row in rows) {
         builder.appendLine("    row(${row.id}) {")
-        for ((columnId, values) in row.columns) {
-            val valuesString = values.values?.joinToString(", ") ?: ""
+        for ((columnId, column) in row.definedColumns()) {
+            val valuesString = column.values?.joinToString(", ") ?: ""
             builder.appendLine("        column($columnId, arrayOf($valuesString))")
         }
         builder.appendLine("    }")

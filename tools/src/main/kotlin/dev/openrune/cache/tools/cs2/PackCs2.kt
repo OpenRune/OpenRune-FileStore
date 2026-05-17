@@ -53,6 +53,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
             val progress = progress("Packing Cs2 Scripts", scripts.size)
 
             scripts.forEach { script ->
+
                 if (!script.archiveName.contains(script.id.toString())) {
                     if (!library.index(CLIENTSCRIPT).contains(script.id)) {
                         library.put(CLIENTSCRIPT, script.id, script.archiveName, script.bytes)

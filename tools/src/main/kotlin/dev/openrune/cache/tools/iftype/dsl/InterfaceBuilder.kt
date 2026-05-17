@@ -1,6 +1,7 @@
 package dev.openrune.cache.tools.iftype.dsl
 
 import dev.openrune.cache.filestore.definition.InterfaceType
+import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.definition.type.widget.ComponentType
 import dev.openrune.definition.type.widget.ComponentTypeBuilder
 
@@ -150,6 +151,12 @@ class InterfaceBuilder(
     var offset = Pair(0,0)
     val components = mutableListOf<ComponentTypeBuilder>()
 
+    /**
+     * Layer widgets whose children are built into a parent [Layer.LayerComponent.layerComponents] list
+     * (nested under another layer) store their subtree here until the root layer flattens into [components].
+     */
+    internal val layerNestedChildren = mutableMapOf<ComponentTypeBuilder, MutableList<ComponentTypeBuilder>>()
+
     fun setOffset(block: () -> Pair<Int, Int>) {
         val (newX, newY) = block()
         offset = Pair(newX,newY)
@@ -161,6 +168,32 @@ class InterfaceBuilder(
 
     private fun totalChildren() = components.size
 }
+
+fun buildInterface(internalName: String, width: Int, height: Int,builder: InterfaceBuilder.() -> Unit): InterfaceType {
+
+    val id = ConstantProvider.getMapping(internalName)
+
+    val bld = InterfaceBuilder(id,width,height)
+    builder.invoke(bld)
+
+    val component = bld.apply("universe")
+
+    bld.components.add(0,component)
+
+    val componentsMap = bld.components.mapIndexed { index, builder ->
+        builder.x = (builder.x ?: 0) + bld.offset.first
+        builder.y = (builder.y ?: 0) + bld.offset.second
+        builder.v3 = true
+        index to builder.build((id shl 16) or index)
+    }.toMap()
+
+    return InterfaceType(
+        components = componentsMap,
+        _internalId = id,
+        _internalName = internalName.substringAfter(".")
+    )
+}
+
 
 fun buildInterface(id: Int, interfaceName: String, width: Int, height: Int,builder: InterfaceBuilder.() -> Unit): InterfaceType {
     val bld = InterfaceBuilder(id,width,height)

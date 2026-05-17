@@ -1,10 +1,9 @@
 package dev.openrune.definition.codec
 
 import dev.openrune.definition.DefinitionCodec
-import dev.openrune.definition.type.DBColumnType
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.util.CacheVarLiteral
-import dev.openrune.definition.util.readColumnValues
+import dev.openrune.definition.util.readDbCell
 import dev.openrune.definition.util.readUnsignedShortSmart
 import dev.openrune.definition.util.readVarInt
 import dev.openrune.definition.util.writeColumnValues
@@ -16,15 +15,26 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
     override fun DBRowType.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             3 -> {
-                //this is the number of columns. Potentially in the future we can set the size of the map to this.
-                buffer.readUnsignedByte().toInt()
+                val columnArrayLength = buffer.readUnsignedByte().toInt()
+                if (columnTypes == null) {
+                    columnTypes = arrayOfNulls(columnArrayLength)
+                    field5306 = arrayOfNulls(columnArrayLength)
+                }
                 var columnId = buffer.readUnsignedByte().toInt()
                 while (columnId != 255) {
-                    val columnTypes = Array(buffer.readUnsignedByte().toInt()) {
-                        CacheVarLiteral.byID(buffer.readUnsignedShortSmart())
+                    val typeSlotCount = buffer.readUnsignedByte().toInt()
+                    val typeIds = IntArray(typeSlotCount) { buffer.readUnsignedShortSmart() }
+                    val tupleCount = buffer.readUnsignedShortSmart()
+                    val cells = arrayOfNulls<Any>(typeSlotCount * tupleCount)
+                    for (tupleIndex in 0 until tupleCount) {
+                        for (typeIndex in 0 until typeSlotCount) {
+                            val cellIndex = tupleIndex * typeSlotCount + typeIndex
+                            val type = CacheVarLiteral.byID(typeIds[typeIndex])
+                            cells[cellIndex] = buffer.readDbCell(type)
+                        }
                     }
-                    val columnValues = buffer.readColumnValues(columnTypes)
-                    columns[columnId] = DBColumnType(columnTypes, columnValues)
+                    columnTypes!![columnId] = cells
+                    field5306!![columnId] = typeIds
                     columnId = buffer.readUnsignedByte().toInt()
                 }
             }
@@ -34,18 +44,21 @@ class DBRowCodec : DefinitionCodec<DBRowType> {
     }
 
     override fun ByteBuf.encode(definition: DBRowType) {
-        if (definition.columns.isNotEmpty()) {
+        val cols = definition.columnTypes
+        val typeIds = definition.field5306
+        if (cols != null && typeIds != null && cols.any { it != null }) {
             writeByte(3)
-            writeByte(definition.columns.size)
-            definition.columns.entries.forEach { entry ->
-                val column = entry.value
-
-                writeByte(entry.key)
-                writeByte(column.types.size)
-                for (type in column.types) {
-                    writeUnsignedShortSmart(type.id)
+            writeByte(cols.size)
+            for (columnId in cols.indices) {
+                val values = cols[columnId] ?: continue
+                val ids = typeIds[columnId] ?: continue
+                val types = Array(ids.size) { i -> CacheVarLiteral.byID(ids[i]) }
+                writeByte(columnId)
+                writeByte(types.size)
+                for (id in ids) {
+                    writeUnsignedShortSmart(id)
                 }
-                writeColumnValues(column.values, column.types)
+                writeColumnValues(values.requireNoNulls(), types)
             }
             writeByte(255)
         }

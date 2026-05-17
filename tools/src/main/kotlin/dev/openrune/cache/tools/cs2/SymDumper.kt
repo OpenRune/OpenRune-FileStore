@@ -107,8 +107,8 @@ class SymDumper {
 
         val varpFile = File(basePath, "varp.sym")
         val varpEntries = varp.mapValues { (id, _) ->
-            val name = varpTypes.lookup(id)?.name ?: "varplayer"
-            "${name}_$id"
+            val name = varpTypes.lookup(id)?.name ?: "varplayer_${id}"
+            name
         }
         appendMissing(varpFile, varpEntries)
     }
