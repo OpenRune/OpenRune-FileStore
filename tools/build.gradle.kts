@@ -1,9 +1,14 @@
+plugins {
+    kotlin("plugin.serialization") version "2.1.0"
+}
 dependencies {
     implementation(project(":filestore"))
     implementation(project(":filesystem"))
     implementation(project(":definition"))
     implementation(project(":definition:osrs"))
     implementation(project(":filestore:osrs-fs"))
+    implementation("org.openrs2:openrs2-cache:0.1.0-SNAPSHOT")
+    implementation("org.openrs2:openrs2-buffer:0.1.0-SNAPSHOT")
     implementation("io.netty:netty-buffer:4.1.107.Final")
     implementation("net.lingala.zip4j:zip4j:2.11.5")
     implementation("me.tongfei:progressbar:0.9.2")
@@ -11,7 +16,8 @@ dependencies {
     implementation("commons-io:commons-io:2.15.1")
     implementation(project(":displee"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-
+    implementation("net.peanuuutz.tomlkt:tomlkt:0.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3")
     // logback-classic: clientscript-compiler configureLogLevel() expects Logback LoggerContext (not slf4j-simple).
     implementation("ch.qos.logback:logback-classic:1.5.16")
     implementation("dev.or2:toml-rsconfig:1.1")
