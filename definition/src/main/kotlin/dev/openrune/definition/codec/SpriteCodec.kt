@@ -11,8 +11,8 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
         val size: Int = buffer.readShort().toInt()
         buffer.readerIndex(buffer.writerIndex() - 7 - size * 8)
 
-        val offsetX: Int = buffer.readShort().toInt()
-        val offsetY: Int = buffer.readShort().toInt()
+        val originalWidth: Int = buffer.readShort().toInt()
+        val originalHeight: Int = buffer.readShort().toInt()
 
         val paletteSize: Int = buffer.readUnsignedByte().toInt() + 1
 
@@ -31,8 +31,10 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
         }
         for (index in 0 until size) {
             val sprite = sprites[index]
-            sprite.subWidth = offsetX - sprite.width - sprite.offsetX
-            sprite.subHeight = offsetY - sprite.height - sprite.offsetY
+            sprite.originalWidth = originalWidth
+            sprite.originalHeight = originalHeight
+            sprite.subWidth = originalWidth - sprite.width - sprite.offsetX
+            sprite.subHeight = originalHeight - sprite.height - sprite.offsetY
         }
 
         buffer.readerIndex(buffer.writerIndex() - 7 - size * 8 - (paletteSize - 1) * 3)
@@ -99,6 +101,9 @@ class SpriteCodec : DefinitionCodec<SpriteType> {
             }
         }
         this.sprites = sprites
+        val validSprites = sprites.filter { it.width > 0 && it.height > 0 }
+        width = validSprites.maxOfOrNull { it.width } ?: 1
+        height = validSprites.maxOfOrNull { it.height } ?: 1
     }
 
     override fun ByteBuf.encode(definition: SpriteType) {

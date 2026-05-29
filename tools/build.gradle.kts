@@ -7,8 +7,6 @@ dependencies {
     implementation(project(":definition"))
     implementation(project(":definition:osrs"))
     implementation(project(":filestore:osrs-fs"))
-    implementation("org.openrs2:openrs2-cache:0.1.0-SNAPSHOT")
-    implementation("org.openrs2:openrs2-buffer:0.1.0-SNAPSHOT")
     implementation("io.netty:netty-buffer:4.1.107.Final")
     implementation("net.lingala.zip4j:zip4j:2.11.5")
     implementation("me.tongfei:progressbar:0.9.2")
