@@ -25,6 +25,9 @@ import java.io.File
  * When [force] is false, unpacking is skipped only if [cs2Directory]/`neptune.toml` exists, its `client_version`
  * equals the cache [revision], and every path in `sources`, `symbols`, `libraries`, and `excluded` already exists
  * as a directory. Otherwise the bundle is extracted. Set [force] to true to always re-unpack.
+ *
+ * Re-unpack merges the bundle: zip files overwrite matching paths; local-only files under
+ * `custom/`, `symbols/`, and `symbols_custom/` are kept (see [Cs2BundleExtract]).
  */
 class UnpackDefaultCs2(
     private val cs2Directory: File,
@@ -98,9 +101,9 @@ class UnpackDefaultCs2(
         val tempZip = File.createTempFile("openrune-cs2-bundle-", ".zip")
         try {
             stream.use { input -> tempZip.outputStream().use { input.copyTo(it) } }
-            ZipFile(tempZip).extractAll(cs2Directory.absolutePath)
+            ZipFile(tempZip).use { zip -> Cs2BundleExtract.extract(zip, cs2Directory) }
             syncNeptuneClientVersion(major)
-            logger.info { "UnpackDefaultCs2: unpacked $bundleKey into ${cs2Directory.absolutePath}" }
+            logger.info { "UnpackDefaultCs2: merged $bundleKey into ${cs2Directory.absolutePath}" }
         } catch (e: Exception) {
             logger.error(e) { "UnpackDefaultCs2: failed to unpack $bundleKey: ${e.message}" }
         } finally {

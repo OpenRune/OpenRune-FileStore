@@ -31,7 +31,9 @@ public data class SpriteSet(
                         if (rgb == 0) rgb = 1
                         if (alpha != 0 && alpha != 255) flags = flags or FLAG_ALPHA
                         if (!palette.contains(rgb)) {
-                            if (palette.size >= 256) throw IOException("Palette size to big.")
+                            if (palette.size >= 256) {
+                                throw IOException("Palette size to big (${id},${palette.size}).")
+                            }
                             palette.add(rgb)
                         }
                     }
