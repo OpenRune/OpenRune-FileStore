@@ -14,15 +14,39 @@ import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.codec.DBRowCodec
 import dev.openrune.definition.codec.DBTableCodec
 import dev.openrune.definition.dbtables.DBTable
+import dev.openrune.definition.dbtables.DBTableToml
 import dev.openrune.definition.type.DBRowType
 import dev.openrune.definition.type.DBTableType
 import dev.openrune.definition.util.toArray
 import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled
+import java.io.File
 import kotlin.collections.forEach
 import kotlin.collections.iterator
 
-class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
+/**
+ * Packs custom DB tables and rows into the cache.
+ *
+ * Use the DSL (`dbTable { … }`) or TOML files ([DBTableToml]):
+ *
+ * ```
+ * +PackDBTables(myTable)
+ * +PackDBTables(File("data/dbtables"))   // directory of *.toml
+ * +PackDBTables.fromToml(File("shop.toml"))
+ * ```
+ */
+public class PackDBTables constructor(private val tables: List<DBTable>) : CacheTask() {
+
+    public constructor(vararg tables: DBTable) : this(tables.toList())
+
+    /** Loads every `*.toml` table definition in [directory]. */
+    public constructor(directory: File) : this(DBTableToml.loadDirectory(directory))
+
+    companion object {
+        fun fromToml(file: File): PackDBTables = PackDBTables(DBTableToml.load(file))
+
+        fun fromTomlDirectory(directory: File): PackDBTables = PackDBTables(DBTableToml.loadDirectory(directory))
+    }
 
     private val rowCodec = DBRowCodec()
     private val tableCodec = DBTableCodec()

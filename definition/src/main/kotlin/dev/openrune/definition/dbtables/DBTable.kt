@@ -11,7 +11,9 @@ data class DBTable(
     val rscmName: String? = null,
     val columns: Map<Int, DBColumnType>,
     val rows: List<DBRow>,
-    val serverOnly : Boolean = false
+    val serverOnly: Boolean = false,
+    /** Optional base table reference (RSCM name or id string) for future schema inheritance. */
+    val inherit: String? = null,
 )
 
 data class DBRow(

@@ -1,0 +1,17 @@
+[dbtable]
+id = 9001
+server_only = false
+
+[dbtable.col]
+value = "INT"
+enabled = "BOOLEAN"
+
+[[row]]
+id = 0
+value = 10
+enabled = true
+
+[[row]]
+id = 1
+value = 99
+enabled = false
