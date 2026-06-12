@@ -117,7 +117,10 @@ object DBTableTomlWriter {
 
     private fun formatCellValue(value: Any, type: CacheVarLiteral): String = when (value) {
         is Boolean -> value.toString()
-        is Int -> DBTableCellCodec.encodeInt(value, type)
+        is Int -> when (type.name) {
+            "COORDGRID" -> CoordGridCodec.formatExport(value)
+            else -> DBTableCellCodec.encodeInt(value, type)
+        }
         is Long -> DBTableCellCodec.encodeInt(value.toInt(), type)
         is Short -> DBTableCellCodec.encodeInt(value.toInt(), type)
         is Byte -> DBTableCellCodec.encodeInt(value.toInt(), type)

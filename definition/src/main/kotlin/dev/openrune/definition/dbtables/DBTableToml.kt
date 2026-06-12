@@ -101,9 +101,12 @@ object DBTableToml {
             val rowColumns = LinkedHashMap<Int, Array<Any>>()
             for ((key, cellValue) in entry) {
                 if (key in reservedRowKeys) continue
-                val colId = resolveColumnId(key, columns, columnIdByName, "$source [[row]] #$index")
-                val colTypes = columns[colId]!!.types
-                rowColumns[colId] = parseCellValues(cellValue, colTypes)
+                val rowContext = "$source [[row]] #$index"
+                val colId = resolveColumnId(key, columnIdByName, "$rowContext column '$key'")
+                val column = columns[colId]!!
+                val colTypes = column.types
+                val cellContext = "$rowContext.$key"
+                rowColumns[colId] = DBTableTomlCellParser.parseCellValues(cellValue, colTypes, cellContext)
             }
             if (rowRscmName != null) rowNames[rowId] = rowRscmName
             DBRow(rowId, rowRscmName, rowColumns)
@@ -151,10 +154,10 @@ object DBTableToml {
 
     private fun parseColumnTypeValue(value: TomlValue, context: String): Array<CacheVarLiteral> =
         when (value) {
-            is TomlValue.String -> arrayOf(CacheVarLiteral.byName(value.value))
+            is TomlValue.String -> arrayOf(CacheVarLiteral.byName(DBTableTomlCellParser.normalizeColumnTypeName(value.value)))
             is TomlValue.List -> {
                 val names = requireStringList(value, context)
-                Array(names.size) { i -> CacheVarLiteral.byName(names[i]) }
+                Array(names.size) { i -> CacheVarLiteral.byName(DBTableTomlCellParser.normalizeColumnTypeName(names[i])) }
             }
             else -> error("$context: expected a type string or array of type strings")
         }
@@ -181,11 +184,11 @@ object DBTableToml {
     private fun parseColumnTypes(entry: Map<String, TomlValue>, context: String): Array<CacheVarLiteral> {
         entry["types"]?.let { typesValue ->
             val names = requireStringList(typesValue, "$context.types")
-            return Array(names.size) { i -> CacheVarLiteral.byName(names[i]) }
+            return Array(names.size) { i -> CacheVarLiteral.byName(DBTableTomlCellParser.normalizeColumnTypeName(names[i])) }
         }
 
         val typeName = requireString(entry, "type", "$context.type")
-        val type = CacheVarLiteral.byName(typeName)
+        val type = CacheVarLiteral.byName(DBTableTomlCellParser.normalizeColumnTypeName(typeName))
         val count = optionalInt(entry["count"]) ?: 1
         require(count > 0) { "$context: count must be positive" }
         return Array(count) { type }
@@ -193,52 +196,12 @@ object DBTableToml {
 
     private fun resolveColumnId(
         key: String,
-        columns: Map<Int, DBColumnType>,
         columnIdByName: Map<String, Int>,
         context: String,
     ): Int {
         columnIdByName[key]?.let { return it }
-        error("$context: unknown column '$key' (define it in [dbtable.col] or [[column]])")
-    }
-
-    private fun parseCellValues(value: TomlValue, types: Array<CacheVarLiteral>): Array<Any> = when (value) {
-        is TomlValue.List -> flattenList(value, types)
-        else -> arrayOf(parseCellValue(value, types.firstOrNull() ?: CacheVarLiteral.INT))
-    }
-
-    private fun flattenList(value: TomlValue.List, types: Array<CacheVarLiteral>): Array<Any> {
-        if (value.elements.isEmpty()) return emptyArray()
-        if (value.elements.all { it is TomlValue.List }) {
-            return value.elements.flatMapIndexed { pairIndex, inner ->
-                (inner as TomlValue.List).elements.mapIndexed { i, element ->
-                    val typeIndex = pairIndex * 2 + i
-                    val type = types.getOrNull(typeIndex) ?: types.lastOrNull() ?: CacheVarLiteral.INT
-                    parseCellValue(element, type)
-                }
-            }.toTypedArray()
-        }
-        return value.elements.mapIndexed { index, element ->
-            val type = types.getOrNull(index) ?: types.lastOrNull() ?: CacheVarLiteral.INT
-            parseCellValue(element, type)
-        }.toTypedArray()
-    }
-
-    private fun parseCellValue(value: TomlValue, type: CacheVarLiteral): Any = when (value) {
-        is TomlValue.Integer -> value.value.toInt()
-        is TomlValue.Bool -> value.value
-        is TomlValue.String -> parseStringCell(value.value, type)
-        is TomlValue.List -> flattenList(value, arrayOf(type)).let { flattened ->
-            require(flattened.size == 1) { "Nested list cell must flatten to a single value here" }
-            flattened.single()
-        }
-        else -> error("Unsupported row cell value: ${value::class.simpleName}")
-    }
-
-    private fun parseStringCell(raw: String, type: CacheVarLiteral): Any {
-        if (type.name == "INT" || type.name == "BOOLEAN") {
-            raw.toIntOrNull()?.let { return if (type.name == "BOOLEAN") it != 0 else it }
-        }
-        return DBTableCellCodec.decodeString(raw, type)
+        val available = columnIdByName.keys.sorted().joinToString(", ")
+        throw IllegalArgumentException("$context: unknown column '$key' (define it in [dbtable.col]; available: $available)")
     }
 
     private fun optionalTableArray(value: TomlValue?, label: String): List<Map<String, TomlValue>> =
@@ -285,7 +248,7 @@ object DBTableToml {
     private fun optionalAnyArray(value: TomlValue?, types: Array<CacheVarLiteral>): Array<Any>? =
         when (value) {
             null -> null
-            is TomlValue.List -> flattenList(value, types)
+            is TomlValue.List -> DBTableTomlCellParser.parseCellValues(value, types, "defaults")
             else -> error("defaults must be an array")
         }
 }

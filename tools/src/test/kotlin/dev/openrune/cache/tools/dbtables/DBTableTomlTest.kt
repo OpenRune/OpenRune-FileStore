@@ -10,6 +10,7 @@ import dev.openrune.definition.util.VarType
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -115,8 +116,8 @@ class DBTableTomlTest {
             id = 0
             title = "Hi"
             requirement_stats = [
-                ["woodcutting", 35],
-                ["ranged", 30],
+                ["stats.woodcutting", 35],
+                ["stats.ranged", 30],
             ]
             """.trimIndent(),
         )
@@ -125,6 +126,117 @@ class DBTableTomlTest {
         assertEquals(CacheVarLiteral.STRING, table.columns[0]!!.types.single())
         assertEquals(4, table.columns[2]!!.types.size)
         assertEquals("Hi", table.rows.single().columns[0]!![0])
+        assertEquals(1, table.rows.single().columns[2]!![0])
+        assertEquals(35, table.rows.single().columns[2]!![1])
+    }
+
+    @Test
+    fun `rejects unknown row columns`() {
+        val error = assertThrows(IllegalArgumentException::class.java) {
+            DBTableToml.parse(
+                """
+                [dbtable]
+                id = 1
+                server_only = false
+
+                [dbtable.col]
+                title = "STRING"
+
+                [[row]]
+                id = 0
+                missing = "x"
+                """.trimIndent(),
+            )
+        }
+        assertTrue(error.message!!.contains("unknown column 'missing'"))
+        assertTrue(error.message!!.contains("title"))
+    }
+
+    @Test
+    fun `rejects wrong value type for string column`() {
+        val error = assertThrows(IllegalArgumentException::class.java) {
+            DBTableToml.parse(
+                """
+                [dbtable]
+                id = 1
+                server_only = false
+
+                [dbtable.col]
+                title = "STRING"
+
+                [[row]]
+                id = 0
+                title = 123
+                """.trimIndent(),
+            )
+        }
+        assertTrue(error.message!!.contains("STRING column requires a string"))
+    }
+
+    @Test
+    fun `rejects wrong value type for int column`() {
+        val error = assertThrows(IllegalArgumentException::class.java) {
+            DBTableToml.parse(
+                """
+                [dbtable]
+                id = 1
+                server_only = false
+
+                [dbtable.col]
+                unlock_bit = "INT"
+
+                [[row]]
+                id = 0
+                unlock_bit = "not-an-int"
+                """.trimIndent(),
+            )
+        }
+        assertTrue(error.message!!.contains("INT column requires an integer"))
+    }
+
+    @Test
+    fun `coord column accepts packed int x z level and conventional string`() {
+        fun parseCoords(value: String): Int {
+            val table = DBTableToml.parse(
+                """
+                [dbtable]
+                id = 1
+                server_only = false
+
+                [dbtable.col]
+                spawn = "COORD"
+
+                [[row]]
+                id = 0
+                spawn = $value
+                """.trimIndent(),
+            )
+            return table.rows.single().columns[0]!![0] as Int
+        }
+
+        val fromArray = parseCoords("[3200, 3200, 0]")
+        val fromTwo = parseCoords("[3200, 3200]")
+        val fromConventional = parseCoords("\"0_50_50_32_32\"")
+        assertEquals(fromArray, fromTwo)
+        assertEquals(fromArray, parseCoords(fromArray.toString()))
+        assertEquals(fromConventional, parseCoords(fromConventional.toString()))
+    }
+
+    @Test
+    fun `coord column exports as x z array omitting level zero`() {
+        val table = dbTable(1) {
+            serverOnly(false)
+            column("spawn", 0, VarType.COORDGRID)
+            row(0) {
+                column(0, 3200 shl 14 or 3200)
+            }
+        }
+        val toml = table.toToml()
+        assertTrue(toml.contains("spawn = [3200, 3200]"))
+        assertFalse(toml.contains("spawn = [3200, 3200, 0]"))
+
+        val reparsed = DBTableToml.parse(toml)
+        assertEquals(table.rows.single().columns[0]!![0], reparsed.rows.single().columns[0]!![0])
     }
 
     @Test
