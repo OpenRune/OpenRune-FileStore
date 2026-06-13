@@ -55,11 +55,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
             scripts.forEach { script ->
 
                 if (!script.archiveName.contains(script.id.toString())) {
-                    if (!library.index(CLIENTSCRIPT).contains(script.id)) {
-                        library.put(CLIENTSCRIPT, script.id, script.archiveName, script.bytes)
-                    } else {
-                        library.put(CLIENTSCRIPT, script.archiveName, script.bytes)
-                    }
+                    library.put(CLIENTSCRIPT, script.id, script.archiveName, script.bytes)
                 } else {
                     library.put(CLIENTSCRIPT, script.id, script.bytes)
                 }

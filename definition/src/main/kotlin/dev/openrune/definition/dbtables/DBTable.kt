@@ -11,7 +11,10 @@ data class DBTable(
     val rscmName: String? = null,
     val columns: Map<Int, DBColumnType>,
     val rows: List<DBRow>,
-    val serverOnly : Boolean = false
+    val serverOnly : Boolean = false,
+    val inherit: String? = null,
+    val rowType: String? = null,
+    val rowMeta: Map<String, String> = emptyMap(),
 )
 
 data class DBRow(
@@ -47,6 +50,16 @@ val columnNames: MutableMap<Int, String> = mutableMapOf()
 val rowNames: MutableMap<Int, String> = mutableMapOf()
 
 class DBTableBuilder(private val tableId: Int, private val tableRscmName: String? = null,private var serverOnly : Boolean = false) {
+
+
+    internal var extensionRowType: String? = null
+    internal var extensionRowMeta: Map<String, String> = emptyMap()
+
+    fun rowType(type: String, meta: Map<String, String> = emptyMap()) {
+        extensionRowType = type
+        extensionRowMeta = meta
+    }
+
 
     constructor(name: String, tableId: Int,serverOnly: Boolean = false) : this(tableId, name,serverOnly) {
         tableNames[tableId] = name
