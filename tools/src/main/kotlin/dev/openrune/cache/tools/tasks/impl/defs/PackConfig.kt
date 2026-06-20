@@ -43,6 +43,14 @@ class PackConfig(
     private val tokenizedFile: Path? = null,
 ) : CacheTask() {
 
+    private data class DefToPack(
+        val fileName: String,
+        val tableKey: String,
+        val definition: Definition,
+        val raw: Map<String, TomlValue>,
+        val packType: PackType,
+    )
+
     val mapper = tomlMapper {
         rsconfig {
             enableConstantProvider()
@@ -79,21 +87,19 @@ class PackConfig(
     override fun init(cache: Cache) {
         val files = getFiles(directory, "toml")
 
-        data class DefToPack(
-            val fileName: String,
-            val tableKey: String,
-            val definition: Definition,
-            val raw: Map<String, TomlValue>,
-            val packType: PackType,
-        )
-
         val definitionsToPack = mutableListOf<DefToPack>()
+        val varpConfigById = mutableMapOf<Int, Boolean>()
 
         files.forEach { file ->
             mapper.decodeRuneScapeBlocks(file.toPath()).forEach { block ->
                 val packType = packTypes[block.name] ?: return@forEach
                 val def = packType.tomlMapper.decodeRuneScape(packType.kType, block.map.properties) as Definition
                 val serverOnly = (block.map.properties["isServerOnly"] as? TomlValue.Bool)?.value ?: false
+
+                if (block.name == "varp" && def.id != -1) {
+                    varpConfigById[def.id] = serverOnly
+                }
+
                 if (serverOnly && !serverPass) return@forEach
 
                 definitionsToPack += DefToPack(file.name, block.name, def, block.map.properties, packType)
@@ -102,13 +108,20 @@ class PackConfig(
 
         if (definitionsToPack.isEmpty()) return
 
-        val progress = progress("Packing Configs", definitionsToPack.size)
+        val (varpEntries, otherEntries) = definitionsToPack.partition { it.tableKey == "varp" }
+        val orderedDefinitionsToPack = varpEntries + otherEntries
 
-        definitionsToPack.forEach { entry ->
+        val progress = progress("Packing Configs", orderedDefinitionsToPack.size)
+
+        orderedDefinitionsToPack.forEach { entry ->
             val inherit = (entry.raw["inherit"] as? TomlValue.Integer)?.value?.toInt() ?: -1
             val debugName = (entry.raw["debugName"] as? TomlValue.String)?.value ?: ""
 
             progress.extraMessage = "${entry.fileName.replace(".toml", "")} (${entry.definition.id})"
+
+            if (entry.tableKey == "varbit") {
+                validateVarbitVarp(entry, cache, varpConfigById)
+            }
 
             try {
                 val codecInstance = createCodecInstance(entry.packType)
@@ -121,6 +134,35 @@ class PackConfig(
         }
 
         progress.close()
+    }
+
+    private fun validateVarbitVarp(
+        entry: DefToPack,
+        cache: Cache,
+        varpConfigById: Map<Int, Boolean>,
+    ) {
+        val varbit = entry.definition as VarBitType
+        val varpId = varbit.varp
+        val varbitServerOnly = (entry.raw["isServerOnly"] as? TomlValue.Bool)?.value ?: false
+        val varpServerOnly = varpConfigById[varpId]
+
+        if (varpServerOnly == true && !serverPass && !varbitServerOnly) {
+            error(
+                "Varbit ${varbit.id} in ${entry.fileName} references varp $varpId which is marked isServerOnly, " +
+                    "but the varbit is not marked isServerOnly",
+            )
+        }
+
+        if (cache.data(CONFIGS, VARPLAYER, varpId) == null) {
+            val configHint = when {
+                varpServerOnly == true -> " (varp is marked isServerOnly and was not packed on this pass)"
+                varpServerOnly == false -> " (varp config exists but was not found in cache after packing varps)"
+                else -> ""
+            }
+            error(
+                "Varbit ${varbit.id} in ${entry.fileName} references varp $varpId which does not exist in cache$configHint",
+            )
+        }
     }
 
     private fun <T : Definition> packDefinition(
