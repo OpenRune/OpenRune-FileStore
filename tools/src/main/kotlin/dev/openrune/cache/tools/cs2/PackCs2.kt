@@ -11,18 +11,23 @@ import dev.openrune.filesystem.Cache
 import java.io.File
 
 /**
- * Compiles Neptune CS2 sources and writes client scripts into the cache via [CacheDelegate.library].
+ * Compiles Neptune CS2 sources and writes client scripts into the cache.
  *
- * Expects [cs2Dir] to contain `neptune.toml` and the directories its `sources`, `symbols`, `libraries`, and `excluded` arrays name.
- * Pair with [UnpackDefaultCs2] on the same directory in the cache tool DSL.
+ * Automatically installs or refreshes the bundled default CS2 project when:
+ * - this is the first run,
+ * - neptune.toml is missing,
+ * - client_version differs from the cache revision,
+ * - required directories from neptune.toml are missing.
  */
 class PackCs2(private val cs2Dir: File) : CacheTask() {
 
     private val logger = InlineLogger()
 
-    override val priority: TaskPriority get() = TaskPriority.CS2_LAST
+    override val priority: TaskPriority
+        get() = TaskPriority.CS2_LAST
 
-    val cs2Root: File get() = cs2Dir
+    val cs2Root: File
+        get() = cs2Dir
 
     override fun init(cache: Cache) {
         try {
@@ -32,6 +37,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
                 }
                 return
             }
+
             if (revision < CacheTask.CS2_MIN_CACHE_REVISION) {
                 logger.warn {
                     "PackCs2: cache revision $revision is not supported (minimum ${CacheTask.CS2_MIN_CACHE_REVISION})."
@@ -39,8 +45,11 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
                 return
             }
 
+            ensureInstalled(cache)
+
             val library = (cache as CacheDelegate).library
             val configFile = File(cs2Dir, "neptune.toml")
+
             if (!validateNeptuneLayout(configFile)) {
                 return
             }
@@ -49,62 +58,124 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
 
             SymDumper.dumpCacheVals(File(cs2Dir, "symbols"), cache, revision)
 
-            val scripts = ClientScripts.compileTask(configFile.toPath(), revision)
+            CustomCs2OverrideSync(cs2Dir, revision).sync()
+
+            val scripts = ClientScripts.compileTask(
+                configFile.toPath(),
+                revision
+            )
+
             val progress = progress("Packing Cs2 Scripts", scripts.size)
 
             scripts.forEach { script ->
-
                 if (!script.archiveName.contains(script.id.toString())) {
-                    library.put(CLIENTSCRIPT, script.id, script.archiveName, script.bytes)
+                    library.put(CLIENTSCRIPT, script.archiveName, script.bytes)
                 } else {
                     library.put(CLIENTSCRIPT, script.id, script.bytes)
                 }
+
                 progress.step()
             }
 
             progress.close()
         } catch (e: Exception) {
-            logger.error(e) { "PackCs2 failed" }
+            logger.error(e) {
+                "PackCs2 failed"
+            }
         }
     }
 
-    private fun validateNeptuneLayout(configFile: File): Boolean {
+    private fun ensureInstalled(cache: Cache) {
+        val neptune = File(cs2Dir, "neptune.toml")
+
+        var needsInstall = !neptune.exists()
+
+        if (!needsInstall) {
+            val text = runCatching {
+                neptune.readText()
+            }.getOrNull()
+
+            if (text == null) {
+                needsInstall = true
+            } else {
+                val existingVersion =
+                    NeptuneTomlClientVersion
+                        .readClientVersionFromText(text)
+
+                val layoutOk =
+                    NeptuneTomlClientVersion
+                        .allNeptunePathDirectoriesExist(
+                            cs2Dir,
+                            text
+                        )
+
+                needsInstall =
+                    existingVersion != revision ||
+                            !layoutOk
+            }
+        }
+
+        if (!needsInstall) {
+            return
+        }
+
+        logger.info {
+            "PackCs2: CS2 project missing or outdated, unpacking bundled defaults."
+        }
+
+        val unpack = UnpackDefaultCs2(
+            cs2Directory = cs2Dir,
+            force = true
+        )
+
+        unpack.revision = revision
+        unpack.init(cache)
+    }
+
+    private fun validateNeptuneLayout(
+        configFile: File
+    ): Boolean {
         if (!configFile.exists()) {
             logger.warn {
-                "PackCs2: neptune.toml not found at ${configFile.absolutePath}. " +
-                    "Run a fresh install: add UnpackDefaultCs2 (or your own CS2 bootstrap) before PackCs2 in your cache " +
-                    "task list, or create neptune.toml and the CS2 directory layout under ${cs2Dir.absolutePath}."
+                "PackCs2: neptune.toml does not exist after installation."
             }
             return false
         }
 
-        val text = runCatching { configFile.readText() }.getOrElse {
-            logger.warn { "PackCs2: could not read neptune.toml: ${it.message}" }
+        val text = runCatching {
+            configFile.readText()
+        }.getOrElse {
+            logger.warn {
+                "PackCs2: could not read neptune.toml: ${it.message}"
+            }
             return false
         }
 
-        NeptuneTomlClientVersion.ensureExcludedDirectories(cs2Dir, text)
+        NeptuneTomlClientVersion.ensureExcludedDirectories(
+            cs2Dir,
+            text
+        )
 
         for (key in NeptuneTomlClientVersion.neptuneDirectoryArrayKeys) {
             for (rel in parseNeptuneStringArray(text, key)) {
-                val dir = File(cs2Dir, rel.trimEnd('/', ' '))
-                if (dir.isDirectory) continue
-                if (key == "sources") {
-                    if (!dir.mkdirs()) {
-                        logger.warn {
-                            "PackCs2: neptune.toml lists sources path \"$rel\" but could not create directory " +
-                                "${dir.absolutePath} (exists as a file or permission denied)."
-                        }
-                        return false
-                    }
-                    logger.info { "PackCs2: created missing sources directory ${dir.absolutePath}" }
-                } else {
+                val dir = File(
+                    cs2Dir,
+                    rel.trimEnd('/', ' ')
+                )
+
+                if (dir.isDirectory) {
+                    continue
+                }
+
+                if (!dir.mkdirs()) {
                     logger.warn {
-                        "PackCs2: neptune.toml lists `$key` path \"$rel\" but that directory is missing " +
-                            "(expected ${dir.absolutePath}). Run a fresh install (UnpackDefaultCs2 before PackCs2) " +
-                            "or create the folders your config references."
+                        "PackCs2: could not create $key directory ${dir.absolutePath}."
                     }
                     return false
+                }
+
+                logger.info {
+                    "PackCs2: created missing $key directory ${dir.absolutePath}"
                 }
             }
         }
@@ -112,10 +183,25 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
         return true
     }
 
-    private fun parseNeptuneStringArray(text: String, key: String): List<String> {
-        val m = Regex("""(?m)^\s*$key\s*=\s*\[(.*?)]\s*(?:#.*)?$""").find(text) ?: return emptyList()
-        return m.groupValues[1].split(',')
-            .map { it.trim().removeSurrounding("\"").removeSurrounding("'").trim() }
-            .filter { it.isNotEmpty() }
+    private fun parseNeptuneStringArray(
+        text: String,
+        key: String
+    ): List<String> {
+        val match = Regex(
+                """(?m)^\s*$key\s*=\s*\[(.*?)]\s*(?:#.*)?$"""
+            ).find(text)
+                ?: return emptyList()
+
+        return match.groupValues[1]
+            .split(',')
+            .map {
+                it.trim()
+                    .removeSurrounding("\"")
+                    .removeSurrounding("'")
+                    .trim()
+            }
+            .filter {
+                it.isNotEmpty()
+            }
     }
 }
