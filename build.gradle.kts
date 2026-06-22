@@ -5,8 +5,8 @@ plugins {
     id("maven-publish")
 }
 
-//val buildDirectory = "/home/advo/Documents/GitHub/hosting/"
-val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "D:\\OpenRune\\openrune-hosting"
+val buildDirectory = "/home/advo/Documents/GitHub/hosting/"
+//val buildDirectory = System.getenv("HOSTING_DIRECTORY") ?: "D:\\OpenRune\\openrune-hosting"
 val buildNumber = "2.4.11"
 
 subprojects {
@@ -81,7 +81,7 @@ subprojects {
     }
 }
 
-val filesystemVersion = buildNumber
+val cacheVersion = buildNumber
 val definitionVersion = buildNumber
 val definitionOpcodeVersion = buildNumber
 val definitionOsrsVersion = buildNumber
@@ -116,8 +116,8 @@ publishing {
                     asNode().appendNode("dependencies").apply {
                         val filesystem = appendNode("dependency")
                         filesystem.appendNode("groupId", "dev.or2")
-                        filesystem.appendNode("artifactId", "filesystem")
-                        filesystem.appendNode("version", filesystemVersion)
+                        filesystem.appendNode("artifactId", "cache")
+                        filesystem.appendNode("version", cacheVersion)
                         filesystem.appendNode("scope", "compile")
 
                         val definition = appendNode("dependency")
@@ -168,11 +168,23 @@ publishing {
                         tools.appendNode("version", toolsVersion)
                         tools.appendNode("scope", "compile")
 
-                        val displee = appendNode("dependency")
-                        displee.appendNode("groupId", "dev.or2")
-                        displee.appendNode("artifactId", "displee")
-                        displee.appendNode("version", toolsVersion)
-                        displee.appendNode("scope", "compile")
+                        val ors2buff = appendNode("dependency")
+                        ors2buff.appendNode("groupId", "dev.or2.openrs2")
+                        ors2buff.appendNode("artifactId", "buffer")
+                        ors2buff.appendNode("version", "1.0.0-openrune")
+                        ors2buff.appendNode("scope", "compile")
+
+                        val ors2cache = appendNode("dependency")
+                        ors2cache.appendNode("groupId", "dev.or2.openrs2")
+                        ors2cache.appendNode("artifactId", "cache")
+                        ors2cache.appendNode("version", "1.0.0-openrune")
+                        ors2cache.appendNode("scope", "compile")
+
+                        val ors2crypto = appendNode("dependency")
+                        ors2crypto.appendNode("groupId", "dev.or2.openrs2")
+                        ors2crypto.appendNode("artifactId", "crypto")
+                        ors2crypto.appendNode("version", "1.0.0-openrune")
+                        ors2crypto.appendNode("scope", "compile")
                     }
                 }
             }
