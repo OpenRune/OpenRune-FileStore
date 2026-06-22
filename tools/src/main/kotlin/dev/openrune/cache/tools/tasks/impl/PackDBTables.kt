@@ -1,7 +1,6 @@
 package dev.openrune.cache.tools.tasks.impl
 
 import com.displee.cache.CacheLibrary
-import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.DBROW
 import dev.openrune.cache.DBTABLE
 import dev.openrune.cache.DBTABLEINDEX
@@ -28,7 +27,7 @@ class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
     private val tableCodec = DBTableCodec()
 
     override fun init(cache: Cache) {
-        val library = (cache as CacheDelegate).library
+        val library = cache.library
 
 
         val dbtableArchive = library.index(2).archive(DBTABLE) ?: return

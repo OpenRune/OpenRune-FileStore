@@ -2,7 +2,6 @@ package dev.openrune.cache.tools.cs2
 
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.CLIENTSCRIPT
-import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.tools.TaskPriority
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.progress
@@ -47,7 +46,7 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
 
             ensureInstalled(cache)
 
-            val library = (cache as CacheDelegate).library
+            val library = cache.library
             val configFile = File(cs2Dir, "neptune.toml")
 
             if (!validateNeptuneLayout(configFile)) {

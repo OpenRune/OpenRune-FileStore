@@ -3,11 +3,11 @@ package dev.openrune.cache.tools
 import com.displee.cache.CacheLibrary
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.CLIENTSCRIPT
-import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.cs2.PackCs2
 import dev.openrune.cache.tools.cs2.UnpackDefaultCs2
 import dev.openrune.cache.tools.tasks.impl.RemoveXteas
+import dev.openrune.filesystem.Cache
 import readCacheRevision
 import java.io.File
 import java.nio.ByteBuffer
@@ -65,7 +65,7 @@ class BuildCache(
                 tasks.forEach { task ->
                     task.revision = revision
                     task.serverPass = serverPass
-                    task.init(CacheDelegate(library))
+                    task.init(Cache(library))
                 }
             }
 

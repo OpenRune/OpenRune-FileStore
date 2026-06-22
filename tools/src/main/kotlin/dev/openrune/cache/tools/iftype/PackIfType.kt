@@ -2,7 +2,6 @@ package dev.openrune.cache.tools.iftype
 
 import com.displee.cache.CacheLibrary
 import com.displee.cache.index.archive.Archive
-import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.INTERFACES
 import dev.openrune.cache.filestore.definition.ComponentDecoder
 import dev.openrune.cache.filestore.definition.InterfaceType
@@ -11,7 +10,6 @@ import dev.openrune.cache.tools.CacheTool
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.GameValGroupTypes
-import dev.openrune.definition.type.widget.ComponentType
 import dev.openrune.definition.util.toArray
 import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled
@@ -23,7 +21,7 @@ class PackIfType(
     override fun init(cache: Cache) {
         val totalInterfaces = interfaces.size
         val progressInterfaces = progress("Packing iftype's", totalInterfaces)
-        val library = (cache as CacheDelegate).library
+        val library = cache.library
         interfaces.forEach {
             packInterface(cache,library,it)
             progressInterfaces.step()
