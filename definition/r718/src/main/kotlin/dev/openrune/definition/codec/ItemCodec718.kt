@@ -5,6 +5,7 @@ import dev.openrune.definition.util.readString
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.EntityOpsLoader
 import dev.openrune.definition.type.ItemType
+import dev.openrune.definition.type.ObjStackability
 import io.netty.buffer.ByteBuf
 
 fun ItemType.getPrimaryCursorOpcode(): Int {
@@ -84,7 +85,7 @@ class ItemCodec718 : DefinitionCodec<ItemType> {
             6 -> yan2d = buffer.readShort().toInt()
             7 -> xOffset2d = buffer.readShort().toInt()
             8 -> yOffset2d = buffer.readShort().toInt()
-            11 -> stacks = 1
+            11 -> stacks = ObjStackability.Always
             12 -> cost = buffer.readInt()
             13 -> equipSlot = buffer.readUnsignedByte().toInt()
             14 -> appearanceOverride1 = buffer.readUnsignedByte().toInt()

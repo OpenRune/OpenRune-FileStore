@@ -5,6 +5,7 @@ import dev.openrune.definition.EntityOpsLoader
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.type.ObjStackability
 import dev.openrune.definition.type.ItemType
 import io.netty.buffer.ByteBuf
 
@@ -33,7 +34,7 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
                 }
             }
 
-            11 -> stacks = 1
+            11 -> stacks = ObjStackability.Always
             12 -> cost = buffer.readInt()
             13 -> equipSlot = buffer.readUnsignedByte().toInt()
             14 -> appearanceOverride1 = buffer.readUnsignedByte().toInt()
@@ -129,6 +130,7 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
             140 -> notedId = buffer.readUnsignedShort()
             148 -> placeholderLink = buffer.readUnsignedShort()
             149 -> placeholderTemplate = buffer.readUnsignedShort()
+            160 -> stacks = ObjStackability.Never
             200 -> entityOpsLoader.decodeSubOp(options, buffer)
             201 -> entityOpsLoader.decodeConditionalOp(options, buffer)
             202 -> entityOpsLoader.decodeConditionalSubOp(options, buffer)
@@ -183,7 +185,7 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
             writeShort(definition.yOffset2d)
         }
 
-        if (definition.stacks == 1) {
+        if (definition.stacks == ObjStackability.Always) {
             writeByte(11)
         }
 
@@ -451,6 +453,10 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
         if (definition.placeholderTemplate != -1) {
             writeByte(149)
             writeShort(definition.placeholderTemplate)
+        }
+
+        if (definition.stacks == ObjStackability.Never) {
+            writeByte(160)
         }
 
         definition.writeParameters(this)
