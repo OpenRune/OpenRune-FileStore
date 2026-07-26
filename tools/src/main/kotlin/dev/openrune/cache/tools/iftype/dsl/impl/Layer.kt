@@ -10,7 +10,9 @@ import dev.openrune.cache.tools.iftype.dsl.impl.Model.applyModel
 import dev.openrune.cache.tools.iftype.dsl.impl.Rectangle.applyRectangle
 import dev.openrune.cache.tools.iftype.dsl.impl.Text.TextComponent
 import dev.openrune.cache.tools.iftype.dsl.impl.Text.applyText
+import dev.openrune.cache.tools.iftype.dsl.setOption
 import dev.openrune.definition.type.widget.ComponentTypeBuilder
+import dev.openrune.definition.type.widget.IfEvent
 
 
 object Layer {
@@ -24,6 +26,7 @@ object Layer {
         var scrollWidth: Int = 0
         var scrollHeight: Int = 0
         var noClickThrough: Boolean = false
+        private val options = mutableListOf<String>()
 
         fun scrollWidth(bld: () -> Int) {
             this.scrollWidth = bld()
@@ -37,6 +40,13 @@ object Layer {
             this.noClickThrough = bld()
         }
 
+        fun addOption(option: String, addAccessMask: Boolean = true) {
+            options.add(option)
+            if (addAccessMask) {
+                events = (events ?: 0) or IfEvent.DeprecatedOp1.bitmask.toInt()
+            }
+        }
+
         fun apply(componentName : String): ComponentTypeBuilder {
             return ComponentTypeBuilder(componentName).apply {
                 applyCommonProperties(this)
@@ -44,6 +54,9 @@ object Layer {
                 scrollWidth = this@LayerComponent.scrollWidth
                 scrollHeight = this@LayerComponent.scrollHeight
                 noClickThrough = this@LayerComponent.noClickThrough
+                this@LayerComponent.options.forEachIndexed { index, option ->
+                    setOption(index, option)
+                }
             }
         }
 
@@ -87,11 +100,6 @@ fun InterfaceBuilder.text(
     } ?: targetList.add(component)
 }
 
-/**
- * Depth-first flatten of layer children into [InterfaceBuilder.components], matching client ordering
- * (parent row first, then descendants). [parentOneBased] matches the historical `components.size + 1`
- * convention used for packed `layer` refs.
- */
 private fun InterfaceBuilder.flattenLayerSubtree(parentOneBased: Int, children: List<ComponentTypeBuilder>) {
     for (child in children) {
         if (child.layer == null) {
@@ -114,6 +122,7 @@ fun InterfaceBuilder.layer(
     val parentOneBased = components.size + 1
 
     val bld = Layer.LayerComponent(this).apply(block)
+    registerFrom(componentName, bld.fromComponent)
     val component = applyLayer(componentName, bld)
     bld.repeatType?.generateComponents(component.width ?: 0, component.height ?: 0, componentName, component)?.forEach {
         targetList.add(it)
@@ -198,6 +207,7 @@ fun InterfaceBuilder.graphic(
     block: Graphic.GraphicComponent.() -> Unit
 ) {
     val bld = Graphic.GraphicComponent().apply(block)
+    registerFrom(componentName, bld.fromComponent)
     val component = applyGraphic(componentName, bld)
     bld.repeatType?.generateComponents(component.width ?: 0, component.height ?: 0, componentName, component)?.forEach {
         targetList.add(it)

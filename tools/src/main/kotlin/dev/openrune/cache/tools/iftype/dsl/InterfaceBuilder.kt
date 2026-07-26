@@ -139,22 +139,20 @@ class InterfaceBuilder(
 ) {
     var onLoad: Array<Any>? = null
 
+    var inheritFrom: String? = null
+
     fun apply(componentName : String): ComponentTypeBuilder {
         return ComponentTypeBuilder(componentName).apply {
             this.width = this@InterfaceBuilder.width
             this.height = this@InterfaceBuilder.height
-            v3 = true
-            onLoad = this@InterfaceBuilder.onLoad
+            this.v3 = true
         }
     }
 
     var offset = Pair(0,0)
     val components = mutableListOf<ComponentTypeBuilder>()
-
-    /**
-     * Layer widgets whose children are built into a parent [Layer.LayerComponent.layerComponents] list
-     * (nested under another layer) store their subtree here until the root layer flattens into [components].
-     */
+    internal val edits = mutableListOf<EditComponent>()
+    internal val fromComponents = mutableMapOf<String, String>()
     internal val layerNestedChildren = mutableMapOf<ComponentTypeBuilder, MutableList<ComponentTypeBuilder>>()
 
     fun setOffset(block: () -> Pair<Int, Int>) {
@@ -166,7 +164,33 @@ class InterfaceBuilder(
         onLoad = block()
     }
 
+    fun inherit(from: String) {
+        inheritFrom = from
+    }
+
+    fun edit(name: String, block: EditComponent.() -> Unit) {
+        edits += EditComponent(name).apply(block)
+    }
+
+    internal fun registerFrom(componentName: String, from: String?) {
+        if (from != null) {
+            fromComponents[componentName] = from
+        }
+    }
+
     private fun totalChildren() = components.size
+}
+
+object InterfaceInherit {
+    private val byId = mutableMapOf<Int, String>()
+
+    fun register(interfaceId: Int, inheritFrom: String) {
+        byId[interfaceId] = inheritFrom
+    }
+
+    fun take(interfaceId: Int): String? = byId.remove(interfaceId)
+
+    fun peek(interfaceId: Int): String? = byId[interfaceId]
 }
 
 fun buildInterface(internalName: String, width: Int, height: Int,builder: InterfaceBuilder.() -> Unit): InterfaceType {
@@ -176,9 +200,23 @@ fun buildInterface(internalName: String, width: Int, height: Int,builder: Interf
     val bld = InterfaceBuilder(id,width,height)
     builder.invoke(bld)
 
-    val component = bld.apply("universe")
+    val root = bld.apply("universe").also { it.onLoad = bld.onLoad }
 
-    bld.components.add(0,component)
+    // Fresh interfaces: nest DSL components under auto-universe so centering the root
+    // keeps search/content/scrollbar aligned. Inherit overlays keep prior sibling layout.
+    if (bld.inheritFrom == null) {
+        val orphans = bld.components.toList()
+        bld.components.clear()
+        bld.components.add(root)
+        orphans.forEach { child ->
+            if (child.layer == null) {
+                child.layer = (id shl 16) or 0
+            }
+            bld.components.add(child)
+        }
+    } else {
+        bld.components.add(0, root)
+    }
 
     val componentsMap = bld.components.mapIndexed { index, builder ->
         builder.x = (builder.x ?: 0) + bld.offset.first
@@ -186,6 +224,10 @@ fun buildInterface(internalName: String, width: Int, height: Int,builder: Interf
         builder.v3 = true
         index to builder.build((id shl 16) or index)
     }.toMap()
+
+    bld.inheritFrom?.let { InterfaceInherit.register(id, it) }
+    registerEdits(bld, id)
+    InterfaceFrom.register(id, bld.fromComponents.toMap())
 
     return InterfaceType(
         components = componentsMap,
@@ -199,9 +241,21 @@ fun buildInterface(id: Int, interfaceName: String, width: Int, height: Int,build
     val bld = InterfaceBuilder(id,width,height)
     builder.invoke(bld)
 
-    val component = bld.apply("universe")
+    val root = bld.apply("universe").also { it.onLoad = bld.onLoad }
 
-    bld.components.add(0,component)
+    if (bld.inheritFrom == null) {
+        val orphans = bld.components.toList()
+        bld.components.clear()
+        bld.components.add(root)
+        orphans.forEach { child ->
+            if (child.layer == null) {
+                child.layer = (id shl 16) or 0
+            }
+            bld.components.add(child)
+        }
+    } else {
+        bld.components.add(0, root)
+    }
 
     val componentsMap = bld.components.mapIndexed { index, builder ->
         builder.x = (builder.x ?: 0) + bld.offset.first
@@ -209,10 +263,20 @@ fun buildInterface(id: Int, interfaceName: String, width: Int, height: Int,build
         builder.v3 = true
         index to builder.build((id shl 16) or index)
     }.toMap()
-    
+
+    bld.inheritFrom?.let { InterfaceInherit.register(id, it) }
+    registerEdits(bld, id)
+    InterfaceFrom.register(id, bld.fromComponents.toMap())
+
     return InterfaceType(
         components = componentsMap,
         _internalId = id,
         _internalName = interfaceName
     )
+}
+
+private fun registerEdits(bld: InterfaceBuilder, interfaceId: Int) {
+    if (bld.edits.isEmpty()) return
+    require(bld.inheritFrom != null) { "edit() requires inherit()" }
+    InterfaceEdits.register(interfaceId, bld.edits.toList())
 }

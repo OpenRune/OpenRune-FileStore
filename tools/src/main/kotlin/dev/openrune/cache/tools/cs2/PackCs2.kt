@@ -7,8 +7,11 @@ import dev.openrune.cache.tools.TaskPriority
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.progress
 import dev.openrune.clientscript.compiler.ClientScripts
+import dev.openrune.clientscript.compiler.ScriptEntry
+import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.filesystem.Cache
 import java.io.File
+import kotlin.io.path.Path
 
 /**
  * Compiles Neptune CS2 sources and writes client scripts into the cache.
@@ -19,6 +22,7 @@ import java.io.File
  * - client_version differs from the cache revision,
  * - required directories from neptune.toml are missing.
  */
+
 class PackCs2(private val cs2Dir: File) : CacheTask() {
 
     private val logger = InlineLogger()
@@ -26,6 +30,9 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
     override val priority: TaskPriority
         get() = TaskPriority.CS2_LAST
 
+    private companion object {
+        private val SCRIPT_ARCHIVE = Regex("""\[(\w+),([^\]]+)]""")
+    }
     val cs2Root: File
         get() = cs2Dir
 
@@ -58,6 +65,10 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
 
             SymDumper.dumpCacheVals(File(cs2Dir, "symbols"), cache, revision)
 
+            // SymDumper may re-emit plugin gamevals into symbols/; drop overlaps so
+            // symbols_custom wins (Neptune rejects duplicate ids/names).
+            SymbolsCustomConflictStrip.strip(cs2Dir)
+
             CustomCs2OverrideSync(cs2Dir, revision).sync()
 
             val scripts = ClientScripts.compileTask(
@@ -68,12 +79,8 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
             val progress = progress("Packing Cs2 Scripts", scripts.size)
 
             scripts.forEach { script ->
-                if (!script.archiveName.contains(script.id.toString())) {
-                    library.put(CLIENTSCRIPT, script.archiveName, script.bytes)
-                } else {
-                    library.put(CLIENTSCRIPT, script.id, script.bytes)
-                }
-
+                val id = resolveScriptId(script)
+                library.put(CLIENTSCRIPT, id, script.bytes)
                 progress.step()
             }
 
@@ -83,6 +90,20 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
                 "PackCs2 failed"
             }
         }
+    }
+
+    /**
+     * Prefer RSCM/gameval id. Tries full archive key (`clientscript.[proc,foo]`) then
+     * short toml key (`clientscript.foo`). Falls back to Neptune `.sym` id.
+     */
+    private fun resolveScriptId(script: ScriptEntry): Int {
+        ConstantProvider.getMappingOrNull("clientscript.${script.archiveName}")?.let { return it }
+
+        val match = SCRIPT_ARCHIVE.matchEntire(script.archiveName) ?: return script.id
+        val name = match.groupValues[2]
+        ConstantProvider.getMappingOrNull("clientscript.$name")?.let { return it }
+
+        return script.id
     }
 
     private fun ensureInstalled(cache: Cache) {

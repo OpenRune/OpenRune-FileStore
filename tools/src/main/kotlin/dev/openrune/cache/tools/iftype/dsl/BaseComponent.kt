@@ -48,6 +48,13 @@ open class BaseComponent {
     var repeatType: RepeatType? = null
     var events: Int? = null
 
+    var fromComponent: String? = null
+        private set
+
+    fun from(name: String) {
+        fromComponent = name.removePrefix("component.").substringAfter(":")
+    }
+
     fun size(block: () -> Pair<Int, Int>) {
         val (newX, newY) = block()
         width = newX

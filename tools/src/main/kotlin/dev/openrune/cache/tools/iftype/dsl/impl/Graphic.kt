@@ -10,7 +10,9 @@ import java.awt.Color
 object Graphic {
 
     fun applyGraphic(name: String, bld: GraphicComponent) : ComponentTypeBuilder {
-        require(bld.spriteId != -1) { "spriteId must be set to a valid value before applying GraphicComponent." }
+        require(bld.spriteId != -1 || bld.fromComponent != null) {
+            "spriteId must be set (or use from(\"…\") to inherit a sprite) before applying GraphicComponent."
+        }
         return bld.apply(name)
     }
 
@@ -85,7 +87,9 @@ object Graphic {
             return ComponentTypeBuilder(componentName).apply {
                 applyCommonProperties(this)
                 type = 5
-                graphic = this@GraphicComponent.spriteId
+                if (this@GraphicComponent.spriteId != -1) {
+                    graphic = this@GraphicComponent.spriteId
+                }
                 angle2d = this@GraphicComponent.textureId
                 tiling = this@GraphicComponent.spriteTiling
                 outline = this@GraphicComponent.borderType
