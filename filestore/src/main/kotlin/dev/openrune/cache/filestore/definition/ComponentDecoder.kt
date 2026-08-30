@@ -103,20 +103,19 @@ class ComponentDecoder(
         for (group in groups) {
             val files = cache.files(INTERFACES, group)
             val types = mutableMapOf<Int, ComponentType>()
+            // Resolved once per group instead of once per component.
+            val gameval = gamevals.lookupAs<Interface>(group and 0xFFFF)
             for (file in files) {
                 val combinedId = (group shl 16) or file
-                val data = cache.data(INTERFACES, group, file)
-                val interfaceId = (combinedId ushr 16) and 0xFFFF
                 val childIdRaw = combinedId and 0xFFFF
 
-                val componentName = gamevals.lookupAs<Interface>(interfaceId)?.components?.lookup(childIdRaw)?.name
-                if (componentName != null) {
-                    types[file] = read(combinedId, Unpooled.wrappedBuffer(data),componentName)
-                }
+                val componentName = gameval?.component(childIdRaw)?.name ?: continue
+                val data = cache.data(INTERFACES, group, file)
+                types[file] = read(combinedId, Unpooled.wrappedBuffer(data), componentName)
             }
 
             components[group] = InterfaceType(
-                types.toMap(),
+                types,
                 group,
                 gamevals.lookup(group)?.name
             )

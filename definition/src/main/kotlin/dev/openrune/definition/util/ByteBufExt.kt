@@ -65,16 +65,21 @@ public fun ByteBuf.readUnsignedShortOrNull(): Int? {
 
 // 0 terminated string.
 fun ByteBuf.readString(): String {
-    val sb = StringBuilder()
-    var b: Int
-    while (isReadable) {
-        b = readUnsignedByte().toInt()
-        if (b == 0) {
-            break
-        }
-        sb.append(b.toChar())
+    if (!isReadable) {
+        return ""
     }
-    return sb.toString()
+    val start = readerIndex()
+    // Latin-1 maps byte -> char identically to the old per-byte `b.toChar()` loop, but decodes the
+    // whole run in one pass instead of growing a StringBuilder a character at a time.
+    val nul = forEachByte(ByteProcessor.FIND_NUL)
+    if (nul == -1) {
+        val value = toString(start, writerIndex() - start, Charsets.ISO_8859_1)
+        readerIndex(writerIndex())
+        return value
+    }
+    val value = toString(start, nul - start, Charsets.ISO_8859_1)
+    readerIndex(nul + 1)
+    return value
 }
 
 public fun ByteBuf.readStringCP(charset: Charset = Cp1252Charset): String {

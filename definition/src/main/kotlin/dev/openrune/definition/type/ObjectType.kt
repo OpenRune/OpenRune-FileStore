@@ -124,18 +124,19 @@ data class ObjectType(
     }
 
     override fun hashCode(): Int {
-        return listOf(
-            name.hashCode(),
-            mapAreaId,
-            actions.hashCode(),
-            sizeX,
-            sizeY,
-            objectModels?.hashCode() ?: 0,
-            modelSizeX,
-            modelSizeY,
-            modelSizeZ,
-            animationId
-        ).fold(0) { acc, hash -> 31 * acc + hash }
+        // Same accumulation the previous `listOf(...).fold(...)` performed, without boxing ten ints
+        // into a throwaway list on every call.
+        var result = name.hashCode()
+        result = 31 * result + mapAreaId
+        result = 31 * result + actions.hashCode()
+        result = 31 * result + sizeX
+        result = 31 * result + sizeY
+        result = 31 * result + (objectModels?.hashCode() ?: 0)
+        result = 31 * result + modelSizeX
+        result = 31 * result + modelSizeY
+        result = 31 * result + modelSizeZ
+        result = 31 * result + animationId
+        return result
     }
 
     fun postDecode() {

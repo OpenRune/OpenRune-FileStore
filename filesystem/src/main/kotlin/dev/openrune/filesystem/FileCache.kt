@@ -1,5 +1,6 @@
 package dev.openrune.filesystem
 
+import dev.openrune.filesystem.ReadOnlyCache.Companion.indexOfFile
 import dev.openrune.filesystem.util.compress.DecompressionContext
 import dev.openrune.filesystem.util.secure.VersionTableBuilder
 import java.io.File
@@ -39,7 +40,8 @@ class FileCache(
     }
 
     override fun data(index: Int, archive: Int, file: Int, xtea: IntArray?): ByteArray? {
-        val matchingIndex = files.getOrNull(index)?.getOrNull(archive)?.indexOf(file) ?: -1
+        val fileIds = files.getOrNull(index)?.getOrNull(archive) ?: return null
+        val matchingIndex = fileIds.indexOfFile(file)
         if (matchingIndex == -1) {
             return null
         }
@@ -48,7 +50,8 @@ class FileCache(
             val indexRaf = indexes[index] ?: return null
             fileData(context, main, length, indexRaf, index, archive, xtea) ?: return null
         }
-        return files[matchingIndex]
+        // Single file archives are laid out sparsely by file id, multi file archives densely by position.
+        return files.getOrNull(if (fileIds.size == 1) file else matchingIndex)
     }
 
     override fun fileData(index: Int, archive: Int, xtea: IntArray?): Array<ByteArray?>? {

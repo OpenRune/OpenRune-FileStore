@@ -252,7 +252,7 @@ abstract class ReadOnlyCache(
 
         private fun ByteBuffer.readSmart(version: Int) = if (version >= 7) readBigSmart() else readUnsignedShort()
 
-        private fun ByteBuffer.readUnsignedShort() = (readUnsignedByte() shl 8) or readUnsignedByte()
+        private fun ByteBuffer.readUnsignedShort() = short.toInt() and 0xffff
 
         private fun ByteBuffer.readUnsignedMedium() = (readUnsignedByte() shl 16) or (readUnsignedByte() shl 8) or readUnsignedByte()
 
@@ -269,20 +269,28 @@ abstract class ReadOnlyCache(
         private fun ByteBuffer.skip(amount: Int) = position(position() + amount)
 
         /**
+         * Scratch space for [readSector]. One 520 byte staging array per thread, reused across every
+         * sector read instead of allocating a fresh array (and wrapper) per call.
+         */
+        private val sectorScratch = ThreadLocal.withInitial { ByteBuffer.wrap(ByteArray(SECTOR_SIZE)) }
+
+        /**
          * Reads a section of a cache's archive
          */
         internal fun readSector(mainFile: RandomAccessFile, length: Long, raf: RandomAccessFile, indexId: Int, sectorId: Int): ByteArray? {
             if (length < INDEX_SIZE * sectorId + INDEX_SIZE) {
                 return null
             }
+            val buffer = sectorScratch.get()
+            val sectorData = buffer.array()
             raf.seek(sectorId.toLong() * INDEX_SIZE)
-            val sectorData = ByteArray(SECTOR_SIZE)
             raf.read(sectorData, 0, INDEX_SIZE)
             val bigSector = sectorId > 65535
-            val buffer = ByteBuffer.wrap(sectorData)
+            val maxSectorPosition = length / SECTOR_SIZE
+            buffer.position(0)
             val sectorSize = buffer.readUnsignedMedium()
             var sectorPosition = buffer.readUnsignedMedium()
-            if (sectorSize < 0 || sectorPosition <= 0 || sectorPosition > mainFile.length() / SECTOR_SIZE) {
+            if (sectorSize < 0 || sectorPosition <= 0 || sectorPosition > maxSectorPosition) {
                 return null
             }
             var read = 0
@@ -307,7 +315,7 @@ abstract class ReadOnlyCache(
                 val sectorIndex = buffer.readUnsignedByte()
                 if (sectorIndex != indexId || id != sectorId || sectorChunk != chunk) {
                     return null
-                } else if (sectorNextPosition < 0 || sectorNextPosition > mainFile.length() / SECTOR_SIZE) {
+                } else if (sectorNextPosition < 0 || sectorNextPosition > maxSectorPosition) {
                     return null
                 }
                 System.arraycopy(sectorData, sectorHeaderSize, output, read, requiredToRead)
@@ -316,6 +324,26 @@ abstract class ReadOnlyCache(
                 chunk++
             }
             return output
+        }
+
+        /**
+         * Binary search over an ascending array of file ids, falling back to a linear scan if the
+         * array turns out not to be sorted. File ids are written as cumulative deltas so they are
+         * always ascending in practice; the fallback only costs anything on a miss.
+         */
+        internal fun IntArray.indexOfFile(file: Int): Int {
+            var low = 0
+            var high = size - 1
+            while (low <= high) {
+                val mid = (low + high) ushr 1
+                val value = this[mid]
+                when {
+                    value < file -> low = mid + 1
+                    value > file -> high = mid - 1
+                    else -> return mid
+                }
+            }
+            return indexOf(file)
         }
     }
 

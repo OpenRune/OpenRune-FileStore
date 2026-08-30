@@ -2,10 +2,26 @@ package dev.openrune.definition
 
 class EntityOpsDefinition {
 
-    val ops = mutableListOf<Op?>()
-    val subOps = mutableListOf<MutableList<SubOp>>()
-    val conditionalOps = mutableListOf<MutableList<ConditionalOp>>()
-    val conditionalSubOps = mutableListOf<MutableMap<Int, MutableList<ConditionalSubOp>>>()
+    // Every item, npc and object owns one of these, so eagerly allocating four lists per instance
+    // cost four objects per definition when the vast majority only ever use `ops` - and plenty use
+    // none at all. The backing lists are created on first touch instead.
+    private var _ops: MutableList<Op?>? = null
+    private var _subOps: MutableList<MutableList<SubOp>>? = null
+    private var _conditionalOps: MutableList<MutableList<ConditionalOp>>? = null
+    private var _conditionalSubOps: MutableList<MutableMap<Int, MutableList<ConditionalSubOp>>>? = null
+
+    val ops: MutableList<Op?>
+        get() = _ops ?: ArrayList<Op?>(DEFAULT_OP_SLOTS).also { _ops = it }
+
+    val subOps: MutableList<MutableList<SubOp>>
+        get() = _subOps ?: ArrayList<MutableList<SubOp>>(DEFAULT_OP_SLOTS).also { _subOps = it }
+
+    val conditionalOps: MutableList<MutableList<ConditionalOp>>
+        get() = _conditionalOps ?: ArrayList<MutableList<ConditionalOp>>(DEFAULT_OP_SLOTS).also { _conditionalOps = it }
+
+    val conditionalSubOps: MutableList<MutableMap<Int, MutableList<ConditionalSubOp>>>
+        get() = _conditionalSubOps
+            ?: ArrayList<MutableMap<Int, MutableList<ConditionalSubOp>>>(DEFAULT_OP_SLOTS).also { _conditionalSubOps = it }
 
     fun op(index: Int, text: String) = apply {
         ops.ensureSize(index) { null }
@@ -17,7 +33,7 @@ class EntityOpsDefinition {
         ops[index] = Op(text)
     }
 
-    fun getOpOrNull(index: Int): String? = ops.getOrNull(index)?.text
+    fun getOpOrNull(index: Int): String? = _ops?.getOrNull(index)?.text
 
     fun subOp(index: Int, subID: Int, text: String) = apply {
         subOps.ensureSize(index) { mutableListOf() }
@@ -31,10 +47,10 @@ class EntityOpsDefinition {
         list += SubOp(text, subID)
     }
 
-    fun getSubOpsOrEmpty(index: Int): List<SubOp> = subOps.getOrNull(index).orEmpty()
+    fun getSubOpsOrEmpty(index: Int): List<SubOp> = _subOps?.getOrNull(index).orEmpty()
 
     fun getSubOpOrNull(index: Int, subID: Int): SubOp? =
-        subOps.getOrNull(index)?.firstOrNull { it.subID == subID }
+        _subOps?.getOrNull(index)?.firstOrNull { it.subID == subID }
 
     fun conditionalOp(
         index: Int,
@@ -60,7 +76,7 @@ class EntityOpsDefinition {
         conditionalOps[index] += ConditionalOp(text, varpID, varbitID, min, max)
     }
 
-    fun getConditionalOpsOrEmpty(index: Int): List<ConditionalOp> = conditionalOps.getOrNull(index).orEmpty()
+    fun getConditionalOpsOrEmpty(index: Int): List<ConditionalOp> = _conditionalOps?.getOrNull(index).orEmpty()
 
     fun conditionalSubOp(
         index: Int,
@@ -95,20 +111,20 @@ class EntityOpsDefinition {
     }
 
     fun getConditionalSubOpsOrEmpty(index: Int): Map<Int, List<ConditionalSubOp>> =
-        conditionalSubOps.getOrNull(index).orEmpty()
+        _conditionalSubOps?.getOrNull(index).orEmpty()
 
     fun getConditionalSubOpsBySubIdOrEmpty(index: Int, subID: Int): List<ConditionalSubOp> =
-        conditionalSubOps.getOrNull(index)?.get(subID).orEmpty()
+        _conditionalSubOps?.getOrNull(index)?.get(subID).orEmpty()
 
     /**
      * Structural equality for merge/patch logic. Reference equality is not enough: decoded TOML
      * often allocates a fresh empty [EntityOpsDefinition] that must compare equal to another empty instance.
      */
     fun contentEquals(other: EntityOpsDefinition): Boolean {
-        if (!opsContentEquals(ops, other.ops)) return false
-        if (!subOpsContentEquals(subOps, other.subOps)) return false
-        if (!conditionalOpsContentEquals(conditionalOps, other.conditionalOps)) return false
-        if (!conditionalSubOpsContentEquals(conditionalSubOps, other.conditionalSubOps)) return false
+        if (!opsContentEquals(_ops.orEmpty(), other._ops.orEmpty())) return false
+        if (!subOpsContentEquals(_subOps.orEmpty(), other._subOps.orEmpty())) return false
+        if (!conditionalOpsContentEquals(_conditionalOps.orEmpty(), other._conditionalOps.orEmpty())) return false
+        if (!conditionalSubOpsContentEquals(_conditionalSubOps.orEmpty(), other._conditionalSubOps.orEmpty())) return false
         return true
     }
 
@@ -189,12 +205,12 @@ class EntityOpsDefinition {
     )
 
     override fun toString(): String {
-        val opsPart = ops.mapIndexedNotNull { index, op -> op?.let { "$index=${it.text}" } }
-        val subOpsPart = subOps.mapIndexedNotNull { index, entries ->
+        val opsPart = _ops.orEmpty().mapIndexedNotNull { index, op -> op?.let { "$index=${it.text}" } }
+        val subOpsPart = _subOps.orEmpty().mapIndexedNotNull { index, entries ->
             if (entries.isEmpty()) null
             else "$index=${entries.joinToString(prefix = "[", postfix = "]") { "${it.subID}:${it.text}" }}"
         }
-        val conditionalOpsPart = conditionalOps.mapIndexedNotNull { index, entries ->
+        val conditionalOpsPart = _conditionalOps.orEmpty().mapIndexedNotNull { index, entries ->
             if (entries.isEmpty()) null
             else "$index=${
                 entries.joinToString(prefix = "[", postfix = "]") {
@@ -202,7 +218,7 @@ class EntityOpsDefinition {
                 }
             }"
         }
-        val conditionalSubOpsPart = conditionalSubOps.mapIndexedNotNull { index, map ->
+        val conditionalSubOpsPart = _conditionalSubOps.orEmpty().mapIndexedNotNull { index, map ->
             if (map.isEmpty()) null
             else "$index=${
                 map.toSortedMap().entries.joinToString(prefix = "{", postfix = "}") { (subId, entries) ->
@@ -225,6 +241,8 @@ class EntityOpsDefinition {
         }
     }
 }
+
+private const val DEFAULT_OP_SLOTS = 5
 
 private inline fun <T> MutableList<T>.ensureSize(index: Int, default: () -> T) {
     while (size <= index) add(default())

@@ -21,12 +21,20 @@ object GameValHandler {
 
     private val logger = InlineLogger()
 
-    fun List<GameValElement>.lookup(id: Int): GameValElement? = this.firstOrNull { it.id == id }
+    fun List<GameValElement>.lookup(id: Int): GameValElement? =
+        if (this is GameValList) first(id) else firstOrNull { it.id == id }
 
     inline fun <reified T : GameValElement> GameValElement.elementAs(): T? = this as? T
 
-    inline fun <reified T : GameValElement> List<GameValElement>.lookupAs(id: Int): T? =
-        filterIsInstance<T>().firstOrNull { it.id == id }
+    inline fun <reified T : GameValElement> List<GameValElement>.lookupAs(id: Int): T? {
+        if (this is GameValList) {
+            // The index holds every id in the group, so a miss here means no element matches at all.
+            val hit = first(id) ?: return null
+            val typed = hit as? T
+            if (typed != null) return typed
+        }
+        return filterIsInstance<T>().firstOrNull { it.id == id }
+    }
 
     private fun assertNoDuplicateGameValKeys(
         type: GameValGroupTypes,
@@ -76,7 +84,7 @@ object GameValHandler {
             unpackGameVal(type, file, data)
         }
 
-        return elements
+        return GameValList(elements)
     }
 
     fun unpackGameVal(type: GameValGroupTypes, id: Int, bytes: ByteArray?): List<GameValElement> {
@@ -248,12 +256,18 @@ object GameValHandler {
         }
     }
 
+    // Compiled once; these were being re-compiled on every call.
+    private val TAGS = Regex("<[^>]*>")
+    private val AT_CODES = Regex("@[^@\\s]+@?")
+    private val NON_NAME_CHARS = Regex("[^a-zA-Z0-9_+\\-\"']")
+    private val REPEATED_UNDERSCORES = Regex("_+")
+
     fun standardizeGamevalName(name: String): String {
         return name
-            .replace(Regex("<[^>]*>"), "")
-            .replace(Regex("@[^@\\s]+@?"), "")
-            .replace(Regex("[^a-zA-Z0-9_+\\-\"']"), "_")
-            .replace(Regex("_+"), "_")
+            .replace(TAGS, "")
+            .replace(AT_CODES, "")
+            .replace(NON_NAME_CHARS, "_")
+            .replace(REPEATED_UNDERSCORES, "_")
             .trim('_')
         .lowercase()
     }

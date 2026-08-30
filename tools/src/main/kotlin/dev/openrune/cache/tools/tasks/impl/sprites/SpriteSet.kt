@@ -20,6 +20,10 @@ public data class SpriteSet(
         return dout.use { os ->
             val palette: MutableList<Int> = ArrayList()
             palette.add(0)
+            // colour -> palette index, so membership and index lookups are constant time. Scanning
+            // the list for every pixel made encoding cost O(pixels * palette size).
+            val paletteIndices = HashMap<Int, Int>(512)
+            paletteIndices[0] = 0
 
             for (sprite in sprites) {
                 var flags = FLAG_VERTICAL
@@ -30,10 +34,11 @@ public data class SpriteSet(
                         var rgb = argb and 0xFFFFFF
                         if (rgb == 0) rgb = 1
                         if (alpha != 0 && alpha != 255) flags = flags or FLAG_ALPHA
-                        if (!palette.contains(rgb)) {
+                        if (!paletteIndices.containsKey(rgb)) {
                             if (palette.size >= 256) {
                                 throw IOException("Palette size to big (${id},${palette.size}).")
                             }
+                            paletteIndices[rgb] = palette.size
                             palette.add(rgb)
                         }
                     }
@@ -49,7 +54,7 @@ public data class SpriteSet(
                         if (flags and FLAG_ALPHA == 0 && alpha == 0) {
                             os.write(0)
                         } else {
-                            os.write(palette.indexOf(rgb))
+                            os.write(paletteIndices[rgb] ?: 0)
                         }
                     }
                 }

@@ -8,8 +8,6 @@ import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.type.ObjectType
 import io.netty.buffer.ByteBuf
-import java.util.stream.IntStream
-import kotlin.streams.toList
 
 class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
     private val entityOpsLoader = EntityOpsLoader(revision)
@@ -18,50 +16,51 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
         when (opcode) {
             1 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                when {
-                    length > 0 -> {
-                        objectTypes = MutableList(length) { 0 }
-                        objectModels = MutableList(length) { 0 }
-
-                        (0 until length).forEach {
-                            objectModels!![it] = buffer.readUnsignedShort()
-                            objectTypes!![it] = buffer.readUnsignedByte().toInt()
-                        }
+                if (length > 0) {
+                    // Appended directly into pre-sized lists; the old form allocated a zero-filled
+                    // list first and then boxed every entry a second time on overwrite.
+                    val types = ArrayList<Int>(length)
+                    val models = ArrayList<Int>(length)
+                    repeat(length) {
+                        models.add(buffer.readUnsignedShort())
+                        types.add(buffer.readUnsignedByte().toInt())
                     }
+                    objectTypes = types
+                    objectModels = models
                 }
             }
 
             2 -> name = buffer.readString()
             5 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                when {
-                    length > 0 -> {
-                        objectTypes = null
-                        objectModels = IntStream.range(0, length).map {
-                            buffer.readUnsignedShort()
-                        }.toList().toMutableList()
-                    }
+                if (length > 0) {
+                    objectTypes = null
+                    // Was an IntStream pipeline collected into a list and copied again.
+                    val models = ArrayList<Int>(length)
+                    repeat(length) { models.add(buffer.readUnsignedShort()) }
+                    objectModels = models
                 }
             }
             6 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
                 if (length > 0) {
-                    objectTypes = MutableList(length) { 0 }
-                    objectModels = MutableList(length) { 0 }
-                    (0 until length).forEach {
-                        objectModels!![it] = buffer.readInt()
-                        objectTypes!![it] = buffer.readUnsignedByte().toInt()
+                    val types = ArrayList<Int>(length)
+                    val models = ArrayList<Int>(length)
+                    repeat(length) {
+                        models.add(buffer.readInt())
+                        types.add(buffer.readUnsignedByte().toInt())
                     }
+                    objectTypes = types
+                    objectModels = models
                 }
             }
             7 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
                 if (length > 0) {
                     objectTypes = null
-                    objectModels = MutableList(length) { 0 }
-                    (0 until length).forEach {
-                        objectModels!![it] = buffer.readInt()
-                    }
+                    val models = ArrayList<Int>(length)
+                    repeat(length) { models.add(buffer.readInt()) }
+                    objectModels = models
                 }
             }
 
@@ -123,9 +122,9 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
                     soundRetain = buffer.readUnsignedByte().toInt()
                 }
                 val length: Int = buffer.readUnsignedByte().toInt()
-                ambientSoundIds = IntStream.range(0, length).map {
-                    buffer.readUnsignedShort()
-                }.toList().toMutableList()
+                val soundIds = ArrayList<Int>(length)
+                repeat(length) { soundIds.add(buffer.readUnsignedShort()) }
+                ambientSoundIds = soundIds
             }
             81 -> clipType = (buffer.readUnsignedByte().toInt()) * 256
             89 -> randomizeAnimStart = true

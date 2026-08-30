@@ -8,6 +8,23 @@ data class Interface(
     val components: List<InterfaceComponent> = emptyList()
 ) : GameValElement(name, id) {
 
+    /**
+     * Child id index, built on first use. Component lookups happen once per component per interface,
+     * so scanning the list each time is quadratic in the component count.
+     */
+    private val componentsById: Map<Int, InterfaceComponent> by lazy {
+        HashMap<Int, InterfaceComponent>(if (components.size < 3) 4 else (components.size / 0.75f).toInt() + 1)
+            .apply {
+                // First-wins, matching the `firstOrNull` scan this replaces.
+                for (component in components) {
+                    putIfAbsent(component.id, component)
+                }
+            }
+    }
+
+    /** The first child component with [id], or null when this interface has no such child. */
+    fun component(id: Int): InterfaceComponent? = componentsById[id]
+
     data class InterfaceComponent(
         override val name: String,
         override val id: Int,

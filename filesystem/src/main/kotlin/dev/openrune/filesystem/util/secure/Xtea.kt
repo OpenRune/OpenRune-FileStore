@@ -30,16 +30,17 @@ object Xtea {
 
         val numQuads = (end - start) / 8
         for (i in 0 until numQuads) {
+            val offset = start + i * 8
             var sum = GOLDEN_RATIO * ROUNDS
-            var v0 = getInt(buffer, start + i * 8)
-            var v1 = getInt(buffer, start + i * 8 + 4)
+            var v0 = getInt(buffer, offset)
+            var v1 = getInt(buffer, offset + 4)
             for (j in 0 until ROUNDS) {
                 v1 -= (v0 shl 4 xor v0.ushr(5)) + v0 xor sum + key[sum.ushr(11) and 3]
                 sum -= GOLDEN_RATIO
                 v0 -= (v1 shl 4 xor v1.ushr(5)) + v1 xor sum + key[sum and 3]
             }
-            putInt(buffer, start + i * 8, v0)
-            putInt(buffer, start + i * 8 + 4, v1)
+            putInt(buffer, offset, v0)
+            putInt(buffer, offset + 4, v1)
         }
     }
 
