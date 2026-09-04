@@ -10,22 +10,26 @@ interface Recolourable {
 
     fun readColours(buffer: ByteBuf) {
         val length = buffer.readUnsignedByte().toInt()
-        originalColours = MutableList(length) { -1 }
-        modifiedColours = MutableList(length) { -1 }
+        val original = ArrayList<Int>(length)
+        val modified = ArrayList<Int>(length)
         for (count in 0 until length) {
-            originalColours!![count] = buffer.readShort().toInt().toShort().toInt()
-            modifiedColours!![count] = buffer.readShort().toInt().toShort().toInt()
+            original.add(buffer.readShort().toInt())
+            modified.add(buffer.readShort().toInt())
         }
+        originalColours = original
+        modifiedColours = modified
     }
 
     fun readTextures(buffer: ByteBuf) {
         val length = buffer.readUnsignedByte().toInt()
-        originalTextureColours = MutableList(length) { -1 }
-        modifiedTextureColours = MutableList(length) { -1 }
+        val original = ArrayList<Int>(length)
+        val modified = ArrayList<Int>(length)
         for (count in 0 until length) {
-            originalTextureColours!![count] = buffer.readShort().toInt().toShort().toInt()
-            modifiedTextureColours!![count] = buffer.readShort().toInt().toShort().toInt()
+            original.add(buffer.readShort().toInt())
+            modified.add(buffer.readShort().toInt())
         }
+        originalTextureColours = original
+        modifiedTextureColours = modified
     }
 
     fun writeColoursTextures(writer: ByteBuf) {

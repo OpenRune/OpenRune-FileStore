@@ -19,13 +19,12 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
         when (opcode) {
             1 -> {
                 val length = buffer.readUnsignedByte().toInt()
-                models = MutableList(length) { 0 }
-                for (count in 0 until length) {
-                    models!![count] = buffer.readUnsignedShort()
-                    if (models!![count] == 65535) {
-                        models!![count] = -1
-                    }
+                val ids = ArrayList<Int>(length)
+                repeat(length) {
+                    val model = buffer.readUnsignedShort()
+                    ids.add(if (model == 65535) -1 else model)
                 }
+                models = ids
             }
 
             2 -> name = buffer.readString()
@@ -47,24 +46,15 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             41 -> readTextures(buffer)
             60 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                chatheadModels = MutableList(length) { 0 }
-                (0 until length).forEach {
-                    chatheadModels!![it] = buffer.readUnsignedShort()
-                }
+                chatheadModels = MutableList(length) { buffer.readUnsignedShort() }
             }
             61 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                models = MutableList(length) { 0 }
-                (0 until length).forEach {
-                    models!![it] = buffer.readInt()
-                }
+                models = MutableList(length) { buffer.readInt() }
             }
             62 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                chatheadModels = MutableList(length) { 0 }
-                (0 until length).forEach {
-                    chatheadModels!![it] = buffer.readInt()
-                }
+                chatheadModels = MutableList(length) { buffer.readInt() }
             }
             74 -> attack = buffer.readUnsignedShort()
             75 -> defence = buffer.readUnsignedShort()
@@ -87,16 +77,16 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
 
                     val bits = buffer.readUnsignedByte().toInt()
                     val length = 32 - Integer.numberOfLeadingZeros(bits)
-                    val iconGroups = MutableList(length) { 0 }
-                    val iconIndexes = MutableList(length) { 0 }
+                    val iconGroups = ArrayList<Int>(length)
+                    val iconIndexes = ArrayList<Int>(length)
 
                     for (index in 0 until length) {
                         if ((bits and (1 shl index)) == 0) {
-                            iconGroups[index] = -1
-                            iconIndexes[index] = -1
+                            iconGroups.add(-1)
+                            iconIndexes.add(-1)
                         } else {
-                            iconGroups[index] = buffer.readNullableLargeSmart()
-                            iconIndexes[index] = buffer.readShortSmartSub()
+                            iconGroups.add(buffer.readNullableLargeSmart())
+                            iconIndexes.add(buffer.readShortSmartSub())
                         }
                     }
 
@@ -240,7 +230,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             writeShort(definition.category)
         }
 
-        definition.actions.ops.forEachIndexed { index, op ->
+        definition.actions.opsOrEmpty.forEachIndexed { index, op ->
             entityOpsLoader.encodeBaseOp(this, index, op)
         }
 

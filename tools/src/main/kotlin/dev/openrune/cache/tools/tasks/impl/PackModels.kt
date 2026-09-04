@@ -23,7 +23,7 @@ class PackModels(
         if (modelSize > 0) {
             modelFiles.forEach { file ->
                 val name = file.nameWithoutExtension
-                val id: Int? = if (name.matches(Regex("-?\\d+"))) {
+                val id: Int? = if (name.matches(NUMERIC_NAME)) {
                     name.toInt()
                 } else {
                     ConstantProvider.getMapping(rscmMappingPrefix + name.lowercase().replace(" ", "_"))
@@ -46,5 +46,9 @@ class PackModels(
 
             progressModels.close()
         }
+    }
+
+    private companion object {
+        val NUMERIC_NAME = Regex("-?\\d+")
     }
 }

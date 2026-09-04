@@ -113,6 +113,9 @@ class PackConfig(
 
         val progress = progress("Packing Configs", orderedDefinitionsToPack.size)
 
+        // Codecs hold nothing but the revision, so one instance per pack type is enough.
+        val codecs = mutableMapOf<String, DefinitionCodec<*>>()
+
         orderedDefinitionsToPack.forEach { entry ->
             val inherit = (entry.raw["inherit"] as? TomlValue.Integer)?.value?.toInt() ?: -1
             val debugName = (entry.raw["debugName"] as? TomlValue.String)?.value ?: ""
@@ -124,7 +127,7 @@ class PackConfig(
             }
 
             try {
-                val codecInstance = createCodecInstance(entry.packType)
+                val codecInstance = codecs.getOrPut(entry.packType.name) { createCodecInstance(entry.packType) }
                 packDefinition(entry.packType, entry.definition, codecInstance, cache, inherit, debugName)
             } catch (e: Exception) {
                 println("Unable to pack ${entry.packType.name} with ID ${entry.definition.id} due to an error: ${e.message}")
@@ -232,24 +235,21 @@ class PackConfig(
     private fun <T : Definition> mergeDefinitions(parentDef: T, childDef: T, codec: DefinitionCodec<T>): T {
         val defaultDef = codec.createDefinition()
 
-        defaultDef::class.java.declaredFields.forEach { field ->
-            if (!Modifier.isStatic(field.modifiers)) {
-                field.isAccessible = true
-                val parentValue = field.get(parentDef)
-                val childValue = field.get(childDef)
-                val defaultValue = field.get(defaultDef)
-                val differsFromParent = !mergeFieldValuesEqual(childValue, parentValue)
-                val differsFromDefault = !mergeFieldValuesEqual(childValue, defaultValue)
+        mergeFieldsOf(defaultDef::class.java).forEach { field ->
+            val parentValue = field.get(parentDef)
+            val childValue = field.get(childDef)
+            val defaultValue = field.get(defaultDef)
+            val differsFromParent = !mergeFieldValuesEqual(childValue, parentValue)
+            val differsFromDefault = !mergeFieldValuesEqual(childValue, defaultValue)
 
-                if (differsFromParent && differsFromDefault) {
-                    if (field.name == "params" && parentValue is Map<*, *> && childValue is Map<*, *>) {
-                        val mergedParams = parentValue.toMutableMap().apply {
-                            putAll(childValue)
-                        }
-                        field.set(parentDef, mergedParams)
-                    } else {
-                        field.set(parentDef, childValue)
+            if (differsFromParent && differsFromDefault) {
+                if (field.name == "params" && parentValue is Map<*, *> && childValue is Map<*, *>) {
+                    val mergedParams = parentValue.toMutableMap().apply {
+                        putAll(childValue)
                     }
+                    field.set(parentDef, mergedParams)
+                } else {
+                    field.set(parentDef, childValue)
                 }
             }
         }
@@ -278,6 +278,17 @@ class PackConfig(
 
     companion object {
         private val tomlMapperDefault = tomlMapper { }
+
+        /** Mergeable instance fields per definition class, reflected and unlocked once. */
+        private val mergeFields = mutableMapOf<Class<*>, List<java.lang.reflect.Field>>()
+
+        private fun mergeFieldsOf(type: Class<*>): List<java.lang.reflect.Field> =
+            mergeFields.getOrPut(type) {
+                type.declaredFields
+                    .filterNot { Modifier.isStatic(it.modifiers) }
+                    .onEach { it.isAccessible = true }
+            }
+
         val packTypes = mutableMapOf<String, PackType>()
 
         fun registerPackType(

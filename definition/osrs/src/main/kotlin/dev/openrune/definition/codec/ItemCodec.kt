@@ -260,7 +260,7 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
             writeByte(definition.appearanceOverride2)
         }
 
-        definition.options.ops.forEachIndexed { index, op ->
+        definition.options.opsOrEmpty.forEachIndexed { index, op ->
             val isDefaultTake = index == 2 && op?.text == "Take"
             if (!isDefaultTake) {
                 entityOpsLoader.encodeBaseOp(this, index, op)
@@ -300,13 +300,13 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
         }
 
         if (entityOpsLoader.supportsExtendedEntityOps()) {
-            definition.options.subOps.forEachIndexed { index, subOps ->
+            definition.options.subOpsOrEmpty.forEachIndexed { index, subOps ->
                 entityOpsLoader.encodeOpcodeSubOps(this, index, subOps)
             }
-            definition.options.conditionalOps.forEachIndexed { index, conditionalOps ->
+            definition.options.conditionalOpsOrEmpty.forEachIndexed { index, conditionalOps ->
                 entityOpsLoader.encodeOpcodeConditionalOps(this, index, conditionalOps)
             }
-            definition.options.conditionalSubOps.forEachIndexed { index, conditionalSubOps ->
+            definition.options.conditionalSubOpsOrEmpty.forEachIndexed { index, conditionalSubOps ->
                 entityOpsLoader.encodeOpcodeConditionalSubOps(this, index, conditionalSubOps)
             }
         }

@@ -33,16 +33,23 @@ class Namer {
 
     companion object {
 
+        private val ALREADY_RSCM = Regex("[A-Z_][A-Z0-9_]*")
+        private val NON_RSCM_CHARS = Regex("[^A-Z0-9_]")
+        private val REPEATED_UNDERSCORES = Regex("_+")
+        private val LEADING_UNDERSCORE_DIGITS = Regex("^_\\d*")
+        private val NON_ALPHANUMERIC = Regex("[^a-zA-Z0-9]+")
+        private val NON_NAME_CHARS = Regex("[^A-Z0-9_]")
+
         fun sanitizeRSCM(value: String): String {
 
-            if (value.matches(Regex("[A-Z_][A-Z0-9_]*"))) {
+            if (value.matches(ALREADY_RSCM)) {
                 return value
             }
 
             var formatted = value
                 .uppercase()
-                .replace(Regex("[^A-Z0-9_]"), "_")
-                .replace(Regex("_+"), "_")
+                .replace(NON_RSCM_CHARS, "_")
+                .replace(REPEATED_UNDERSCORES, "_")
                 .trim('_')
 
             // If it starts with a digit after formatting, prepend an underscore
@@ -58,7 +65,7 @@ class Namer {
             if (value.isBlank()) {
                 value1 = "UNKOWN"
             }
-            val prefix = Regex("^_\\d*").find(value1)?.value.orEmpty()
+            val prefix = LEADING_UNDERSCORE_DIGITS.find(value1)?.value.orEmpty()
 
             // Remove the prefix from the original to process the rest
             val remainder = value1.removePrefix(prefix)
@@ -66,7 +73,7 @@ class Namer {
             // Split by underscores or non-alphanumeric characters
             val words = remainder
                 .lowercase()
-                .split(Regex("[^a-zA-Z0-9]+"))
+                .split(NON_ALPHANUMERIC)
                 .filter { it.isNotBlank() }
 
 
@@ -88,7 +95,7 @@ class Namer {
             val sanitized = removeTags(input)
                 .uppercase(Locale.getDefault())
                 .replace(' ', '_')
-                .replace("[^A-Z0-9_]".toRegex(), "")
+                .replace(NON_NAME_CHARS, "")
 
             if (sanitized.isEmpty()) return null
 

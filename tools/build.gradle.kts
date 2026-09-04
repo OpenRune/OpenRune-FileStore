@@ -24,9 +24,12 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
 
     testImplementation(project(":filesystem"))
+    testImplementation(project(":definition:opcode"))
 
 }
 
 tasks.test {
     useJUnitPlatform()
+    // Opt in to CacheDecodeBench with `-Dbench=true`; it is skipped otherwise.
+    System.getProperty("bench")?.let { systemProperty("bench", it) }
 }

@@ -62,7 +62,7 @@ class EntityOpsLoader(private val revision: Int) {
         buffer: ByteBuf,
         opcode: Int,
         index: Int,
-        subOps: MutableList<EntityOpsDefinition.SubOp>?
+        subOps: List<EntityOpsDefinition.SubOp>?
     ) {
         if (subOps.isNullOrEmpty()) {
             return
@@ -81,7 +81,7 @@ class EntityOpsLoader(private val revision: Int) {
         buffer: ByteBuf,
         opcode: Int,
         index: Int,
-        conditionalOps: MutableList<EntityOpsDefinition.ConditionalOp>?
+        conditionalOps: List<EntityOpsDefinition.ConditionalOp>?
     ) {
         if (conditionalOps.isNullOrEmpty()) {
             return
@@ -102,7 +102,7 @@ class EntityOpsLoader(private val revision: Int) {
         buffer: ByteBuf,
         opcode: Int,
         index: Int,
-        conditionalSubOps: MutableMap<Int, MutableList<EntityOpsDefinition.ConditionalSubOp>>?
+        conditionalSubOps: Map<Int, List<EntityOpsDefinition.ConditionalSubOp>>?
     ) {
         if (conditionalSubOps.isNullOrEmpty()) {
             return
@@ -122,16 +122,16 @@ class EntityOpsLoader(private val revision: Int) {
         }
     }
 
-    fun encodeOpcodeSubOps(buffer: ByteBuf, index: Int, subOps: MutableList<EntityOpsDefinition.SubOp>?) =
+    fun encodeOpcodeSubOps(buffer: ByteBuf, index: Int, subOps: List<EntityOpsDefinition.SubOp>?) =
         encodeSubOpsOpcode(buffer, 200, index, subOps)
 
-    fun encodeOpcodeConditionalOps(buffer: ByteBuf, index: Int, conditionalOps: MutableList<EntityOpsDefinition.ConditionalOp>?) =
+    fun encodeOpcodeConditionalOps(buffer: ByteBuf, index: Int, conditionalOps: List<EntityOpsDefinition.ConditionalOp>?) =
         encodeConditionalOpsOpcode(buffer, 201, index, conditionalOps)
 
     fun encodeOpcodeConditionalSubOps(
         buffer: ByteBuf,
         index: Int,
-        conditionalSubOps: MutableMap<Int, MutableList<EntityOpsDefinition.ConditionalSubOp>>?
+        conditionalSubOps: Map<Int, List<EntityOpsDefinition.ConditionalSubOp>>?
     ) = encodeConditionalSubOpsOpcode(buffer, 202, index, conditionalSubOps)
 
     companion object {

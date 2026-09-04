@@ -75,6 +75,12 @@ data class ItemType(
 
     ) : Definition, Recolourable, Parameterized {
 
+    // In the body so it stays out of equals/hashCode/toString/copy. Used by the r718 codec.
+    private var extraProperties: MutableMap<String, Any?>? = null
+
+    override val extra: MutableMap<String, Any?>
+        get() = extraProperties ?: LinkedHashMap<String, Any?>(8).also { extraProperties = it }
+
     val stackable: Boolean
         get() = stacks == ObjStackability.Always || noteTemplateId > 0
 

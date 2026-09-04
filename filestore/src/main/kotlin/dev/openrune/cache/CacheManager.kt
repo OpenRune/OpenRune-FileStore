@@ -2,6 +2,7 @@ package dev.openrune.cache
 
 import dev.openrune.definition.Definition
 import dev.openrune.definition.type.*
+import java.util.Collections
 
 
 /**
@@ -15,12 +16,19 @@ import dev.openrune.definition.type.*
 fun <T : Definition> MutableMap<Int, T>.withOffset(offset: Int): MutableMap<Int, T> {
     if (offset == 0) return this.toMutableMap()
 
-    return this.mapKeys { (key, def) ->
+    val result = LinkedHashMap<Int, T>(capacityFor(size))
+    for ((key, def) in this) {
         val newId = key + offset
         def.id = newId
-        newId
-    }.toMutableMap()
+        result[newId] = def
+    }
+    return result
 }
+
+/**
+ * Table capacity that holds [size] entries without a rehash at the default 0.75 load factor.
+ */
+internal fun capacityFor(size: Int): Int = if (size < 3) 4 else (size / 0.75f).toInt() + 1
 
 /**
  * Retrieves a value from the given [map] by [id], or returns the specified [default] if not found.
@@ -40,34 +48,43 @@ fun <T> getOrDefault(map: Map<Int, T>, id: Int, default: T, typeName: String): T
 
 object CacheManager {
 
-    private val npcs = mutableMapOf<Int, NpcType>()
-    private val objects = mutableMapOf<Int, ObjectType>()
-    private val items = mutableMapOf<Int, ItemType>()
-    private val varbits = mutableMapOf<Int, VarBitType>()
-    private val varps = mutableMapOf<Int, VarpType>()
-    private val anims = mutableMapOf<Int, SequenceType>()
-    private val enums = mutableMapOf<Int, EnumType>()
-    private val healthBars = mutableMapOf<Int, HealthBarType>()
-    private val hitsplats = mutableMapOf<Int, HitSplatType>()
-    private val structs = mutableMapOf<Int, StructType>()
-    private val dbrows = mutableMapOf<Int, DBRowType>()
-    private val dbtables = mutableMapOf<Int, DBTableType>()
+    private var npcs: MutableMap<Int, NpcType> = mutableMapOf()
+    private var objects: MutableMap<Int, ObjectType> = mutableMapOf()
+    private var items: MutableMap<Int, ItemType> = mutableMapOf()
+    private var varbits: MutableMap<Int, VarBitType> = mutableMapOf()
+    private var varps: MutableMap<Int, VarpType> = mutableMapOf()
+    private var anims: MutableMap<Int, SequenceType> = mutableMapOf()
+    private var enums: MutableMap<Int, EnumType> = mutableMapOf()
+    private var healthBars: MutableMap<Int, HealthBarType> = mutableMapOf()
+    private var hitsplats: MutableMap<Int, HitSplatType> = mutableMapOf()
+    private var structs: MutableMap<Int, StructType> = mutableMapOf()
+    private var dbrows: MutableMap<Int, DBRowType> = mutableMapOf()
+    private var dbtables: MutableMap<Int, DBTableType> = mutableMapOf()
+
+    /** Adopts [source] outright on the first init, otherwise merges into the existing map. */
+    private fun <T> adopt(current: MutableMap<Int, T>, source: MutableMap<Int, T>): MutableMap<Int, T> {
+        if (current.isEmpty()) {
+            return source
+        }
+        current.putAll(source)
+        return current
+    }
 
     @JvmStatic
     fun init(cacheStore : CacheStore) {
         cacheStore.init()
-        npcs.putAll(cacheStore.npcs)
-        objects.putAll(cacheStore.objects)
-        items.putAll(cacheStore.items)
-        varbits.putAll(cacheStore.varbits)
-        varps.putAll(cacheStore.varps)
-        anims.putAll(cacheStore.anims)
-        enums.putAll(cacheStore.enums)
-        healthBars.putAll(cacheStore.healthBars)
-        hitsplats.putAll(cacheStore.hitsplats)
-        structs.putAll(cacheStore.structs)
-        dbrows.putAll(cacheStore.dbrows)
-        dbtables.putAll(cacheStore.dbtables)
+        npcs = adopt(npcs, cacheStore.npcs)
+        objects = adopt(objects, cacheStore.objects)
+        items = adopt(items, cacheStore.items)
+        varbits = adopt(varbits, cacheStore.varbits)
+        varps = adopt(varps, cacheStore.varps)
+        anims = adopt(anims, cacheStore.anims)
+        enums = adopt(enums, cacheStore.enums)
+        healthBars = adopt(healthBars, cacheStore.healthBars)
+        hitsplats = adopt(hitsplats, cacheStore.hitsplats)
+        structs = adopt(structs, cacheStore.structs)
+        dbrows = adopt(dbrows, cacheStore.dbrows)
+        dbtables = adopt(dbtables, cacheStore.dbtables)
     }
 
     fun getNpc(id: Int) = npcs[id]
@@ -83,18 +100,24 @@ object CacheManager {
     fun getDbrow(id: Int) = dbrows[id]
     fun getDbtable(id: Int) = dbtables[id]
 
-    fun getNpcOrDefault(id: Int) = getOrDefault(npcs, id, NpcType(), "Npc")
-    fun getObjectOrDefault(id: Int) = getOrDefault(objects, id, ObjectType(), "Object")
-    fun getItemOrDefault(id: Int) = getOrDefault(items, id, ItemType(), "Item")
-    fun getVarbitOrDefault(id: Int) = getOrDefault(varbits, id, VarBitType(), "Varbit")
-    fun getVarpOrDefault(id: Int) = getOrDefault(varps, id, VarpType(), "Varp")
-    fun getAnimOrDefault(id: Int) = getOrDefault(anims, id, SequenceType(), "Anim")
-    fun getEnumOrDefault(id: Int) = getOrDefault(enums, id, EnumType(), "Enum")
-    fun getHealthBarOrDefault(id: Int) = getOrDefault(healthBars, id, HealthBarType(), "HealthBar")
-    fun getHitsplatOrDefault(id: Int) = getOrDefault(hitsplats, id, HitSplatType(), "Hitsplat")
-    fun getStructOrDefault(id: Int) = getOrDefault(structs, id, StructType(), "Struct")
-    fun getDbrowOrDefault(id: Int) = getOrDefault(dbrows, id, DBRowType(), "DBRow")
-    fun getDbtableOrDefault(id: Int) = getOrDefault(dbtables, id, DBTableType(), "DBTable")
+    /** Same contract as [getOrDefault], but the fallback is only built on a miss. */
+    private inline fun <T> lookupOrDefault(map: Map<Int, T>, id: Int, typeName: String, default: () -> T): T {
+        if (id == -1) println("$typeName with id $id is missing.")
+        return map[id] ?: default()
+    }
+
+    fun getNpcOrDefault(id: Int) = lookupOrDefault(npcs, id, "Npc") { NpcType() }
+    fun getObjectOrDefault(id: Int) = lookupOrDefault(objects, id, "Object") { ObjectType() }
+    fun getItemOrDefault(id: Int) = lookupOrDefault(items, id, "Item") { ItemType() }
+    fun getVarbitOrDefault(id: Int) = lookupOrDefault(varbits, id, "Varbit") { VarBitType() }
+    fun getVarpOrDefault(id: Int) = lookupOrDefault(varps, id, "Varp") { VarpType() }
+    fun getAnimOrDefault(id: Int) = lookupOrDefault(anims, id, "Anim") { SequenceType() }
+    fun getEnumOrDefault(id: Int) = lookupOrDefault(enums, id, "Enum") { EnumType() }
+    fun getHealthBarOrDefault(id: Int) = lookupOrDefault(healthBars, id, "HealthBar") { HealthBarType() }
+    fun getHitsplatOrDefault(id: Int) = lookupOrDefault(hitsplats, id, "Hitsplat") { HitSplatType() }
+    fun getStructOrDefault(id: Int) = lookupOrDefault(structs, id, "Struct") { StructType() }
+    fun getDbrowOrDefault(id: Int) = lookupOrDefault(dbrows, id, "DBRow") { DBRowType() }
+    fun getDbtableOrDefault(id: Int) = lookupOrDefault(dbtables, id, "DBTable") { DBTableType() }
 
     // Size methods
     fun npcSize() = npcs.size
@@ -108,18 +131,18 @@ object CacheManager {
     fun hitsplatSize() = hitsplats.size
     fun structSize() = structs.size
 
-    // Bulk getters
-    fun getNpcs() = npcs.toMap()
-    fun getObjects() = objects.toMap()
-    fun getItems() = items.toMap()
-    fun getVarbits() = varbits.toMap()
-    fun getVarps() = varps.toMap()
-    fun getAnims() = anims.toMap()
-    fun getEnums() = enums.toMap()
-    fun getHealthBars() = healthBars.toMap()
-    fun getHitsplats() = hitsplats.toMap()
-    fun getStructs() = structs.toMap()
-    fun getRows() = dbrows.toMap()
+    // Bulk getters. Read-only views rather than a copy per call; the tables are fixed after `init`.
+    fun getNpcs(): Map<Int, NpcType> = Collections.unmodifiableMap(npcs)
+    fun getObjects(): Map<Int, ObjectType> = Collections.unmodifiableMap(objects)
+    fun getItems(): Map<Int, ItemType> = Collections.unmodifiableMap(items)
+    fun getVarbits(): Map<Int, VarBitType> = Collections.unmodifiableMap(varbits)
+    fun getVarps(): Map<Int, VarpType> = Collections.unmodifiableMap(varps)
+    fun getAnims(): Map<Int, SequenceType> = Collections.unmodifiableMap(anims)
+    fun getEnums(): Map<Int, EnumType> = Collections.unmodifiableMap(enums)
+    fun getHealthBars(): Map<Int, HealthBarType> = Collections.unmodifiableMap(healthBars)
+    fun getHitsplats(): Map<Int, HitSplatType> = Collections.unmodifiableMap(hitsplats)
+    fun getStructs(): Map<Int, StructType> = Collections.unmodifiableMap(structs)
+    fun getRows(): Map<Int, DBRowType> = Collections.unmodifiableMap(dbrows)
 
     fun revisionIsOrAfter(cacheRevision : Int,rev: Int) = rev <= cacheRevision
     fun revisionIsOrBefore(cacheRevision : Int,rev: Int) = rev >= cacheRevision

@@ -103,20 +103,18 @@ class ComponentDecoder(
         for (group in groups) {
             val files = cache.files(INTERFACES, group)
             val types = mutableMapOf<Int, ComponentType>()
+            val gameval = gamevals.lookupAs<Interface>(group and 0xFFFF)
             for (file in files) {
                 val combinedId = (group shl 16) or file
-                val data = cache.data(INTERFACES, group, file)
-                val interfaceId = (combinedId ushr 16) and 0xFFFF
                 val childIdRaw = combinedId and 0xFFFF
 
-                val componentName = gamevals.lookupAs<Interface>(interfaceId)?.components?.lookup(childIdRaw)?.name
-                if (componentName != null) {
-                    types[file] = read(combinedId, Unpooled.wrappedBuffer(data),componentName)
-                }
+                val componentName = gameval?.component(childIdRaw)?.name ?: continue
+                val data = cache.data(INTERFACES, group, file)
+                types[file] = read(combinedId, Unpooled.wrappedBuffer(data), componentName)
             }
 
             components[group] = InterfaceType(
-                types.toMap(),
+                types,
                 group,
                 gamevals.lookup(group)?.name
             )
@@ -429,17 +427,14 @@ class ComponentDecoder(
         if (count == 0) {
             return null
         }
-        val values = Array<Any>(count) {}
-        for (i in 0 until count) {
+        return Array(count) {
             val type = data.readUnsignedByte().toInt()
-            values[i] =
-                if (type == 0) {
-                    Integer.valueOf(data.readInt())
-                } else {
-                    data.readString()
-                }
+            if (type == 0) {
+                Integer.valueOf(data.readInt())
+            } else {
+                data.readString()
+            }
         }
-        return values
     }
 
     public fun decodeHookTransmitList(data: ByteBuf): IntArray? {

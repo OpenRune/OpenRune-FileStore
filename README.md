@@ -141,3 +141,7 @@ Both aggregate POMs use `compile` scope, meaning their subprojects are transitiv
 This structure includes essential attributes like the item's ID, name, and the model used in the inventory. Each task that involves packing from JSON will look for files with similar structures tailored to the specific game element being packed.
 
 For detailed information, please refer to the [OpenRune FileStore Definitions Documentation](https://github.com/OpenRune/OpenRune-FileStore/wiki).
+
+## Performance
+
+Benchmarks for the cache read path, and notes on what dominates it, are in [PERFORMANCE.md](PERFORMANCE.md).

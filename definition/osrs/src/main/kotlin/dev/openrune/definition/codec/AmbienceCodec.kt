@@ -20,7 +20,7 @@ class AmbienceCodec : DefinitionCodec<AmbienceType> {
                 val delayMin = buffer.readUnsignedShort()
                 val delayMax = buffer.readUnsignedShort()
                 val count = buffer.readUnsignedByte().toInt()
-                val sounds = IntArray(count) { buffer.readUnsignedShort() }.toList().toMutableList()
+                val sounds = MutableList(count) { buffer.readUnsignedShort() }
 
                 randomSounds = RandomSound(delayMin, delayMax, soundIds = sounds)
             }

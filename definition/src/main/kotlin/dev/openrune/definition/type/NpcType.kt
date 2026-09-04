@@ -81,7 +81,13 @@ data class NpcType(
 
     var examine : String = ""
 
-    fun isAttackable(): Boolean = combatLevel > 0 && actions.ops.count { it?.text == "Attack" } != 0
+    // In the body so it stays out of equals/hashCode/toString/copy. Used by the r718 and rs3 codecs.
+    private var extraProperties: MutableMap<String, Any?>? = null
+
+    override val extra: MutableMap<String, Any?>
+        get() = extraProperties ?: LinkedHashMap<String, Any?>(8).also { extraProperties = it }
+
+    fun isAttackable(): Boolean = combatLevel > 0 && actions.opsOrEmpty.any { it?.text == "Attack" }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -41,11 +41,13 @@ class TablesAndRows(
                 }
             }
 
+            val tableIdByRowId = CacheManager.getRows().mapValues { it.value.tableId }
+            val rowsByTableId = rows.groupBy { tableIdByRowId[it.id] }
+
             tableColumns.forEach { (table, columns) ->
 
                 val tableId = tableIds[table] ?: -1
-                val allRows = CacheManager.getRows().filterValues { it.tableId == tableId }.keys
-                val attachedRows = rows.filter { it.id in allRows }
+                val attachedRows = rowsByTableId[tableId].orEmpty()
                 if (typeDumper.language == Language.RSCM) {
 
                     typeDumper.write(components, "${table}:${tableId}")
@@ -66,17 +68,6 @@ class TablesAndRows(
 
             typeDumper.endWriter(components, pathComponents)
         } else {
-            val dbTables = emptyList<String>().toMutableList()
-
-            tables.forEach {
-                tableIds[it.name] = it.id
-                val entry = "${it.name}:${it.id}"
-                if (entry !in dbTables) {
-                    dbTables.add(entry)
-                }
-            }
-
-
             typeDumper.writeGeneralGroupData(TABLETYPES, writeToJava)
             typeDumper.writeGeneralGroupData(ROWTYPES, writeToJava)
 

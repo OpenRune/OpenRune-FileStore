@@ -15,11 +15,12 @@ interface Transforms {
         multiVarp = buffer.readUnsignedShortOrNull() ?: -1
         multiDefault = if (isLast) buffer.readUnsignedShortOrNull() ?: -1 else -1
         val count = if (extendedTransforms) buffer.readSmart() else buffer.readUnsignedByte().toInt()
-        transforms = MutableList(count + 2) { -1 }
+        val ids = ArrayList<Int>(count + 2)
         for (i in 0..count) {
-            transforms!![i] = buffer.readUnsignedShortOrNull() ?: -1
+            ids.add(buffer.readUnsignedShortOrNull() ?: -1)
         }
-        transforms!![count + 1] = multiDefault
+        ids.add(multiDefault)
+        transforms = ids
     }
 
     fun writeTransforms(writer: ByteBuf, smaller: Int, larger: Int) {

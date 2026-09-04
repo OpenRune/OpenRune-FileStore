@@ -75,19 +75,19 @@ data class ObjectType(
     override var params: MutableMap<Int, Any>? = null,
 ) : Definition, Transforms, Recolourable, Parameterized {
 
-    private fun actionAt(index: Int): String? = actions.ops.getOrNull(index)?.text
+    private fun actionAt(index: Int): String? = actions.getOpOrNull(index)
 
-    fun hasActions() = actions.ops.any { it != null }
+    fun hasActions() = actions.opsOrEmpty.any { it != null }
 
     fun hasOption(vararg searchOptions: String): Boolean {
         return searchOptions.any { option ->
-            actions.ops.any { it?.text.equals(option, ignoreCase = true) }
+            actions.opsOrEmpty.any { it?.text.equals(option, ignoreCase = true) }
         }
     }
 
     fun getOption(vararg searchOptions: String): Int {
         searchOptions.forEach {
-            actions.ops.forEachIndexed { index, option ->
+            actions.opsOrEmpty.forEachIndexed { index, option ->
                 if (it.equals(option?.text, ignoreCase = true)) return index + 1
             }
         }
@@ -124,18 +124,17 @@ data class ObjectType(
     }
 
     override fun hashCode(): Int {
-        return listOf(
-            name.hashCode(),
-            mapAreaId,
-            actions.hashCode(),
-            sizeX,
-            sizeY,
-            objectModels?.hashCode() ?: 0,
-            modelSizeX,
-            modelSizeY,
-            modelSizeZ,
-            animationId
-        ).fold(0) { acc, hash -> 31 * acc + hash }
+        var result = name.hashCode()
+        result = 31 * result + mapAreaId
+        result = 31 * result + actions.hashCode()
+        result = 31 * result + sizeX
+        result = 31 * result + sizeY
+        result = 31 * result + (objectModels?.hashCode() ?: 0)
+        result = 31 * result + modelSizeX
+        result = 31 * result + modelSizeY
+        result = 31 * result + modelSizeZ
+        result = 31 * result + animationId
+        return result
     }
 
     fun postDecode() {

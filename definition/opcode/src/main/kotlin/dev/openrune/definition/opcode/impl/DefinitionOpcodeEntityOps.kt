@@ -114,7 +114,7 @@ fun <T> DefinitionOpcodeEntityOps(
         encode = { buf, def ->
             val ops = property.get(def)
             val encodeExtended = entityOpsLoader.supportsExtendedEntityOps()
-            val nonNullOps = ops.ops.withIndex().filter { it.value != null }
+            val nonNullOps = ops.opsOrEmpty.withIndex().filter { it.value != null }
             if (!encodeExtended) {
                 buf.writeByte(nonNullOps.size)
                 nonNullOps.forEach { (index, op) ->
@@ -124,9 +124,9 @@ fun <T> DefinitionOpcodeEntityOps(
                 return@DefinitionOpcode
             }
 
-            val subSlots = ops.subOps.withIndex().filter { it.value.isNotEmpty() }
-            val conditionalSlots = ops.conditionalOps.withIndex().filter { it.value.isNotEmpty() }
-            val conditionalSubSlots = ops.conditionalSubOps.withIndex().filter { it.value.isNotEmpty() }
+            val subSlots = ops.subOpsOrEmpty.withIndex().filter { it.value.isNotEmpty() }
+            val conditionalSlots = ops.conditionalOpsOrEmpty.withIndex().filter { it.value.isNotEmpty() }
+            val conditionalSubSlots = ops.conditionalSubOpsOrEmpty.withIndex().filter { it.value.isNotEmpty() }
 
             var flags = 0
             if (nonNullOps.isNotEmpty()) flags = flags or 0x1
@@ -190,10 +190,10 @@ fun <T> DefinitionOpcodeEntityOps(
         },
         shouldEncode = { def ->
             val ops = property.get(def)
-            ops.ops.any { it != null } ||
-                ops.subOps.any { it.isNotEmpty() } ||
-                ops.conditionalOps.any { it.isNotEmpty() } ||
-                ops.conditionalSubOps.any { it.isNotEmpty() }
+            ops.opsOrEmpty.any { it != null } ||
+                ops.subOpsOrEmpty.any { it.isNotEmpty() } ||
+                ops.conditionalOpsOrEmpty.any { it.isNotEmpty() } ||
+                ops.conditionalSubOpsOrEmpty.any { it.isNotEmpty() }
         }
     )
 }

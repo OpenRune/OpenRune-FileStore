@@ -32,31 +32,24 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
         when (opcode) {
             1 -> {
                 val frameCount = buffer.readUnsignedShort()
-                frameIDs = MutableList(frameCount) { 0 }
-                frameDelays = MutableList(frameCount) { 0 }
+                val delays = MutableList(frameCount) { buffer.readUnsignedShort() }
+                val ids = MutableList(frameCount) { buffer.readUnsignedShort() }
 
                 for (i in 0 until frameCount) {
-                    frameDelays!![i] = buffer.readUnsignedShort()
+                    ids[i] = ids[i] + (buffer.readUnsignedShort() shl 16)
                 }
 
-                for (i in 0 until frameCount) {
-                    frameIDs!![i] = buffer.readUnsignedShort()
-                }
-
-                for (i in 0 until frameCount) {
-                    frameIDs!![i] += buffer.readUnsignedShort() shl 16
-                }
-
+                frameDelays = delays
+                frameIDs = ids
             }
 
             2 -> frameStep = buffer.readUnsignedShort()
             3 -> {
                 val count = buffer.readUnsignedByte().toInt()
-                interleaveLeave = MutableList(count + 1) { 0 }
-                for (i in 0 until count) {
-                    interleaveLeave!![i] = buffer.readUnsignedByte().toInt()
-                }
-                interleaveLeave!![count] = 0x98967f
+                val leave = ArrayList<Int>(count + 1)
+                repeat(count) { leave.add(buffer.readUnsignedByte().toInt()) }
+                leave.add(0x98967f)
+                interleaveLeave = leave
             }
 
             4 -> stretches = true
@@ -69,22 +62,16 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
             11 -> replyMode = buffer.readUnsignedByte().toInt()
             12 -> {
                 val count = buffer.readUnsignedByte().toInt()
-                chatFrameIds = MutableList(count) { 0 }
+                val ids = MutableList(count) { buffer.readUnsignedShort() }
                 for (i in 0 until count) {
-                    chatFrameIds!![i] = buffer.readUnsignedShort()
+                    ids[i] = ids[i] + (buffer.readUnsignedShort() shl 16)
                 }
-
-                for (i in 0 until count) {
-                    chatFrameIds!![i] += buffer.readUnsignedShort() shl 16
-                }
+                chatFrameIds = ids
             }
 
             frameSoundOpcode -> {
                 val count = buffer.readUnsignedByte().toInt()
-                soundEffects = MutableList(count) { null }
-                for (i in 0 until count) {
-                    soundEffects[i] = readSounds(buffer, revision)
-                }
+                soundEffects = MutableList(count) { readSounds(buffer, revision) }
             }
 
             skeletalIdOpcode -> skeletalId = buffer.readInt()

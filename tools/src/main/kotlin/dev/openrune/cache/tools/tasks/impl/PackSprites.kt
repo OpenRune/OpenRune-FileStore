@@ -41,6 +41,7 @@ class PackSprites(
 
     companion object {
         val customSprites: MutableMap<Int, SpriteSet> = mutableMapOf()
+        private val UNNAMED_SPRITE = Regex("^[_0-9]+\\.png$", RegexOption.IGNORE_CASE)
     }
 
     private var manifest: MutableMap<String, SpriteManifest> = mutableMapOf()
@@ -51,7 +52,7 @@ class PackSprites(
 
         val progress = progress(
             "Packing OSRS Sprites",
-            files.filter { it.extension.contains("png", true) }.size
+            files.count { it.extension.contains("png", true) }
         )
 
         if (spriteManifest.exists()) {
@@ -201,7 +202,7 @@ class PackSprites(
         spriteFile: File,
         cache: Cache
     ) {
-        if (!spriteFile.name.matches(Regex("^[_0-9]+\\.png$", RegexOption.IGNORE_CASE))) {
+        if (!spriteFile.name.matches(UNNAMED_SPRITE)) {
             return
         }
 

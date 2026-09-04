@@ -7,7 +7,6 @@ import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.INTERFACES
 import dev.openrune.cache.filestore.definition.ComponentDecoder
 import dev.openrune.cache.filestore.definition.InterfaceType
-import dev.openrune.cache.gameval.GameValHandler
 import dev.openrune.cache.gameval.GameValHandler.lookup
 import dev.openrune.cache.gameval.GameValHandler.lookupAs
 import dev.openrune.cache.gameval.impl.Interface
@@ -83,7 +82,8 @@ class PackIfType(
         decoder: ComponentDecoder,
         internalName: String,
     ): InterfaceType? {
-        val gamevals = GameValHandler.readGameVal(GameValGroupTypes.IFTYPES, cache)
+        // The decoder already read this group at construction.
+        val gamevals = decoder.gamevals
         val shortName = internalName.removePrefix("interface.")
         val id =
             gamevals.firstOrNull { it.name == shortName }?.id
@@ -93,11 +93,11 @@ class PackIfType(
             return null
         }
         val types = mutableMapOf<Int, ComponentType>()
+        val gameval = gamevals.lookupAs<Interface>(id)
         for (file in files) {
             val combinedId = (id shl 16) or file
             val data = cache.data(INTERFACES, id, file) ?: continue
-            val name =
-                gamevals.lookupAs<Interface>(id)?.components?.lookup(file)?.name ?: "com_$file"
+            val name = gameval?.component(file)?.name ?: "com_$file"
             types[file] = decoder.read(combinedId, Unpooled.wrappedBuffer(data), name)
         }
         val ifName = gamevals.lookup(id)?.name ?: shortName

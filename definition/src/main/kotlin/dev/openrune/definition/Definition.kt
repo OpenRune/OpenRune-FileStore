@@ -3,8 +3,14 @@ package dev.openrune.definition
 interface Definition {
     var id: Int
 
+    /**
+     * Loose, codec-specific properties. An interface cannot hold state, so the default is a shared
+     * immutable map: reads return null and writes throw. A type that needs [setExtraProperty] to
+     * retain anything must override this with its own backing map - see
+     * [dev.openrune.definition.type.NpcType].
+     */
     val extra: MutableMap<String, Any?>
-        get() = mutableMapOf()
+        get() = NO_EXTRA_PROPERTIES
 
 
     fun setExtraProperty(key: String, value: Any?) {
@@ -12,7 +18,7 @@ interface Definition {
     }
 
     fun Definition.getBooleanProperty(key: String): Boolean {
-        return key == "true"
+        return (extra[key] as? Boolean) ?: false
     }
 
     fun Definition.getIntArray2DProperty(key: String): Array<IntArray?> {
@@ -36,3 +42,6 @@ interface Definition {
     }
 
 }
+
+private val NO_EXTRA_PROPERTIES: MutableMap<String, Any?> =
+    java.util.Collections.unmodifiableMap(mutableMapOf<String, Any?>())

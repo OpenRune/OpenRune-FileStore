@@ -14,7 +14,7 @@ interface Parameterized {
         val length = buffer.readUnsignedByte().toInt()
         if (length == 0) return
 
-        val params = mutableMapOf<Int, Any>()
+        val params = LinkedHashMap<Int, Any>(if (length < 3) 4 else (length / 0.75f).toInt() + 1)
 
         repeat(length) {
             val type = buffer.readUnsignedByte().toInt()

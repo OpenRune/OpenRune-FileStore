@@ -59,11 +59,7 @@ object SpriteData {
 
             val encoding = buffer.readUnsignedByte().toInt()
             when (encoding) {
-                0 -> {
-                    for (j in 0 until size) {
-                        pixelData[j] = buffer.readByte()
-                    }
-                }
+                0 -> buffer.readBytes(pixelData, 0, size)
                 1 -> {
                     for (x in 0 until width) {
                         for (y in 0 until height) {

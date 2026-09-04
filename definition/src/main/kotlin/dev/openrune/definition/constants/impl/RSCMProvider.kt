@@ -58,7 +58,8 @@ class RSCMProvider : MutableMappingProvider {
         // Track sub-types for this file
         val fileSubTypes = mutableSetOf<String>()
 
-        mappings[fullType] = emptyMap<String, Int>().toMutableMap()
+        val table = LinkedHashMap<String, Int>(if (lines.size < 3) 4 else (lines.size / 0.75f).toInt() + 1)
+        mappings[fullType] = table
         tableSources[fullType] = file
 
         lines.forEachIndexed { lineNumber, line ->
@@ -68,7 +69,7 @@ class RSCMProvider : MutableMappingProvider {
                     RSCMFormat.V2 -> parseRSCMV2Line(line, lineNumber + 1, fileSubTypes)
                 }
 
-                mappings[fullType]?.put("${fullType}.${key}",value)
+                table["${fullType}.${key}"] = value
                 if (value == UNASSIGNED) {
                     unassigned += UnassignedGameVal(fullType, key, file)
                 }
@@ -107,9 +108,9 @@ class RSCMProvider : MutableMappingProvider {
             entry.source?.let { tableSources.putIfAbsent(entry.table, it) }
         }
 
-        unassigned.removeAll { placeholder ->
-            placed.any { it.table == placeholder.table && it.key == placeholder.key }
-        }
+        val placedKeys = HashSet<String>(placed.size * 2)
+        placed.forEach { placedKeys += "${it.table}.${it.key}" }
+        unassigned.removeAll { placedKeys.contains("${it.table}.${it.key}") }
     }
 
     private fun writeFile(file: File, entries: List<GameValWrite>) {
@@ -121,9 +122,15 @@ class RSCMProvider : MutableMappingProvider {
             ?.let { detectFormat(it, file.name) }
             ?: RSCMFormat.V2
 
-        fun indexOfKey(key: String): Int = lines.indexOfFirst { line ->
-            line.isNotBlank() && runCatching { parseKeyOnly(line, format) }.getOrNull() == key
+        // Each line's key is parsed once up front rather than on every lookup.
+        val keyIndex = HashMap<String, Int>(if (lines.size < 3) 4 else (lines.size / 0.75f).toInt() + 1)
+        lines.forEachIndexed { index, line ->
+            if (line.isBlank()) return@forEachIndexed
+            // First-wins.
+            runCatching { parseKeyOnly(line, format) }.getOrNull()?.let { keyIndex.putIfAbsent(it, index) }
         }
+
+        fun indexOfKey(key: String): Int = keyIndex[key] ?: -1
 
         val (present, absent) = entries.partition { indexOfKey(it.key) != -1 }
 
@@ -137,7 +144,10 @@ class RSCMProvider : MutableMappingProvider {
             }
             val anchor = entry.after?.let(::indexOfKey) ?: -1
             val line = formatLine(entry.key, entry.id, format)
-            if (anchor == -1) lines.add(line) else lines.add(anchor + 1, line)
+            val at = if (anchor == -1) lines.size else anchor + 1
+            lines.add(at, line)
+            keyIndex.replaceAll { _, position -> if (position >= at) position + 1 else position }
+            keyIndex.putIfAbsent(entry.key, at)
         }
 
         file.writeText(lines.joinToString(separator, postfix = separator))
@@ -154,7 +164,7 @@ class RSCMProvider : MutableMappingProvider {
     }
 
     private fun extractBaseType(filename: String): String {
-        return filename.replace(Regex("_v\\d+$"), "")
+        return filename.replace(VERSION_SUFFIX, "")
     }
 
     private fun detectFormat(firstLine: String, fileName: String): RSCMFormat {
@@ -216,5 +226,6 @@ class RSCMProvider : MutableMappingProvider {
 
     private companion object {
         const val UNASSIGNED = -1
+        val VERSION_SUFFIX = Regex("_v\\d+$")
     }
 }

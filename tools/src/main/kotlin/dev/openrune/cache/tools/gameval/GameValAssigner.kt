@@ -42,6 +42,9 @@ object GameValAssigner {
 
         val certTable = settings?.table ?: "obj"
         val certByItem = candidates.associateBy { it.itemKey }
+        // First-wins.
+        val certByCertKey = HashMap<String, CertCandidate>(candidates.size * 2)
+        candidates.forEach { certByCertKey.putIfAbsent(it.certKey, it) }
         val used = usedIdsByTable()
         val floors = mutableMapOf<String, Int>()
         val writes = mutableListOf<Pair<MutableMappingProvider, GameValWrite>>()
@@ -139,7 +142,7 @@ object GameValAssigner {
                 table = certTable,
                 key = certKey,
                 id = certId,
-                after = candidates.firstOrNull { it.certKey == certKey }?.itemKey,
+                after = certByCertKey[certKey]?.itemKey,
                 generated = true,
             )
         }
