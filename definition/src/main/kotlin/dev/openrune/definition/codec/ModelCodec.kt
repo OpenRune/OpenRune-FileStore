@@ -1073,17 +1073,18 @@ class ModelCodec(val id: Int, private val options: List<MeshDecodingOption>) {
             def.textureTriangleVertex1 = IntArray(textureTriangleCount)
             def.textureTriangleVertex2 = IntArray(textureTriangleCount)
             def.textureTriangleVertex3 = IntArray(textureTriangleCount)
+            // Written at the texture face's own index, so sized by the face list, not by the counts.
             if (complexTextureFaceCount > 0) {
-                def.textureScaleX = IntArray(complexTextureFaceCount)
-                def.textureScaleY = IntArray(complexTextureFaceCount)
-                def.textureScaleZ = IntArray(complexTextureFaceCount)
-                def.textureRotation = IntArray(complexTextureFaceCount)
-                def.textureDirection = IntArray(complexTextureFaceCount)
-                def.textureSpeed = IntArray(complexTextureFaceCount)
+                def.textureScaleX = IntArray(textureTriangleCount)
+                def.textureScaleY = IntArray(textureTriangleCount)
+                def.textureScaleZ = IntArray(textureTriangleCount)
+                def.textureRotation = IntArray(textureTriangleCount)
+                def.textureDirection = IntArray(textureTriangleCount)
+                def.textureSpeed = IntArray(textureTriangleCount)
             }
             if (cubeTextureFaceCount > 0) {
-                def.textureTransU = IntArray(cubeTextureFaceCount)
-                def.textureTransV = IntArray(cubeTextureFaceCount)
+                def.textureTransU = IntArray(textureTriangleCount)
+                def.textureTransV = IntArray(textureTriangleCount)
             }
         }
         if (hasSkeletalBones) {

@@ -25,6 +25,29 @@ data class IndexedSprite(
     lateinit var raster: ByteArray
     lateinit var palette: IntArray
 
+    val fullWidth: Int get() = offsetX + width + subWidth
+    val fullHeight: Int get() = offsetY + height + subHeight
+
+    /** Expands the cropped raster back out to the full sheet, for anything sampling by absolute coordinate. */
+    fun normalized(): IndexedSprite {
+        if (width == fullWidth && height == fullHeight) return this
+
+        val padded = ByteArray(fullWidth * fullHeight)
+        var source = 0
+        for (y in 0 until height) {
+            val row = (y + offsetY) * fullWidth + offsetX
+            for (x in 0 until width) {
+                padded[row + x] = raster[source++]
+            }
+        }
+
+        return copy(offsetX = 0, offsetY = 0, width = fullWidth, height = fullHeight, subWidth = 0, subHeight = 0)
+            .also {
+                it.raster = padded
+                it.palette = palette
+            }
+    }
+
     fun toBufferedImage(): BufferedImage {
         if (width <= 0 || height <= 0) {
             return BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB)
