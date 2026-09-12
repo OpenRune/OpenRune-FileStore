@@ -5,6 +5,7 @@ import dev.openrune.Index.ITEMS
 import dev.openrune.Index.NPCS
 import dev.openrune.Index.VAR_BIT
 import dev.openrune.cache.CacheStore
+import dev.openrune.cache.DenseIntMap
 import dev.openrune.filesystem.Cache
 import dev.openrune.cache.filestore.definition.IndexedDefinitionDecoder
 import dev.openrune.definition.type.*
