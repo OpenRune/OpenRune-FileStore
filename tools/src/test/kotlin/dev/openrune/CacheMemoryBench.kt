@@ -67,26 +67,8 @@ class CacheMemoryBench {
 
         out.appendLine("== retained heap per definition type ==")
         measure("objects", defs { OsrsCacheProvider.ObjectDecoder(rev) })
-        measure("objects compacted") { cache ->
-            val target = HashMap<Int, dev.openrune.definition.type.ObjectType>()
-            runCatching { OsrsCacheProvider.ObjectDecoder(rev).load(cache, target) }
-            dev.openrune.cache.DefinitionCompactor.compactObjects(target)
-            target.size to target
-        }
         measure("items", defs { OsrsCacheProvider.ItemDecoder(rev) })
-        measure("items compacted") { cache ->
-            val target = HashMap<Int, dev.openrune.definition.type.ItemType>()
-            runCatching { OsrsCacheProvider.ItemDecoder(rev).load(cache, target) }
-            dev.openrune.cache.DefinitionCompactor.compactItems(target)
-            target.size to target
-        }
         measure("npcs", defs { OsrsCacheProvider.NPCDecoder(rev) })
-        measure("npcs compacted") { cache ->
-            val target = HashMap<Int, dev.openrune.definition.type.NpcType>()
-            runCatching { OsrsCacheProvider.NPCDecoder(rev).load(cache, target) }
-            dev.openrune.cache.DefinitionCompactor.compactNpcs(target)
-            target.size to target
-        }
         measure("anims", defs { OsrsCacheProvider.SequenceDecoder(rev) })
         measure("varbits", defs { OsrsCacheProvider.VarBitDecoder() })
         measure("enums", defs { OsrsCacheProvider.EnumDecoder() })

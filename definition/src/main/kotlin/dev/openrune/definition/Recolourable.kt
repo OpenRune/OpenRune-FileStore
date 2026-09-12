@@ -35,19 +35,30 @@ interface Recolourable {
     }
 
     fun writeColoursTextures(writer: ByteBuf) {
-        writeArray(writer, 40, originalColours, modifiedColours)
-        writeArray(writer, 41, originalTextureColours, modifiedTextureColours)
+        writeColoursTextures(writer, originalColours, modifiedColours, originalTextureColours, modifiedTextureColours)
     }
 
-    private fun writeArray(writer: ByteBuf, opcode: Int, original: List<Int>?, modified: List<Int>?) {
-        if (original != null && modified != null) {
-            writer.writeByte(opcode)
-            writer.writeByte(original.size)
-            for (i in original.indices) {
-                writer.writeShort(original[i])
-                writer.writeShort(modified[i])
-            }
+}
+
+/** Standalone form for immutable types that carry the colour lists without the interface. */
+fun writeColoursTextures(
+    writer: ByteBuf,
+    originalColours: List<Int>?,
+    modifiedColours: List<Int>?,
+    originalTextureColours: List<Int>?,
+    modifiedTextureColours: List<Int>?,
+) {
+    writeColourPairs(writer, 40, originalColours, modifiedColours)
+    writeColourPairs(writer, 41, originalTextureColours, modifiedTextureColours)
+}
+
+private fun writeColourPairs(writer: ByteBuf, opcode: Int, original: List<Int>?, modified: List<Int>?) {
+    if (original != null && modified != null) {
+        writer.writeByte(opcode)
+        writer.writeByte(original.size)
+        for (i in original.indices) {
+            writer.writeShort(original[i])
+            writer.writeShort(modified[i])
         }
     }
-
 }

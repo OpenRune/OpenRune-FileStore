@@ -1,4 +1,4 @@
-﻿package dev.openrune.definition
+package dev.openrune.definition
 
 class EntityOpsDefinition {
 
@@ -9,50 +9,18 @@ class EntityOpsDefinition {
     private var _conditionalOps: MutableList<MutableList<ConditionalOp>>? = null
     private var _conditionalSubOps: MutableList<MutableMap<Int, MutableList<ConditionalSubOp>>>? = null
 
-    private var frozen = false
-
-    /**
-     * Makes the recorded ops permanently immutable, so equal instances can be shared between
-     * loaded definitions. The backing lists are wrapped rather than copied; mutating them, or
-     * calling any of the set/op builders, throws after this.
-     */
-    fun freeze(): EntityOpsDefinition {
-        if (frozen) return this
-        frozen = true
-        @Suppress("UNCHECKED_CAST")
-        _ops = _ops?.let { java.util.Collections.unmodifiableList(it) as MutableList<Op?> }
-        @Suppress("UNCHECKED_CAST")
-        _subOps = _subOps?.let { java.util.Collections.unmodifiableList(it) as MutableList<MutableList<SubOp>> }
-        @Suppress("UNCHECKED_CAST")
-        _conditionalOps = _conditionalOps?.let { java.util.Collections.unmodifiableList(it) as MutableList<MutableList<ConditionalOp>> }
-        @Suppress("UNCHECKED_CAST")
-        _conditionalSubOps = _conditionalSubOps?.let {
-            java.util.Collections.unmodifiableList(it) as MutableList<MutableMap<Int, MutableList<ConditionalSubOp>>>
-        }
-        return this
-    }
-
-    private fun checkMutable() {
-        if (frozen) throw UnsupportedOperationException("These ops belong to a loaded definition and are immutable.")
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun <T> frozenEmpty(): MutableList<T> = java.util.Collections.emptyList<T>() as MutableList<T>
-
     val ops: MutableList<Op?>
-        get() = _ops ?: if (frozen) frozenEmpty() else ArrayList<Op?>(DEFAULT_OP_SLOTS).also { _ops = it }
+        get() = _ops ?: ArrayList<Op?>(DEFAULT_OP_SLOTS).also { _ops = it }
 
     val subOps: MutableList<MutableList<SubOp>>
-        get() = _subOps ?: if (frozen) frozenEmpty() else ArrayList<MutableList<SubOp>>(DEFAULT_OP_SLOTS).also { _subOps = it }
+        get() = _subOps ?: ArrayList<MutableList<SubOp>>(DEFAULT_OP_SLOTS).also { _subOps = it }
 
     val conditionalOps: MutableList<MutableList<ConditionalOp>>
-        get() = _conditionalOps
-            ?: if (frozen) frozenEmpty() else ArrayList<MutableList<ConditionalOp>>(DEFAULT_OP_SLOTS).also { _conditionalOps = it }
+        get() = _conditionalOps ?: ArrayList<MutableList<ConditionalOp>>(DEFAULT_OP_SLOTS).also { _conditionalOps = it }
 
     val conditionalSubOps: MutableList<MutableMap<Int, MutableList<ConditionalSubOp>>>
         get() = _conditionalSubOps
-            ?: if (frozen) frozenEmpty()
-            else ArrayList<MutableMap<Int, MutableList<ConditionalSubOp>>>(DEFAULT_OP_SLOTS).also { _conditionalSubOps = it }
+            ?: ArrayList<MutableMap<Int, MutableList<ConditionalSubOp>>>(DEFAULT_OP_SLOTS).also { _conditionalSubOps = it }
 
     // Read-only views. Touching `ops`/`subOps`/... materialises the backing list, so read-only
     // callers should use these instead.
@@ -67,13 +35,11 @@ class EntityOpsDefinition {
             _conditionalOps.isNullOrEmpty() && _conditionalSubOps.isNullOrEmpty()
 
     fun op(index: Int, text: String) = apply {
-        checkMutable()
         ops.ensureSize(index) { null }
         ops[index] = Op.of(text)
     }
 
     fun setOp(index: Int, text: String) {
-        checkMutable()
         ops.ensureSize(index) { null }
         ops[index] = Op.of(text)
     }
@@ -81,13 +47,11 @@ class EntityOpsDefinition {
     fun getOpOrNull(index: Int): String? = _ops?.getOrNull(index)?.text
 
     fun subOp(index: Int, subID: Int, text: String) = apply {
-        checkMutable()
         subOps.ensureSize(index) { mutableListOf() }
         subOps[index] += SubOp(text, subID)
     }
 
     fun setSubOp(index: Int, subID: Int, text: String) {
-        checkMutable()
         subOps.ensureSize(index) { mutableListOf() }
         val list = subOps[index]
         list.removeIf { it.subID == subID }
@@ -107,7 +71,6 @@ class EntityOpsDefinition {
         min: Int,
         max: Int
     ) = apply {
-        checkMutable()
         conditionalOps.ensureSize(index) { mutableListOf() }
         conditionalOps[index] += ConditionalOp(text, varpID, varbitID, min, max)
     }
@@ -120,7 +83,6 @@ class EntityOpsDefinition {
         min: Int,
         max: Int
     ) {
-        checkMutable()
         conditionalOps.ensureSize(index) { mutableListOf() }
         conditionalOps[index] += ConditionalOp(text, varpID, varbitID, min, max)
     }
@@ -136,7 +98,6 @@ class EntityOpsDefinition {
         min: Int,
         max: Int
     ) = apply {
-        checkMutable()
         conditionalSubOps.ensureSize(index) { mutableMapOf() }
 
         val map = conditionalSubOps[index]
@@ -154,7 +115,6 @@ class EntityOpsDefinition {
         min: Int,
         max: Int
     ) {
-        checkMutable()
         conditionalSubOps.ensureSize(index) { mutableMapOf() }
         val map = conditionalSubOps[index]
         val list = map.getOrPut(subID) { mutableListOf() }
@@ -229,12 +189,6 @@ class EntityOpsDefinition {
             }
         }
         return true
-    }
-
-    companion object {
-        /** A shared, frozen instance for loaded definitions that record no ops at all. */
-        @JvmField
-        val EMPTY = EntityOpsDefinition().freeze()
     }
 
     data class Op(val text: String) {

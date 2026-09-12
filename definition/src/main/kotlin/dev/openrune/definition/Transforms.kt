@@ -25,21 +25,34 @@ interface Transforms {
     }
 
     fun writeTransforms(writer: ByteBuf, smaller: Int, larger: Int) {
-        val ids = transforms
-        if (ids == null || (multiVarBit == -1 && multiVarp == -1)) {
-            return
-        }
-        val last = multiDefault.takeUnless { it == -1 } ?: ids.last()
-        val hasDefault = last != -1
-        writer.writeByte(if (hasDefault) larger else smaller)
-        writer.writeShort(multiVarBit)
-        writer.writeShort(multiVarp)
-        if (hasDefault) {
-            writer.writeShort(last)
-        }
-        writer.writeByte(ids.size - 2)
-        for (i in 0 until ids.size - 1) {
-            writer.writeShort(ids[i])
-        }
+        writeTransforms(writer, smaller, larger, multiVarBit, multiVarp, multiDefault, transforms)
+    }
+}
+
+/** Standalone form for immutable types that carry the transform fields without the interface. */
+fun writeTransforms(
+    writer: ByteBuf,
+    smaller: Int,
+    larger: Int,
+    multiVarBit: Int,
+    multiVarp: Int,
+    multiDefault: Int,
+    transforms: List<Int>?,
+) {
+    val ids = transforms
+    if (ids == null || (multiVarBit == -1 && multiVarp == -1)) {
+        return
+    }
+    val last = multiDefault.takeUnless { it == -1 } ?: ids.last()
+    val hasDefault = last != -1
+    writer.writeByte(if (hasDefault) larger else smaller)
+    writer.writeShort(multiVarBit)
+    writer.writeShort(multiVarp)
+    if (hasDefault) {
+        writer.writeShort(last)
+    }
+    writer.writeByte(ids.size - 2)
+    for (i in 0 until ids.size - 1) {
+        writer.writeShort(ids[i])
     }
 }

@@ -4,76 +4,83 @@ import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.toml.serialization.TomlField
 import dev.openrune.definition.Definition
 import dev.openrune.definition.EntityOpsDefinition
-import dev.openrune.definition.Parameterized
-import dev.openrune.definition.Recolourable
-import dev.openrune.definition.Transforms
 import dev.openrune.seralizer.ObjectTypeOptionsTableHook
 import dev.openrune.seralizer.ParamSerializer
 import kotlin.math.abs
 
+/**
+ * A loaded object definition. Immutable apart from [id] (which the load machinery assigns):
+ * decoding and packing build one through [ObjectTypeBuilder], and everything after that only
+ * reads. [actions] is a mutable holder by necessity — the TOML options hook fills it in after
+ * construction — but by convention it is not modified once a definition has been built.
+ */
 @RsTableHeaders(
     "object",
     rowPostDecode = ObjectTypeOptionsTableHook::class,
 )
 data class ObjectType(
     override var id: Int = -1,
-    var name: String = "null",
-    var decorDisplacement: Int = 16,
-    var isHollow: Boolean = false,
-    var objectModels: MutableList<Int>? = null,
-    var objectTypes: MutableList<Int>? = null,
-    var mapAreaId: Int = -1,
-    var sizeX: Int = 1,
-    var sizeY: Int = 1,
-    var soundDistance: Int = 0,
-    var soundRetain: Int = 0,
-    var ambientSoundIds: MutableList<Int>? = null,
-    var offsetX: Int = 0,
-    var nonFlatShading: Boolean = false,
-    var interactive: Int = -1,
-    var animationId: Int = -1,
-    var ambient: Int = 0,
-    var contrast: Int = 0,
-    var actions: EntityOpsDefinition = EntityOpsDefinition(),
-    var solid: Int = 2,
-    var mapSceneID: Int = -1,
-    var clipMask: Int = 0,
-    var clipped: Boolean = true,
-    var modelSizeX: Int = 128,
-    var modelSizeZ: Int = 128,
-    var modelSizeY: Int = 128,
-    var offsetZ: Int = 0,
-    var offsetY: Int = 0,
-    var obstructive: Boolean = false,
-    var randomizeAnimStart: Boolean = true,
-    var clipType: Int = -1,
-    var category: Int = -1,
-    var supportsItems: Int = -1,
-    var isRotated: Boolean = false,
-    var ambientSoundId: Int = -1,
-    var modelClipped: Boolean = false,
-    var soundMin: Int = 0,
-    var soundMax: Int = 0,
-    var soundDistanceFadeCurve : Int = 0,
-    var soundFadeInDuration : Int = 300,
-    var soundFadeOutDuration : Int = 300,
-    var soundFadeInCurve : Int = 0,
-    var soundFadeOutCurve : Int = 0,
-    var delayAnimationUpdate: Boolean = false,
-    var impenetrable: Boolean = true,
-    var soundVisibility : Int = 2,
-    var rasie : Int = 0,
-    override var originalColours: MutableList<Int>? = null,
-    override var modifiedColours: MutableList<Int>? = null,
-    override var originalTextureColours: MutableList<Int>? = null,
-    override var modifiedTextureColours: MutableList<Int>? = null,
-    override var multiVarBit: Int = -1,
-    override var multiVarp: Int = -1,
-    override var multiDefault: Int = -1,
-    override var transforms: MutableList<Int>? = null,
+    val name: String = "null",
+    val decorDisplacement: Int = 16,
+    val isHollow: Boolean = false,
+    val objectModels: List<Int>? = null,
+    val objectTypes: List<Int>? = null,
+    val mapAreaId: Int = -1,
+    val sizeX: Int = 1,
+    val sizeY: Int = 1,
+    val soundDistance: Int = 0,
+    val soundRetain: Int = 0,
+    val ambientSoundIds: List<Int>? = null,
+    val offsetX: Int = 0,
+    val nonFlatShading: Boolean = false,
+    val interactive: Int = -1,
+    val animationId: Int = -1,
+    val ambient: Int = 0,
+    val contrast: Int = 0,
+    val actions: EntityOpsDefinition = EntityOpsDefinition(),
+    val solid: Int = 2,
+    val mapSceneID: Int = -1,
+    val clipMask: Int = 0,
+    val clipped: Boolean = true,
+    val modelSizeX: Int = 128,
+    val modelSizeZ: Int = 128,
+    val modelSizeY: Int = 128,
+    val offsetZ: Int = 0,
+    val offsetY: Int = 0,
+    val obstructive: Boolean = false,
+    val randomizeAnimStart: Boolean = true,
+    val clipType: Int = -1,
+    val category: Int = -1,
+    val supportsItems: Int = -1,
+    val isRotated: Boolean = false,
+    val ambientSoundId: Int = -1,
+    val modelClipped: Boolean = false,
+    val soundMin: Int = 0,
+    val soundMax: Int = 0,
+    val soundDistanceFadeCurve : Int = 0,
+    val soundFadeInDuration : Int = 300,
+    val soundFadeOutDuration : Int = 300,
+    val soundFadeInCurve : Int = 0,
+    val soundFadeOutCurve : Int = 0,
+    val delayAnimationUpdate: Boolean = false,
+    val impenetrable: Boolean = true,
+    val soundVisibility : Int = 2,
+    val rasie : Int = 0,
+    val originalColours: List<Int>? = null,
+    val modifiedColours: List<Int>? = null,
+    val originalTextureColours: List<Int>? = null,
+    val modifiedTextureColours: List<Int>? = null,
+    val multiVarBit: Int = -1,
+    val multiVarp: Int = -1,
+    val multiDefault: Int = -1,
+    val transforms: List<Int>? = null,
+    // Stays MutableMap: ParamSerializer's declared type argument must match the parameter type.
     @param:TomlField(serializer = ParamSerializer::class)
-    override var params: MutableMap<Int, Any>? = null,
-) : Definition, Transforms, Recolourable, Parameterized {
+    val params: MutableMap<Int, Any>? = null,
+) : Definition {
+
+    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
+    fun toBuilder(): ObjectTypeBuilder = ObjectTypeBuilder.from(this)
 
     private fun actionAt(index: Int): String? = actions.getOpOrNull(index)
 
@@ -137,10 +144,14 @@ data class ObjectType(
         return result
     }
 
-    fun postDecode() {
+    /** The client's post-decode defaults, applied as a copy since the type is immutable. */
+    fun postDecode(): ObjectType {
+        var interactive = interactive
+        var supportsItems = supportsItems
+
         if (interactive == -1) {
             interactive = 0
-            if (objectModels != null && (objectTypes == null || objectTypes!![0] == 10)) {
+            if (objectModels != null && (objectTypes == null || objectTypes[0] == 10)) {
                 interactive = 1
             }
 
@@ -152,12 +163,15 @@ data class ObjectType(
         if (supportsItems == -1) {
             supportsItems = if (solid != 0) 1 else 0
         }
+
+        if (interactive == this.interactive && supportsItems == this.supportsItems) return this
+        return copy(interactive = interactive, supportsItems = supportsItems)
     }
 
     // Optional: custom equals to match based on the same fields
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is dev.openrune.definition.type.ObjectType) return false
+        if (other !is ObjectType) return false
 
         return name == other.name &&
                 mapAreaId == other.mapAreaId &&

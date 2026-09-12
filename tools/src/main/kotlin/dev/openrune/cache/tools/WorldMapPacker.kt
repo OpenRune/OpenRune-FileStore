@@ -379,8 +379,9 @@ class WorldMapPacker(
         val objects = mutableMapOf<Int, ObjectType>()
         OsrsCacheProvider.ObjectDecoder(238).load(cache,objects)
 
-        objects.forEach {
-            it.value.postDecode()
+        // postDecode returns a copy now that definitions are immutable.
+        objects.entries.forEach { entry ->
+            entry.setValue(entry.value.postDecode())
         }
 
         return object : ObjectProvider {

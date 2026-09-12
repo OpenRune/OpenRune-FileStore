@@ -39,34 +39,39 @@ interface Parameterized {
     }
 
     fun writeParameters(writer: ByteBuf) {
-        val params = params ?: return
-
-        writer.writeByte(249)
-        writer.writeByte(params.size)
-
-        for ((id, value) in params) {
-            when (value) {
-                is Int -> {
-                    writer.writeByte(0)
-                    writer.writeMedium(id)
-                    writer.writeInt(value)
-                }
-
-                is String -> {
-                    writer.writeByte(1)
-                    writer.writeMedium(id)
-                    writer.writeString(value)
-                }
-
-                is Long -> {
-                    writer.writeByte(2)
-                    writer.writeMedium(id)
-                    writer.writeLong(value)
-                }
-
-                else -> error("Unsupported parameter type for id $id: ${value::class}")
-            }
-        }
+        writeParameters(writer, params)
     }
 
+}
+
+/** Standalone form for immutable types that carry the params map without the interface. */
+fun writeParameters(writer: ByteBuf, params: Map<Int, Any>?) {
+    if (params == null) return
+
+    writer.writeByte(249)
+    writer.writeByte(params.size)
+
+    for ((id, value) in params) {
+        when (value) {
+            is Int -> {
+                writer.writeByte(0)
+                writer.writeMedium(id)
+                writer.writeInt(value)
+            }
+
+            is String -> {
+                writer.writeByte(1)
+                writer.writeMedium(id)
+                writer.writeString(value)
+            }
+
+            is Long -> {
+                writer.writeByte(2)
+                writer.writeMedium(id)
+                writer.writeLong(value)
+            }
+
+            else -> error("Unsupported parameter type for id $id: ${value::class}")
+        }
+    }
 }
