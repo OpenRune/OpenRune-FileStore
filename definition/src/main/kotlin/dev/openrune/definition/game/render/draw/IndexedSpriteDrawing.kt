@@ -1,6 +1,5 @@
-package dev.openrune.cache.worldmap.rasterizer.sprite
+package dev.openrune.definition.game.render.draw
 
-import dev.openrune.cache.worldmap.rasterizer.Rasterizer2D
 import dev.openrune.definition.game.IndexedSprite
 
 fun IndexedSprite.rasterizeScanLine(

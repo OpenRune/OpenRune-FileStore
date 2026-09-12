@@ -10,6 +10,7 @@ import dev.openrune.cache.worldmap.worldmap.WorldMapAreaDetails
 import dev.openrune.cache.worldmap.worldmap.WorldMapFormat
 import dev.openrune.cache.worldmap.worldmap.exportBaseName
 import dev.openrune.cache.worldmap.worldmap.hasValidNames
+import dev.openrune.cache.worldmap.worldmap.sourceMapsquares
 import dev.openrune.cache.worldmap.worldmap.randomExportName
 import dev.openrune.cache.worldmap.worldmap.builder.test.WorldMap
 import dev.openrune.cache.worldmap.worldmap.config.WorldMapConfig
@@ -57,38 +58,77 @@ import javax.imageio.ImageIO
 class WorldMapPacker(val cache: Cache) {
     val mapProvider = CachedMapProvider(cache)
 
-    fun pack(cachePath : Path) {
-        val packSurface = true
-        val providers = Providers(
-            provideCache(cache),
-            provideTextures(),
-            provideSprites(),
-            provideFonts(),
-            provideObjects(),
-            mapProvider,
-            provideOverlays(),
-            provideMapElements(),
-            provideGraphicsDefaults(),
-            provideUnderlays(),
-        )
-        val config = WorldMapConfig().apply {
-            cacheRevision = runCatching { readCacheRevision(cache) }.getOrDefault(WorldMapFormat.REVISION)
-        }
+    /** Builds every provider the renderer and packer need from the supplied cache. */
+    fun buildProviders(): Providers = Providers(
+        provideCache(cache),
+        provideTextures(),
+        provideSprites(),
+        provideFonts(),
+        provideObjects(),
+        mapProvider,
+        provideOverlays(),
+        provideMapElements(),
+        provideGraphicsDefaults(),
+        provideUnderlays(),
+    )
+
+    private fun buildConfig() = WorldMapConfig().apply {
+        cacheRevision = runCatching { readCacheRevision(cache) }.getOrDefault(WorldMapFormat.REVISION)
+    }
+
+    /**
+     * Renders every world map area already present in the cache to a PNG in [outputDir].
+     * Read-only: nothing is written back to the cache.
+     */
+    fun dumpImages(outputDir: Path, pixelsPerTile: Int = 4) {
+        val providers = buildProviders()
+        val config = buildConfig()
         val worldMap = WorldMap(config, cache)
-        val blocks = loadAreaBlocks(cache)
+        outputDir.toFile().mkdirs()
+        for (block in loadAreaBlocks(cache).sortedBy { it.details.id }) {
+            val details = block.details
+            if (!worldMap.exists(providers, details.id, details.internalName)) continue
+            val outputFile = outputDir.resolve("${details.id}_${details.exportBaseName()}.png").toFile()
+            try {
+                val image = worldMap.generateImageFromExistingData(
+                    details.id,
+                    details.internalName,
+                    providers,
+                    pixelsPerTile,
+                )
+                ImageIO.write(image, "png", outputFile)
+                logger.info { "Wrote ${outputFile.name} (${image.width}x${image.height})" }
+            } catch (e: Exception) {
+                logger.warn { "Failed to render area ${details.id} (${details.internalName}): $e" }
+            }
+        }
+    }
+
+    /**
+     * Packs [blocks] into the cache, updating areas that already exist and adding the rest.
+     * When [imageOutputDir] is set, each updated area is also rendered to a PNG there.
+     */
+    fun pack(
+        blocks: List<WorldMapAreaBlock>,
+        imageOutputDir: Path? = null,
+        dirtySourceMapsquares: Set<Int>? = null,
+    ) {
+        val startedAt = System.nanoTime()
+        val providers = buildProviders()
+        val config = buildConfig()
+        val worldMap = WorldMap(config, cache)
+        val providersMs = (System.nanoTime() - startedAt) / 1_000_000
+        var encodeNanos = 0L
+        var imageNanos = 0L
+        var updated = 0
+        var added = 0
 
         for (block in blocks.sortedBy { it.details.id }) {
             if (worldMap.exists(providers, block.details.id, block.details.internalName)) {
                 logger.info { "Updating ${block.details.displayName} map area." }
+                updated++
 
-                val name = block.details.exportBaseName()
-                val outputFile = try {
-                    Paths.get("C:\\Users\\chris\\Desktop\\Images\\images\\$name.png").toFile()
-                } catch (_: Exception) {
-                    Paths.get("C:\\Users\\chris\\Desktop\\Images\\images\\${randomExportName(block.details.id)}.png").toFile()
-                }
-                outputFile.parentFile?.mkdirs()
-
+                val areaStartedAt = System.nanoTime()
                 worldMap.update(
                     block.details.id,
                     block.details.internalName,
@@ -100,24 +140,81 @@ class WorldMapPacker(val cache: Cache) {
                             displayName = block.details.displayName,
                             origin = block.details.origin,
                             backgroundColour = block.details.backgroundColour,
+                            mapBackgroundColour = block.details.mapBackgroundColour,
                             zoom = block.details.zoom,
-                            sections = details.sections + block.details.sections
+                            // The block carries the full section list, so replace rather than append;
+                            // appending would duplicate every section each time an area is repacked.
+                            sections = block.details.sections,
                         )
                     },
                     labelsTransformer = { labels ->
-                        labels + block.mapElements
-                    })
-
-
-                ImageIO.write(
-                    worldMap.generateImageFromExistingData(block.details.id, block.details.internalName, providers, 4),
-                    "png",
-                    outputFile,
+                        if (block.mapElements.isEmpty()) labels else block.mapElements
+                    },
+                    dirtySourceMapsquares = dirtySourceMapsquares,
                 )
+                encodeNanos += System.nanoTime() - areaStartedAt
+
+                if (imageOutputDir != null) {
+                    val imageStartedAt = System.nanoTime()
+                    val outputFile = imageOutputDir
+                        .resolve("${block.details.id}_${block.details.exportBaseName()}.png")
+                        .toFile()
+                    outputFile.parentFile?.mkdirs()
+                    ImageIO.write(
+                        worldMap.generateImageFromExistingData(block.details.id, block.details.internalName, providers, 4),
+                        "png",
+                        outputFile,
+                    )
+                    imageNanos += System.nanoTime() - imageStartedAt
+                }
             } else {
+                added++
+                val areaStartedAt = System.nanoTime()
                 worldMap.add(providers, block.details, block.mapElements)
+                encodeNanos += System.nanoTime() - areaStartedAt
             }
         }
+
+        val flushStartedAt = System.nanoTime()
+        cache.update()
+        val flushMs = (System.nanoTime() - flushStartedAt) / 1_000_000
+        val encodeMs = encodeNanos / 1_000_000
+        val totalMs = (System.nanoTime() - startedAt) / 1_000_000
+        logger.info {
+            "World map pack: $updated updated, $added added in ${totalMs}ms " +
+                "(providers ${providersMs}ms, encode ${encodeMs}ms, cache flush ${flushMs}ms" +
+                (if (imageOutputDir != null) ", png ${imageNanos / 1_000_000}ms" else "") + ")"
+        }
+    }
+
+    /** Repacks every world map area already present in the cache. */
+    fun repack(imageOutputDir: Path? = null) = pack(loadAreaBlocks(cache), imageOutputDir)
+
+    /**
+     * Repacks only the world map areas that draw from one of [changedMapsquares], given as
+     * `(x shl 8) or y`. Areas that source none of those squares are left untouched.
+     * Returns the number of areas repacked.
+     */
+    fun repackChanged(changedMapsquares: Set<Int>, imageOutputDir: Path? = null): Int {
+        if (changedMapsquares.isEmpty()) {
+            logger.info { "No mapsquares changed; world map left as-is." }
+            return 0
+        }
+        val affected = loadAreaBlocks(cache).filter { block ->
+            block.details.sections.any { section ->
+                section.sourceMapsquares().any { it in changedMapsquares }
+            }
+        }
+        if (affected.isEmpty()) {
+            logger.info { "${changedMapsquares.size} mapsquare(s) changed, none used by a world map area." }
+            return 0
+        }
+        logger.info {
+            "${changedMapsquares.size} mapsquare(s) changed; repacking ${affected.size} world map area(s): " +
+                affected.joinToString { it.details.internalName }
+        }
+        pack(affected, imageOutputDir, dirtySourceMapsquares = changedMapsquares)
+        return affected.size
     }
 
     private fun provideMapElements(): MapElementConfigProvider {
@@ -205,7 +302,7 @@ class WorldMapPacker(val cache: Cache) {
 
     private fun provideSprites(): SpriteProvider {
         val sprites = mutableMapOf<Int, SpriteType>()
-        SpriteDecoder().load(cache,sprites)
+        SpriteDecoder().load(cache, sprites)
         return CachedSpriteProvider(sprites)
     }
 
@@ -280,16 +377,20 @@ class WorldMapPacker(val cache: Cache) {
 
         fun storeBuf(mapsquareId: MapsquareId, mapBuffer: ByteBuf, locBuffer: ByteBuf?): Mapsquare {
             val fullMap = FullMapDefinition.decode(mapBuffer, mapsquareId.x, mapsquareId.y)
-            val mapObjects = locBuffer?.let { MapLocDefinition.decodeBaseData(it) } ?: emptyList()
-
-            println("HERR3434444")
+            val mapObjects = locBuffer?.let {
+                try {
+                    MapLocDefinition.decodeBaseData(it)
+                } catch (e: Exception) {
+                    logger.warn { "Unreadable loc data for mapsquare ${mapsquareId.x},${mapsquareId.y}: $e" }
+                    emptyList()
+                }
+            } ?: emptyList()
 
             mapBuffer.release()
             locBuffer?.release()
             val worldMapObjects = mapObjects.map { loc ->
                 Loc(loc.id, loc.type, loc.orientation, loc.coordinate)
             }
-            println("Loaded ${worldMapObjects.size} objects for ${mapsquareId.x},${mapsquareId.y}")
             // Same thing here..
             val land = object : Landscape {
                 override fun getUnderlayId(level: Int, x: Int, y: Int): Int {
@@ -297,7 +398,6 @@ class WorldMapPacker(val cache: Cache) {
                 }
 
                 override fun getOverlayId(level: Int, x: Int, y: Int): Int {
-                    println(fullMap.overlayIds[level][x][y] - 1)
                     return fullMap.overlayIds[level][x][y] - 1
                 }
 

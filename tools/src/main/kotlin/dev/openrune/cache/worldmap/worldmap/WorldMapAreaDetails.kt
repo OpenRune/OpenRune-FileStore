@@ -37,6 +37,14 @@ data class WorldMapAreaDetails(
     val backgroundColour: Int,
 
     /**
+     * The colour the world map interface paints behind the map itself, outside the map's rectangle.
+     * Read by the client as the third integer of the record (see WorldMapData.method6340); almost every
+     * area uses opaque black (0xFF000000). Distinct from [backgroundColour], which fills tiles inside
+     * the rectangle that have no map data.
+     */
+    val mapBackgroundColour: Int = DEFAULT_MAP_BACKGROUND_COLOUR,
+
+    /**
      * The zoom level of the map when opening the given section. Possible values include 50, 75, 100, 150 and 200.
      * The zoom level 150 is never used by any of the maps in OSRS.
      */
@@ -67,6 +75,7 @@ data class WorldMapAreaDetails(
         buffer.writeString(displayName)
         buffer.writeInt(origin.packedCoord)
         buffer.writeInt(backgroundColour)
+        buffer.writeInt(mapBackgroundColour)
         buffer.writeByte(1)
         buffer.writeBoolean(isMain)
         buffer.writeByte(zoom)
@@ -99,6 +108,8 @@ data class WorldMapAreaDetails(
     }
 
     companion object {
+        const val DEFAULT_MAP_BACKGROUND_COLOUR = -16777216
+
         fun construct(
             rscmName: String,
             displayName: String,
@@ -106,17 +117,29 @@ data class WorldMapAreaDetails(
             backgroundColour: Int,
             zoom: Int,
             sections: List<WorldMapSection>,
-            isMain: Boolean = rscmName == "worldmap.main"
+            isMain: Boolean = rscmName == "worldmap.main",
+            mapBackgroundColour: Int = DEFAULT_MAP_BACKGROUND_COLOUR,
         ): WorldMapAreaDetails {
             val id = ConstantProvider.getMapping(rscmName)
             val internalName = rscmName.replace("worldmap.", "")
-            return WorldMapAreaDetails(id, internalName, displayName, origin, backgroundColour, zoom, sections, isMain)
+            return WorldMapAreaDetails(
+                id,
+                internalName,
+                displayName,
+                origin,
+                backgroundColour,
+                mapBackgroundColour,
+                zoom,
+                sections,
+                isMain
+            )
         }
         fun decode(id: Int, buffer: ByteBuf): WorldMapAreaDetails {
             val internalName = buffer.readString()
             val displayName = buffer.readString()
             val origin = Coordinate(buffer.readInt())
             val backgroundColor = buffer.readInt()
+            val mapBackgroundColor = buffer.readInt()
             buffer.readUnsignedByte() // Always a value of one
             val isMain = buffer.readUnsignedByte().toInt() == 1
             val zoom = buffer.readUnsignedByte().toInt()
@@ -131,6 +154,7 @@ data class WorldMapAreaDetails(
                 displayName,
                 origin,
                 backgroundColor,
+                mapBackgroundColor,
                 zoom,
                 sections,
                 isMain

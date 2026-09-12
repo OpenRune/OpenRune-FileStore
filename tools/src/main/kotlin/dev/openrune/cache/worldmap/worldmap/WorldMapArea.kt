@@ -61,7 +61,18 @@ data class WorldMapArea(
     }
 
     companion object {
-        fun decode(cache: CacheProvider, id: Int, internalName: String, revision: Int): WorldMapArea {
+        /**
+         * @param geographyFilter decides, per destination mapsquare, whether that square's geography is
+         *   read and decoded. Squares it rejects get a placeholder carrying only their coordinates, which
+         *   lets an incremental update skip the bulk of the work. `null` decodes everything.
+         */
+        fun decode(
+            cache: CacheProvider,
+            id: Int,
+            internalName: String,
+            revision: Int,
+            geographyFilter: ((Int, Int) -> Boolean)? = null,
+        ): WorldMapArea {
             val legacy = WorldMapFormat.isLegacy(revision)
             if (legacy) {
                 require(cache.exists(WORLD_MAP_DATA_ARCHIVE, "details", internalName))
@@ -81,7 +92,7 @@ data class WorldMapArea(
             } else {
                 cache.read(WORLD_MAP_DATA_ARCHIVE, WorldMapFormat.compositemapGroupId(), id)
             }
-            val data = WorldMapAreaData.decode(cache, compositeBuffer, id, revision)
+            val data = WorldMapAreaData.decode(cache, compositeBuffer, id, revision, geographyFilter)
             return WorldMapArea(internalName, details, data)
         }
 
@@ -138,12 +149,24 @@ data class WorldMapAreaData(
     }
 
     companion object {
-        fun decode(cache: CacheProvider, buffer: ByteBuf, areaId: Int, revision: Int): WorldMapAreaData {
+        fun decode(
+            cache: CacheProvider,
+            buffer: ByteBuf,
+            areaId: Int,
+            revision: Int,
+            geographyFilter: ((Int, Int) -> Boolean)? = null,
+        ): WorldMapAreaData {
             val legacy = WorldMapFormat.isLegacy(revision)
             val mapsquareCount = buffer.readUnsignedShort()
             val mapsquares = ArrayList<WorldMapMapsquare>(mapsquareCount)
             for (i in 0 until mapsquareCount) {
                 val data = WorldMapMapsquareData.decode(buffer, legacy)
+                if (geographyFilter != null &&
+                    !geographyFilter(data.mapsquareDestinationX, data.mapsquareDestinationY)
+                ) {
+                    mapsquares += WorldMapMapsquare(data, WorldMapMapsquareGeography.placeholder(data))
+                    continue
+                }
                 val geographyBuffer = readGeographyBuffer(cache, data, areaId, legacy)
                 val geography = WorldMapMapsquareGeography.decode(geographyBuffer, data, legacy)
                 mapsquares += WorldMapMapsquare(data, geography)
@@ -155,6 +178,14 @@ data class WorldMapAreaData(
             val zoneGeographyBuffers = mutableMapOf<Int, ByteBuf>()
             for (i in 0 until zoneCount) {
                 val data = WorldMapZoneData.decode(buffer, legacy)
+                // Every zone of a square shares one geography file and is read sequentially from it, so
+                // the filter has to keep or drop a whole square at a time.
+                if (geographyFilter != null &&
+                    !geographyFilter(data.mapsquareDestinationX, data.mapsquareDestinationY)
+                ) {
+                    zones += WorldMapZone(data, WorldMapZoneGeography.placeholder(data))
+                    continue
+                }
                 val groupKey = WorldMapFormat.regionGroupKey(data.mapsquareDestinationX, data.mapsquareDestinationY)
                 val geographyBuffer = zoneGeographyBuffers.getOrPut(groupKey) {
                     readGeographyBuffer(cache, data, areaId, legacy)

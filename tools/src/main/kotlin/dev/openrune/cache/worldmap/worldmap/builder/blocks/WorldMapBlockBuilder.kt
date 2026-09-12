@@ -89,7 +89,7 @@ interface WorldMapBlockBuilder<out T : WorldMapBlock> {
                 // In the end, it doesn't really matter though as almost all the differences are just due to level differences,
                 // but as the world map flattens everything onto a single level, it makes no difference in the end.
                 for (z in baseLevel..maxLevel) {
-                    overlays[z - baseLevel][x + xOffset][y + yOffset] = ((landscape.getOverlayId(z, x, y) + 1) and 0xFF).toShort()
+                    overlays[z - baseLevel][x + xOffset][y + yOffset] = (landscape.getOverlayId(z, x, y) + 1).toShort()
                     shapes[z - baseLevel][x + xOffset][y + yOffset] = landscape.getOverlayShape(z, x, y).toByte()
                     rotations[z - baseLevel][x + xOffset][y + yOffset] = landscape.getOverlayRotation(z, x, y).toByte()
                 }
@@ -106,9 +106,15 @@ interface WorldMapBlockBuilder<out T : WorldMapBlock> {
         landscape: Landscape,
         decorations: Decorations
     ): Int {
+        // z is an absolute level: it has to stay inside the source landscape (4 planes) and inside the
+        // generated arrays, which only hold levelsCount levels starting at baseLevel.
+        val topLevel = min(
+            WorldMapConstants.MAX_LEVELS.dec(),
+            baseLevel + min(WorldMapConstants.MAX_LEVELS, levelsCount).dec(),
+        )
         var maxLevel = baseLevel
-        for (z in levelsCount.dec() downTo baseLevel) {
-            val hasDecoration = decorations[z][x][y].isNotEmpty()
+        for (z in topLevel downTo baseLevel) {
+            val hasDecoration = decorations[z - baseLevel][x][y].isNotEmpty()
             if (hasDecoration) {
                 maxLevel = z
                 break

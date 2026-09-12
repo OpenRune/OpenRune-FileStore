@@ -47,7 +47,15 @@ class TomlWorldMap {
             val coord = sections.convertCoord(requireNotNull(element.location))
             WorldMapElement(requireNotNull(element.name), coord)
         }
-        val details = WorldMapAreaDetails(id, internalName, displayName, origin, backgroundColour, zoom, sections)
+        val details = WorldMapAreaDetails(
+            id = id,
+            internalName = internalName,
+            displayName = displayName,
+            origin = origin,
+            backgroundColour = backgroundColour,
+            zoom = zoom,
+            sections = sections,
+        )
         return WorldMapAreaBlock(details, mapElements)
     }
 

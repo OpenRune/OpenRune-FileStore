@@ -30,3 +30,4 @@ tools/build/*
 /definition/rs3/build
 /definition/opcode/build
 /data
+worldmap-out/

@@ -40,3 +40,20 @@ fun String.sanitizeWorldMapFileName(): String {
         .take(120)
         .trim()
 }
+
+/**
+ * The source mapsquares a section reads its map data from, packed as `(x shl 8) or y`.
+ * Used to decide which world map areas a changed mapsquare affects.
+ */
+fun WorldMapSection.sourceMapsquares(): Set<Int> = when (this) {
+    is MapsquareSingleSection -> setOf((mapsquareSourceX shl 8) or (mapsquareSourceY and 0xFF))
+    is ZoneSingleSection -> setOf((mapsquareSourceX shl 8) or (mapsquareSourceY and 0xFF))
+    is ZoneMultiSection -> setOf((mapsquareSourceX shl 8) or (mapsquareSourceY and 0xFF))
+    is MapsquareMultiSection -> buildSet {
+        for (x in mapsquareSourceMinX..mapsquareSourceMaxX) {
+            for (y in mapsquareSourceMinY..mapsquareSourceMaxY) {
+                add((x shl 8) or (y and 0xFF))
+            }
+        }
+    }
+}

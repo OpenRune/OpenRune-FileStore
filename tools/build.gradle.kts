@@ -35,3 +35,15 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
+// Runs a main class from this module, e.g.
+//   ./gradlew :tools:runTool -PmainClass=dev.openrune.cache.tools.TestKt -Pd.cachePath=/path/to/cache
+tasks.register<JavaExec>("runTool") {
+    group = "application"
+    mainClass.set(project.findProperty("mainClass")?.toString() ?: "dev.openrune.cache.tools.TestKt")
+    classpath = sourceSets["main"].runtimeClasspath
+    jvmArgs = listOf("-Xmx8G")
+    // Forward -Pd.<name>=<value> to the JVM as -D<name>=<value>.
+    project.properties.forEach { (key, value) ->
+        if (key.startsWith("d.") && value != null) systemProperty(key.removePrefix("d."), value)
+    }
+}

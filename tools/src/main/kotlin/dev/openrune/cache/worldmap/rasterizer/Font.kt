@@ -2,9 +2,10 @@
 
 package dev.openrune.cache.worldmap.rasterizer
 
+import dev.openrune.definition.game.render.draw.Rasterizer2D
 import dev.openrune.cache.worldmap.rasterizer.provider.FontMetrics
 import dev.openrune.cache.worldmap.rasterizer.sprite.ModIconsSprites
-import dev.openrune.cache.worldmap.rasterizer.sprite.drawTransparentBackgroundSprite
+import dev.openrune.definition.game.render.draw.drawTransparentBackgroundSprite
 import java.util.*
 import kotlin.math.sin
 

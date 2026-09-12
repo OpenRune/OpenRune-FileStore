@@ -112,18 +112,30 @@ data class MapsquareGround(val width: Int, val height: Int) {
             count[xInMapsquare][yInMapsquare]++
         }
 
+        /**
+         * @param paint squares to re-blend. Blending a square also contributes colour to its eight
+         *   neighbours, so a square's ground is only complete when its whole neighbourhood is painted;
+         *   this set therefore needs one more square of margin than [compositeRegenerate].
+         * @param compositeRegenerate squares to redraw in the composite texture. Every other square is
+         *   copied out of [cachedComposite]. `null` for both means rebuild everything.
+         */
         fun generateSprites(
             providers: Providers,
             areaData: WorldMapArea,
             bordersSeparate: Boolean,
             backgroundColour: Int,
             brightness: Double,
+            paint: Set<MapsquareId>? = null,
+            compositeRegenerate: Set<MapsquareId>? = null,
+            cachedComposite: BufferedImage? = null,
         ): Pair<Map<MapsquareId, BufferedImage>, BufferedImage> {
             val boundaries = areaData.boundaries
             val totalWidth = boundaries.width
             val totalHeight = boundaries.height
             val groundAreas = Array<Array<MapsquareGroundArea?>>(totalWidth) { arrayOfNulls(totalHeight) }
-            val underlayImages = buildUnderlayImages(groundAreas, areaData, bordersSeparate, providers.underlayProvider)
+            val underlayImages = buildUnderlayImages(
+                groundAreas, areaData, bordersSeparate, providers.underlayProvider, paint,
+            )
             val mapSceneSprites = MapSceneSprites.build(providers.graphicsDefaultsProvider, providers.spriteProvider)
             val composite = generateCompositeTexture(
                 providers,
@@ -133,6 +145,8 @@ data class MapsquareGround(val width: Int, val height: Int) {
                 underlayImages,
                 backgroundColour,
                 brightness,
+                compositeRegenerate,
+                cachedComposite,
             )
             return underlayImages to composite
         }
@@ -242,6 +256,7 @@ data class MapsquareGround(val width: Int, val height: Int) {
             areaData: WorldMapArea,
             bordersSeparate: Boolean,
             underlayProvider: UnderlayProvider,
+            regenerate: Set<MapsquareId>? = null,
         ): Map<MapsquareId, BufferedImage> {
             val boundaries = areaData.boundaries
             val minX = boundaries.minX
@@ -284,6 +299,9 @@ data class MapsquareGround(val width: Int, val height: Int) {
                     if (current == null || current.isEmpty) {
                         continue
                     }
+                    // Untouched square: its ground bytes and its slice of the composite are already
+                    // packed, so neither needs rebuilding.
+                    if (regenerate != null && current.mapsquareId !in regenerate) continue
                     fillNeighbouringZones(mapRegions, x, y, neighbours)
                     val ground = current.paintGround(neighbours, bordersSeparate, underlayProvider)
                     repository[current.mapsquareId] = ground

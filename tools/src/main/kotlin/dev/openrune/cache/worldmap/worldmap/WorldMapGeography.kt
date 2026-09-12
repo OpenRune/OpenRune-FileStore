@@ -112,6 +112,7 @@ sealed class WorldMapGeography(
             if (hasDecorations) {
                 flag = flag or HAS_DECORATIVE_OBJECTS
             }
+            /* Bits 3-4 are the decorative object level count, which the client derives from the flag. */
             flag = flag or (maxLevels shl 3)
             buffer.writeByte(flag)
             buffer.writeShort(underlays[0][x][y].toInt())
@@ -360,6 +361,20 @@ data class WorldMapMapsquareGeography(
     }
 
     companion object {
+        /**
+         * Carries only the square's placement. Has no tile arrays, so reading tile data from a square
+         * that was deliberately skipped throws rather than silently yielding blank terrain.
+         */
+        fun placeholder(data: WorldMapData) = WorldMapMapsquareGeography(
+            data.mapsquareDestinationX,
+            data.mapsquareDestinationY,
+            emptyArray(),
+            emptyArray(),
+            emptyArray(),
+            emptyArray(),
+            emptyArray(),
+        )
+
         fun decode(
             buffer: ByteBuf,
             data: WorldMapData,
@@ -495,6 +510,19 @@ data class WorldMapZoneGeography(
     }
 
     companion object {
+        /** See [WorldMapMapsquareGeography.placeholder]. */
+        fun placeholder(data: WorldMapZoneData) = WorldMapZoneGeography(
+            data.mapsquareDestinationX,
+            data.mapsquareDestinationY,
+            data.zoneDestinationX,
+            data.zoneDestinationY,
+            emptyArray(),
+            emptyArray(),
+            emptyArray(),
+            emptyArray(),
+            emptyArray(),
+        )
+
         fun decode(
             buffer: ByteBuf,
             data: WorldMapZoneData,

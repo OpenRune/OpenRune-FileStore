@@ -13,4 +13,7 @@ class WorldMapConfig {
     var updateCompositeTexture: Boolean = true
     var updateUnderlayImages: Boolean = true
     var brightness: Double = 0.7
+
+    /** When set, each packed area's composite texture is also written here as an image for inspection. */
+    var compositeDumpDirectory: java.nio.file.Path? = null
 }

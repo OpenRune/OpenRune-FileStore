@@ -1,12 +1,12 @@
 package dev.openrune.cache.worldmap.worldmap.rasterizer
 
-import dev.openrune.cache.worldmap.rasterizer.Rasterizer2D
-import dev.openrune.cache.worldmap.rasterizer.Rasterizer3D
+import dev.openrune.definition.game.render.draw.Rasterizer2D
+import dev.openrune.definition.game.render.util.JagexColor
 import dev.openrune.cache.worldmap.rasterizer.sprite.MapSceneSprites
 import dev.openrune.cache.worldmap.rasterizer.sprite.ModIconsSprites
 import dev.openrune.cache.worldmap.rasterizer.sprite.OverlayRenderer
-import dev.openrune.cache.worldmap.rasterizer.sprite.drawTransparentBackgroundSprite
-import dev.openrune.cache.worldmap.rasterizer.sprite.rasterizeScanLine
+import dev.openrune.definition.game.render.draw.drawTransparentBackgroundSprite
+import dev.openrune.definition.game.render.draw.rasterizeScanLine
 import dev.openrune.cache.worldmap.worldmap.WorldMapArea
 import dev.openrune.cache.worldmap.worldmap.WorldMapAreaBoundaries
 import dev.openrune.cache.worldmap.worldmap.WorldMapDecorationObject
@@ -39,21 +39,24 @@ object WorldMapRenderer {
         underlayImages: Map<MapsquareId, BufferedImage>,
         backgroundColour: Int,
         brightness: Double,
+        regenerate: Set<MapsquareId>? = null,
+        cachedComposite: BufferedImage? = null,
     ): BufferedImage {
         val boundaries = areaData.boundaries
         val totalWidth = boundaries.width
         val totalHeight = boundaries.height
         val overlayRenderer = OverlayRenderer(COMPOSITE_TEXTURE_PIXELS_PER_TILE)
         val rasterizers = generateRasterizers(totalWidth, totalHeight, COMPOSITE_TEXTURE_PIXELS_PER_TILE)
-        val rasterizer3D = Rasterizer3D(brightness)
+        val colourPalette = JagexColor.createPalette(brightness)
         for (x in 0 until totalWidth) {
             for (y in 0 until totalHeight) {
                 val current = groundAreas[x][y] ?: continue
                 if (current.isEmpty) continue
-                val sprite = underlayImages.getValue(current.mapsquareId)
+                if (regenerate != null && current.mapsquareId !in regenerate) continue
+                val sprite = underlayImages[current.mapsquareId] ?: continue
                 val rasterizer = rasterizers[x][y]
                 drawOverlays(
-                    rasterizer3D,
+                    colourPalette,
                     rasterizer,
                     providers,
                     mapSceneSprites,
@@ -72,7 +75,42 @@ object WorldMapRenderer {
             totalHeight,
             COMPOSITE_TEXTURE_PIXELS_PER_TILE
         )
-        return fullRasterizer.downscale(factor = COMPOSITE_TEXTURE_DOWNSCALE_FACTOR)
+        val composite = fullRasterizer.downscale(factor = COMPOSITE_TEXTURE_DOWNSCALE_FACTOR)
+        if (regenerate != null && cachedComposite != null) {
+            copyUnchangedComposite(composite, cachedComposite, boundaries, regenerate)
+        }
+        return composite
+    }
+
+    /** Size of one mapsquare in the downscaled composite texture. */
+    private const val COMPOSITE_SQUARE_PIXELS =
+        WorldMapConstants.MAPSQUARE_SIZE * COMPOSITE_TEXTURE_PIXELS_PER_TILE / COMPOSITE_TEXTURE_DOWNSCALE_FACTOR
+
+    /**
+     * Copies every square that was not regenerated out of the previously packed composite, so only the
+     * changed squares are actually redrawn.
+     */
+    private fun copyUnchangedComposite(
+        target: BufferedImage,
+        cached: BufferedImage,
+        boundaries: WorldMapAreaBoundaries,
+        regenerate: Set<MapsquareId>,
+    ) {
+        if (cached.width != target.width || cached.height != target.height) return
+        val totalHeight = boundaries.height
+        for (gridX in 0 until boundaries.width) {
+            for (gridY in 0 until totalHeight) {
+                val id = MapsquareId(boundaries.minX + gridX, boundaries.minY + gridY)
+                if (id in regenerate) continue
+                val originX = gridX * COMPOSITE_SQUARE_PIXELS
+                val originY = (totalHeight - gridY - 1) * COMPOSITE_SQUARE_PIXELS
+                for (x in 0 until COMPOSITE_SQUARE_PIXELS) {
+                    for (y in 0 until COMPOSITE_SQUARE_PIXELS) {
+                        target.setRGB(originX + x, originY + y, cached.getRGB(originX + x, originY + y))
+                    }
+                }
+            }
+        }
     }
 
     fun drawOverlaysAndElements(
@@ -90,7 +128,7 @@ object WorldMapRenderer {
         val totalHeight = boundaries.height
         val overlayRenderer = OverlayRenderer(pixelsPerTile)
         val rasterizers = generateRasterizers(totalWidth, totalHeight, pixelsPerTile)
-        val rasterizer3D = Rasterizer3D(brightness)
+        val colourPalette = JagexColor.createPalette(brightness)
 
         for (x in 0 until totalWidth) {
             for (y in 0 until totalHeight) {
@@ -100,7 +138,7 @@ object WorldMapRenderer {
                     val sprite = images.getValue(current.mapsquareId)
                     val rasterizer = rasterizers[x][y]
                     drawOverlays(
-                        rasterizer3D,
+                        colourPalette,
                         rasterizer,
                         providers,
                         mapSceneSprites,
@@ -208,7 +246,7 @@ object WorldMapRenderer {
     }
 
     private fun drawOverlays(
-        rasterizer3D: Rasterizer3D,
+        colourPalette: IntArray,
         rasterizer2D: Rasterizer2D,
         providers: Providers,
         mapSceneSprites: MapSceneSprites,
@@ -221,9 +259,9 @@ object WorldMapRenderer {
     ) {
         for (x in 0 until WorldMapConstants.MAPSQUARE_SIZE) {
             for (y in 0 until WorldMapConstants.MAPSQUARE_SIZE) {
-                drawTileGround(rasterizer3D, rasterizer2D, providers, overlayRenderer, x, y, mapsquare, image, pixelsPerTile, backgroundColour)
+                drawTileGround(colourPalette, rasterizer2D, providers, overlayRenderer, x, y, mapsquare, image, pixelsPerTile, backgroundColour)
                 if (!compositeTexture) {
-                    drawAboveTiles(rasterizer3D, rasterizer2D, providers, overlayRenderer, x, y, mapsquare, pixelsPerTile, backgroundColour)
+                    drawAboveTiles(colourPalette, rasterizer2D, providers, overlayRenderer, x, y, mapsquare, pixelsPerTile, backgroundColour)
                 }
             }
         }
@@ -519,7 +557,7 @@ object WorldMapRenderer {
     }
 
     private fun determineOverlayColour(
-        rasterizer3D: Rasterizer3D,
+        colourPalette: IntArray,
         overlayProvider: OverlayProvider,
         textureProvider: TextureProvider,
         overlayId: Int,
@@ -533,7 +571,7 @@ object WorldMapRenderer {
         } else if (overlayProvider.getTextureId(overlayId) >= 0) {
             val averageRgb = textureProvider.getHsl(overlayProvider.getTextureId(overlayId))
             val var12 = adjustLightness(averageRgb, 96)
-            rasterizer3D.colourPalette[var12] or -16777216
+            colourPalette[var12] or -16777216
         } else if (overlayProvider.getTileColour(overlayId) == 16711935) {
             backgroundColour
         } else {
@@ -554,12 +592,12 @@ object WorldMapRenderer {
             }
             val var16 = (saturation / 32 shl 7) + lightness / 2 + (hue / 4 shl 10)
             val var17 = adjustLightness(var16, 96)
-            rasterizer3D.colourPalette[var17] or -16777216
+            colourPalette[var17] or -16777216
         }
     }
 
     private fun drawTileGround(
-        rasterizer3D: Rasterizer3D,
+        colourPalette: IntArray,
         rasterizer2D: Rasterizer2D,
         providers: Providers,
         overlayRenderer: OverlayRenderer,
@@ -576,7 +614,7 @@ object WorldMapRenderer {
         if (underlay == -1 && overlayId == -1) {
             rasterizer2D.fillRectangle(pixelsPerTile * x, pixelsPerTile * (63 - y), pixelsPerTile, pixelsPerTile, backgroundColour)
         }
-        val overlayColour = determineOverlayColour(rasterizer3D, overlayProvider, providers.textureProvider, overlayId, backgroundColour)
+        val overlayColour = determineOverlayColour(colourPalette, overlayProvider, providers.textureProvider, overlayId, backgroundColour)
         val tileShape = mapsquare.getShape(0, x, y)
         val tileRotation = mapsquare.getRotation(0, x, y)
 
@@ -601,7 +639,7 @@ object WorldMapRenderer {
     }
 
     private fun drawAboveTiles(
-        rasterizer3D: Rasterizer3D,
+        colourPalette: IntArray,
         rasterizer: Rasterizer2D,
         providers: Providers,
         overlayRenderer: OverlayRenderer,
@@ -615,7 +653,7 @@ object WorldMapRenderer {
         for (level in 1 until mapsquare.levels) {
             val overlayId = mapsquare.getOverlayId(level, x, y)
             if (overlayId < 0) continue
-            val overlayColour = determineOverlayColour(rasterizer3D, overlayProvider, providers.textureProvider, overlayId, backgroundColour)
+            val overlayColour = determineOverlayColour(colourPalette, overlayProvider, providers.textureProvider, overlayId, backgroundColour)
             val shape = mapsquare.getShape(level, x, y)
             if (shape == 0) {
                 rasterizer.fillRectangle(pixelsPerTile * x, pixelsPerTile * (63 - y), pixelsPerTile, pixelsPerTile, overlayColour)

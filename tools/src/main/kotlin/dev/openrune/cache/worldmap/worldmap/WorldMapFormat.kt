@@ -29,6 +29,8 @@ internal fun writeWorldMapGeography(
     mapsquares: List<WorldMapMapsquare>,
     zones: List<WorldMapZone>,
     legacy: Boolean,
+    /** When set, only these group keys are rewritten; every other square keeps its packed bytes. */
+    restrictToGroups: Set<Int>? = null,
 ) {
     if (legacy) {
         for (mapsquare in mapsquares) {
@@ -51,6 +53,7 @@ internal fun writeWorldMapGeography(
             mapsquare.data.mapsquareDestinationY,
         )
         mapsquareRegions += groupKey
+        if (restrictToGroups != null && groupKey !in restrictToGroups) continue
         val geographyBuffer = io.netty.buffer.Unpooled.buffer(10_000)
         mapsquare.geography.encode(geographyBuffer, legacy = false)
         cacheProvider.write(WORLD_MAP_GEOGRAPHY_ARCHIVE, groupKey, areaId, geographyBuffer)
@@ -67,6 +70,7 @@ internal fun writeWorldMapGeography(
     }
 
     for ((groupKey, regionZones) in zoneRegions) {
+        if (restrictToGroups != null && groupKey !in restrictToGroups) continue
         val geographyBuffer = io.netty.buffer.Unpooled.buffer(10_000)
         for (zone in regionZones) {
             zone.geography.encode(geographyBuffer, legacy = false)

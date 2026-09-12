@@ -1,5 +1,6 @@
 package dev.openrune.cache.worldmap.worldmap.builder.blocks
 
+import dev.openrune.cache.util.logger
 import dev.openrune.cache.worldmap.worldmap.MapsquareMultiSection
 import dev.openrune.cache.worldmap.worldmap.WorldMapMapsquare
 import dev.openrune.cache.worldmap.worldmap.providers.MapProvider
@@ -12,11 +13,11 @@ import dev.openrune.filesystem.Cache
 class WorldMapMultiMapsquareBuilder(val cache : Cache, private val section: MapsquareMultiSection) : WorldMapBlockBuilder<WorldMapMapsquare> {
     override fun build(mapProvider: MapProvider, objectProvider: ObjectProvider): List<WorldMapMapsquare> {
         val initial = (section.mapsquareSourceMaxX.inc() - section.mapsquareSourceMinX) * (section.mapsquareSourceMaxY.inc() - section.mapsquareSourceMinY)
-        try {
-            val list = ArrayList<WorldMapMapsquare>(initial)
-            for (x in section.mapsquareSourceMinX..section.mapsquareSourceMaxX) {
-                for (y in section.mapsquareSourceMinY..section.mapsquareSourceMaxY) {
-                    val mapsquare = generateMapsquare(
+        val list = ArrayList<WorldMapMapsquare>(initial)
+        for (x in section.mapsquareSourceMinX..section.mapsquareSourceMaxX) {
+            for (y in section.mapsquareSourceMinY..section.mapsquareSourceMaxY) {
+                val mapsquare = try {
+                    generateMapsquare(
                         cache,
                         mapProvider,
                         objectProvider,
@@ -27,12 +28,13 @@ class WorldMapMultiMapsquareBuilder(val cache : Cache, private val section: Maps
                         section.mapsquareDestinationMinX + (x - section.mapsquareSourceMinX),
                         section.mapsquareDestinationMinY + (y - section.mapsquareSourceMinY),
                     )
-                    if (mapsquare != null) list += mapsquare
+                } catch (e: Exception) {
+                    logger.warn { "Failed to build world map mapsquare $x,$y: $e" }
+                    null
                 }
-                return list
+                if (mapsquare != null) list += mapsquare
             }
-        }catch (Exception:Exception){}
-        return emptyList()
+        }
+        return list
     }
 }
-

@@ -1,7 +1,6 @@
 package dev.openrune.definition.codec
 
 import dev.openrune.definition.DefinitionCodec
-import dev.openrune.definition.revisionIsOrBefore
 import dev.openrune.definition.type.MultiSquare
 import dev.openrune.definition.type.MultiZone
 import dev.openrune.definition.type.SingleSquare
@@ -19,9 +18,8 @@ class WorldMapAreaCodec(val rev : Int) : DefinitionCodec<WorldMapAreaType> {
         this.externalName = buffer.readString()
         this.origin = Coord(buffer.readInt())
         this.backgroundColour = buffer.readInt()
-        if (revisionIsOrBefore(rev, 217)) {
-            this.fillColour = buffer.readInt()
-        }
+        // Present in every revision checked (223 and 238 clients both read three ints here).
+        this.fillColour = buffer.readInt()
         buffer.readUnsignedByte()
         this.isMain = buffer.readUnsignedByte().toInt() == 1
         this.zoom = buffer.readUnsignedByte().toInt()

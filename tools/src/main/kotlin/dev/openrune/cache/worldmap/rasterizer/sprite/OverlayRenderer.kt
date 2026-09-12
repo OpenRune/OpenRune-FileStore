@@ -1,6 +1,6 @@
 package dev.openrune.cache.worldmap.rasterizer.sprite
 
-import dev.openrune.cache.worldmap.rasterizer.Rasterizer2D
+import dev.openrune.definition.game.render.draw.Rasterizer2D
 
 /**
  * @author Kris | 15/08/2022
