@@ -19,6 +19,21 @@ class IntBackedList private constructor(
 
     constructor(initialCapacity: Int) : this(IntArray(initialCapacity), 0)
 
+    private var frozen = false
+
+    /**
+     * Makes the list permanently immutable. Frozen lists can be shared between definitions,
+     * which is what lets equal lists collapse to one instance after a cache load.
+     */
+    fun freeze(): IntBackedList {
+        frozen = true
+        return this
+    }
+
+    private fun checkMutable() {
+        if (frozen) throw UnsupportedOperationException("This list belongs to a loaded definition and is immutable.")
+    }
+
     override val size: Int get() = count
 
     override fun get(index: Int): Int {
@@ -27,6 +42,7 @@ class IntBackedList private constructor(
     }
 
     override fun set(index: Int, element: Int): Int {
+        checkMutable()
         checkIndex(index)
         val previous = elements[index]
         elements[index] = element
@@ -34,6 +50,7 @@ class IntBackedList private constructor(
     }
 
     override fun add(index: Int, element: Int) {
+        checkMutable()
         if (index < 0 || index > count) throw IndexOutOfBoundsException("index $index, size $count")
         if (count == elements.size) {
             elements = elements.copyOf(if (elements.isEmpty()) 4 else elements.size * 2)
@@ -44,6 +61,7 @@ class IntBackedList private constructor(
     }
 
     override fun removeAt(index: Int): Int {
+        checkMutable()
         checkIndex(index)
         val removed = elements[index]
         System.arraycopy(elements, index + 1, elements, index, count - index - 1)

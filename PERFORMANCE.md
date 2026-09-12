@@ -143,6 +143,29 @@ cost of the config types is their fifty-plus declared scalar fields — the floo
 type shapes. Converting the fields to raw `IntArray` was considered and rejected: it would break
 the public definition API for the same bytes the array-backed lists already save.
 
+### Compact and freeze at the manager
+
+A cache is full of copies — one object at four rotations is four ids with identical model, type
+and colour lists, and thousands of doors share one op set. While a definition is being decoded or
+packed it has to be mutable, so nothing can be shared. The moment `CacheManager.init` adopts the
+tables, `DefinitionCompactor` interns equal lists and op sets to one frozen instance each and
+freezes them; mutating anything a loaded definition holds throws from then on. A freshly
+constructed type stays fully mutable — that is the builder the codecs and packing tools use.
+
+| Type    | Loose   | Compacted | Change |
+|---------|---------|-----------|--------|
+| objects | 29.3 MB | 19.7 MB   | -33%   |
+| items   | 20.6 MB | 16.5 MB   | -20%   |
+| npcs    | 10.9 MB | 8.3 MB    | -24%   |
+
+Against the original baseline that puts objects at -44%, npcs at -44% and items at -30%, and the
+ten-workload total at 143 MB → 106 MB (-26%). The pass is one content-keyed intern per table and
+adds a few milliseconds to `CacheManager.init`; decode times are unchanged.
+
+`CompactedObjectsTest` and `CompactedNpcsAndItemsTest` lock the contract: byte-identical encodes
+before and after compaction over the whole cache, equal lists and op sets provably shared, frozen
+state throwing on mutation, and fresh instances staying mutable for the tools.
+
 ### Round-trip verification
 
 `CodecByteRoundTripTest` locks the pooling down over every definition in a real cache:
