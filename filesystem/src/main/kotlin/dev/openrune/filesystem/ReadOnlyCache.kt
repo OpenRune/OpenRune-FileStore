@@ -8,6 +8,7 @@ import dev.openrune.filesystem.util.readUnsignedByte
 import dev.openrune.filesystem.util.secure.VersionTableBuilder
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import java.util.Arrays
 
 /**
@@ -318,9 +319,6 @@ abstract class ReadOnlyCache(
                 (this[offset + 2].toInt() and 0xFF)
 
         /**
-         * Reads a section of a cache's archive
-         */
-        /**
          * Reads an index file whole so its six byte entries can be looked up without a seek and a
          * read per archive. An index file is six bytes per archive, so even the largest is under a
          * megabyte.
@@ -330,6 +328,22 @@ abstract class ReadOnlyCache(
             raf.seek(0)
             raf.readFully(table)
             return table
+        }
+
+        /**
+         * Fills the first [wanted] bytes of [target] from [position]. A positional channel read is
+         * one call where a seek plus a read is two, and unlike `RandomAccessFile.read` it reports
+         * how much it actually got, so a short read is caught rather than silently left as zeroes.
+         */
+        private fun readAt(channel: FileChannel, target: ByteArray, wanted: Int, position: Long): Boolean {
+            val buffer = ByteBuffer.wrap(target, 0, wanted)
+            var offset = position
+            while (buffer.hasRemaining()) {
+                val read = channel.read(buffer, offset)
+                if (read <= 0) return false
+                offset += read
+            }
+            return true
         }
 
         internal fun readSector(mainFile: RandomAccessFile, length: Long, table: ByteArray, indexId: Int, sectorId: Int): ByteArray? {
@@ -348,6 +362,7 @@ abstract class ReadOnlyCache(
             }
             var read = 0
             var chunk = 0
+            val channel = mainFile.channel
             val sectorHeaderSize = if (bigSector) SECTOR_HEADER_SIZE_BIG else SECTOR_HEADER_SIZE_SMALL
             val sectorDataSize = if (bigSector) SECTOR_DATA_SIZE_BIG else SECTOR_DATA_SIZE_SMALL
             val output = ByteArray(sectorSize)
@@ -359,8 +374,10 @@ abstract class ReadOnlyCache(
                 if (requiredToRead > sectorDataSize) {
                     requiredToRead = sectorDataSize
                 }
-                mainFile.seek(sectorPosition.toLong() * SECTOR_SIZE)
-                mainFile.read(sectorData, 0, requiredToRead + sectorHeaderSize)
+                val wanted = requiredToRead + sectorHeaderSize
+                if (!readAt(channel, sectorData, wanted, sectorPosition.toLong() * SECTOR_SIZE)) {
+                    return null
+                }
                 buffer.position(0)
                 val id = if (bigSector) buffer.readInt() else buffer.readUnsignedShort()
                 val sectorChunk = buffer.readUnsignedShort()

@@ -53,27 +53,61 @@ Resident heap after a definition load dropped from +115 MB to +105 MB.
 Rows marked `~0` are I/O bound and move a few percent between runs in either direction; only their
 codec-only figures above changed meaningfully.
 
+## Read path pass
+
+The decode pass above left `Cache.data` as about 96% of a definition load. That has now been
+addressed, so the end-to-end figures moved again:
+
+| Workload                                   | Decode pass | Read pass | Change   |
+|--------------------------------------------|-------------|-----------|----------|
+| all definitions (`OsrsCacheProvider.init`)  | 845 ms      | 93 ms     | **-89%** |
+| objects (62 400)                            | 537 ms      | 26 ms     | **-95%** |
+| gamevals, all 15 groups (178 618)           | 881 ms      | 65 ms     | **-93%** |
+| items (33 971)                              | 144 ms      | 16 ms     | **-89%** |
+| npcs (16 338)                               | 43 ms       | 8 ms      | **-81%** |
+| varbits (19 086)                            | 41 ms       | 1 ms      | **-98%** |
+| sprites (8 559)                             | 289 ms      | 172 ms    | -40%     |
+| interfaces + components (26 407)            | 68 ms       | 55 ms     | -19%     |
+| `Cache.data` for 62 400 object payloads     | 493 ms      | 0 ms      | **-100%**|
+
+What changed:
+
+- `FileCache.data` mapped a file id to its slot with `IntArray.indexOf`, a linear scan of the
+  archive's file id table run once per definition — roughly 2 × 10^9 comparisons for the object
+  archive. File ids are cumulative deltas, so each table is now classified once at load as identity,
+  ascending or neither, and looked up by slot, binary search or scan accordingly.
+- A one entry memo in front of the archive LRU, since a definition load reads one archive
+  repeatedly and the `LinkedHashMap` lookup boxed its key every time.
+- Index files are read whole at open, so an archive read no longer costs a seek and a read on the
+  index file. The largest index file is under a megabyte.
+- Sector reads use a positional `FileChannel` read rather than a seek followed by a read, halving
+  the syscalls per chunk, and a short read is now detected instead of being left as zeroes.
+- Two `RandomAccessFile.length()` syscalls were being made per sector chunk despite the length
+  already being passed in.
+
+`FileCache.close` also now closes the index 255 handle, which it leaked.
+
 ## Where the remaining time goes
 
-Splitting the object load:
+`sprites` is the only workload still meaningfully above its codec figure: 172 ms end to end against
+22 ms in `SpriteCodec`. The gap is 8 559 separate archive reads and gzip inflations, one per sprite
+group, which is inherent to the layout rather than to the lookup path. It is also the noisiest
+figure in the harness, moving between roughly 140 ms and 175 ms across runs.
 
-| Stage                                 | Time   |
-|---------------------------------------|--------|
-| `Cache.data` for 62 400 object payloads | 478 ms |
-| `ObjectCodec` over those payloads     | 17 ms  |
+## Memory
 
-**About 96% of a definition load is now `Cache.data`, not decoding.** The cost is in `FileCache.data`:
+Measured by the `retained heap` section of the harness, after loading objects, items and npcs
+(112 709 definitions):
 
-```kotlin
-val matchingIndex = files.getOrNull(index)?.getOrNull(archive)?.indexOf(file) ?: -1
-```
+| What                                     | Heap   |
+|------------------------------------------|--------|
+| definitions                              | 90 MB  |
+| held by the cache after the load          | 18 MB  |
 
-`IntArray.indexOf` is a linear scan of the archive's file id table, run once per definition. For the
-62 400-entry object archive that is roughly 2 × 10^9 comparisons, which matches the measured 478-530 ms.
-File ids are stored as ascending cumulative deltas, so a binary search would remove nearly all of it.
-
-That code lives in the `filesystem` module, which is slated for replacement, so it was left alone in
-this pass. It is the single largest remaining win in the read path.
+The 18 MB is the decoded payloads for the archives just read, which the bounded LRU keeps resident.
+Bounding that cache by bytes rather than by entry count was tried and reverted: the three config
+archives fit inside any budget worth setting, so it reclaimed nothing while adding per-insert
+bookkeeping. The remaining 90 MB is the definition objects themselves and is not a cache concern.
 
 ## What changed
 
@@ -106,7 +140,16 @@ Tooling:
 
 ## Correctness
 
-Every change was verified by re-encoding the full decode output and comparing SHA-256 digests against
-the previous revision: 62 400 objects, 33 971 items, 16 338 npcs, 14 468 anims, 19 086 varbits,
-5 725 varps, 5 872 enums, 3 990 structs, 16 790 db rows, 248 db tables, all 15 gameval groups and
-26 407 interface components — byte-identical, with zero encode failures.
+The decode pass was verified by re-encoding the full decode output and comparing SHA-256 digests
+against the previous revision: 62 400 objects, 33 971 items, 16 338 npcs, 14 468 anims, 19 086
+varbits, 5 725 varps, 5 872 enums, 3 990 structs, 16 790 db rows, 248 db tables, all 15 gameval
+groups and 26 407 interface components — byte-identical, with zero encode failures.
+
+The read pass added two test classes:
+
+- `CacheByteRoundTripTest` packs payloads with the displee writer, reads them back with `FileCache`
+  and asserts the bytes are unchanged. Two independent implementations, so it pins the archive
+  lookup, the index tables and the sector walk. Covers sparse file ids, payloads spanning several
+  sectors, every compression type, several indexes, and interleaved reads that thrash the caches.
+- `CacheFileIndexTest` checks the new archive lookup agrees with a linear scan for every archive in
+  a real cache — about 1.4 million lookups — and for ids that are absent.

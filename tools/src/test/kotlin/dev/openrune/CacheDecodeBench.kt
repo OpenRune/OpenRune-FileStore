@@ -1,4 +1,4 @@
-package dev.openrune
+﻿package dev.openrune
 
 import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.DBROW
@@ -22,6 +22,9 @@ import dev.openrune.definition.codec.ItemCodec
 import dev.openrune.definition.codec.NPCCodec
 import dev.openrune.definition.codec.ObjectCodec
 import dev.openrune.definition.codec.SpriteCodec
+import dev.openrune.definition.type.ItemType
+import dev.openrune.definition.type.NpcType
+import dev.openrune.definition.type.ObjectType
 import dev.openrune.definition.type.SpriteType
 import dev.openrune.filesystem.Cache
 import org.junit.jupiter.api.Test
@@ -47,7 +50,21 @@ import java.nio.file.Path
 @EnabledIfSystemProperty(named = "bench", matches = "true")
 class CacheDecodeBench {
 
+    private companion object {
+        const val MB = 1024L * 1024L
+    }
+
     private val out = StringBuilder()
+
+    /** Settles the heap as far as a test can, so the figure reflects what is actually retained. */
+    private fun usedHeap(): Long {
+        val runtime = Runtime.getRuntime()
+        repeat(4) {
+            System.gc()
+            Thread.sleep(60)
+        }
+        return runtime.totalMemory() - runtime.freeMemory()
+    }
 
     private fun measure(name: String, runs: Int, body: () -> Int) {
         val times = mutableListOf<Long>()
@@ -147,6 +164,34 @@ class CacheDecodeBench {
         codecOnly("sprites", cache, cache.archives(SPRITES), { cache.data(SPRITES, it, 0) }) { SpriteCodec() }
 
         out.appendLine()
+        out.appendLine("== retained heap ==")
+        run {
+            // Decoders are used directly rather than OsrsCacheProvider, which holds the cache and
+            // would keep it reachable no matter what this does with its own reference.
+            var open: Cache? = Cache.load(Path.of("..", "data", "cache"))
+            val afterOpen = usedHeap()
+
+            val objects = mutableMapOf<Int, ObjectType>()
+            val items = mutableMapOf<Int, ItemType>()
+            val npcs = mutableMapOf<Int, NpcType>()
+            OsrsCacheProvider.ObjectDecoder(rev).load(open!!, objects)
+            OsrsCacheProvider.ItemDecoder(rev).load(open!!, items)
+            OsrsCacheProvider.NPCDecoder(rev).load(open!!, npcs)
+            val afterLoad = usedHeap()
+
+            open!!.close()
+            open = null
+            val afterRelease = usedHeap()
+
+            out.appendLine("%-26s %5d MB".format("cache open", afterOpen / MB))
+            out.appendLine("%-26s %5d MB".format("definitions loaded", afterLoad / MB))
+            out.appendLine("%-26s %5d MB".format("cache released", afterRelease / MB))
+            out.appendLine("%-26s %5d MB".format("  held by the cache", (afterLoad - afterRelease) / MB))
+            out.appendLine("%-26s %5d MB".format("  held by definitions", afterRelease / MB))
+            out.appendLine("%-26s %5d".format("objects retained", objects.size + items.size + npcs.size))
+        }
+
+        out.appendLine()
         out.appendLine("== Cache.data i/o alone ==")
         val objectIds = cache.files(CONFIGS, OBJECT)
         measure("objects: cache fetch", 4) {
@@ -159,3 +204,4 @@ class CacheDecodeBench {
         println(out)
     }
 }
+
