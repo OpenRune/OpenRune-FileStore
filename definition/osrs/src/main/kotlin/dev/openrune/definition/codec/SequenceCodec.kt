@@ -1,13 +1,16 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.type.SequenceType
+import dev.openrune.definition.type.builders.SequenceTypeBuilder
+import dev.openrune.definition.util.readIntList
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 import kotlin.math.ceil
 
-class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
+class SequenceCodec(private val revision: Int) : BuilderDefinitionCodec<SequenceType, SequenceTypeBuilder> {
 
     private val frameSoundOpcode: Int
     private val skeletalIdOpcode: Int
@@ -28,35 +31,27 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
         }
     }
 
-    override fun SequenceType.read(opcode: Int, buffer: ByteBuf) {
+    override fun builder(id: Int) = SequenceTypeBuilder(id)
+
+    override fun build(builder: SequenceTypeBuilder) = builder.build()
+
+    override fun SequenceTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
                 val frameCount = buffer.readUnsignedShort()
-                frameIDs = MutableList(frameCount) { 0 }
-                frameDelays = MutableList(frameCount) { 0 }
+                val delays = readIntList(frameCount) { buffer.readUnsignedShort() }
+                val lows = IntArray(frameCount) { buffer.readUnsignedShort() }
 
-                for (i in 0 until frameCount) {
-                    frameDelays!![i] = buffer.readUnsignedShort()
-                }
-
-                for (i in 0 until frameCount) {
-                    frameIDs!![i] = buffer.readUnsignedShort()
-                }
-
-                for (i in 0 until frameCount) {
-                    frameIDs!![i] += buffer.readUnsignedShort() shl 16
-                }
-
+                frameDelays = delays
+                frameIDs = readIntList(frameCount) { i -> lows[i] + (buffer.readUnsignedShort() shl 16) }
             }
 
             2 -> frameStep = buffer.readUnsignedShort()
             3 -> {
                 val count = buffer.readUnsignedByte().toInt()
-                interleaveLeave = MutableList(count + 1) { 0 }
-                for (i in 0 until count) {
-                    interleaveLeave!![i] = buffer.readUnsignedByte().toInt()
+                interleaveLeave = readIntList(count + 1) { i ->
+                    if (i < count) buffer.readUnsignedByte().toInt() else 0x98967f
                 }
-                interleaveLeave!![count] = 0x98967f
             }
 
             4 -> stretches = true
@@ -69,22 +64,13 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
             11 -> replyMode = buffer.readUnsignedByte().toInt()
             12 -> {
                 val count = buffer.readUnsignedByte().toInt()
-                chatFrameIds = MutableList(count) { 0 }
-                for (i in 0 until count) {
-                    chatFrameIds!![i] = buffer.readUnsignedShort()
-                }
-
-                for (i in 0 until count) {
-                    chatFrameIds!![i] += buffer.readUnsignedShort() shl 16
-                }
+                val lows = IntArray(count) { buffer.readUnsignedShort() }
+                chatFrameIds = readIntList(count) { i -> lows[i] + (buffer.readUnsignedShort() shl 16) }
             }
 
             frameSoundOpcode -> {
                 val count = buffer.readUnsignedByte().toInt()
-                soundEffects = MutableList(count) { null }
-                for (i in 0 until count) {
-                    soundEffects[i] = readSounds(buffer, revision)
-                }
+                soundEffects = MutableList(count) { readSounds(buffer, revision) }
             }
 
             skeletalIdOpcode -> skeletalId = buffer.readInt()
@@ -136,10 +122,13 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
         }
 
         if (definition.interleaveLeave != null) {
+            // strip the decoder's 0x98967f sentinel
+            val leave = definition.interleaveLeave!!
+            val count = if (leave.lastOrNull() == 0x98967f) leave.size - 1 else leave.size
             writeByte(3)
-            writeByte(definition.interleaveLeave!!.size)
-            for (i in 0 until definition.interleaveLeave!!.size) {
-                writeByte(definition.interleaveLeave!![i])
+            writeByte(count)
+            for (i in 0 until count) {
+                writeByte(leave[i])
             }
         }
 

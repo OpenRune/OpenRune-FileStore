@@ -2,13 +2,20 @@ package dev.openrune.definition.codec
 
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.type.VarClanSettingsType
+import dev.openrune.definition.type.builders.VarClanSettingsTypeBuilder
 import dev.openrune.definition.util.CacheVarLiteral
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class VarClanSettingCodec : DefinitionCodec<VarClanSettingsType> {
-    override fun VarClanSettingsType.read(opcode: Int, buffer: ByteBuf) {
+class VarClanSettingCodec : BuilderDefinitionCodec<VarClanSettingsType, VarClanSettingsTypeBuilder> {
+
+    override fun builder(id: Int) = VarClanSettingsTypeBuilder(id)
+
+    override fun build(builder: VarClanSettingsTypeBuilder) = builder.build()
+
+    override fun VarClanSettingsTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
                 val idx = buffer.readUnsignedByte().toInt()

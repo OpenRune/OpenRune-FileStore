@@ -2,14 +2,21 @@ package dev.openrune.definition.codec
 
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.type.ParamType
+import dev.openrune.definition.type.builders.ParamTypeBuilder
 import dev.openrune.definition.util.CacheVarLiteral
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class ParamCodec(val rev : Int) : DefinitionCodec<ParamType> {
-    override fun ParamType.read(opcode: Int, buffer: ByteBuf) {
+class ParamCodec(val rev : Int) : BuilderDefinitionCodec<ParamType, ParamTypeBuilder> {
+
+    override fun builder(id: Int) = ParamTypeBuilder(id)
+
+    override fun build(builder: ParamTypeBuilder) = builder.build()
+
+    override fun ParamTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
                 val idx = buffer.readUnsignedByte().toInt()

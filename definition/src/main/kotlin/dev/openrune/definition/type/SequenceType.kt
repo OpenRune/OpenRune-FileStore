@@ -1,5 +1,7 @@
 package dev.openrune.definition.type
 
+import dev.openrune.definition.type.builders.SequenceTypeBuilder
+
 import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
 import dev.openrune.definition.Sound
@@ -9,31 +11,34 @@ import kotlin.math.ceil
 @RsTableHeaders("animation")
 data class SequenceType(
     override var id: Int = -1,
-    var frameIDs: MutableList<Int>? = null,
-    var chatFrameIds: MutableList<Int>? = null,
-    var frameDelays: MutableList<Int>? = null,
-    var soundEffects: MutableList<SoundData?> = emptyList<SoundData>().toMutableList(),
-    var frameStep: Int = -1,
-    var interleaveLeave: MutableList<Int>? = null,
-    var stretches: Boolean = false,
-    var forcedPriority: Int = 5,
-    var leftHandItem: Int = -1,
-    var rightHandItem: Int = -1,
-    var maxLoops: Int = 99,
-    var precedenceAnimating: Int = -1,
-    var priority: Int = -1,
-    var skeletalId: Int = -1,
-    var skeletalRangeBegin: Int = -1,
-    var skeletalRangeEnd: Int = -1,
-    var replyMode: Int = 2,
-    var rangeBegin : Int = 0,
-    var rangeEnd : Int = 0,
-    var verticalOffset : Int = 0,
-    var skeletalSounds: MutableMap<Int, SoundData> = emptyMap<Int, SoundData>().toMutableMap(),
-    var mask: MutableList<Boolean>? = null,
-    var debugName : String = ""
+    val frameIDs: List<Int>? = null,
+    val chatFrameIds: List<Int>? = null,
+    val frameDelays: List<Int>? = null,
+    val soundEffects: List<SoundData?> = emptyList(),
+    val frameStep: Int = -1,
+    val interleaveLeave: List<Int>? = null,
+    val stretches: Boolean = false,
+    val forcedPriority: Int = 5,
+    val leftHandItem: Int = -1,
+    val rightHandItem: Int = -1,
+    val maxLoops: Int = 99,
+    val precedenceAnimating: Int = -1,
+    val priority: Int = -1,
+    val skeletalId: Int = -1,
+    val skeletalRangeBegin: Int = -1,
+    val skeletalRangeEnd: Int = -1,
+    val replyMode: Int = 2,
+    val rangeBegin : Int = 0,
+    val rangeEnd : Int = 0,
+    val verticalOffset : Int = 0,
+    val skeletalSounds: Map<Int, SoundData> = emptyMap(),
+    val mask: List<Boolean>? = null,
+    val debugName : String = ""
 
 ) : Definition, Sound {
+
+    fun toBuilder(): SequenceTypeBuilder = SequenceTypeBuilder.from(this)
+
     val lengthInCycles: Int
         get() = if (skeletalId >= 0) {
             (getSkeletalLength() / 30.0).toInt()
@@ -41,17 +46,16 @@ data class SequenceType(
             ceil((cycleLength * 20.0) / 600.0).toInt()
         }
 
-    private val cycleLength: Int by lazy {
-        val delays = frameDelays
-        when {
-            skeletalId >= 0 || delays == null -> -1
-            else -> delays.withIndex().sumOf { (i, d) ->
-                if (i < delays.lastIndex || d < 200) d else 0
+    private val cycleLength: Int
+        get() {
+            val delays = frameDelays
+            return when {
+                skeletalId >= 0 || delays == null -> -1
+                else -> delays.withIndex().sumOf { (i, d) ->
+                    if (i < delays.lastIndex || d < 200) d else 0
+                }
             }
         }
-    }
 
     private fun getSkeletalLength(): Int = rangeEnd - rangeBegin
-
-
 }

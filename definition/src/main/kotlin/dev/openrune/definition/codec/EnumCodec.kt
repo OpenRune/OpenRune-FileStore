@@ -1,14 +1,22 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.type.EnumType
+import dev.openrune.definition.type.builders.EnumTypeBuilder
+import dev.openrune.definition.util.BoxedInts
 import dev.openrune.definition.util.CacheVarLiteral
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class EnumCodec : DefinitionCodec<EnumType> {
-    override fun EnumType.read(opcode: Int, buffer: ByteBuf) {
+class EnumCodec : BuilderDefinitionCodec<EnumType, EnumTypeBuilder> {
+
+    override fun builder(id: Int) = EnumTypeBuilder(id)
+
+    override fun build(builder: EnumTypeBuilder) = builder.build()
+
+    override fun EnumTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> keyType = CacheVarLiteral.byChar(buffer.readUnsignedByte().toInt().toChar())
             2 -> valueType = CacheVarLiteral.byChar(buffer.readUnsignedByte().toInt().toChar())
@@ -16,12 +24,14 @@ class EnumCodec : DefinitionCodec<EnumType> {
             4 -> defaultInt = buffer.readInt()
             5, 6 -> {
                 val count = buffer.readUnsignedShort()
+                @Suppress("UNCHECKED_CAST")
+                val target = values as MutableMap<Any, Any>
                 for (i in 0 until count) {
-                    val key = buffer.readInt()
+                    val key = BoxedInts.of(buffer.readInt())
                     if (opcode == 5) {
-                        values[key] = buffer.readString()
+                        target[key] = buffer.readString()
                     } else {
-                        values[key] = buffer.readInt()
+                        target[key] = BoxedInts.of(buffer.readInt())
                     }
                 }
             }

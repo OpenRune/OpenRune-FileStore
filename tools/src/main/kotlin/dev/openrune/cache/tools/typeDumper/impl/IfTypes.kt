@@ -27,11 +27,10 @@ class IfTypes(
             val (components, pathComponents) = typeDumper.generateWriter(group)
 
             ifTypes.forEach {
-                val inf = it.elementAs<Interface>()
-                val (interfaceName, interfaceID, _, _) = arrayOf(inf!!.name,inf.id.toString(),"","")
-                if (!writtenInterfaces.contains(interfaceName)) {
-                    writeComponentData(interfaceName, interfaceID, components, writeToJava)
-                    writtenInterfaces.add(interfaceName)
+                val inf = it.elementAs<Interface>()!!
+                val interfaceName = inf.name
+                if (writtenInterfaces.add(interfaceName)) {
+                    writeComponentData(interfaceName, inf.id.toString(), components, writeToJava)
                 }
             }
 

@@ -1,13 +1,19 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.type.MapElementType
+import dev.openrune.definition.type.builders.MapElementTypeBuilder
 import dev.openrune.definition.util.*
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class MapElementCodec : DefinitionCodec<MapElementType> {
+class MapElementCodec : BuilderDefinitionCodec<MapElementType, MapElementTypeBuilder> {
 
-    override fun MapElementType.read(opcode: Int, buffer: ByteBuf) {
+    override fun builder(id: Int) = MapElementTypeBuilder(id)
+
+    override fun build(builder: MapElementTypeBuilder) = builder.build()
+
+    override fun MapElementTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> sprite1 = buffer.readNullableLargeSmart()
             2 -> sprite2 = buffer.readNullableLargeSmart()
@@ -30,20 +36,11 @@ class MapElementCodec : DefinitionCodec<MapElementType> {
             in 10..14 -> options[opcode - 10] = buffer.readString()
             15 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                field1933 = MutableList(length * 2) { 0 }
-                (0 until length * 2).forEach {
-                    field1933!![it] = buffer.readShort().toInt()
-                }
+                field1933 = readIntList(length * 2) { buffer.readShort().toInt() }
                 buffer.readInt()
                 val subLength: Int = buffer.readUnsignedByte().toInt()
-                field1930 = MutableList(subLength) { 0 }
-                (0 until subLength).forEach {
-                    field1930[it] = buffer.readInt()
-                }
-                field1948 = MutableList(length) { 0 }
-                (0 until length).forEach {
-                    field1948[it] = buffer.readByte().toInt()
-                }
+                field1930 = readIntList(subLength) { buffer.readInt() }
+                field1948 = readIntList(length) { buffer.readByte().toInt() }
             }
 
             16 -> buffer.readByte().toInt()

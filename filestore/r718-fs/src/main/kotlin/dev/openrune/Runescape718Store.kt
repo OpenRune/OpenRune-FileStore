@@ -5,6 +5,7 @@ import dev.openrune.Index.ITEMS
 import dev.openrune.Index.NPCS
 import dev.openrune.Index.VAR_BIT
 import dev.openrune.cache.CacheStore
+import dev.openrune.cache.DenseIntMap
 import dev.openrune.filesystem.Cache
 import dev.openrune.cache.filestore.definition.IndexedDefinitionDecoder
 import dev.openrune.definition.type.*
@@ -24,10 +25,10 @@ class Runescape718Store(private val cache : Cache, override var cacheRevision : 
         var CACHE_REVISION = -1
     }
 
-    override val items: MutableMap<Int, ItemType> = mutableMapOf()
-    override val npcs: MutableMap<Int, NpcType> = mutableMapOf()
-    override val varbits: MutableMap<Int, VarBitType> = mutableMapOf()
-    override val enums: MutableMap<Int, EnumType> = mutableMapOf()
+    override val items: MutableMap<Int, ItemType> = DenseIntMap()
+    override val npcs: MutableMap<Int, NpcType> = DenseIntMap()
+    override val varbits: MutableMap<Int, VarBitType> = DenseIntMap()
+    override val enums: MutableMap<Int, EnumType> = DenseIntMap()
 
     override fun init() {
         try {

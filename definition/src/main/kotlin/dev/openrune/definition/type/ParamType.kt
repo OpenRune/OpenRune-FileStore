@@ -1,5 +1,7 @@
 package dev.openrune.definition.type
 
+import dev.openrune.definition.type.builders.ParamTypeBuilder
+
 import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.toml.serialization.TomlField
 import dev.openrune.definition.Definition
@@ -14,9 +16,12 @@ import dev.openrune.seralizer.ParamTypeTableHook
 data class ParamType(
     override var id: Int = -1,
     @param:TomlField(serializer = CacheVarLiteralSeralizier::class)
-    var type: CacheVarLiteral? = null,
-    var isMembers: Boolean = true,
-    var defaultInt: Int = 0,
-    var defaultString: String? = null,
-    var defaultLong: Long = 0L
-) : Definition
+    val type: CacheVarLiteral? = null,
+    val isMembers: Boolean = true,
+    val defaultInt: Int = 0,
+    val defaultString: String? = null,
+    val defaultLong: Long = 0L
+) : Definition {
+
+    fun toBuilder(): ParamTypeBuilder = ParamTypeBuilder.from(this)
+}

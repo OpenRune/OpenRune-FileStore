@@ -169,9 +169,8 @@ class PackMaps(
 
     private fun parseBaseRegionId(file: File): Int? {
         val name = file.nameWithoutExtension
-        val regex = Regex("(\\d+)$")
 
-        return regex.find(name)
+        return TRAILING_DIGITS.find(name)
             ?.groupValues
             ?.get(1)
             ?.toIntOrNull()
@@ -272,5 +271,9 @@ class PackMaps(
         return IntArray(4) {
             Random.nextInt(Int.MIN_VALUE, Int.MAX_VALUE)
         }
+    }
+
+    private companion object {
+        val TRAILING_DIGITS = Regex("(\\d+)$")
     }
 }

@@ -11,13 +11,14 @@ data class SoundData(
 ) {
     fun writeSound(writer: ByteBuf, revision : Int) {
         if (!revisionIsOrAfter(revision, 220)) {
-            val payload: Int = (location and 15) or (id shl 8) or (loops shl 4 and 7)
+            val payload: Int = (location and 15) or (id shl 8) or ((loops and 7) shl 4)
             writer.writeMedium(payload)
         } else {
-            writer.writeByte(id)
+            writer.writeShort(id)
             if (revisionIsOrAfter(revision, 226)) {
                 writer.writeByte(unknown)
             }
+            writer.writeByte(loops)
             writer.writeByte(location)
             writer.writeByte(retain)
         }

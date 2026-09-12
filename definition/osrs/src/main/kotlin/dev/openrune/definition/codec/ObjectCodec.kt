@@ -2,66 +2,69 @@ package dev.openrune.definition.codec
 
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.definition.EntityOpsLoader
+import dev.openrune.definition.util.IntBackedList
+import dev.openrune.definition.util.readIntList
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
+import dev.openrune.definition.writeColoursTextures
+import dev.openrune.definition.writeParameters
+import dev.openrune.definition.writeTransforms
 import dev.openrune.definition.type.ObjectType
+import dev.openrune.definition.type.builders.ObjectTypeBuilder
 import io.netty.buffer.ByteBuf
-import java.util.stream.IntStream
-import kotlin.streams.toList
+import io.netty.buffer.Unpooled
 
-class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
+class ObjectCodec(private val revision: Int) : BuilderDefinitionCodec<ObjectType, ObjectTypeBuilder> {
     private val entityOpsLoader = EntityOpsLoader(revision)
 
-    override fun ObjectType.read(opcode: Int, buffer: ByteBuf) {
+    override fun builder(id: Int) = ObjectTypeBuilder(id)
+
+    override fun build(builder: ObjectTypeBuilder) = builder.build()
+
+    override fun ObjectTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                when {
-                    length > 0 -> {
-                        objectTypes = MutableList(length) { 0 }
-                        objectModels = MutableList(length) { 0 }
-
-                        (0 until length).forEach {
-                            objectModels!![it] = buffer.readUnsignedShort()
-                            objectTypes!![it] = buffer.readUnsignedByte().toInt()
-                        }
+                if (length > 0) {
+                    val types = IntBackedList(length)
+                    val models = readIntList(length) {
+                        val model = buffer.readUnsignedShort()
+                        types.add(buffer.readUnsignedByte().toInt())
+                        model
                     }
+                    objectTypes = types
+                    objectModels = models
                 }
             }
 
             2 -> name = buffer.readString()
             5 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                when {
-                    length > 0 -> {
-                        objectTypes = null
-                        objectModels = IntStream.range(0, length).map {
-                            buffer.readUnsignedShort()
-                        }.toList().toMutableList()
-                    }
+                if (length > 0) {
+                    objectTypes = null
+                    objectModels = readIntList(length) { buffer.readUnsignedShort() }
                 }
             }
             6 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
                 if (length > 0) {
-                    objectTypes = MutableList(length) { 0 }
-                    objectModels = MutableList(length) { 0 }
-                    (0 until length).forEach {
-                        objectModels!![it] = buffer.readInt()
-                        objectTypes!![it] = buffer.readUnsignedByte().toInt()
+                    val types = IntBackedList(length)
+                    val models = readIntList(length) {
+                        val model = buffer.readInt()
+                        types.add(buffer.readUnsignedByte().toInt())
+                        model
                     }
+                    objectTypes = types
+                    objectModels = models
                 }
             }
             7 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
                 if (length > 0) {
                     objectTypes = null
-                    objectModels = MutableList(length) { 0 }
-                    (0 until length).forEach {
-                        objectModels!![it] = buffer.readInt()
-                    }
+                    objectModels = readIntList(length) { buffer.readInt() }
                 }
             }
 
@@ -123,9 +126,7 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
                     soundRetain = buffer.readUnsignedByte().toInt()
                 }
                 val length: Int = buffer.readUnsignedByte().toInt()
-                ambientSoundIds = IntStream.range(0, length).map {
-                    buffer.readUnsignedShort()
-                }.toList().toMutableList()
+                ambientSoundIds = readIntList(length) { buffer.readUnsignedShort() }
             }
             81 -> clipType = (buffer.readUnsignedByte().toInt()) * 256
             89 -> randomizeAnimStart = true
@@ -232,14 +233,20 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
         writeByte(definition.ambient)
 
         writeByte(39)
-        writeByte(definition.contrast / 25)
+        writeByte(definition.contrast)
 
 
-        definition.actions.ops.forEachIndexed { index, action ->
+        definition.actions.opsOrEmpty.forEachIndexed { index, action ->
             entityOpsLoader.encodeBaseOp(this, index, action)
         }
 
-        definition.writeColoursTextures(this)
+        writeColoursTextures(
+            this,
+            definition.originalColours,
+            definition.modifiedColours,
+            definition.originalTextureColours,
+            definition.modifiedTextureColours,
+        )
 
         if (definition.category != -1) {
             writeByte(61)
@@ -356,28 +363,37 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
         )
 
         if (values.indices.any { values[it] != defaults[it] }) {
+            writeByte(93)
             writeByte(definition.soundFadeInCurve)
             writeShort(definition.soundFadeInDuration)
             writeByte(definition.soundFadeOutCurve)
             writeShort(definition.soundFadeOutDuration)
         }
 
+        if (definition.rasie != 0) {
+            writeByte(96)
+            writeByte(definition.rasie)
+        }
+
 
 
         if (entityOpsLoader.supportsExtendedEntityOps()) {
-            definition.actions.subOps.forEachIndexed { index, subOps ->
+            definition.actions.subOpsOrEmpty.forEachIndexed { index, subOps ->
                 entityOpsLoader.encodeSubOpsOpcode(this, 100, index, subOps)
             }
-            definition.actions.conditionalOps.forEachIndexed { index, conditionalOps ->
+            definition.actions.conditionalOpsOrEmpty.forEachIndexed { index, conditionalOps ->
                 entityOpsLoader.encodeConditionalOpsOpcode(this, 101, index, conditionalOps)
             }
-            definition.actions.conditionalSubOps.forEachIndexed { index, conditionalSubOps ->
+            definition.actions.conditionalSubOpsOrEmpty.forEachIndexed { index, conditionalSubOps ->
                 entityOpsLoader.encodeConditionalSubOpsOpcode(this, 102, index, conditionalSubOps)
             }
         }
 
-        definition.writeTransforms(this, 77,92)
-        definition.writeParameters(this)
+        writeTransforms(
+            this, 77, 92,
+            definition.multiVarBit, definition.multiVarp, definition.multiDefault, definition.transforms,
+        )
+        writeParameters(this, definition.params)
 
         writeByte(0)
     }
@@ -388,3 +404,4 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
         internal val logger = InlineLogger()
     }
 }
+

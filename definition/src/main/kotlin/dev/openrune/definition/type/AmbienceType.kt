@@ -1,14 +1,18 @@
 package dev.openrune.definition.type
 
+import dev.openrune.definition.type.builders.AmbienceTypeBuilder
+
 
 import dev.openrune.definition.Definition
 
 data class AmbienceType(
     override var id: Int = -1,
-    var sequentialSounds: IntArray? = null,
-    var randomSounds: RandomSound? = null,
-    var fade: SoundFade? = null
+    val sequentialSounds: IntArray? = null,
+    val randomSounds: RandomSound? = null,
+    val fade: SoundFade? = null
 ) : Definition {
+
+    fun toBuilder(): AmbienceTypeBuilder = AmbienceTypeBuilder.from(this)
 
     data class SoundFade(
         var inSpeed: Int? = null,

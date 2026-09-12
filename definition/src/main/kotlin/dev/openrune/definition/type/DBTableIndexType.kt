@@ -1,5 +1,7 @@
 package dev.openrune.definition.type
 
+import dev.openrune.definition.type.builders.DBTableIndexTypeBuilder
+
 import dev.openrune.definition.Definition
 import dev.openrune.definition.util.BaseVarType
 
@@ -16,5 +18,8 @@ data class DBTableIndexColumn(
 
 data class DBTableIndexType(
     override var id: Int = -1,
-    val columns: MutableList<DBTableIndexColumn> = mutableListOf(),
-) : Definition
+    val columns: List<DBTableIndexColumn> = emptyList(),
+) : Definition {
+
+    fun toBuilder(): DBTableIndexTypeBuilder = DBTableIndexTypeBuilder.from(this)
+}

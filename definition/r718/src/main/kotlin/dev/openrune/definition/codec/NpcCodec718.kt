@@ -2,10 +2,12 @@ package dev.openrune.definition.codec
 
 import dev.openrune.definition.util.readBigSmart
 import dev.openrune.definition.util.readString
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.EntityOpsLoader
 import dev.openrune.definition.type.NpcType
+import dev.openrune.definition.type.builders.NpcTypeBuilder
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
 fun NpcType.getPrimaryShadowColour(): Int {
     return getIntProperty("primaryShadowColour")
@@ -151,11 +153,15 @@ fun NpcType.getAnInt2862(): Int {
     return getIntProperty("anInt2862")
 }
 
-class NpcCodec718 : DefinitionCodec<NpcType> {
+class NpcCodec718 : BuilderDefinitionCodec<NpcType, NpcTypeBuilder> {
 
     private val entityOpsLoader = EntityOpsLoader(1)
 
-    override fun NpcType.read(opcode: Int, buffer: ByteBuf) {
+    override fun builder(id: Int) = NpcTypeBuilder(id)
+
+    override fun build(builder: NpcTypeBuilder) = builder.build()
+
+    override fun NpcTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
                 val length = buffer.readUnsignedByte().toInt()
@@ -170,7 +176,7 @@ class NpcCodec718 : DefinitionCodec<NpcType> {
 
             2 -> name = buffer.readString()
             12 -> size = buffer.readUnsignedByte().toInt()
-            in 30..34 -> entityOpsLoader.decodeBaseOp(actions, buffer, opcode - 30)
+            in 30..34 -> actions = actions.toBuilder().also { entityOpsLoader.decodeBaseOp(it, buffer, opcode - 30) }.build()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
             42 -> readColourPalette(buffer)
@@ -272,7 +278,7 @@ class NpcCodec718 : DefinitionCodec<NpcType> {
             141 -> renderPriority = 1
             142 -> setExtraProperty("mapFunction", buffer.readShort().toInt())
             143 -> setExtraProperty("invisiblePriority", true)
-            in 150..154 -> entityOpsLoader.decodeBaseOp(actions, buffer, opcode - 150)
+            in 150..154 -> actions = actions.toBuilder().also { entityOpsLoader.decodeBaseOp(it, buffer, opcode - 150) }.build()
             155 -> {
                 setExtraProperty("hue", buffer.readByte().toInt().toByte())
                 setExtraProperty("saturation", buffer.readByte().toInt().toByte())

@@ -11,17 +11,48 @@ class CacheVarLiteral(
     companion object {
 
         private val registry = mutableMapOf<String, CacheVarLiteral>()
+
+        // Derived indexes, rebuilt only when [register] changes the registry.
+        private var registryVersion = 0
+        private var indexVersion = -1
+        private var idIndex: Map<Int, CacheVarLiteral> = emptyMap()
+        private var charIndex: Map<Char, CacheVarLiteral> = emptyMap()
+        private var nameIndex: Map<String, CacheVarLiteral> = emptyMap()
+
         private fun register(literal: CacheVarLiteral): CacheVarLiteral {
             registry[literal.name] = literal
+            registryVersion++
             return literal
         }
 
         fun registerExternal(id: Int, ch: Char, type: BaseVarType = BaseVarType.INTEGER, name: String) =
             register(CacheVarLiteral(id, ch, type, name))
 
-        private val byId get() = registry.values.associateBy { it.id }
-        private val byChar get() = registry.values.associateBy { it.ch }
-        private val byName get() = registry.values.associateBy { it.name.uppercase() }
+        private fun refreshIndexes() {
+            if (indexVersion == registryVersion) return
+            idIndex = registry.values.associateBy { it.id }
+            charIndex = registry.values.associateBy { it.ch }
+            nameIndex = registry.values.associateBy { it.name.uppercase() }
+            indexVersion = registryVersion
+        }
+
+        private val byId: Map<Int, CacheVarLiteral>
+            get() {
+                refreshIndexes()
+                return idIndex
+            }
+
+        private val byChar: Map<Char, CacheVarLiteral>
+            get() {
+                refreshIndexes()
+                return charIndex
+            }
+
+        private val byName: Map<String, CacheVarLiteral>
+            get() {
+                refreshIndexes()
+                return nameIndex
+            }
 
         operator fun get(id: Int): CacheVarLiteral = byId[id] ?: error("Error finding CacheVarLiteral: $id")
         fun byID(id: Int) = get(id)

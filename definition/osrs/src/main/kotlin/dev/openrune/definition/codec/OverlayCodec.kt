@@ -1,11 +1,18 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.type.OverlayType
+import dev.openrune.definition.type.builders.OverlayTypeBuilder
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class OverlayCodec : DefinitionCodec<OverlayType> {
-    override fun OverlayType.read(opcode: Int, buffer: ByteBuf) {
+class OverlayCodec : BuilderDefinitionCodec<OverlayType, OverlayTypeBuilder> {
+
+    override fun builder(id: Int) = OverlayTypeBuilder(id)
+
+    override fun build(builder: OverlayTypeBuilder) = builder.build()
+
+    override fun OverlayTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> primaryRgb = buffer.readUnsignedMedium()
             2 -> texture = buffer.readUnsignedByte().toInt()
@@ -13,17 +20,6 @@ class OverlayCodec : DefinitionCodec<OverlayType> {
             7 -> secondaryRgb = buffer.readUnsignedMedium()
             9 -> water = buffer.readUnsignedByte().toInt()
         }
-    }
-
-    override fun readLoop(definition: OverlayType, buffer: ByteBuf) {
-        while (true) {
-            val opcode = buffer.readUnsignedByte().toInt()
-            if (opcode == 0) {
-                break
-            }
-            definition.read(opcode, buffer)
-        }
-        definition.calculateHsl()
     }
 
     override fun ByteBuf.encode(definition: OverlayType) {

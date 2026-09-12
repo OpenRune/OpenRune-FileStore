@@ -63,18 +63,36 @@ public fun ByteBuf.readUnsignedShortOrNull(): Int? {
     return if (value == 65535) null else value
 }
 
+private val decodedStringPool = arrayOfNulls<String>(4096)
+
+private const val DEDUP_MAX_LENGTH = 64
+
+internal fun dedupDecodedString(value: String): String {
+    if (value.isEmpty()) return ""
+    if (value.length > DEDUP_MAX_LENGTH) return value
+    val slot = value.hashCode() and (decodedStringPool.size - 1)
+    val cached = decodedStringPool[slot]
+    if (cached == value) return cached
+    decodedStringPool[slot] = value
+    return value
+}
+
 // 0 terminated string.
 fun ByteBuf.readString(): String {
-    val sb = StringBuilder()
-    var b: Int
-    while (isReadable) {
-        b = readUnsignedByte().toInt()
-        if (b == 0) {
-            break
-        }
-        sb.append(b.toChar())
+    if (!isReadable) {
+        return ""
     }
-    return sb.toString()
+    val start = readerIndex()
+    // Latin-1 maps byte -> char, matching the client's encoding.
+    val nul = forEachByte(ByteProcessor.FIND_NUL)
+    if (nul == -1) {
+        val value = toString(start, writerIndex() - start, Charsets.ISO_8859_1)
+        readerIndex(writerIndex())
+        return dedupDecodedString(value)
+    }
+    val value = toString(start, nul - start, Charsets.ISO_8859_1)
+    readerIndex(nul + 1)
+    return dedupDecodedString(value)
 }
 
 public fun ByteBuf.readStringCP(charset: Charset = Cp1252Charset): String {
@@ -87,7 +105,7 @@ public fun ByteBuf.readStringCP(charset: Charset = Cp1252Charset): String {
 
     val s = toString(start, end - start, charset)
     readerIndex(end + 1)
-    return s
+    return dedupDecodedString(s)
 }
 
 public fun ByteBuf.readUnsignedShortSmart(): Int {
@@ -247,7 +265,7 @@ fun Any?.debugString(): String = when (this) {
 }
 
 fun ByteBuf.readDbCell(type: CacheVarLiteral): Any = when (type.baseType) {
-    BaseVarType.INTEGER -> readInt()
+    BaseVarType.INTEGER -> BoxedInts.of(readInt())
     BaseVarType.LONG -> readLong()
     BaseVarType.STRING -> readString()
     BaseVarType.ARRAY -> error("Array Type ${type.name} is not yet defined in db row")

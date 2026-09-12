@@ -2,11 +2,13 @@ package dev.openrune.definition.codec
 
 import dev.openrune.definition.util.readBigSmart
 import dev.openrune.definition.util.readString
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.EntityOpsLoader
 import dev.openrune.definition.type.ItemType
+import dev.openrune.definition.type.builders.ItemTypeBuilder
 import dev.openrune.definition.type.ObjStackability
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
 fun ItemType.getPrimaryCursorOpcode(): Int {
     return getIntProperty("primaryCursorOpcode")
@@ -72,11 +74,15 @@ fun ItemType.getNoteTemplateId(): Int {
     return getIntProperty("noteTemplateId")
 }
 
-class ItemCodec718 : DefinitionCodec<ItemType> {
+class ItemCodec718 : BuilderDefinitionCodec<ItemType, ItemTypeBuilder> {
 
     private val entityOpsLoader = EntityOpsLoader(1)
 
-    override fun ItemType.read(opcode: Int, buffer: ByteBuf) {
+    override fun builder(id: Int) = ItemTypeBuilder(id)
+
+    override fun build(builder: ItemTypeBuilder) = builder.build()
+
+    override fun ItemTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> inventoryModel = buffer.readBigSmart()
             2 -> name = buffer.readString()
@@ -95,7 +101,7 @@ class ItemCodec718 : DefinitionCodec<ItemType> {
             24 -> maleModel1 = buffer.readBigSmart()
             25 -> femaleModel0 = buffer.readBigSmart()
             26 -> femaleModel1 = buffer.readBigSmart()
-            in 30..34 -> entityOpsLoader.decodeBaseOp(options, buffer, opcode - 30)
+            in 30..34 -> options = options.toBuilder().also { entityOpsLoader.decodeBaseOp(it, buffer, opcode - 30) }.build()
             in 35..39 -> interfaceOptions[opcode - 35] = buffer.readString()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)

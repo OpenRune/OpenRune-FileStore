@@ -48,7 +48,8 @@ class SymProvider : MappingProvider {
     private fun processSymFile(file: File) {
         val fullType = file.nameWithoutExtension
 
-        mappings[fullType] = emptyMap<String, Int>().toMutableMap()
+        val table = LinkedHashMap<String, Int>()
+        mappings[fullType] = table
         file.readLines()
             .filter { it.isNotBlank() }
             .forEachIndexed { lineNumber, line ->
@@ -57,7 +58,7 @@ class SymProvider : MappingProvider {
                     val cleanKey = key.trim()
                     val cleanValue = value.trim().toInt()
 
-                    mappings[fullType]!!["${fullType}.${cleanKey}"] = cleanValue
+                    table["${fullType}.${cleanKey}"] = cleanValue
                 } catch (e: Exception) {
                     throw IllegalArgumentException(
                         "Failed to parse line ${lineNumber + 1} in ${file.name}: $line", e
@@ -76,9 +77,12 @@ class SymProvider : MappingProvider {
     }
     
     private fun extractBaseType(filename: String): String {
-        return filename.replace(Regex("_v\\d+$"), "")
+        return filename.replace(VERSION_SUFFIX, "")
     }
-    
+
     override fun getSupportedExtensions(): List<String> = listOf(".sym")
 
+    private companion object {
+        val VERSION_SUFFIX = Regex("_v\\d+$")
+    }
 }

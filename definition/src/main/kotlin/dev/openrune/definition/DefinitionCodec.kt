@@ -55,5 +55,40 @@ interface DefinitionCodec<T : Definition> {
     }
 }
 
+interface BuilderDefinitionCodec<T : Definition, B> : DefinitionCodec<T> {
+
+    fun builder(id: Int): B
+
+    fun B.read(opcode: Int, buffer: ByteBuf)
+
+    fun build(builder: B): T
+
+    override fun T.read(opcode: Int, buffer: ByteBuf): Unit =
+        error("${javaClass.simpleName} is immutable; decoding goes through its builder")
+
+    override fun loadData(id: Int, data: ByteBuf?): T = decodeWithBuilder(id, data)
+
+    override fun loadData(id: Int, data: ByteArray?): T =
+        decodeWithBuilder(id, data?.takeIf { it.isNotEmpty() }?.let { Unpooled.wrappedBuffer(it) })
+
+    private fun decodeWithBuilder(id: Int, data: ByteBuf?): T {
+        val builder = builder(id)
+        if (data != null && data.readableBytes() > 0) {
+            try {
+                while (true) {
+                    val opcode = data.readUnsignedByte().toInt()
+                    if (opcode == 0) break
+                    builder.read(opcode, data)
+                }
+            } catch (e: Exception) {
+                throw IllegalStateException(
+                    "Unable to decode ${createDefinition().javaClass.simpleName} [$id]", e
+                )
+            }
+        }
+        return build(builder)
+    }
+}
+
 fun revisionIsOrAfter(cacheRevision : Int, rev: Int) = rev <= cacheRevision
 fun revisionIsOrBefore(cacheRevision : Int,rev: Int) = rev >= cacheRevision

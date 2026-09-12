@@ -1,24 +1,32 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.type.IdentityKitType
+import dev.openrune.definition.type.builders.IdentityKitTypeBuilder
+import dev.openrune.definition.util.readIntList
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class IdentityKitCodec(val rev : Int) : DefinitionCodec<IdentityKitType> {
-    override fun IdentityKitType.read(opcode: Int, buffer: ByteBuf) {
+class IdentityKitCodec(val rev : Int) : BuilderDefinitionCodec<IdentityKitType, IdentityKitTypeBuilder> {
+
+    override fun builder(id: Int) = IdentityKitTypeBuilder(id)
+
+    override fun build(builder: IdentityKitTypeBuilder) = builder.build()
+
+    override fun IdentityKitTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> bodyPartId = buffer.readUnsignedByte().toInt()
             2 -> {
                 val length = buffer.readUnsignedByte().toInt()
-                models = MutableList(length) {
+                models = readIntList(length) {
                     buffer.readUnsignedShort().let { if (it == 65535) -1 else it }
                 }
             }
             3 -> nonSelectable = true
             5 -> {
                 val length = buffer.readUnsignedByte().toInt()
-                models = MutableList(length) {
+                models = readIntList(length) {
                     buffer.readInt().let { if (it == 65535) -1 else it }
                 }
             }

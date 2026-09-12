@@ -36,7 +36,7 @@ class PackModels(
 
     private fun packModel(cache: Cache, file: File) {
         val name = file.nameWithoutExtension
-        val id: Int? = if (name.matches(Regex("-?\\d+"))) {
+        val id: Int? = if (name.matches(NUMERIC_NAME)) {
             name.toInt()
         } else {
             ConstantProvider.getMapping(rscmMappingPrefix + name.lowercase().replace(" ", "_"))
@@ -53,5 +53,9 @@ class PackModels(
         } else {
             println("Unable to pack model ${file.name}")
         }
+    }
+
+    private companion object {
+        val NUMERIC_NAME = Regex("-?\\d+")
     }
 }

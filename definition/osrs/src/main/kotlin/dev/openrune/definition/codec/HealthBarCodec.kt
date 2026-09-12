@@ -1,11 +1,17 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.type.HealthBarType
+import dev.openrune.definition.type.builders.HealthBarTypeBuilder
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class HealthBarCodec : DefinitionCodec<HealthBarType> {
-    override fun HealthBarType.read(opcode: Int, buffer: ByteBuf) {
+class HealthBarCodec : BuilderDefinitionCodec<HealthBarType, HealthBarTypeBuilder> {
+    override fun builder(id: Int) = HealthBarTypeBuilder(id)
+
+    override fun build(builder: HealthBarTypeBuilder) = builder.build()
+
+    override fun HealthBarTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> buffer.readUnsignedShort()
             2 -> int1 = buffer.readUnsignedByte().toInt()

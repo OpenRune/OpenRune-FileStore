@@ -2,6 +2,7 @@ package dev.openrune
 
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.*
+import dev.openrune.cache.DenseIntMap
 import dev.openrune.filesystem.Cache
 import dev.openrune.cache.filestore.definition.ConfigDefinitionDecoder
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
@@ -15,18 +16,18 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
 
     private val logger = InlineLogger()
 
-    override val npcs: MutableMap<Int, NpcType> = mutableMapOf()
-    override val objects: MutableMap<Int, ObjectType> = mutableMapOf()
-    override val items: MutableMap<Int, ItemType> = mutableMapOf()
-    override val varbits: MutableMap<Int, VarBitType> = mutableMapOf()
-    override val varps: MutableMap<Int, VarpType> = mutableMapOf()
-    override val anims: MutableMap<Int, SequenceType> = mutableMapOf()
-    override val enums: MutableMap<Int, EnumType> = mutableMapOf()
-    override val healthBars: MutableMap<Int, HealthBarType> = mutableMapOf()
-    override val hitsplats: MutableMap<Int, HitSplatType> = mutableMapOf()
-    override val structs: MutableMap<Int, StructType> = mutableMapOf()
-    override val dbrows: MutableMap<Int, DBRowType> = mutableMapOf()
-    override val dbtables: MutableMap<Int, DBTableType> = mutableMapOf()
+    override val npcs: MutableMap<Int, NpcType> = DenseIntMap()
+    override val objects: MutableMap<Int, ObjectType> = DenseIntMap()
+    override val items: MutableMap<Int, ItemType> = DenseIntMap()
+    override val varbits: MutableMap<Int, VarBitType> = DenseIntMap()
+    override val varps: MutableMap<Int, VarpType> = DenseIntMap()
+    override val anims: MutableMap<Int, SequenceType> = DenseIntMap()
+    override val enums: MutableMap<Int, EnumType> = DenseIntMap()
+    override val healthBars: MutableMap<Int, HealthBarType> = DenseIntMap()
+    override val hitsplats: MutableMap<Int, HitSplatType> = DenseIntMap()
+    override val structs: MutableMap<Int, StructType> = DenseIntMap()
+    override val dbrows: MutableMap<Int, DBRowType> = DenseIntMap()
+    override val dbtables: MutableMap<Int, DBTableType> = DenseIntMap()
 
     override fun init() {
         try {
@@ -67,8 +68,7 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     class NPCDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<NpcType>(NPCCodec(cacheRevision), NPC)
     class ObjectDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<ObjectType>(ObjectCodec(cacheRevision), OBJECT)
 
-    class OverlayDecoder : ConfigDefinitionDecoder<OverlayType>(OverlayCodec(), OVERLAY,
-        DefinitionTransform { id, definition -> definition.calculateHsl() })
+    class OverlayDecoder : ConfigDefinitionDecoder<OverlayType>(OverlayCodec(), OVERLAY)
     class ParamDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<ParamType>(ParamCodec(cacheRevision), PARAMS)
     class SequenceDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<SequenceType>(SequenceCodec(cacheRevision), SEQUENCE)
     class StructDecoder : ConfigDefinitionDecoder<StructType>(StructCodec(), STRUCT)

@@ -53,6 +53,8 @@ class PackConfig(
         val packType: PackType,
     )
 
+    private val codecs = HashMap<PackType, DefinitionCodec<*>>()
+
     val mapper = tomlMapper {
         rsconfig {
             enableConstantProvider()
@@ -188,8 +190,7 @@ class PackConfig(
         }
 
         try {
-            val codecInstance = createCodecInstance(packType)
-            packDefinition(packType, def, codecInstance, cache, inherit, debugName)
+            packDefinition(packType, def, codecFor(packType), cache, inherit, debugName)
         } catch (e: Exception) {
             println("Unable to pack ${packType.name} with ID ${def.id} due to an error: ${e.message}")
         }
@@ -296,24 +297,21 @@ class PackConfig(
     private fun <T : Definition> mergeDefinitions(parentDef: T, childDef: T, codec: DefinitionCodec<T>): T {
         val defaultDef = codec.createDefinition()
 
-        defaultDef::class.java.declaredFields.forEach { field ->
-            if (!Modifier.isStatic(field.modifiers)) {
-                field.isAccessible = true
-                val parentValue = field.get(parentDef)
-                val childValue = field.get(childDef)
-                val defaultValue = field.get(defaultDef)
-                val differsFromParent = !mergeFieldValuesEqual(childValue, parentValue)
-                val differsFromDefault = !mergeFieldValuesEqual(childValue, defaultValue)
+        mergeFieldsOf(defaultDef::class.java).forEach { field ->
+            val parentValue = field.get(parentDef)
+            val childValue = field.get(childDef)
+            val defaultValue = field.get(defaultDef)
+            val differsFromParent = !mergeFieldValuesEqual(childValue, parentValue)
+            val differsFromDefault = !mergeFieldValuesEqual(childValue, defaultValue)
 
-                if (differsFromParent && differsFromDefault) {
-                    if (field.name == "params" && parentValue is Map<*, *> && childValue is Map<*, *>) {
-                        val mergedParams = parentValue.toMutableMap().apply {
-                            putAll(childValue)
-                        }
-                        field.set(parentDef, mergedParams)
-                    } else {
-                        field.set(parentDef, childValue)
+            if (differsFromParent && differsFromDefault) {
+                if (field.name == "params" && parentValue is Map<*, *> && childValue is Map<*, *>) {
+                    val mergedParams = parentValue.toMutableMap().apply {
+                        putAll(childValue)
                     }
+                    field.set(parentDef, mergedParams)
+                } else {
+                    field.set(parentDef, childValue)
                 }
             }
         }
@@ -328,6 +326,9 @@ class PackConfig(
         if (a is EntityOpsDefinition && b is EntityOpsDefinition) return a.contentEquals(b)
         return a == b
     }
+
+    private fun codecFor(packType: PackType): DefinitionCodec<*> =
+        codecs.getOrPut(packType) { createCodecInstance(packType) }
 
     private fun createCodecInstance(codec: PackType): DefinitionCodec<*> {
         val constructor = codec.codecClass.constructors.first()
@@ -345,6 +346,17 @@ class PackConfig(
         private const val OTHER_PASS = "other"
 
         private val tomlMapperDefault = tomlMapper { }
+
+        /** Mergeable instance fields per definition class, reflected and unlocked once. */
+        private val mergeFields = mutableMapOf<Class<*>, List<java.lang.reflect.Field>>()
+
+        private fun mergeFieldsOf(type: Class<*>): List<java.lang.reflect.Field> =
+            mergeFields.getOrPut(type) {
+                type.declaredFields
+                    .filterNot { Modifier.isStatic(it.modifiers) }
+                    .onEach { it.isAccessible = true }
+            }
+
         val packTypes = mutableMapOf<String, PackType>()
 
         fun registerPackType(

@@ -21,12 +21,18 @@ object GameValHandler {
 
     private val logger = InlineLogger()
 
-    fun List<GameValElement>.lookup(id: Int): GameValElement? = this.firstOrNull { it.id == id }
+    fun List<GameValElement>.lookup(id: Int): GameValElement? =
+        if (this is GameValList) first(id) else firstOrNull { it.id == id }
 
     inline fun <reified T : GameValElement> GameValElement.elementAs(): T? = this as? T
 
-    inline fun <reified T : GameValElement> List<GameValElement>.lookupAs(id: Int): T? =
-        filterIsInstance<T>().firstOrNull { it.id == id }
+    inline fun <reified T : GameValElement> List<GameValElement>.lookupAs(id: Int): T? {
+        if (this is GameValList) {
+            val typed = first(id) as? T
+            if (typed != null) return typed
+        }
+        return filterIsInstance<T>().firstOrNull { it.id == id }
+    }
 
     private fun assertNoDuplicateGameValKeys(
         type: GameValGroupTypes,
@@ -70,19 +76,21 @@ object GameValHandler {
             }
         }
 
-        val elements = cache.files(GAMEVALS, type.id).flatMap { file ->
-            val archive = type.id
+        val archive = type.id
+        val files = cache.files(GAMEVALS, archive)
+        val elements = ArrayList<GameValElement>(files.size)
+        for (file in files) {
             val data = cache.data(GAMEVALS, archive, file)
-            unpackGameVal(type, file, data)
+            elements.addAll(unpackGameVal(type, file, data))
         }
 
-        return elements
+        return GameValList(elements)
     }
 
     fun unpackGameVal(type: GameValGroupTypes, id: Int, bytes: ByteArray?): List<GameValElement> {
         if (bytes == null) return emptyList()
         val data = Unpooled.wrappedBuffer(bytes)
-        val elements = mutableListOf<GameValElement>()
+        val elements = ArrayList<GameValElement>(1)
 
         when (type) {
             TABLETYPES -> {
@@ -106,7 +114,7 @@ object GameValHandler {
                 val components = mutableListOf<InterfaceComponent>()
                 while (true) {
                     val child = data.readUnsignedByte().toInt()
-                    val nextByte = if (data.readerIndex() < data.array().size) data.array()[data.readerIndex()] else null
+                    val nextByte = if (data.readerIndex() < bytes.size) bytes[data.readerIndex()] else null
 
                     if (child == 0xFF && nextByte == 0.toByte()) break
 
@@ -137,9 +145,7 @@ object GameValHandler {
             }
 
             else -> {
-                val remainingBytes = ByteArray(data.readableBytes())
-                data.readBytes(remainingBytes)
-                val name = remainingBytes.toString(Charsets.UTF_8)
+                val name = data.toString(Charsets.UTF_8)
                 if (type == SPRITETYPES) {
                     val parts = name.split(',')
                     val spriteName = parts[0]
@@ -248,12 +254,17 @@ object GameValHandler {
         }
     }
 
+    private val TAGS = Regex("<[^>]*>")
+    private val AT_CODES = Regex("@[^@\\s]+@?")
+    private val NON_NAME_CHARS = Regex("[^a-zA-Z0-9_+\\-\"']")
+    private val REPEATED_UNDERSCORES = Regex("_+")
+
     fun standardizeGamevalName(name: String): String {
         return name
-            .replace(Regex("<[^>]*>"), "")
-            .replace(Regex("@[^@\\s]+@?"), "")
-            .replace(Regex("[^a-zA-Z0-9_+\\-\"']"), "_")
-            .replace(Regex("_+"), "_")
+            .replace(TAGS, "")
+            .replace(AT_CODES, "")
+            .replace(NON_NAME_CHARS, "_")
+            .replace(REPEATED_UNDERSCORES, "_")
             .trim('_')
         .lowercase()
     }

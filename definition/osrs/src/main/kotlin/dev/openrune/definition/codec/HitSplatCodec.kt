@@ -3,12 +3,18 @@ package dev.openrune.definition.codec
 import dev.openrune.definition.util.readShortSmart
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writePrefixedString
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.type.HitSplatType
+import dev.openrune.definition.type.builders.HitSplatTypeBuilder
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class HitSplatCodec : DefinitionCodec<HitSplatType> {
-    override fun HitSplatType.read(opcode: Int, buffer: ByteBuf) {
+class HitSplatCodec : BuilderDefinitionCodec<HitSplatType, HitSplatTypeBuilder> {
+    override fun builder(id: Int) = HitSplatTypeBuilder(id)
+
+    override fun build(builder: HitSplatTypeBuilder) = builder.build()
+
+    override fun HitSplatTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> font = buffer.readShortSmart()
             2 -> textColour = buffer.readUnsignedMedium()

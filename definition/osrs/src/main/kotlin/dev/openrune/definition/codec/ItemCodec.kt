@@ -2,17 +2,24 @@ package dev.openrune.definition.codec
 
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.definition.EntityOpsLoader
+import dev.openrune.definition.util.IntBackedList
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.type.ObjStackability
 import dev.openrune.definition.type.ItemType
+import dev.openrune.definition.type.builders.ItemTypeBuilder
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
+class ItemCodec(private val revision: Int) : BuilderDefinitionCodec<ItemType, ItemTypeBuilder> {
     private val entityOpsLoader = EntityOpsLoader(revision)
 
-    override fun ItemType.read(opcode: Int, buffer: ByteBuf) {
+    override fun builder(id: Int) = ItemTypeBuilder(id)
+
+    override fun build(builder: ItemTypeBuilder) = builder.build()
+
+    override fun ItemTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> inventoryModel = buffer.readUnsignedShort()
             2 -> name = buffer.readString()
@@ -53,7 +60,7 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
 
             26 -> femaleModel1 = buffer.readUnsignedShort()
             27 -> appearanceOverride2 = buffer.readByte().toInt()
-            in 30..34 -> entityOpsLoader.decodeBaseOp(options, buffer, opcode - 30)
+            in 30..34 -> options = options.toBuilder().also { entityOpsLoader.decodeBaseOp(it, buffer, opcode - 30) }.build()
             in 35..39 -> interfaceOptions[opcode - 35] = buffer.readString()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
@@ -113,8 +120,8 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
             98 -> noteTemplateId = buffer.readUnsignedShort()
             in 100..109 -> {
                 if (countCo == null) {
-                    countObj = MutableList(10) { 0 }
-                    countCo = MutableList(10) { 0 }
+                    countObj = IntBackedList(IntArray(10))
+                    countCo = IntBackedList(IntArray(10))
                 }
                 countObj!![opcode - 100] = buffer.readUnsignedShort()
                 countCo!![opcode - 100] = buffer.readUnsignedShort()
@@ -131,9 +138,9 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
             148 -> placeholderLink = buffer.readUnsignedShort()
             149 -> placeholderTemplate = buffer.readUnsignedShort()
             160 -> stacks = ObjStackability.Never
-            200 -> entityOpsLoader.decodeSubOp(options, buffer)
-            201 -> entityOpsLoader.decodeConditionalOp(options, buffer)
-            202 -> entityOpsLoader.decodeConditionalSubOp(options, buffer)
+            200 -> options = options.toBuilder().also { entityOpsLoader.decodeSubOp(it, buffer) }.build()
+            201 -> options = options.toBuilder().also { entityOpsLoader.decodeConditionalOp(it, buffer) }.build()
+            202 -> options = options.toBuilder().also { entityOpsLoader.decodeConditionalSubOp(it, buffer) }.build()
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Items [${opcode}]" }
         }
@@ -260,7 +267,7 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
             writeByte(definition.appearanceOverride2)
         }
 
-        definition.options.ops.forEachIndexed { index, op ->
+        definition.options.opsOrEmpty.forEachIndexed { index, op ->
             val isDefaultTake = index == 2 && op?.text == "Take"
             if (!isDefaultTake) {
                 entityOpsLoader.encodeBaseOp(this, index, op)
@@ -300,13 +307,13 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
         }
 
         if (entityOpsLoader.supportsExtendedEntityOps()) {
-            definition.options.subOps.forEachIndexed { index, subOps ->
+            definition.options.subOpsOrEmpty.forEachIndexed { index, subOps ->
                 entityOpsLoader.encodeOpcodeSubOps(this, index, subOps)
             }
-            definition.options.conditionalOps.forEachIndexed { index, conditionalOps ->
+            definition.options.conditionalOpsOrEmpty.forEachIndexed { index, conditionalOps ->
                 entityOpsLoader.encodeOpcodeConditionalOps(this, index, conditionalOps)
             }
-            definition.options.conditionalSubOps.forEachIndexed { index, conditionalSubOps ->
+            definition.options.conditionalSubOpsOrEmpty.forEachIndexed { index, conditionalSubOps ->
                 entityOpsLoader.encodeOpcodeConditionalSubOps(this, index, conditionalSubOps)
             }
         }

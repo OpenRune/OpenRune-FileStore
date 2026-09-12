@@ -1,5 +1,7 @@
 package dev.openrune.definition.type
 
+import dev.openrune.definition.type.builders.WorldEntityTypeBuilder
+
 import dev.openrune.definition.Definition
 
 enum class WorldInteractTarget(val id: Int) {
@@ -27,19 +29,22 @@ enum class WorldInteractMode(val id: Int) {
 
 data class WorldEntityType(
     override var id: Int = -1,
-    var name: String = "null",
-    var options: MutableList<String?> = mutableListOf(null, null, null, null, null),
-    var active: Boolean = false,
-    var mainX: Int = 0,
-    var mainZ: Int = 0,
-    var boundsOffsetX: Int = 0,
-    var boundsOffsetZ: Int = 0,
-    var boundSizeZ: Int = 0,
-    var boundsSizeZ: Int = 0,
-    var anim: Int = -1,
-    var mainLevel: Int = 0,
-    var interactTarget: WorldInteractTarget = WorldInteractTarget.UNKNOWN,
-    var interactContentsMode: WorldInteractMode = WorldInteractMode.UNKNOWN,
-    var minimapIcon: Int = -1,
-    var rgb: Int = 39188
-) : Definition
+    val name: String = "null",
+    val options: List<String?> = listOf(null, null, null, null, null),
+    val active: Boolean = false,
+    val mainX: Int = 0,
+    val mainZ: Int = 0,
+    val boundsOffsetX: Int = 0,
+    val boundsOffsetZ: Int = 0,
+    val boundSizeZ: Int = 0,
+    val boundsSizeZ: Int = 0,
+    val anim: Int = -1,
+    val mainLevel: Int = 0,
+    val interactTarget: WorldInteractTarget = WorldInteractTarget.UNKNOWN,
+    val interactContentsMode: WorldInteractMode = WorldInteractMode.UNKNOWN,
+    val minimapIcon: Int = -1,
+    val rgb: Int = 39188
+) : Definition {
+
+    fun toBuilder(): WorldEntityTypeBuilder = WorldEntityTypeBuilder.from(this)
+}

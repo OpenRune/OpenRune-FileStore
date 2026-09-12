@@ -31,32 +31,44 @@ class FileCache(
     private val length = main.length()
     private val context = DecompressionContext()
 
+    private var lastArchiveHash = -1
+    private var lastArchiveFiles: Array<ByteArray?>? = null
+
+    private val index255Table = readIndexTable(index255)
+    private val indexTables: Array<ByteArray?> = Array(indexes.size) { id ->
+        indexes[id]?.let { readIndexTable(it) }
+    }
+
+    private fun indexTable(index: Int): ByteArray? =
+        if (index == 255) index255Table else indexTables.getOrNull(index)
+
     override fun sector(index: Int, archive: Int): ByteArray? {
-        val indexRaf = if (index == 255) index255 else indexes[index] ?: return null
+        val table = indexTable(index) ?: return null
         return sectorCache.getOrPut(index + (archive shl 6)) {
-            readSector(main, length, indexRaf, index, archive)
+            readSector(main, length, table, index, archive)
         }
     }
 
     override fun data(index: Int, archive: Int, file: Int, xtea: IntArray?): ByteArray? {
-        val matchingIndex = files.getOrNull(index)?.getOrNull(archive)?.indexOf(file) ?: -1
+        val matchingIndex = fileIndex(index, archive, file)
         if (matchingIndex == -1) {
             return null
         }
-        val hash = index + (archive shl 6)
-        val files = dataCache.getOrPut(hash) {
-            val indexRaf = indexes[index] ?: return null
-            fileData(context, main, length, indexRaf, index, archive, xtea) ?: return null
-        }
-        return files[matchingIndex]
+        val files = fileData(index, archive, xtea) ?: return null
+        return files.getOrNull(matchingIndex)
     }
 
     override fun fileData(index: Int, archive: Int, xtea: IntArray?): Array<ByteArray?>? {
         val hash = index + (archive shl 6)
-        val files = dataCache.getOrPut(hash) {
-            val indexRaf = indexes[index] ?: return null
-            fileData(context, main, length, indexRaf, index, archive, xtea) ?: return null
+        if (hash == lastArchiveHash) {
+            return lastArchiveFiles
         }
+        val files = dataCache.getOrPut(hash) {
+            val table = indexTables.getOrNull(index) ?: return null
+            fileData(context, main, length, table, index, archive, xtea) ?: return null
+        }
+        lastArchiveHash = hash
+        lastArchiveFiles = files
         return files
     }
 
@@ -70,6 +82,7 @@ class FileCache(
 
     override fun close() {
         main.close()
+        index255.close()
         for (file in indexes) {
             file?.close()
         }
@@ -105,7 +118,7 @@ class FileCache(
             }
             val cache = FileCache(main, index255, indices, indexCount, xteas, mapFactory)
             for (indexId in 0 until indexCount) {
-                cache.archiveData(context, main, length, index255, indexId, versionTable)
+                cache.archiveData(context, main, length, cache.index255Table, indexId, versionTable)
             }
             cache.versionTable = versionTable?.build() ?: ByteArray(0)
             return cache

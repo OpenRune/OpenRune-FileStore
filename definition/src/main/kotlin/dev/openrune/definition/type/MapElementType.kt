@@ -1,5 +1,7 @@
 package dev.openrune.definition.type
 
+import dev.openrune.definition.type.builders.MapElementTypeBuilder
+
 import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
 import dev.openrune.seralizer.MapElementTypeOptionsTableHook
@@ -11,33 +13,39 @@ import dev.openrune.seralizer.MapElementTypeOptionsTableHook
 data class MapElementType(
     override var id: Int = -1,
 
-    var sprite1: Int = -1,
+    val sprite1: Int = -1,
 
-    var sprite2: Int = -1,
+    val sprite2: Int = -1,
 
-    var name: String = "null",
+    val name: String = "null",
 
-    var fontColor: Int = 0,
+    val fontColor: Int = 0,
 
-    var textSize: Int = 0,
+    val textSize: Int = 0,
 
-    var renderOnWorldMap: Boolean = true,
+    val renderOnWorldMap: Boolean = true,
 
-    var renderOnMinimap: Boolean = false,
+    val renderOnMinimap: Boolean = false,
 
+    // The one non-val: [MapElementTypeOptionsTableHook] runs after TOML construction and fills
+    // this list in place, so it must stay a mutable holder. By convention it is not modified once
+    // a definition has been built.
     var options : MutableList<String?> = mutableListOf(null, null, null, null, null),
 
-    var menuTargetName: String = "null",
+    val menuTargetName: String = "null",
 
-    var field1933: MutableList<Int>? = null,
+    val field1933: List<Int>? = null,
 
-    var horizontalAlignment: Int = 1,
+    val horizontalAlignment: Int = 1,
 
-    var verticalAlignment: Int = 1,
+    val verticalAlignment: Int = 1,
 
-    var field1930: MutableList<Int> = emptyList<Int>().toMutableList(),
+    val field1930: List<Int> = emptyList(),
 
-    var field1948: MutableList<Int> = emptyList<Int>().toMutableList(),
+    val field1948: List<Int> = emptyList(),
 
-    var category: Int = 0
-) : Definition
+    val category: Int = 0
+) : Definition {
+
+    fun toBuilder(): MapElementTypeBuilder = MapElementTypeBuilder.from(this)
+}

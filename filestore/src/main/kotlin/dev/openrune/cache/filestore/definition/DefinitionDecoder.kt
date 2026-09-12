@@ -42,9 +42,8 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int, protected val c
                     definitions[id] = definition
                 }
             } catch (e: Exception) {
-                // A definition in a custom or unexpected format should not abort the whole load.
                 skipped++
-                logger.debug { "Skipping definition $id in index $index: $e" }
+                //logger.debug { "Skipping definition $id in index $index: $e" }
             }
         }
 

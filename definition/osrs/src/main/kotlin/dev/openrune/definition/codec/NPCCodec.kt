@@ -1,30 +1,33 @@
 package dev.openrune.definition.codec
 
 import com.github.michaelbull.logging.InlineLogger
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.EntityOpsLoader
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.revisionIsOrBefore
 import dev.openrune.definition.type.BgSound
 import dev.openrune.definition.type.BgSoundFade
 import dev.openrune.definition.type.NpcType
+import dev.openrune.definition.type.builders.NpcTypeBuilder
 import dev.openrune.definition.type.RandomSound
 import dev.openrune.definition.util.*
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
+class NPCCodec(private val revision: Int) : BuilderDefinitionCodec<NpcType, NpcTypeBuilder> {
     private val entityOpsLoader = EntityOpsLoader(revision)
 
-    override fun NpcType.read(opcode: Int, buffer: ByteBuf) {
+    override fun builder(id: Int) = NpcTypeBuilder(id)
+
+    override fun build(builder: NpcTypeBuilder) = builder.build()
+
+    override fun NpcTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
                 val length = buffer.readUnsignedByte().toInt()
-                models = MutableList(length) { 0 }
-                for (count in 0 until length) {
-                    models!![count] = buffer.readUnsignedShort()
-                    if (models!![count] == 65535) {
-                        models!![count] = -1
-                    }
+                models = readIntList(length) {
+                    val model = buffer.readUnsignedShort()
+                    if (model == 65535) -1 else model
                 }
             }
 
@@ -42,29 +45,20 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             }
 
             18 -> category = buffer.readUnsignedShort()
-            in 30..34 -> entityOpsLoader.decodeBaseOp(actions, buffer, opcode - 30)
+            in 30..34 -> actions = actions.toBuilder().also { entityOpsLoader.decodeBaseOp(it, buffer, opcode - 30) }.build()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
             60 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                chatheadModels = MutableList(length) { 0 }
-                (0 until length).forEach {
-                    chatheadModels!![it] = buffer.readUnsignedShort()
-                }
+                chatheadModels = readIntList(length) { buffer.readUnsignedShort() }
             }
             61 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                models = MutableList(length) { 0 }
-                (0 until length).forEach {
-                    models!![it] = buffer.readInt()
-                }
+                models = readIntList(length) { buffer.readInt() }
             }
             62 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                chatheadModels = MutableList(length) { 0 }
-                (0 until length).forEach {
-                    chatheadModels!![it] = buffer.readInt()
-                }
+                chatheadModels = readIntList(length) { buffer.readInt() }
             }
             74 -> attack = buffer.readUnsignedShort()
             75 -> defence = buffer.readUnsignedShort()
@@ -81,22 +75,22 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             101 -> contrast = buffer.readByte().toInt()
             102 -> {
                 if (revisionIsOrBefore(revision, 210)) {
-                    headIconGraphics = mutableListOf(0)
-                    headIconIndexes = mutableListOf(buffer.readUnsignedShort())
+                    headIconGraphics = IntBackedList(intArrayOf(0))
+                    headIconIndexes = IntBackedList(intArrayOf(buffer.readUnsignedShort()))
                 } else {
 
                     val bits = buffer.readUnsignedByte().toInt()
                     val length = 32 - Integer.numberOfLeadingZeros(bits)
-                    val iconGroups = MutableList(length) { 0 }
-                    val iconIndexes = MutableList(length) { 0 }
+                    val iconGroups = IntBackedList(length)
+                    val iconIndexes = IntBackedList(length)
 
                     for (index in 0 until length) {
                         if ((bits and (1 shl index)) == 0) {
-                            iconGroups[index] = -1
-                            iconIndexes[index] = -1
+                            iconGroups.add(-1)
+                            iconIndexes.add(-1)
                         } else {
-                            iconGroups[index] = buffer.readNullableLargeSmart()
-                            iconIndexes[index] = buffer.readShortSmartSub()
+                            iconGroups.add(buffer.readNullableLargeSmart())
+                            iconIndexes.add(buffer.readShortSmartSub())
                         }
                     }
 
@@ -170,12 +164,10 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                     maxDelay = buffer.readUnsignedShort(),
                     minVolume = buffer.readUnsignedByte().toInt(),
                     maxVolume = buffer.readUnsignedByte().toInt(),
-                    soundIds = MutableList(buffer.readUnsignedByte().toInt()) {
-                        buffer.readUnsignedShort()
-                    }
+                    soundIds = readIntList(buffer.readUnsignedByte().toInt()) { buffer.readUnsignedShort() }
                 )
             }
-            252 -> entityOpsLoader.decodeConditionalOp(actions, buffer)
+            252 -> actions = actions.toBuilder().also { entityOpsLoader.decodeConditionalOp(it, buffer) }.build()
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Npcs [${opcode}]" }
         }
@@ -241,7 +233,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             writeShort(definition.category)
         }
 
-        definition.actions.ops.forEachIndexed { index, op ->
+        definition.actions.opsOrEmpty.forEachIndexed { index, op ->
             entityOpsLoader.encodeBaseOp(this, index, op)
         }
 

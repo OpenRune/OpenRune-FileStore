@@ -7,18 +7,18 @@ import dev.openrune.definition.opcode.DefinitionOpcode
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import io.netty.buffer.Unpooled
-import kotlin.reflect.KProperty1
+import kotlin.reflect.KMutableProperty1
 
 fun <T> DefinitionOpcodeEntityOps(
     opcode: Int,
-    property: KProperty1<T, EntityOpsDefinition>,
+    property: KMutableProperty1<T, EntityOpsDefinition>,
     revision: Int
 ): DefinitionOpcode<T> {
     val entityOpsLoader = EntityOpsLoader(revision)
     return DefinitionOpcode(
         opcode = opcode,
         decode = { buf, def, _ ->
-            val ops = property.get(def)
+            val ops = property.get(def).toBuilder()
             val decodeExtended = entityOpsLoader.supportsExtendedEntityOps()
             if (!decodeExtended) {
                 val opCount = buf.readUnsignedByte().toInt()
@@ -29,6 +29,7 @@ fun <T> DefinitionOpcodeEntityOps(
                     payload.writeString(text)
                     entityOpsLoader.decodeBaseOp(ops, payload, index)
                 }
+                property.set(def, ops.build())
                 return@DefinitionOpcode
             }
 
@@ -110,11 +111,13 @@ fun <T> DefinitionOpcodeEntityOps(
                     }
                 }
             }
+
+            property.set(def, ops.build())
         },
         encode = { buf, def ->
             val ops = property.get(def)
             val encodeExtended = entityOpsLoader.supportsExtendedEntityOps()
-            val nonNullOps = ops.ops.withIndex().filter { it.value != null }
+            val nonNullOps = ops.opsOrEmpty.withIndex().filter { it.value != null }
             if (!encodeExtended) {
                 buf.writeByte(nonNullOps.size)
                 nonNullOps.forEach { (index, op) ->
@@ -124,9 +127,9 @@ fun <T> DefinitionOpcodeEntityOps(
                 return@DefinitionOpcode
             }
 
-            val subSlots = ops.subOps.withIndex().filter { it.value.isNotEmpty() }
-            val conditionalSlots = ops.conditionalOps.withIndex().filter { it.value.isNotEmpty() }
-            val conditionalSubSlots = ops.conditionalSubOps.withIndex().filter { it.value.isNotEmpty() }
+            val subSlots = ops.subOpsOrEmpty.withIndex().filter { it.value.isNotEmpty() }
+            val conditionalSlots = ops.conditionalOpsOrEmpty.withIndex().filter { it.value.isNotEmpty() }
+            val conditionalSubSlots = ops.conditionalSubOpsOrEmpty.withIndex().filter { it.value.isNotEmpty() }
 
             var flags = 0
             if (nonNullOps.isNotEmpty()) flags = flags or 0x1
@@ -190,10 +193,10 @@ fun <T> DefinitionOpcodeEntityOps(
         },
         shouldEncode = { def ->
             val ops = property.get(def)
-            ops.ops.any { it != null } ||
-                ops.subOps.any { it.isNotEmpty() } ||
-                ops.conditionalOps.any { it.isNotEmpty() } ||
-                ops.conditionalSubOps.any { it.isNotEmpty() }
+            ops.opsOrEmpty.any { it != null } ||
+                ops.subOpsOrEmpty.any { it.isNotEmpty() } ||
+                ops.conditionalOpsOrEmpty.any { it.isNotEmpty() } ||
+                ops.conditionalSubOpsOrEmpty.any { it.isNotEmpty() }
         }
     )
 }

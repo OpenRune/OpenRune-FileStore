@@ -1,6 +1,7 @@
 package dev.openrune.seralizer
 
 import dev.openrune.toml.model.TomlValue
+import dev.openrune.definition.EntityOpsBuilder
 import dev.openrune.definition.EntityOpsDefinition
 
 /**
@@ -53,8 +54,21 @@ object StringListOptionsFromToml {
  */
 object EntityOpsOptionsFromToml {
 
+    /** Parses the option keys on top of [current] and returns the (shared) built result. */
+    fun applied(
+        current: EntityOpsDefinition,
+        id: Int,
+        name: String,
+        keyName: String,
+        content: Map<String, TomlValue>,
+    ): EntityOpsDefinition {
+        val builder = current.toBuilder()
+        apply(builder, id, name, keyName, content)
+        return builder.build()
+    }
+
     fun apply(
-        ops: EntityOpsDefinition,
+        ops: EntityOpsBuilder,
         id: Int,
         name: String,
         keyName: String,
