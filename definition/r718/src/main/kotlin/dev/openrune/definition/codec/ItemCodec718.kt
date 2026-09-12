@@ -95,7 +95,7 @@ class ItemCodec718 : DefinitionCodec<ItemType> {
             24 -> maleModel1 = buffer.readBigSmart()
             25 -> femaleModel0 = buffer.readBigSmart()
             26 -> femaleModel1 = buffer.readBigSmart()
-            in 30..34 -> entityOpsLoader.decodeBaseOp(options, buffer, opcode - 30)
+            in 30..34 -> options = options.toBuilder().also { entityOpsLoader.decodeBaseOp(it, buffer, opcode - 30) }.build()
             in 35..39 -> interfaceOptions[opcode - 35] = buffer.readString()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)

@@ -7,7 +7,20 @@ import dev.openrune.definition.util.writeByte
 import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
 
+/**
+ * The read side of params: what an immutable definition exposes. The mutable counterpart for
+ * decoding and builders is [MutableParameterized].
+ */
 interface Parameterized {
+    val params: Map<Int, Any>?
+
+    fun writeParameters(writer: ByteBuf) {
+        writeParameters(writer, params)
+    }
+}
+
+/** The mutable side of params, implemented by builders and the still-mutable types. */
+interface MutableParameterized {
 
     var params: MutableMap<Int, Any>?
 
@@ -41,10 +54,9 @@ interface Parameterized {
     fun writeParameters(writer: ByteBuf) {
         writeParameters(writer, params)
     }
-
 }
 
-/** Standalone form for immutable types that carry the params map without the interface. */
+/** Standalone form usable with either side of the interface pair. */
 fun writeParameters(writer: ByteBuf, params: Map<Int, Any>?) {
     if (params == null) return
 

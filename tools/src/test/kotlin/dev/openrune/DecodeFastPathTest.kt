@@ -9,6 +9,7 @@ import dev.openrune.cache.gameval.impl.Interface.InterfaceComponent
 import dev.openrune.cache.withOffset
 import dev.openrune.cache.tools.tasks.impl.sprites.Sprite
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet
+import dev.openrune.definition.EntityOpsBuilder
 import dev.openrune.definition.EntityOpsDefinition
 import dev.openrune.definition.codec.ObjectCodec
 import dev.openrune.definition.opcode.DefinitionOpcode
@@ -93,15 +94,21 @@ class DecodeFastPathTest {
     }
 
     @Test
-    fun `the backing list is created once and reused`() {
-        val ops = EntityOpsDefinition()
-        assertSame(ops.ops, ops.ops)
+    fun `an empty build returns the shared empty instance`() {
+        assertSame(EntityOpsDefinition.EMPTY, EntityOpsBuilder().build())
+        assertSame(EntityOpsBuilder().build(), EntityOpsBuilder().build())
+    }
+
+    @Test
+    fun `equal op sets built twice share one instance`() {
+        val first = EntityOpsBuilder().op(0, "Open").op(1, "Close").build()
+        val second = EntityOpsBuilder().op(0, "Open").op(1, "Close").build()
+        assertSame(first, second)
     }
 
     @Test
     fun `setting an op pads the earlier slots with null`() {
-        val ops = EntityOpsDefinition()
-        ops.setOp(2, "Open")
+        val ops = EntityOpsBuilder().op(2, "Open").build()
 
         assertFalse(ops.isEmpty())
         assertEquals(3, ops.opsOrEmpty.size)
@@ -113,16 +120,18 @@ class DecodeFastPathTest {
     }
 
     @Test
-    fun `sub and conditional ops round trip through the lazy slots`() {
-        val ops = EntityOpsDefinition()
-        ops.setSubOp(1, 3, "Sub")
-        ops.setConditionalOp(0, "Cond", varpID = 100, varbitID = 200, min = 1, max = 9)
-        ops.setConditionalSubOp(2, 4, "CondSub", varpID = 300, varbitID = 400, min = 2, max = 8)
+    fun `sub and conditional ops round trip through the builder`() {
+        val builder = EntityOpsBuilder()
+        builder.setSubOp(1, 3, "Sub")
+        builder.setConditionalOp(0, "Cond", varpID = 100, varbitID = 200, min = 1, max = 9)
+        builder.setConditionalSubOp(2, 4, "CondSub", varpID = 300, varbitID = 400, min = 2, max = 8)
+        val ops = builder.build()
 
         assertEquals("Sub", ops.getSubOpOrNull(1, 3)?.text)
         assertEquals("Cond", ops.getConditionalOpsOrEmpty(0).single().text)
         assertEquals("CondSub", ops.getConditionalSubOpsBySubIdOrEmpty(2, 4).single().text)
         assertTrue(ops.toString().contains("Sub"))
+        assertTrue(ops.contentEquals(ops.toBuilder().build()))
     }
 
     // --- ObjectCodec decode ------------------------------------------------------------------

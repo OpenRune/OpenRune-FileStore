@@ -143,28 +143,38 @@ cost of the config types is their fifty-plus declared scalar fields — the floo
 type shapes. Converting the fields to raw `IntArray` was considered and rejected: it would break
 the public definition API for the same bytes the array-backed lists already save.
 
-### Compact and freeze at the manager
+### Immutable types built through builders
 
 A cache is full of copies — one object at four rotations is four ids with identical model, type
-and colour lists, and thousands of doors share one op set. While a definition is being decoded or
-packed it has to be mutable, so nothing can be shared. The moment `CacheManager.init` adopts the
-tables, `DefinitionCompactor` interns equal lists and op sets to one frozen instance each and
-freezes them; mutating anything a loaded definition holds throws from then on. A freshly
-constructed type stays fully mutable — that is the builder the codecs and packing tools use.
+and colour lists, and thousands of doors share one op set. Sharing those safely needs genuine
+immutability, so the types themselves became immutable and the mutability moved into builders
+(this replaced an earlier freeze-at-the-manager pass):
 
-| Type    | Loose   | Compacted | Change |
-|---------|---------|-----------|--------|
-| objects | 29.3 MB | 19.7 MB   | -33%   |
-| items   | 20.6 MB | 16.5 MB   | -20%   |
-| npcs    | 10.9 MB | 8.3 MB    | -24%   |
+- `ObjectType` is `val`-only (`id` excepted, which the load machinery assigns; `actions` excepted,
+  which the TOML options hook replaces after construction). `ObjectCodec` decodes through
+  `ObjectTypeBuilder`, `ObjectType.toBuilder()` gives tools an editable copy, and the
+  `objectType { }` / `edit { }` DSL in `dev.openrune.cache.tools.dsl` wraps both.
+- `EntityOpsDefinition` is immutable everywhere, assembled through `EntityOpsBuilder`. Every stock
+  item shares one default "Take" op set, every op-less definition shares `EMPTY`, and equal op
+  sets built anywhere collapse to one instance.
+- The codec helper interfaces split into read/mutable pairs (`Recolourable`/`MutableRecolourable`
+  and so on): immutable types implement the `val` side, builders and the still-mutable types the
+  `var` side. They are unrelated hierarchies because Kotlin cannot override a `var MutableList`
+  with a `val List`.
 
-Against the original baseline that puts objects at -44%, npcs at -44% and items at -30%, and the
-ten-workload total at 143 MB → 106 MB (-26%). The pass is one content-keyed intern per table and
-adds a few milliseconds to `CacheManager.init`; decode times are unchanged.
+Because built instances can never change, `ObjectTypeBuilder.build()` shares equal lists through
+`IntListPool` and `EntityOpsBuilder.build()` shares equal op sets — no freeze flags, no post-load
+compaction pass, nothing for callers to remember.
 
-`CompactedObjectsTest` and `CompactedNpcsAndItemsTest` lock the contract: byte-identical encodes
-before and after compaction over the whole cache, equal lists and op sets provably shared, frozen
-state throwing on mutation, and fresh instances staying mutable for the tools.
+| Type    | Before all passes | Now     | Change |
+|---------|-------------------|---------|--------|
+| objects | 35.3 MB           | 21.2 MB | -40%   |
+| npcs    | 14.8 MB           | 9.5 MB  | -36%   |
+| items   | 23.5 MB           | 17.3 MB | -26%   |
+
+Ten-workload total: 143 MB → 109 MB (-24%). Object decode pays a few extra milliseconds for the
+builder pass and content pooling (roughly 30 ms → 55 ms for all 62 400), which is what buys the
+immutability and the sharing.
 
 ### Round-trip verification
 

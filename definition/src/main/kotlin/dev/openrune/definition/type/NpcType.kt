@@ -4,9 +4,9 @@ import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.toml.serialization.TomlField
 import dev.openrune.definition.Definition
 import dev.openrune.definition.EntityOpsDefinition
-import dev.openrune.definition.Parameterized
-import dev.openrune.definition.Recolourable
-import dev.openrune.definition.Transforms
+import dev.openrune.definition.MutableParameterized
+import dev.openrune.definition.MutableRecolourable
+import dev.openrune.definition.MutableTransforms
 import dev.openrune.seralizer.NpcTypeOptionsTableHook
 import dev.openrune.seralizer.ParamSerializer
 
@@ -28,7 +28,7 @@ data class NpcType(
     var rotateBackAnim : Int = -1,
     var walkLeftAnim : Int = -1,
     var walkRightAnim : Int = -1,
-    var actions : EntityOpsDefinition = EntityOpsDefinition(),
+    var actions : EntityOpsDefinition = EntityOpsDefinition.EMPTY,
     override var originalColours: MutableList<Int>? = null,
     override var modifiedColours: MutableList<Int>? = null,
     override var originalTextureColours: MutableList<Int>? = null,
@@ -77,7 +77,7 @@ data class NpcType(
     var bgSoundFade: BgSoundFade? = null,
     var crossWorldSound: Int = 2,
     var randomSound: RandomSound? = null,
-    ) : Definition, Transforms, Recolourable, Parameterized {
+    ) : Definition, MutableTransforms, MutableRecolourable, MutableParameterized {
 
     var examine : String = ""
 

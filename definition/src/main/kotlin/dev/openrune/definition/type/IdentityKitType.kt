@@ -2,7 +2,7 @@ package dev.openrune.definition.type
 
 import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
-import dev.openrune.definition.Recolourable
+import dev.openrune.definition.MutableRecolourable
 
 @RsTableHeaders("idk")
 data class IdentityKitType(
@@ -15,4 +15,4 @@ data class IdentityKitType(
     var models: MutableList<Int>? = null,
     var chatheadModels : MutableList<Int> = mutableListOf(-1, -1, -1, -1, -1),
     var nonSelectable : Boolean = false
-) : Definition, Recolourable
+) : Definition, MutableRecolourable

@@ -3,12 +3,16 @@ package dev.openrune.definition.type
 import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.toml.serialization.TomlField
 import dev.openrune.definition.Definition
+import dev.openrune.definition.EntityOpsBuilder
 import dev.openrune.definition.EntityOpsDefinition
-import dev.openrune.definition.Parameterized
-import dev.openrune.definition.Recolourable
+import dev.openrune.definition.MutableParameterized
+import dev.openrune.definition.MutableRecolourable
 import dev.openrune.seralizer.ObjStackabilitySerializer
 import dev.openrune.seralizer.ItemTypeOptionsTableHook
 import dev.openrune.seralizer.ParamSerializer
+
+/** The op set every item starts with; shared because [EntityOpsDefinition] is immutable. */
+val DEFAULT_ITEM_OPTIONS: EntityOpsDefinition = EntityOpsBuilder().op(2, "Take").build()
 
 @RsTableHeaders(
     "item",
@@ -49,7 +53,8 @@ data class ItemType(
     var contrast: Int = 0,
     var countCo: MutableList<Int>? = null,
     var countObj: MutableList<Int>? = null,
-    var options : EntityOpsDefinition = EntityOpsDefinition().op(2, "Take"),
+    // Immutable and shared: every stock item points at the same default "Take" op set.
+    var options : EntityOpsDefinition = DEFAULT_ITEM_OPTIONS,
     var interfaceOptions: MutableList<String?> = mutableListOf(null, null, null, null, "Drop"),
     var maleModel0: Int = -1,
     var maleModel1: Int = -1,
@@ -73,7 +78,7 @@ data class ItemType(
     var placeholderTemplate: Int = -1,
     var subops: Array<Array<String?>?>? = null,
 
-    ) : Definition, Recolourable, Parameterized {
+    ) : Definition, MutableRecolourable, MutableParameterized {
 
     // In the body so it stays out of equals/hashCode/toString/copy. Used by the r718 codec.
     private var extraProperties: MutableMap<String, Any?>? = null

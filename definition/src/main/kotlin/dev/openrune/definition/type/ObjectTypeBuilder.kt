@@ -1,9 +1,9 @@
 package dev.openrune.definition.type
 
-import dev.openrune.definition.EntityOpsDefinition
-import dev.openrune.definition.Parameterized
-import dev.openrune.definition.Recolourable
-import dev.openrune.definition.Transforms
+import dev.openrune.definition.EntityOpsBuilder
+import dev.openrune.definition.MutableParameterized
+import dev.openrune.definition.MutableRecolourable
+import dev.openrune.definition.MutableTransforms
 import dev.openrune.definition.util.IntListPool
 
 /**
@@ -11,7 +11,7 @@ import dev.openrune.definition.util.IntListPool
  * one — either fresh or via [ObjectType.toBuilder] — then [build] produces the immutable
  * definition everything else reads.
  */
-class ObjectTypeBuilder(var id: Int = -1) : Transforms, Recolourable, Parameterized {
+class ObjectTypeBuilder(var id: Int = -1) : MutableTransforms, MutableRecolourable, MutableParameterized {
 
     var name: String = "null"
     var decorDisplacement: Int = 16
@@ -30,7 +30,7 @@ class ObjectTypeBuilder(var id: Int = -1) : Transforms, Recolourable, Parameteri
     var animationId: Int = -1
     var ambient: Int = 0
     var contrast: Int = 0
-    val actions: EntityOpsDefinition = EntityOpsDefinition()
+    val actions: EntityOpsBuilder = EntityOpsBuilder()
     var solid: Int = 2
     var mapSceneID: Int = -1
     var clipMask: Int = 0
@@ -89,7 +89,7 @@ class ObjectTypeBuilder(var id: Int = -1) : Transforms, Recolourable, Parameteri
         animationId = animationId,
         ambient = ambient,
         contrast = contrast,
-        actions = actions,
+        actions = actions.build(),
         solid = solid,
         mapSceneID = mapSceneID,
         clipMask = clipMask,
@@ -150,26 +150,7 @@ class ObjectTypeBuilder(var id: Int = -1) : Transforms, Recolourable, Parameteri
             builder.animationId = type.animationId
             builder.ambient = type.ambient
             builder.contrast = type.contrast
-            type.actions.opsOrEmpty.forEachIndexed { index, op ->
-                if (op != null) builder.actions.setOp(index, op.text)
-            }
-            type.actions.subOpsOrEmpty.forEachIndexed { index, subOps ->
-                subOps.forEach { builder.actions.subOp(index, it.subID, it.text) }
-            }
-            type.actions.conditionalOpsOrEmpty.forEachIndexed { index, conditionals ->
-                conditionals.forEach {
-                    builder.actions.conditionalOp(index, it.text, it.varpID, it.varbitID, it.minValue, it.maxValue)
-                }
-            }
-            type.actions.conditionalSubOpsOrEmpty.forEachIndexed { index, bySub ->
-                bySub.values.forEach { conditionals ->
-                    conditionals.forEach {
-                        builder.actions.conditionalSubOp(
-                            index, it.subID, it.text, it.varpID, it.varbitID, it.minValue, it.maxValue
-                        )
-                    }
-                }
-            }
+            builder.actions.include(type.actions)
             builder.solid = type.solid
             builder.mapSceneID = type.mapSceneID
             builder.clipMask = type.clipMask

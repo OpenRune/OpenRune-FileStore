@@ -8,7 +8,7 @@ class EntityOpsLoader(private val revision: Int) {
 
     fun supportsExtendedEntityOps(): Boolean = revisionIsOrAfter(revision, EXTENDED_ENTITY_OPS_REVISION)
 
-    fun decodeBaseOp(ops: EntityOpsDefinition, buffer: ByteBuf, index: Int) {
+    fun decodeBaseOp(ops: EntityOpsBuilder, buffer: ByteBuf, index: Int) {
         val text = buffer.readString()
         if (!text.equals("Hidden", ignoreCase = true)) {
             ops.setOp(index, text)
@@ -23,7 +23,7 @@ class EntityOpsLoader(private val revision: Int) {
         buffer.writeString(op.text)
     }
 
-    fun decodeSubOp(ops: EntityOpsDefinition, buffer: ByteBuf) {
+    fun decodeSubOp(ops: EntityOpsBuilder, buffer: ByteBuf) {
         val index = buffer.readUnsignedByte().toInt()
         while (true) {
             val subID = buffer.readUnsignedByte().toInt() - 1
@@ -35,7 +35,7 @@ class EntityOpsLoader(private val revision: Int) {
         }
     }
 
-    fun decodeConditionalOp(ops: EntityOpsDefinition, buffer: ByteBuf) {
+    fun decodeConditionalOp(ops: EntityOpsBuilder, buffer: ByteBuf) {
         val index = buffer.readUnsignedByte().toInt()
         val varp = buffer.readUnsignedShort().toInt()
         val varb = buffer.readUnsignedShort().toInt()
@@ -46,7 +46,7 @@ class EntityOpsLoader(private val revision: Int) {
         ops.setConditionalOp(index, text, varp, varb, min, max)
     }
 
-    fun decodeConditionalSubOp(ops: EntityOpsDefinition, buffer: ByteBuf) {
+    fun decodeConditionalSubOp(ops: EntityOpsBuilder, buffer: ByteBuf) {
         val index = buffer.readUnsignedByte().toInt()
         val subID = buffer.readUnsignedShort().toInt()
         val varp = buffer.readUnsignedShort().toInt()

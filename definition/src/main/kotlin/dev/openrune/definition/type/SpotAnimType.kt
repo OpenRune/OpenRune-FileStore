@@ -2,7 +2,7 @@ package dev.openrune.definition.type
 
 import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
-import dev.openrune.definition.Recolourable
+import dev.openrune.definition.MutableRecolourable
 
 @RsTableHeaders("graphics", "graphic")
 data class SpotAnimType(
@@ -20,4 +20,4 @@ data class SpotAnimType(
     var ambient: Int = 0,
     var contrast: Int = 0,
     var debugName : String = ""
-) : Definition, Recolourable
+) : Definition, MutableRecolourable

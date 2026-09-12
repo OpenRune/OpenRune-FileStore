@@ -181,7 +181,7 @@ class NpcCodecRS3(private val revision: Int) : DefinitionCodec<NpcType> {
 
             2 -> name = buffer.readString()
             12 -> size = buffer.readUnsignedByte().toInt()
-            in 30..34 -> entityOpsLoader.decodeBaseOp(actions, buffer, opcode - 30)
+            in 30..34 -> actions = actions.toBuilder().also { entityOpsLoader.decodeBaseOp(it, buffer, opcode - 30) }.build()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
             42 -> readColourPalette(buffer)
@@ -283,7 +283,7 @@ class NpcCodecRS3(private val revision: Int) : DefinitionCodec<NpcType> {
             141 -> renderPriority = 1
             142 -> setExtraProperty("mapFunction", buffer.readShort().toInt())
             143 -> setExtraProperty("invisiblePriority", true)
-            in 150..154 -> entityOpsLoader.decodeBaseOp(actions, buffer, opcode - 150)
+            in 150..154 -> actions = actions.toBuilder().also { entityOpsLoader.decodeBaseOp(it, buffer, opcode - 150) }.build()
             155 -> {
                 setExtraProperty("hue", buffer.readByte().toInt().toByte())
                 setExtraProperty("saturation", buffer.readByte().toInt().toByte())

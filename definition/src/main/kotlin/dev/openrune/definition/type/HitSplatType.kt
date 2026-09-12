@@ -2,7 +2,7 @@ package dev.openrune.definition.type
 
 import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
-import dev.openrune.definition.Transforms
+import dev.openrune.definition.MutableTransforms
 
 @RsTableHeaders("hitsplat")
 data class HitSplatType(
@@ -25,4 +25,4 @@ data class HitSplatType(
     override var multiDefault: Int = -1,
     override var transforms: MutableList<Int>? = null,
 
-) : Definition, Transforms
+) : Definition, MutableTransforms

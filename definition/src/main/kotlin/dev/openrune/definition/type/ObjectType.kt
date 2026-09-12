@@ -4,6 +4,9 @@ import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.toml.serialization.TomlField
 import dev.openrune.definition.Definition
 import dev.openrune.definition.EntityOpsDefinition
+import dev.openrune.definition.Parameterized
+import dev.openrune.definition.Recolourable
+import dev.openrune.definition.Transforms
 import dev.openrune.seralizer.ObjectTypeOptionsTableHook
 import dev.openrune.seralizer.ParamSerializer
 import kotlin.math.abs
@@ -37,7 +40,9 @@ data class ObjectType(
     val animationId: Int = -1,
     val ambient: Int = 0,
     val contrast: Int = 0,
-    val actions: EntityOpsDefinition = EntityOpsDefinition(),
+    // The one non-val: the TOML options hook runs after construction and replaces this with the
+    // parsed op set. The instance itself is immutable, so sharing stays safe.
+    var actions: EntityOpsDefinition = EntityOpsDefinition.EMPTY,
     val solid: Int = 2,
     val mapSceneID: Int = -1,
     val clipMask: Int = 0,
@@ -66,18 +71,18 @@ data class ObjectType(
     val impenetrable: Boolean = true,
     val soundVisibility : Int = 2,
     val rasie : Int = 0,
-    val originalColours: List<Int>? = null,
-    val modifiedColours: List<Int>? = null,
-    val originalTextureColours: List<Int>? = null,
-    val modifiedTextureColours: List<Int>? = null,
-    val multiVarBit: Int = -1,
-    val multiVarp: Int = -1,
-    val multiDefault: Int = -1,
-    val transforms: List<Int>? = null,
+    override val originalColours: List<Int>? = null,
+    override val modifiedColours: List<Int>? = null,
+    override val originalTextureColours: List<Int>? = null,
+    override val modifiedTextureColours: List<Int>? = null,
+    override val multiVarBit: Int = -1,
+    override val multiVarp: Int = -1,
+    override val multiDefault: Int = -1,
+    override val transforms: List<Int>? = null,
     // Stays MutableMap: ParamSerializer's declared type argument must match the parameter type.
     @param:TomlField(serializer = ParamSerializer::class)
-    val params: MutableMap<Int, Any>? = null,
-) : Definition {
+    override val params: MutableMap<Int, Any>? = null,
+) : Definition, Transforms, Recolourable, Parameterized {
 
     /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): ObjectTypeBuilder = ObjectTypeBuilder.from(this)

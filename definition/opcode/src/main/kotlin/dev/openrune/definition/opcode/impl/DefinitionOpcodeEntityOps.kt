@@ -7,18 +7,19 @@ import dev.openrune.definition.opcode.DefinitionOpcode
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import io.netty.buffer.Unpooled
-import kotlin.reflect.KProperty1
+import kotlin.reflect.KMutableProperty1
 
 fun <T> DefinitionOpcodeEntityOps(
     opcode: Int,
-    property: KProperty1<T, EntityOpsDefinition>,
+    property: KMutableProperty1<T, EntityOpsDefinition>,
     revision: Int
 ): DefinitionOpcode<T> {
     val entityOpsLoader = EntityOpsLoader(revision)
     return DefinitionOpcode(
         opcode = opcode,
         decode = { buf, def, _ ->
-            val ops = property.get(def)
+            // EntityOpsDefinition is immutable, so decode into a builder and set the result back.
+            val ops = property.get(def).toBuilder()
             val decodeExtended = entityOpsLoader.supportsExtendedEntityOps()
             if (!decodeExtended) {
                 val opCount = buf.readUnsignedByte().toInt()
@@ -29,6 +30,7 @@ fun <T> DefinitionOpcodeEntityOps(
                     payload.writeString(text)
                     entityOpsLoader.decodeBaseOp(ops, payload, index)
                 }
+                property.set(def, ops.build())
                 return@DefinitionOpcode
             }
 
@@ -110,6 +112,8 @@ fun <T> DefinitionOpcodeEntityOps(
                     }
                 }
             }
+
+            property.set(def, ops.build())
         },
         encode = { buf, def ->
             val ops = property.get(def)

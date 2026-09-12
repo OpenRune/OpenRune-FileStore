@@ -54,7 +54,7 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
 
             26 -> femaleModel1 = buffer.readUnsignedShort()
             27 -> appearanceOverride2 = buffer.readByte().toInt()
-            in 30..34 -> entityOpsLoader.decodeBaseOp(options, buffer, opcode - 30)
+            in 30..34 -> options = options.toBuilder().also { entityOpsLoader.decodeBaseOp(it, buffer, opcode - 30) }.build()
             in 35..39 -> interfaceOptions[opcode - 35] = buffer.readString()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
@@ -132,9 +132,9 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
             148 -> placeholderLink = buffer.readUnsignedShort()
             149 -> placeholderTemplate = buffer.readUnsignedShort()
             160 -> stacks = ObjStackability.Never
-            200 -> entityOpsLoader.decodeSubOp(options, buffer)
-            201 -> entityOpsLoader.decodeConditionalOp(options, buffer)
-            202 -> entityOpsLoader.decodeConditionalSubOp(options, buffer)
+            200 -> options = options.toBuilder().also { entityOpsLoader.decodeSubOp(it, buffer) }.build()
+            201 -> options = options.toBuilder().also { entityOpsLoader.decodeConditionalOp(it, buffer) }.build()
+            202 -> options = options.toBuilder().also { entityOpsLoader.decodeConditionalSubOp(it, buffer) }.build()
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Items [${opcode}]" }
         }

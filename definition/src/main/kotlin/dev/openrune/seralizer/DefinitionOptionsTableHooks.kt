@@ -26,7 +26,7 @@ object ItemTypeOptionsTableHook : TypedRsTableRowPostDecode<ItemType>(ItemType::
                 appearanceOverride2 = slotType.override2
             }
         }
-        EntityOpsOptionsFromToml.apply(def.options, def.id, def.name, "option", content)
+        def.options = EntityOpsOptionsFromToml.applied(def.options, def.id, def.name, "option", content)
         StringListOptionsFromToml.apply(def.interfaceOptions, def.id, def.name, "ioption", content)
     }
 }
@@ -39,7 +39,7 @@ object ObjectTypeOptionsTableHook : TypedRsTableRowPostDecode<ObjectType>(Object
     }
 
     fun applyFromToml(content: Map<String, TomlValue>, def: ObjectType) {
-        EntityOpsOptionsFromToml.apply(def.actions, def.id, def.name, "option", content)
+        def.actions = EntityOpsOptionsFromToml.applied(def.actions, def.id, def.name, "option", content)
     }
 }
 
@@ -51,7 +51,7 @@ object NpcTypeOptionsTableHook : TypedRsTableRowPostDecode<NpcType>(NpcType::cla
     }
 
     fun applyFromToml(content: Map<String, TomlValue>, def: NpcType) {
-        EntityOpsOptionsFromToml.apply(def.actions, def.id, def.name, "option", content)
+        def.actions = EntityOpsOptionsFromToml.applied(def.actions, def.id, def.name, "option", content)
     }
 }
 

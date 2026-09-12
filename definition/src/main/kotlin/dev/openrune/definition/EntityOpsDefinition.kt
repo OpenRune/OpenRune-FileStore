@@ -1,142 +1,73 @@
 package dev.openrune.definition
 
-class EntityOpsDefinition {
+/**
+ * An immutable set of entity ops. Decoding and TOML parsing assemble one through
+ * [EntityOpsBuilder]; once built the contents cannot change, which is what makes it safe for
+ * equal op sets to share a single instance across thousands of definitions ([EntityOpsBuilder.build]
+ * routes through a content pool).
+ */
+class EntityOpsDefinition(
+    val ops: List<Op?> = emptyList(),
+    val subOps: List<List<SubOp>> = emptyList(),
+    val conditionalOps: List<List<ConditionalOp>> = emptyList(),
+    val conditionalSubOps: List<Map<Int, List<ConditionalSubOp>>> = emptyList(),
+) {
 
-    // Allocated on first touch: every item, npc and object owns one of these and most only ever
-    // use `ops`, if anything at all.
-    private var _ops: MutableList<Op?>? = null
-    private var _subOps: MutableList<MutableList<SubOp>>? = null
-    private var _conditionalOps: MutableList<MutableList<ConditionalOp>>? = null
-    private var _conditionalSubOps: MutableList<MutableMap<Int, MutableList<ConditionalSubOp>>>? = null
-
-    val ops: MutableList<Op?>
-        get() = _ops ?: ArrayList<Op?>(DEFAULT_OP_SLOTS).also { _ops = it }
-
-    val subOps: MutableList<MutableList<SubOp>>
-        get() = _subOps ?: ArrayList<MutableList<SubOp>>(DEFAULT_OP_SLOTS).also { _subOps = it }
-
-    val conditionalOps: MutableList<MutableList<ConditionalOp>>
-        get() = _conditionalOps ?: ArrayList<MutableList<ConditionalOp>>(DEFAULT_OP_SLOTS).also { _conditionalOps = it }
-
-    val conditionalSubOps: MutableList<MutableMap<Int, MutableList<ConditionalSubOp>>>
-        get() = _conditionalSubOps
-            ?: ArrayList<MutableMap<Int, MutableList<ConditionalSubOp>>>(DEFAULT_OP_SLOTS).also { _conditionalSubOps = it }
-
-    // Read-only views. Touching `ops`/`subOps`/... materialises the backing list, so read-only
-    // callers should use these instead.
-    val opsOrEmpty: List<Op?> get() = _ops ?: emptyList()
-    val subOpsOrEmpty: List<List<SubOp>> get() = _subOps ?: emptyList()
-    val conditionalOpsOrEmpty: List<List<ConditionalOp>> get() = _conditionalOps ?: emptyList()
-    val conditionalSubOpsOrEmpty: List<Map<Int, List<ConditionalSubOp>>> get() = _conditionalSubOps ?: emptyList()
+    // Kept for source compatibility with the old lazily-allocated API.
+    val opsOrEmpty: List<Op?> get() = ops
+    val subOpsOrEmpty: List<List<SubOp>> get() = subOps
+    val conditionalOpsOrEmpty: List<List<ConditionalOp>> get() = conditionalOps
+    val conditionalSubOpsOrEmpty: List<Map<Int, List<ConditionalSubOp>>> get() = conditionalSubOps
 
     /** True when nothing at all has been recorded on this instance. */
     fun isEmpty(): Boolean =
-        _ops.isNullOrEmpty() && _subOps.isNullOrEmpty() &&
-            _conditionalOps.isNullOrEmpty() && _conditionalSubOps.isNullOrEmpty()
+        ops.isEmpty() && subOps.isEmpty() && conditionalOps.isEmpty() && conditionalSubOps.isEmpty()
 
-    fun op(index: Int, text: String) = apply {
-        ops.ensureSize(index) { null }
-        ops[index] = Op.of(text)
-    }
+    fun getOpOrNull(index: Int): String? = ops.getOrNull(index)?.text
 
-    fun setOp(index: Int, text: String) {
-        ops.ensureSize(index) { null }
-        ops[index] = Op.of(text)
-    }
-
-    fun getOpOrNull(index: Int): String? = _ops?.getOrNull(index)?.text
-
-    fun subOp(index: Int, subID: Int, text: String) = apply {
-        subOps.ensureSize(index) { mutableListOf() }
-        subOps[index] += SubOp(text, subID)
-    }
-
-    fun setSubOp(index: Int, subID: Int, text: String) {
-        subOps.ensureSize(index) { mutableListOf() }
-        val list = subOps[index]
-        list.removeIf { it.subID == subID }
-        list += SubOp(text, subID)
-    }
-
-    fun getSubOpsOrEmpty(index: Int): List<SubOp> = _subOps?.getOrNull(index).orEmpty()
+    fun getSubOpsOrEmpty(index: Int): List<SubOp> = subOps.getOrNull(index).orEmpty()
 
     fun getSubOpOrNull(index: Int, subID: Int): SubOp? =
-        _subOps?.getOrNull(index)?.firstOrNull { it.subID == subID }
+        subOps.getOrNull(index)?.firstOrNull { it.subID == subID }
 
-    fun conditionalOp(
-        index: Int,
-        text: String,
-        varpID: Int,
-        varbitID: Int,
-        min: Int,
-        max: Int
-    ) = apply {
-        conditionalOps.ensureSize(index) { mutableListOf() }
-        conditionalOps[index] += ConditionalOp(text, varpID, varbitID, min, max)
-    }
-
-    fun setConditionalOp(
-        index: Int,
-        text: String,
-        varpID: Int,
-        varbitID: Int,
-        min: Int,
-        max: Int
-    ) {
-        conditionalOps.ensureSize(index) { mutableListOf() }
-        conditionalOps[index] += ConditionalOp(text, varpID, varbitID, min, max)
-    }
-
-    fun getConditionalOpsOrEmpty(index: Int): List<ConditionalOp> = _conditionalOps?.getOrNull(index).orEmpty()
-
-    fun conditionalSubOp(
-        index: Int,
-        subID: Int,
-        text: String,
-        varpID: Int,
-        varbitID: Int,
-        min: Int,
-        max: Int
-    ) = apply {
-        conditionalSubOps.ensureSize(index) { mutableMapOf() }
-
-        val map = conditionalSubOps[index]
-        val list = map.getOrPut(subID) { mutableListOf() }
-
-        list += ConditionalSubOp(text, subID, varpID, varbitID, min, max)
-    }
-
-    fun setConditionalSubOp(
-        index: Int,
-        subID: Int,
-        text: String,
-        varpID: Int,
-        varbitID: Int,
-        min: Int,
-        max: Int
-    ) {
-        conditionalSubOps.ensureSize(index) { mutableMapOf() }
-        val map = conditionalSubOps[index]
-        val list = map.getOrPut(subID) { mutableListOf() }
-        list += ConditionalSubOp(text, subID, varpID, varbitID, min, max)
-    }
+    fun getConditionalOpsOrEmpty(index: Int): List<ConditionalOp> = conditionalOps.getOrNull(index).orEmpty()
 
     fun getConditionalSubOpsOrEmpty(index: Int): Map<Int, List<ConditionalSubOp>> =
-        _conditionalSubOps?.getOrNull(index).orEmpty()
+        conditionalSubOps.getOrNull(index).orEmpty()
 
     fun getConditionalSubOpsBySubIdOrEmpty(index: Int, subID: Int): List<ConditionalSubOp> =
-        _conditionalSubOps?.getOrNull(index)?.get(subID).orEmpty()
+        conditionalSubOps.getOrNull(index)?.get(subID).orEmpty()
+
+    /** A mutable builder pre-filled with this instance's ops. */
+    fun toBuilder(): EntityOpsBuilder = EntityOpsBuilder.from(this)
 
     /**
-     * Structural equality for merge/patch logic. Reference equality is not enough: decoded TOML
-     * often allocates a fresh empty [EntityOpsDefinition] that must compare equal to another empty instance.
+     * Structural equality for merge/patch logic. Unlike [equals], trailing empty slots are
+     * ignored, so `[Open, null]` compares equal to `[Open]`.
      */
     fun contentEquals(other: EntityOpsDefinition): Boolean {
-        if (!opsContentEquals(_ops.orEmpty(), other._ops.orEmpty())) return false
-        if (!subOpsContentEquals(_subOps.orEmpty(), other._subOps.orEmpty())) return false
-        if (!conditionalOpsContentEquals(_conditionalOps.orEmpty(), other._conditionalOps.orEmpty())) return false
-        if (!conditionalSubOpsContentEquals(_conditionalSubOps.orEmpty(), other._conditionalSubOps.orEmpty())) return false
+        if (!opsContentEquals(ops, other.ops)) return false
+        if (!subOpsContentEquals(subOps, other.subOps)) return false
+        if (!conditionalOpsContentEquals(conditionalOps, other.conditionalOps)) return false
+        if (!conditionalSubOpsContentEquals(conditionalSubOps, other.conditionalSubOps)) return false
         return true
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is EntityOpsDefinition) return false
+        return ops == other.ops &&
+            subOps == other.subOps &&
+            conditionalOps == other.conditionalOps &&
+            conditionalSubOps == other.conditionalSubOps
+    }
+
+    override fun hashCode(): Int {
+        var result = ops.hashCode()
+        result = 31 * result + subOps.hashCode()
+        result = 31 * result + conditionalOps.hashCode()
+        result = 31 * result + conditionalSubOps.hashCode()
+        return result
     }
 
     private fun opsContentEquals(a: List<Op?>, b: List<Op?>): Boolean {
@@ -147,10 +78,7 @@ class EntityOpsDefinition {
         return true
     }
 
-    private fun subOpsContentEquals(
-        a: List<MutableList<SubOp>>,
-        b: List<MutableList<SubOp>>
-    ): Boolean {
+    private fun subOpsContentEquals(a: List<List<SubOp>>, b: List<List<SubOp>>): Boolean {
         val n = maxOf(a.size, b.size)
         for (i in 0 until n) {
             val la = a.getOrNull(i)?.sortedBy { it.subID }.orEmpty()
@@ -160,22 +88,17 @@ class EntityOpsDefinition {
         return true
     }
 
-    private fun conditionalOpsContentEquals(
-        a: List<MutableList<ConditionalOp>>,
-        b: List<MutableList<ConditionalOp>>
-    ): Boolean {
+    private fun conditionalOpsContentEquals(a: List<List<ConditionalOp>>, b: List<List<ConditionalOp>>): Boolean {
         val n = maxOf(a.size, b.size)
         for (i in 0 until n) {
-            val la = a.getOrNull(i).orEmpty()
-            val lb = b.getOrNull(i).orEmpty()
-            if (la != lb) return false
+            if (a.getOrNull(i).orEmpty() != b.getOrNull(i).orEmpty()) return false
         }
         return true
     }
 
     private fun conditionalSubOpsContentEquals(
-        a: List<MutableMap<Int, MutableList<ConditionalSubOp>>>,
-        b: List<MutableMap<Int, MutableList<ConditionalSubOp>>>
+        a: List<Map<Int, List<ConditionalSubOp>>>,
+        b: List<Map<Int, List<ConditionalSubOp>>>
     ): Boolean {
         val n = maxOf(a.size, b.size)
         for (i in 0 until n) {
@@ -183,12 +106,16 @@ class EntityOpsDefinition {
             val mb = b.getOrNull(i).orEmpty()
             if (ma.keys != mb.keys) return false
             for (k in ma.keys) {
-                val la = ma[k].orEmpty()
-                val lb = mb[k].orEmpty()
-                if (la != lb) return false
+                if (ma[k].orEmpty() != mb[k].orEmpty()) return false
             }
         }
         return true
+    }
+
+    companion object {
+        /** The shared instance for definitions that record no ops at all. */
+        @JvmField
+        val EMPTY = EntityOpsDefinition()
     }
 
     data class Op(val text: String) {
@@ -232,12 +159,12 @@ class EntityOpsDefinition {
     )
 
     override fun toString(): String {
-        val opsPart = _ops.orEmpty().mapIndexedNotNull { index, op -> op?.let { "$index=${it.text}" } }
-        val subOpsPart = _subOps.orEmpty().mapIndexedNotNull { index, entries ->
+        val opsPart = ops.mapIndexedNotNull { index, op -> op?.let { "$index=${it.text}" } }
+        val subOpsPart = subOps.mapIndexedNotNull { index, entries ->
             if (entries.isEmpty()) null
             else "$index=${entries.joinToString(prefix = "[", postfix = "]") { "${it.subID}:${it.text}" }}"
         }
-        val conditionalOpsPart = _conditionalOps.orEmpty().mapIndexedNotNull { index, entries ->
+        val conditionalOpsPart = conditionalOps.mapIndexedNotNull { index, entries ->
             if (entries.isEmpty()) null
             else "$index=${
                 entries.joinToString(prefix = "[", postfix = "]") {
@@ -245,7 +172,7 @@ class EntityOpsDefinition {
                 }
             }"
         }
-        val conditionalSubOpsPart = _conditionalSubOps.orEmpty().mapIndexedNotNull { index, map ->
+        val conditionalSubOpsPart = conditionalSubOps.mapIndexedNotNull { index, map ->
             if (map.isEmpty()) null
             else "$index=${
                 map.toSortedMap().entries.joinToString(prefix = "{", postfix = "}") { (subId, entries) ->
@@ -269,9 +196,129 @@ class EntityOpsDefinition {
     }
 }
 
+/**
+ * The mutable side of [EntityOpsDefinition], with the same op/subOp/conditional mutators the old
+ * mutable definition had. [build] hands equal contents back as one shared instance.
+ */
+class EntityOpsBuilder {
+
+    private var _ops: MutableList<EntityOpsDefinition.Op?>? = null
+    private var _subOps: MutableList<MutableList<EntityOpsDefinition.SubOp>>? = null
+    private var _conditionalOps: MutableList<MutableList<EntityOpsDefinition.ConditionalOp>>? = null
+    private var _conditionalSubOps: MutableList<MutableMap<Int, MutableList<EntityOpsDefinition.ConditionalSubOp>>>? = null
+
+    val ops: MutableList<EntityOpsDefinition.Op?>
+        get() = _ops ?: ArrayList<EntityOpsDefinition.Op?>(DEFAULT_OP_SLOTS).also { _ops = it }
+
+    val subOps: MutableList<MutableList<EntityOpsDefinition.SubOp>>
+        get() = _subOps ?: ArrayList<MutableList<EntityOpsDefinition.SubOp>>(DEFAULT_OP_SLOTS).also { _subOps = it }
+
+    val conditionalOps: MutableList<MutableList<EntityOpsDefinition.ConditionalOp>>
+        get() = _conditionalOps
+            ?: ArrayList<MutableList<EntityOpsDefinition.ConditionalOp>>(DEFAULT_OP_SLOTS).also { _conditionalOps = it }
+
+    val conditionalSubOps: MutableList<MutableMap<Int, MutableList<EntityOpsDefinition.ConditionalSubOp>>>
+        get() = _conditionalSubOps
+            ?: ArrayList<MutableMap<Int, MutableList<EntityOpsDefinition.ConditionalSubOp>>>(DEFAULT_OP_SLOTS)
+                .also { _conditionalSubOps = it }
+
+    fun isEmpty(): Boolean =
+        _ops.isNullOrEmpty() && _subOps.isNullOrEmpty() &&
+            _conditionalOps.isNullOrEmpty() && _conditionalSubOps.isNullOrEmpty()
+
+    fun op(index: Int, text: String) = apply {
+        ops.ensureSize(index) { null }
+        ops[index] = EntityOpsDefinition.Op.of(text)
+    }
+
+    fun setOp(index: Int, text: String) {
+        op(index, text)
+    }
+
+    fun subOp(index: Int, subID: Int, text: String) = apply {
+        subOps.ensureSize(index) { mutableListOf() }
+        subOps[index] += EntityOpsDefinition.SubOp(text, subID)
+    }
+
+    fun setSubOp(index: Int, subID: Int, text: String) {
+        subOps.ensureSize(index) { mutableListOf() }
+        val list = subOps[index]
+        list.removeIf { it.subID == subID }
+        list += EntityOpsDefinition.SubOp(text, subID)
+    }
+
+    fun conditionalOp(index: Int, text: String, varpID: Int, varbitID: Int, min: Int, max: Int) = apply {
+        conditionalOps.ensureSize(index) { mutableListOf() }
+        conditionalOps[index] += EntityOpsDefinition.ConditionalOp(text, varpID, varbitID, min, max)
+    }
+
+    fun setConditionalOp(index: Int, text: String, varpID: Int, varbitID: Int, min: Int, max: Int) {
+        conditionalOp(index, text, varpID, varbitID, min, max)
+    }
+
+    fun conditionalSubOp(index: Int, subID: Int, text: String, varpID: Int, varbitID: Int, min: Int, max: Int) = apply {
+        conditionalSubOps.ensureSize(index) { mutableMapOf() }
+        val map = conditionalSubOps[index]
+        val list = map.getOrPut(subID) { mutableListOf() }
+        list += EntityOpsDefinition.ConditionalSubOp(text, subID, varpID, varbitID, min, max)
+    }
+
+    fun setConditionalSubOp(index: Int, subID: Int, text: String, varpID: Int, varbitID: Int, min: Int, max: Int) {
+        conditionalSubOp(index, subID, text, varpID, varbitID, min, max)
+    }
+
+    /** Copies every op recorded on [definition] into this builder. */
+    fun include(definition: EntityOpsDefinition) = apply {
+        definition.ops.forEachIndexed { index, entry ->
+            if (entry != null) op(index, entry.text)
+        }
+        definition.subOps.forEachIndexed { index, subOps ->
+            subOps.forEach { subOp(index, it.subID, it.text) }
+        }
+        definition.conditionalOps.forEachIndexed { index, conditionals ->
+            conditionals.forEach { conditionalOp(index, it.text, it.varpID, it.varbitID, it.minValue, it.maxValue) }
+        }
+        definition.conditionalSubOps.forEachIndexed { index, bySub ->
+            bySub.values.forEach { conditionals ->
+                conditionals.forEach {
+                    conditionalSubOp(index, it.subID, it.text, it.varpID, it.varbitID, it.minValue, it.maxValue)
+                }
+            }
+        }
+    }
+
+    fun build(): EntityOpsDefinition {
+        if (isEmpty()) return EntityOpsDefinition.EMPTY
+
+        val built = EntityOpsDefinition(
+            ops = _ops?.toList() ?: emptyList(),
+            subOps = _subOps?.map { it.toList() } ?: emptyList(),
+            conditionalOps = _conditionalOps?.map { it.toList() } ?: emptyList(),
+            conditionalSubOps = _conditionalSubOps
+                ?.map { bySub -> bySub.entries.associate { (subId, list) -> subId to list.toList() } }
+                ?: emptyList(),
+        )
+
+        // Thousands of definitions share the same op set ("Open"/"Close" doors, the item default
+        // "Take"), so equal contents collapse to one instance. Safe because built instances are
+        // immutable; direct-mapped and race tolerant like the other decode pools.
+        val slot = built.hashCode() and (pool.size - 1)
+        val cached = pool[slot]
+        if (cached != null && cached == built) return cached
+        pool[slot] = built
+        return built
+    }
+
+    companion object {
+        private val pool = arrayOfNulls<EntityOpsDefinition>(2048)
+
+        fun from(definition: EntityOpsDefinition): EntityOpsBuilder =
+            EntityOpsBuilder().include(definition)
+    }
+}
+
 private const val DEFAULT_OP_SLOTS = 5
 
 private inline fun <T> MutableList<T>.ensureSize(index: Int, default: () -> T) {
     while (size <= index) add(default())
 }
-

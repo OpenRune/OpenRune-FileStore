@@ -1,4 +1,4 @@
-﻿package dev.openrune.definition.codec
+package dev.openrune.definition.codec
 
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.definition.DefinitionCodec
@@ -39,7 +39,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             }
 
             18 -> category = buffer.readUnsignedShort()
-            in 30..34 -> entityOpsLoader.decodeBaseOp(actions, buffer, opcode - 30)
+            in 30..34 -> actions = actions.toBuilder().also { entityOpsLoader.decodeBaseOp(it, buffer, opcode - 30) }.build()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
             60 -> {
@@ -161,7 +161,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                     soundIds = readIntList(buffer.readUnsignedByte().toInt()) { buffer.readUnsignedShort() }
                 )
             }
-            252 -> entityOpsLoader.decodeConditionalOp(actions, buffer)
+            252 -> actions = actions.toBuilder().also { entityOpsLoader.decodeConditionalOp(it, buffer) }.build()
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Npcs [${opcode}]" }
         }
