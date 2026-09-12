@@ -2,11 +2,6 @@ package dev.openrune.definition.type.builders
 
 import dev.openrune.definition.type.*
 
-/**
- * The mutable side of [HealthBarType]. Codecs decode into one of these and the packing tools edit
- * one — either fresh or via [HealthBarType.toBuilder] — then [build] produces the immutable
- * definition everything else reads.
- */
 class HealthBarTypeBuilder(var id: Int = -1) {
 
     var int1: Int = 255

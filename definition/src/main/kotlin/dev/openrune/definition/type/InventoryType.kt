@@ -12,11 +12,9 @@ import dev.openrune.seralizer.ParamSerializer
 data class InventoryType(
     override var id: Int = -1,
     val size: Int = 0,
-    // Stays MutableMap: ParamSerializer's declared type argument must match the parameter type.
     @param:TomlField(serializer = ParamSerializer::class)
     override val params: MutableMap<Int, Any>? = null,
 ) : Parameterized, Definition {
 
-    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): InventoryTypeBuilder = InventoryTypeBuilder.from(this)
 }

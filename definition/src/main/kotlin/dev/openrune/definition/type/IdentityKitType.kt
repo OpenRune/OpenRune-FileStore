@@ -19,6 +19,5 @@ data class IdentityKitType(
     val nonSelectable : Boolean = false
 ) : Definition, Recolourable {
 
-    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): IdentityKitTypeBuilder = IdentityKitTypeBuilder.from(this)
 }

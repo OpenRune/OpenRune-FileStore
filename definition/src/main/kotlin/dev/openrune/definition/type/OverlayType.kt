@@ -5,11 +5,6 @@ import dev.openrune.definition.type.builders.OverlayTypeBuilder
 import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
 
-/**
- * A loaded overlay definition. Immutable apart from [id]: decoding builds one through
- * [OverlayTypeBuilder], which also derives the HSL fields from the rgb values — what used to be a
- * post-decode `calculateHsl` mutation.
- */
 @RsTableHeaders("overlay")
 data class OverlayType(
     override var id: Int = -1,
@@ -26,6 +21,5 @@ data class OverlayType(
     val secondaryLightness: Int = 0,
 ) : Definition {
 
-    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): OverlayTypeBuilder = OverlayTypeBuilder.from(this)
 }

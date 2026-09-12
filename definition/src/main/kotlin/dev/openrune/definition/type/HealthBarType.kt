@@ -19,6 +19,5 @@ data class HealthBarType(
 
 ) : Definition {
 
-    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): HealthBarTypeBuilder = HealthBarTypeBuilder.from(this)
 }

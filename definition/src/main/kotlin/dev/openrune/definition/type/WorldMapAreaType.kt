@@ -194,11 +194,6 @@ data class SingleZone(
     }
 }
 
-/**
- * A loaded world map area definition. Immutable apart from [id] (which the load machinery
- * assigns): decoding builds one through [WorldMapAreaTypeBuilder], and everything after that
- * only reads.
- */
 data class WorldMapAreaType(
     override var id: Int = -1,
     val backgroundColour : Int = -1,
@@ -215,6 +210,5 @@ data class WorldMapAreaType(
     val sections : List<WorldMapSectionType> = emptyList()
 ) : Definition {
 
-    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): WorldMapAreaTypeBuilder = WorldMapAreaTypeBuilder.from(this)
 }

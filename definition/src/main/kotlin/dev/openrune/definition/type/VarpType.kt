@@ -12,6 +12,5 @@ data class VarpType(
 
 ) : Definition {
 
-    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): VarpTypeBuilder = VarpTypeBuilder.from(this)
 }

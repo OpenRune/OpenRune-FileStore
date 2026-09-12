@@ -3,11 +3,6 @@ package dev.openrune.definition
 import dev.openrune.definition.util.IntBackedList
 import io.netty.buffer.ByteBuf
 
-/**
- * The read side of recolouring: what an immutable definition exposes. The mutable counterpart for
- * decoding and builders is [MutableRecolourable]; the two are deliberately unrelated because a
- * `var MutableList` cannot override a `val List`.
- */
 interface Recolourable {
     val originalColours: List<Int>?
     val modifiedColours: List<Int>?
@@ -19,7 +14,6 @@ interface Recolourable {
     }
 }
 
-/** The mutable side of recolouring, implemented by builders and the still-mutable types. */
 interface MutableRecolourable {
     var originalColours: MutableList<Int>?
     var modifiedColours: MutableList<Int>?
@@ -38,7 +32,6 @@ interface MutableRecolourable {
         modifiedTextureColours = modified
     }
 
-    /** Palette pairs are stored array-backed, so the lists hold no boxed elements. */
     private fun readPairs(buffer: ByteBuf): Pair<MutableList<Int>, MutableList<Int>> {
         val length = buffer.readUnsignedByte().toInt()
         val original = IntArray(length)
@@ -56,7 +49,6 @@ interface MutableRecolourable {
     }
 }
 
-/** Standalone form usable with either side of the interface pair. */
 fun writeColoursTextures(
     writer: ByteBuf,
     originalColours: List<Int>?,

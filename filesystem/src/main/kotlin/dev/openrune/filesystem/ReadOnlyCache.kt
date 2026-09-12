@@ -23,7 +23,6 @@ abstract class ReadOnlyCache(
     val fileCounts: Array<IntArray?> = arrayOfNulls(indexCount)
     val files: Array<Array<IntArray?>?> = arrayOfNulls(indexCount)
 
-    /** Per archive shape of its file id table, so [fileIndex] can avoid a linear scan. */
     private val fileIdKinds: Array<ByteArray?> = arrayOfNulls(indexCount)
     private val hashes: MutableMap<Int, Int> = mapFactory()
 
@@ -190,13 +189,6 @@ abstract class ReadOnlyCache(
         return highest
     }
 
-    /**
-     * Position of [file] within the archive's file id table, or -1 when it holds no such file.
-     *
-     * File ids are cumulative deltas, so in practice a table is either the identity mapping or at
-     * least ascending, and both answer without scanning. The linear fallback keeps a table built
-     * from a negative delta correct.
-     */
     fun fileIndex(index: Int, archive: Int, file: Int): Int {
         val ids = files.getOrNull(index)?.getOrNull(archive) ?: return -1
         return when (fileIdKinds.getOrNull(index)?.getOrNull(archive)?.toInt() ?: KIND_UNSORTED.toInt()) {
@@ -318,11 +310,6 @@ abstract class ReadOnlyCache(
                 ((this[offset + 1].toInt() and 0xFF) shl 8) or
                 (this[offset + 2].toInt() and 0xFF)
 
-        /**
-         * Reads an index file whole so its six byte entries can be looked up without a seek and a
-         * read per archive. An index file is six bytes per archive, so even the largest is under a
-         * megabyte.
-         */
         internal fun readIndexTable(raf: RandomAccessFile): ByteArray {
             val table = ByteArray(raf.length().toInt())
             raf.seek(0)
@@ -330,11 +317,6 @@ abstract class ReadOnlyCache(
             return table
         }
 
-        /**
-         * Fills the first [wanted] bytes of [target] from [position]. A positional channel read is
-         * one call where a seek plus a read is two, and unlike `RandomAccessFile.read` it reports
-         * how much it actually got, so a short read is caught rather than silently left as zeroes.
-         */
         private fun readAt(channel: FileChannel, target: ByteArray, wanted: Int, position: Long): Boolean {
             val buffer = ByteBuffer.wrap(target, 0, wanted)
             var offset = position

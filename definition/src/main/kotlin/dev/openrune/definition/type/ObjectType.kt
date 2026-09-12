@@ -13,12 +13,6 @@ import dev.openrune.seralizer.ObjectTypeOptionsTableHook
 import dev.openrune.seralizer.ParamSerializer
 import kotlin.math.abs
 
-/**
- * A loaded object definition. Immutable apart from [id] (which the load machinery assigns):
- * decoding and packing build one through [ObjectTypeBuilder], and everything after that only
- * reads. [actions] is a mutable holder by necessity — the TOML options hook fills it in after
- * construction — but by convention it is not modified once a definition has been built.
- */
 @RsTableHeaders(
     "object",
     rowPostDecode = ObjectTypeOptionsTableHook::class,
@@ -42,8 +36,6 @@ data class ObjectType(
     val animationId: Int = -1,
     val ambient: Int = 0,
     val contrast: Int = 0,
-    // The one non-val: the TOML options hook runs after construction and replaces this with the
-    // parsed op set. The instance itself is immutable, so sharing stays safe.
     var actions: EntityOpsDefinition = EntityOpsDefinition.EMPTY,
     val solid: Int = 2,
     val mapSceneID: Int = -1,
@@ -81,12 +73,10 @@ data class ObjectType(
     override val multiVarp: Int = -1,
     override val multiDefault: Int = -1,
     override val transforms: List<Int>? = null,
-    // Stays MutableMap: ParamSerializer's declared type argument must match the parameter type.
     @param:TomlField(serializer = ParamSerializer::class)
     override val params: MutableMap<Int, Any>? = null,
 ) : Definition, Transforms, Recolourable, Parameterized {
 
-    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): ObjectTypeBuilder = ObjectTypeBuilder.from(this)
 
     private fun actionAt(index: Int): String? = actions.getOpOrNull(index)
@@ -151,7 +141,6 @@ data class ObjectType(
         return result
     }
 
-    /** The client's post-decode defaults, applied as a copy since the type is immutable. */
     fun postDecode(): ObjectType {
         var interactive = interactive
         var supportsItems = supportsItems

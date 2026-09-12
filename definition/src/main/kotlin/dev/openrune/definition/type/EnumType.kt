@@ -10,11 +10,6 @@ import dev.openrune.seralizer.CacheVarLiteralSeralizier
 import dev.openrune.seralizer.EnumTypeTableHook
 import dev.openrune.seralizer.ParamSerializer
 
-/**
- * A loaded enum definition. Immutable apart from [id]: decoding and packing build one through
- * [EnumTypeBuilder]. [values] stays declared MutableMap because ParamSerializer's type argument
- * must match, but by convention it is never modified after construction.
- */
 @RsTableHeaders(
     "enum",
     rowPostDecode = EnumTypeTableHook::class,
@@ -31,7 +26,6 @@ data class EnumType(
     val values: MutableMap<Int, Any> = HashMap()
 ) : Definition {
 
-    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): EnumTypeBuilder = EnumTypeBuilder.from(this)
 
     fun getSize() = values.size

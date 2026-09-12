@@ -8,11 +8,6 @@ import dev.openrune.definition.MutableRecolourable
 import dev.openrune.definition.MutableTransforms
 import dev.openrune.definition.util.IntListPool
 
-/**
- * The mutable side of [ObjectType]. Codecs decode into one of these and the packing tools edit
- * one — either fresh or via [ObjectType.toBuilder] — then [build] produces the immutable
- * definition everything else reads.
- */
 class ObjectTypeBuilder(var id: Int = -1) : MutableTransforms, MutableRecolourable, MutableParameterized {
 
     var name: String = "null"

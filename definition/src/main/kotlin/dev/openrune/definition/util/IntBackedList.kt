@@ -1,15 +1,5 @@
-﻿package dev.openrune.definition.util
+package dev.openrune.definition.util
 
-/**
- * A `MutableList<Int>` stored as a plain `IntArray`: four bytes per element instead of a boxed
- * `Integer` and a reference. The definition types keep their declared `MutableList<Int>` fields,
- * so nothing downstream changes - decode just hands back this implementation. Equality and hash
- * follow the `List` contract via [AbstractMutableList], so it compares equal to any other list
- * with the same values, in both directions.
- *
- * Reads and writes through the generic `List` surface still box transiently; only the retained
- * storage is primitive, which is the part that matters for a cache held in memory.
- */
 class IntBackedList private constructor(
     private var elements: IntArray,
     private var count: Int
@@ -56,10 +46,6 @@ class IntBackedList private constructor(
     }
 }
 
-/**
- * Reads [length] values into an array-backed `Int` list, so decoded id, colour and frame lists
- * hold no boxed elements at all.
- */
 inline fun readIntList(length: Int, read: (Int) -> Int): MutableList<Int> {
     val values = IntArray(length)
     for (i in 0 until length) {

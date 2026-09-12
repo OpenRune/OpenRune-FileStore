@@ -12,7 +12,6 @@ data class AmbienceType(
     val fade: SoundFade? = null
 ) : Definition {
 
-    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): AmbienceTypeBuilder = AmbienceTypeBuilder.from(this)
 
     data class SoundFade(

@@ -2,11 +2,6 @@ package dev.openrune.definition.type.builders
 
 import dev.openrune.definition.type.*
 
-/**
- * The mutable side of [AmbienceType]. Codecs decode into one of these and the packing tools edit
- * one — either fresh or via [AmbienceType.toBuilder] — then [build] produces the immutable
- * definition everything else reads.
- */
 class AmbienceTypeBuilder(var id: Int = -1) {
 
     var sequentialSounds: IntArray? = null

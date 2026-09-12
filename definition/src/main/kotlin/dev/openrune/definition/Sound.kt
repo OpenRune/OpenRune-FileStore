@@ -14,8 +14,6 @@ data class SoundData(
             val payload: Int = (location and 15) or (id shl 8) or ((loops and 7) shl 4)
             writer.writeMedium(payload)
         } else {
-            // Mirrors readSounds: a two byte id and the loop count were being dropped, so an
-            // encoded sound could not be decoded again.
             writer.writeShort(id)
             if (revisionIsOrAfter(revision, 226)) {
                 writer.writeByte(unknown)

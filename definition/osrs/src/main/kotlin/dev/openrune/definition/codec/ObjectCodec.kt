@@ -232,8 +232,6 @@ class ObjectCodec(private val revision: Int) : BuilderDefinitionCodec<ObjectType
         writeByte(29)
         writeByte(definition.ambient)
 
-        // The decoder stores the raw byte (consumers apply their own scale), so the encoder must
-        // not divide it: contrast values under 25 were collapsing to zero on a round trip.
         writeByte(39)
         writeByte(definition.contrast)
 
@@ -365,7 +363,6 @@ class ObjectCodec(private val revision: Int) : BuilderDefinitionCodec<ObjectType
         )
 
         if (values.indices.any { values[it] != defaults[it] }) {
-            // The opcode byte itself was missing, so the fade payload was read back as opcodes.
             writeByte(93)
             writeByte(definition.soundFadeInCurve)
             writeShort(definition.soundFadeInDuration)

@@ -68,7 +68,6 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
     class NPCDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<NpcType>(NPCCodec(cacheRevision), NPC)
     class ObjectDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<ObjectType>(ObjectCodec(cacheRevision), OBJECT)
 
-    // The HSL fields are derived inside OverlayTypeBuilder.build(), so no transform is needed.
     class OverlayDecoder : ConfigDefinitionDecoder<OverlayType>(OverlayCodec(), OVERLAY)
     class ParamDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<ParamType>(ParamCodec(cacheRevision), PARAMS)
     class SequenceDecoder(cacheRevision: Int) : ConfigDefinitionDecoder<SequenceType>(SequenceCodec(cacheRevision), SEQUENCE)

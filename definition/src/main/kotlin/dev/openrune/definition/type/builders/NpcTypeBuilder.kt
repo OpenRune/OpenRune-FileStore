@@ -8,11 +8,6 @@ import dev.openrune.definition.MutableRecolourable
 import dev.openrune.definition.MutableTransforms
 import dev.openrune.definition.util.IntListPool
 
-/**
- * The mutable side of [NpcType]. Codecs decode into one of these and the packing tools edit
- * one — either fresh or via [NpcType.toBuilder] — then [build] produces the immutable
- * definition everything else reads.
- */
 class NpcTypeBuilder(var id: Int = -1) : MutableTransforms, MutableRecolourable, MutableParameterized {
 
     var name: String = "null"
@@ -27,8 +22,6 @@ class NpcTypeBuilder(var id: Int = -1) : MutableTransforms, MutableRecolourable,
     var rotateBackAnim: Int = -1
     var walkLeftAnim: Int = -1
     var walkRightAnim: Int = -1
-    // Kept as a definition rather than a builder: the codecs rebuild it per ops opcode with
-    // `actions = actions.toBuilder().also { ... }.build()`.
     var actions: EntityOpsDefinition = EntityOpsDefinition.EMPTY
     var isMinimapVisible: Boolean = true
     var combatLevel: Int = -1
@@ -172,8 +165,6 @@ class NpcTypeBuilder(var id: Int = -1) : MutableTransforms, MutableRecolourable,
             builder.rotateBackAnim = type.rotateBackAnim
             builder.walkLeftAnim = type.walkLeftAnim
             builder.walkRightAnim = type.walkRightAnim
-            // By reference: EntityOpsDefinition is immutable, and the codecs replace rather than
-            // mutate it.
             builder.actions = type.actions
             builder.originalColours = type.originalColours?.toMutableList()
             builder.modifiedColours = type.modifiedColours?.toMutableList()

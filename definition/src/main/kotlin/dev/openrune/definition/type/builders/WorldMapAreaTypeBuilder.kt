@@ -4,11 +4,6 @@ import dev.openrune.definition.type.*
 
 import dev.openrune.definition.util.Coord
 
-/**
- * The mutable side of [WorldMapAreaType]. Codecs decode into one of these and the packing tools
- * edit one — either fresh or via [WorldMapAreaType.toBuilder] — then [build] produces the
- * immutable definition everything else reads.
- */
 class WorldMapAreaTypeBuilder(var id: Int = -1) {
 
     var backgroundColour: Int = -1

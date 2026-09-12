@@ -4,11 +4,6 @@ import dev.openrune.definition.type.*
 
 import dev.openrune.definition.MutableParameterized
 
-/**
- * The mutable side of [StructType]. Codecs decode into one of these and the packing tools edit
- * one — either fresh or via [StructType.toBuilder] — then [build] produces the immutable
- * definition everything else reads.
- */
 class StructTypeBuilder(var id: Int = -1) : MutableParameterized {
 
     override var params: MutableMap<Int, Any>? = null

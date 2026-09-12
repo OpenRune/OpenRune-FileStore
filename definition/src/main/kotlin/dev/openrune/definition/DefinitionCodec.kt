@@ -55,13 +55,6 @@ interface DefinitionCodec<T : Definition> {
     }
 }
 
-/**
- * A [DefinitionCodec] for an immutable definition type that is assembled through a builder.
- *
- * Implementations provide the builder factory, the per-opcode read against the builder, and the
- * final [build]; the opcode loop, both [loadData] overloads and the read-on-the-type error stub
- * live here so every codec doesn't repeat them.
- */
 interface BuilderDefinitionCodec<T : Definition, B> : DefinitionCodec<T> {
 
     fun builder(id: Int): B

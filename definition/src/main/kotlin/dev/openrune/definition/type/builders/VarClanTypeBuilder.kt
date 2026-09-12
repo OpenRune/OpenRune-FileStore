@@ -4,11 +4,6 @@ import dev.openrune.definition.type.*
 
 import dev.openrune.definition.util.CacheVarLiteral
 
-/**
- * The mutable side of [VarClanType]. Codecs decode into one of these and the packing tools edit
- * one — either fresh or via [VarClanType.toBuilder] — then [build] produces the immutable
- * definition everything else reads.
- */
 class VarClanTypeBuilder(var id: Int = -1) {
 
     var type: CacheVarLiteral? = null

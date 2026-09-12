@@ -63,13 +63,6 @@ public fun ByteBuf.readUnsignedShortOrNull(): Int? {
     return if (value == 65535) null else value
 }
 
-/**
- * Decoded strings repeat heavily — op names, entity names, examine lines — and every decode used
- * to build a fresh instance, so a cache full of definitions held tens of thousands of copies of
- * "Attack" and friends. A small direct-mapped table hands back the previous instance when the
- * same text comes around again. It is bounded, lock free, and safe under races: entries are
- * immutable and equality-checked before reuse, so the worst a race costs is a lost slot.
- */
 private val decodedStringPool = arrayOfNulls<String>(4096)
 
 private const val DEDUP_MAX_LENGTH = 64

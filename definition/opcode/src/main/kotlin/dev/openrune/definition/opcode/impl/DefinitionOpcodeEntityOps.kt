@@ -18,7 +18,6 @@ fun <T> DefinitionOpcodeEntityOps(
     return DefinitionOpcode(
         opcode = opcode,
         decode = { buf, def, _ ->
-            // EntityOpsDefinition is immutable, so decode into a builder and set the result back.
             val ops = property.get(def).toBuilder()
             val decodeExtended = entityOpsLoader.supportsExtendedEntityOps()
             if (!decodeExtended) {

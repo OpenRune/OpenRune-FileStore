@@ -45,8 +45,6 @@ fun <T> getOrDefault(map: Map<Int, T>, id: Int, default: T, typeName: String): T
 
 object CacheManager {
 
-    // Read-only once adopted: the held instance only implements Map, so a loaded table cannot be
-    // mutated even by casting.
     private var npcs: Map<Int, NpcType> = emptyMap()
     private var objects: Map<Int, ObjectType> = emptyMap()
     private var items: Map<Int, ItemType> = emptyMap()
@@ -60,7 +58,6 @@ object CacheManager {
     private var dbrows: Map<Int, DBRowType> = emptyMap()
     private var dbtables: Map<Int, DBTableType> = emptyMap()
 
-    /** Adopts [source] outright on the first init, otherwise merges; the result is read-only. */
     private fun <T : Any> adopt(current: Map<Int, T>, source: MutableMap<Int, T>): Map<Int, T> {
         if (current.isEmpty()) {
             val table = source as? DenseIntMap<T> ?: DenseIntMap<T>(source.size).apply { putAll(source) }
@@ -102,7 +99,6 @@ object CacheManager {
     fun getDbrow(id: Int) = dbrows[id]
     fun getDbtable(id: Int) = dbtables[id]
 
-    /** Same contract as [getOrDefault], but the fallback is only built on a miss. */
     private inline fun <T> lookupOrDefault(map: Map<Int, T>, id: Int, typeName: String, default: () -> T): T {
         if (id == -1) println("$typeName with id $id is missing.")
         return map[id] ?: default()
@@ -133,7 +129,6 @@ object CacheManager {
     fun hitsplatSize() = hitsplats.size
     fun structSize() = structs.size
 
-    // Bulk getters. The held tables are already read-only, so no wrapper per call is needed.
     fun getNpcs(): Map<Int, NpcType> = npcs
     fun getObjects(): Map<Int, ObjectType> = objects
     fun getItems(): Map<Int, ItemType> = items

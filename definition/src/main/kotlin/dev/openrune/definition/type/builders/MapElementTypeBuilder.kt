@@ -4,11 +4,6 @@ import dev.openrune.definition.type.*
 
 import dev.openrune.definition.util.IntListPool
 
-/**
- * The mutable side of [MapElementType]. Codecs decode into one of these and the packing tools
- * edit one — either fresh or via [MapElementType.toBuilder] — then [build] produces the
- * immutable definition everything else reads.
- */
 class MapElementTypeBuilder(var id: Int = -1) {
 
     var sprite1: Int = -1

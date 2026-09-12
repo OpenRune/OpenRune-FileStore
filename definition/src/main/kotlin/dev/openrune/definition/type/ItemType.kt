@@ -13,15 +13,8 @@ import dev.openrune.seralizer.ObjStackabilitySerializer
 import dev.openrune.seralizer.ItemTypeOptionsTableHook
 import dev.openrune.seralizer.ParamSerializer
 
-/** The op set every item starts with; shared because [EntityOpsDefinition] is immutable. */
 val DEFAULT_ITEM_OPTIONS: EntityOpsDefinition = EntityOpsBuilder().op(2, "Take").build()
 
-/**
- * A loaded item definition. Immutable apart from [id] and the handful of fields the TOML options
- * hook assigns after construction ([options], [equipSlot], [appearanceOverride1],
- * [appearanceOverride2]; [interfaceOptions] is filled in place). Decoding and packing build one
- * through [ItemTypeBuilder].
- */
 @RsTableHeaders(
     "item",
     rowPostDecode = ItemTypeOptionsTableHook::class,
@@ -34,7 +27,6 @@ data class ItemType(
     override val modifiedColours: List<Int>? = null,
     override val originalTextureColours: List<Int>? = null,
     override val modifiedTextureColours: List<Int>? = null,
-    // Stays MutableMap: ParamSerializer's declared type argument must match the parameter type.
     @param:TomlField(serializer = ParamSerializer::class)
     override val params: MutableMap<Int, Any>? = null,
     val resizeX: Int = 128,
@@ -44,7 +36,6 @@ data class ItemType(
     val category: Int = -1,
     val yan2d: Int = 0,
     val zan2d: Int = 0,
-    // var: the TOML options hook assigns these after construction.
     var equipSlot: Int = -1,
     var appearanceOverride1: Int = -1,
     var appearanceOverride2: Int = -1,
@@ -63,10 +54,7 @@ data class ItemType(
     val contrast: Int = 0,
     val countCo: List<Int>? = null,
     val countObj: List<Int>? = null,
-    // var: the TOML options hook replaces it; immutable and shared, every stock item points at
-    // the same default "Take" op set.
     var options : EntityOpsDefinition = DEFAULT_ITEM_OPTIONS,
-    // The hook fills slots in place, so this stays a mutable list by design.
     val interfaceOptions: MutableList<String?> = mutableListOf(null, null, null, null, "Drop"),
     val maleModel0: Int = -1,
     val maleModel1: Int = -1,
@@ -98,7 +86,6 @@ data class ItemType(
     override val extra: MutableMap<String, Any?>
         get() = extraProperties ?: LinkedHashMap<String, Any?>(8).also { extraProperties = it }
 
-    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): ItemTypeBuilder = ItemTypeBuilder.from(this)
 
     val stackable: Boolean

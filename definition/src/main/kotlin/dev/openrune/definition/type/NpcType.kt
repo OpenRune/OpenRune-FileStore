@@ -12,12 +12,6 @@ import dev.openrune.definition.Transforms
 import dev.openrune.seralizer.NpcTypeOptionsTableHook
 import dev.openrune.seralizer.ParamSerializer
 
-/**
- * A loaded npc definition. Immutable apart from [id] (which the load machinery assigns):
- * decoding and packing build one through [NpcTypeBuilder], and everything after that only
- * reads. [actions] is a mutable holder by necessity — the TOML options hook fills it in after
- * construction — but by convention it is not modified once a definition has been built.
- */
 @RsTableHeaders(
     "npc",
     rowPostDecode = NpcTypeOptionsTableHook::class,
@@ -36,8 +30,6 @@ data class NpcType(
     val rotateBackAnim : Int = -1,
     val walkLeftAnim : Int = -1,
     val walkRightAnim : Int = -1,
-    // The one non-val: the TOML options hook runs after construction and replaces this with the
-    // parsed op set. The instance itself is immutable, so sharing stays safe.
     var actions : EntityOpsDefinition = EntityOpsDefinition.EMPTY,
     override val originalColours: List<Int>? = null,
     override val modifiedColours: List<Int>? = null,
@@ -69,7 +61,6 @@ data class NpcType(
     val crawlBackSequence : Int = -1,
     val crawlRightSequence : Int = -1,
     val crawlLeftSequence : Int = -1,
-    // Stays MutableMap: ParamSerializer's declared type argument must match the parameter type.
     @param:TomlField(serializer = ParamSerializer::class)
     override val params: MutableMap<Int, Any>? = null,
     val height: Int = -1,
@@ -98,7 +89,6 @@ data class NpcType(
     override val extra: MutableMap<String, Any?>
         get() = extraProperties ?: LinkedHashMap<String, Any?>(8).also { extraProperties = it }
 
-    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): NpcTypeBuilder = NpcTypeBuilder.from(this)
 
     fun isAttackable(): Boolean = combatLevel > 0 && actions.opsOrEmpty.any { it?.text == "Attack" }

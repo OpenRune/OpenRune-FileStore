@@ -8,10 +8,6 @@ import dev.openrune.definition.Sound
 import dev.openrune.definition.SoundData
 import kotlin.math.ceil
 
-/**
- * A loaded animation definition. Immutable apart from [id]: decoding and packing build one
- * through [SequenceTypeBuilder].
- */
 @RsTableHeaders("animation")
 data class SequenceType(
     override var id: Int = -1,
@@ -41,7 +37,6 @@ data class SequenceType(
 
 ) : Definition, Sound {
 
-    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): SequenceTypeBuilder = SequenceTypeBuilder.from(this)
 
     val lengthInCycles: Int

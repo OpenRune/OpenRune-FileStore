@@ -327,7 +327,6 @@ class PackConfig(
         return a == b
     }
 
-    /** Codecs hold nothing but the revision, so one reflective instantiation per pack type is enough. */
     private fun codecFor(packType: PackType): DefinitionCodec<*> =
         codecs.getOrPut(packType) { createCodecInstance(packType) }
 

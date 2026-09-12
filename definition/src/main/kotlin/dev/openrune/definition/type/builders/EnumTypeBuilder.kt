@@ -4,7 +4,6 @@ import dev.openrune.definition.type.*
 
 import dev.openrune.definition.util.CacheVarLiteral
 
-/** The mutable side of [EnumType]; codecs decode into one and [build] produces the definition. */
 class EnumTypeBuilder(var id: Int = -1) {
 
     var keyType: CacheVarLiteral = CacheVarLiteral.INT

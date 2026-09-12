@@ -27,11 +27,6 @@ enum class WorldInteractMode(val id: Int) {
     }
 }
 
-/**
- * A loaded world entity definition. Immutable apart from [id] (which the load machinery
- * assigns): decoding builds one through [WorldEntityTypeBuilder], and everything after that
- * only reads.
- */
 data class WorldEntityType(
     override var id: Int = -1,
     val name: String = "null",
@@ -51,6 +46,5 @@ data class WorldEntityType(
     val rgb: Int = 39188
 ) : Definition {
 
-    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): WorldEntityTypeBuilder = WorldEntityTypeBuilder.from(this)
 }

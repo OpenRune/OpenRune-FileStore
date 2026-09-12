@@ -4,11 +4,6 @@ import dev.openrune.definition.type.*
 
 import dev.openrune.definition.MutableParameterized
 
-/**
- * The mutable side of [InventoryType]. Codecs decode into one of these and the packing tools edit
- * one — either fresh or via [InventoryType.toBuilder] — then [build] produces the immutable
- * definition everything else reads.
- */
 class InventoryTypeBuilder(var id: Int = -1) : MutableParameterized {
 
     var size: Int = 0

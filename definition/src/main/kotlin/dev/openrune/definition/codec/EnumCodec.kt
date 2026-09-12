@@ -24,8 +24,6 @@ class EnumCodec : BuilderDefinitionCodec<EnumType, EnumTypeBuilder> {
             4 -> defaultInt = buffer.readInt()
             5, 6 -> {
                 val count = buffer.readUnsignedShort()
-                // The same ids appear as keys across many enums, so their boxes are pooled too.
-                // The unchecked view only widens the key type; equality semantics are unchanged.
                 @Suppress("UNCHECKED_CAST")
                 val target = values as MutableMap<Any, Any>
                 for (i in 0 until count) {

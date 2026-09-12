@@ -13,11 +13,6 @@ import dev.openrune.seralizer.ParamTypeTableHook
     "params",
     rowPostDecode = ParamTypeTableHook::class,
 )
-/**
- * A loaded param definition. Immutable apart from [id] (which the load machinery assigns):
- * decoding builds one through [ParamTypeBuilder], and everything after that only reads (the
- * TOML row hook only validates, it never writes).
- */
 data class ParamType(
     override var id: Int = -1,
     @param:TomlField(serializer = CacheVarLiteralSeralizier::class)
@@ -28,6 +23,5 @@ data class ParamType(
     val defaultLong: Long = 0L
 ) : Definition {
 
-    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): ParamTypeBuilder = ParamTypeBuilder.from(this)
 }

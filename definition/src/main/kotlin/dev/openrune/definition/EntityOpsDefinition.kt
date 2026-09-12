@@ -1,11 +1,5 @@
 package dev.openrune.definition
 
-/**
- * An immutable set of entity ops. Decoding and TOML parsing assemble one through
- * [EntityOpsBuilder]; once built the contents cannot change, which is what makes it safe for
- * equal op sets to share a single instance across thousands of definitions ([EntityOpsBuilder.build]
- * routes through a content pool).
- */
 class EntityOpsDefinition(
     val ops: List<Op?> = emptyList(),
     val subOps: List<List<SubOp>> = emptyList(),
@@ -13,7 +7,6 @@ class EntityOpsDefinition(
     val conditionalSubOps: List<Map<Int, List<ConditionalSubOp>>> = emptyList(),
 ) {
 
-    // Kept for source compatibility with the old lazily-allocated API.
     val opsOrEmpty: List<Op?> get() = ops
     val subOpsOrEmpty: List<List<SubOp>> get() = subOps
     val conditionalOpsOrEmpty: List<List<ConditionalOp>> get() = conditionalOps
@@ -38,7 +31,6 @@ class EntityOpsDefinition(
     fun getConditionalSubOpsBySubIdOrEmpty(index: Int, subID: Int): List<ConditionalSubOp> =
         conditionalSubOps.getOrNull(index)?.get(subID).orEmpty()
 
-    /** A mutable builder pre-filled with this instance's ops. */
     fun toBuilder(): EntityOpsBuilder = EntityOpsBuilder.from(this)
 
     /**
@@ -113,7 +105,6 @@ class EntityOpsDefinition(
     }
 
     companion object {
-        /** The shared instance for definitions that record no ops at all. */
         @JvmField
         val EMPTY = EntityOpsDefinition()
     }
@@ -122,11 +113,6 @@ class EntityOpsDefinition(
         companion object {
             private val pool = arrayOfNulls<Op>(512)
 
-            /**
-             * Ops are immutable and drawn from a tiny vocabulary ("Attack", "Take", ...), so equal
-             * ones share an instance instead of every definition holding its own. Direct-mapped
-             * and race-tolerant: a lost slot only costs the sharing, never correctness.
-             */
             fun of(text: String): Op {
                 val slot = text.hashCode() and (pool.size - 1)
                 val cached = pool[slot]
@@ -196,10 +182,6 @@ class EntityOpsDefinition(
     }
 }
 
-/**
- * The mutable side of [EntityOpsDefinition], with the same op/subOp/conditional mutators the old
- * mutable definition had. [build] hands equal contents back as one shared instance.
- */
 class EntityOpsBuilder {
 
     private var _ops: MutableList<EntityOpsDefinition.Op?>? = null
@@ -267,7 +249,6 @@ class EntityOpsBuilder {
         conditionalSubOp(index, subID, text, varpID, varbitID, min, max)
     }
 
-    /** Copies every op recorded on [definition] into this builder. */
     fun include(definition: EntityOpsDefinition) = apply {
         definition.ops.forEachIndexed { index, entry ->
             if (entry != null) op(index, entry.text)
@@ -299,9 +280,6 @@ class EntityOpsBuilder {
                 ?: emptyList(),
         )
 
-        // Thousands of definitions share the same op set ("Open"/"Close" doors, the item default
-        // "Take"), so equal contents collapse to one instance. Safe because built instances are
-        // immutable; direct-mapped and race tolerant like the other decode pools.
         val slot = built.hashCode() and (pool.size - 1)
         val cached = pool[slot]
         if (cached != null && cached == built) return cached

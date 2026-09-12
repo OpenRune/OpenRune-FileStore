@@ -2,10 +2,6 @@ package dev.openrune.definition.type.builders
 
 import dev.openrune.definition.type.*
 
-/**
- * The mutable side of [OverlayType]. [build] derives the HSL fields from the rgb values, which
- * used to happen as a post-decode mutation.
- */
 class OverlayTypeBuilder(var id: Int = -1) {
 
     var primaryRgb: Int = 0
@@ -55,7 +51,6 @@ class OverlayTypeBuilder(var id: Int = -1) {
             return builder
         }
 
-        /** The client's rgb-to-hsl conversion, bit for bit as the old `setHsl` computed it. */
         internal fun hsl(rgbValue: Int): Triple<Int, Int, Int> {
             val red = (rgbValue shr 16 and 255).toDouble() / 256.0
             val green = (rgbValue shr 8 and 255).toDouble() / 256.0

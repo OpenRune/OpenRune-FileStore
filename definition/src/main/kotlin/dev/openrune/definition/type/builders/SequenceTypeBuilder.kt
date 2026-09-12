@@ -6,7 +6,6 @@ import dev.openrune.definition.Sound
 import dev.openrune.definition.SoundData
 import dev.openrune.definition.util.IntListPool
 
-/** The mutable side of [SequenceType]; codecs decode into one and [build] produces the definition. */
 class SequenceTypeBuilder(var id: Int = -1) : Sound {
 
     var frameIDs: MutableList<Int>? = null

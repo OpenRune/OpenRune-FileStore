@@ -29,6 +29,5 @@ data class HitSplatType(
 
 ) : Definition, Transforms {
 
-    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): HitSplatTypeBuilder = HitSplatTypeBuilder.from(this)
 }

@@ -121,7 +121,6 @@ class ItemSpriteFactory(
         decorate
     )
 
-    /** Applies the note/bought/placeholder links as a copy; the cached definitions stay untouched. */
     private fun linkItem(item: ItemType): ItemType {
         if (item.noteTemplateId == -1 && item.notedId == -1 && item.placeholderTemplate == -1) return item
 

@@ -7,11 +7,6 @@ import dev.openrune.definition.MutableParameterized
 import dev.openrune.definition.MutableRecolourable
 import dev.openrune.definition.util.IntListPool
 
-/**
- * The mutable side of [ItemType]. Codecs decode into one and the packing tools edit one — either
- * fresh or via [ItemType.toBuilder] — then [build] produces the immutable definition. The
- * note/bought/placeholder link steps that used to mutate an item now live here.
- */
 class ItemTypeBuilder(var id: Int = -1) : MutableRecolourable, MutableParameterized {
 
     var name: String = "null"
@@ -70,14 +65,12 @@ class ItemTypeBuilder(var id: Int = -1) : MutableRecolourable, MutableParameteri
     override var modifiedTextureColours: MutableList<Int>? = null
     override var params: MutableMap<Int, Any>? = null
 
-    // Extras written by the r718 codec during decode; transferred onto the built definition.
     private val extras = LinkedHashMap<String, Any?>()
 
     fun setExtraProperty(key: String, value: Any?) {
         extras[key] = value
     }
 
-    /** The client's noted-item link: display of the template, identity of the unnoted item. */
     fun linkNote(notedItem: ItemType, unnotedItem: ItemType) = apply {
         inventoryModel = notedItem.inventoryModel
         zoom2d = notedItem.zoom2d
@@ -95,7 +88,6 @@ class ItemTypeBuilder(var id: Int = -1) : MutableRecolourable, MutableParameteri
         stacks = ObjStackability.Always
     }
 
-    /** The client's bought-item link. */
     fun linkBought(var1: ItemType, var2: ItemType) = apply {
         inventoryModel = var1.inventoryModel
         zoom2d = var1.zoom2d
@@ -130,7 +122,6 @@ class ItemTypeBuilder(var id: Int = -1) : MutableRecolourable, MutableParameteri
         cost = 0
     }
 
-    /** The client's placeholder link. */
     fun linkPlaceholder(var1: ItemType, var2: ItemType) = apply {
         inventoryModel = var1.inventoryModel
         zoom2d = var1.zoom2d

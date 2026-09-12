@@ -34,7 +34,6 @@ class FileCache(
     private var lastArchiveHash = -1
     private var lastArchiveFiles: Array<ByteArray?>? = null
 
-    /** Index files read whole up front, so an archive read costs no seek on the index file. */
     private val index255Table = readIndexTable(index255)
     private val indexTables: Array<ByteArray?> = Array(indexes.size) { id ->
         indexes[id]?.let { readIndexTable(it) }
@@ -61,7 +60,6 @@ class FileCache(
 
     override fun fileData(index: Int, archive: Int, xtea: IntArray?): Array<ByteArray?>? {
         val hash = index + (archive shl 6)
-        // Definition loads hammer one archive at a time, so skip the map lookup and its boxed key.
         if (hash == lastArchiveHash) {
             return lastArchiveFiles
         }

@@ -7,10 +7,6 @@ import dev.openrune.definition.util.writeByte
 import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
 
-/**
- * The read side of params: what an immutable definition exposes. The mutable counterpart for
- * decoding and builders is [MutableParameterized].
- */
 interface Parameterized {
     val params: Map<Int, Any>?
 
@@ -19,7 +15,6 @@ interface Parameterized {
     }
 }
 
-/** The mutable side of params, implemented by builders and the still-mutable types. */
 interface MutableParameterized {
 
     var params: MutableMap<Int, Any>?
@@ -30,8 +25,6 @@ interface MutableParameterized {
 
         val params = LinkedHashMap<Int, Any>(if (length < 3) 4 else (length / 0.75f).toInt() + 1)
 
-        // Param ids repeat across thousands of definitions, so their key boxes are pooled. The
-        // unchecked view only widens the key type; equality semantics are unchanged.
         @Suppress("UNCHECKED_CAST")
         val target = params as MutableMap<Any, Any>
 
@@ -56,7 +49,6 @@ interface MutableParameterized {
     }
 }
 
-/** Standalone form usable with either side of the interface pair. */
 fun writeParameters(writer: ByteBuf, params: Map<Int, Any>?) {
     if (params == null) return
 

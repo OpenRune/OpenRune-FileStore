@@ -20,7 +20,6 @@ data class TextureType(
     val isLowDetail : Boolean = false
 ) : Definition {
 
-    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
     fun toBuilder(): TextureTypeBuilder = TextureTypeBuilder.from(this)
 
     private var pixels: IntArray? = null

@@ -122,8 +122,7 @@ class SequenceCodec(private val revision: Int) : BuilderDefinitionCodec<Sequence
         }
 
         if (definition.interleaveLeave != null) {
-            // The decoder appends a 0x98967f sentinel; it is not part of the payload, and writing
-            // it back grew the list by one entry per round trip.
+            // strip the decoder's 0x98967f sentinel
             val leave = definition.interleaveLeave!!
             val count = if (leave.lastOrNull() == 0x98967f) leave.size - 1 else leave.size
             writeByte(3)

@@ -2,24 +2,11 @@ package dev.openrune.cache
 
 import java.util.Arrays
 
-/**
- * A `MutableMap<Int, V>` for definition ids, stored as a plain array indexed by key: a slot is
- * the value or null for a gap. That is 4 bytes per id — half of what the previous sorted
- * key/value pair layout cost per entry, and far less than a `LinkedHashMap`'s hash node plus
- * boxed `Integer` key (~50 bytes of structure per entry across 112 000+ definitions). Gaps cost
- * one null slot each, which at game-content densities (even stock items ending at 32k with
- * custom content resuming at 64k) stays cheaper than per-entry bookkeeping.
- *
- * Lookups are a direct array index. The `Map` API is unchanged, so every consumer keeps working,
- * and iteration is in ascending key order. Keys must be >= 0: `get`/`containsKey` on a negative
- * key simply miss, `put` throws.
- */
 class DenseIntMap<V : Any>(initialCapacity: Int = 16) : AbstractMutableMap<Int, V>() {
 
     private var slots = arrayOfNulls<Any>(maxOf(initialCapacity, 1))
     private var count = 0
 
-    /** Highest key ever written, so iteration does not scan unused capacity. */
     private var maxKey = -1
 
     override val size: Int get() = count
@@ -56,7 +43,6 @@ class DenseIntMap<V : Any>(initialCapacity: Int = 16) : AbstractMutableMap<Int, 
         maxKey = -1
     }
 
-    /** A read-only view of this map; the returned instance cannot be cast back to a mutable one. */
     fun readOnly(): Map<Int, V> = ReadOnlyIntMap(this)
 
     override val entries: MutableSet<MutableMap.MutableEntry<Int, V>> = object :
@@ -123,8 +109,4 @@ class DenseIntMap<V : Any>(initialCapacity: Int = 16) : AbstractMutableMap<Int, 
     }
 }
 
-/**
- * Read-only wrapper handed out by the cache manager: it only implements [Map], so a loaded table
- * cannot be mutated even by casting.
- */
 class ReadOnlyIntMap<V : Any>(private val backing: DenseIntMap<V>) : Map<Int, V> by backing

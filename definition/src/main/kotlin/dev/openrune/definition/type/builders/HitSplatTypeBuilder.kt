@@ -5,11 +5,6 @@ import dev.openrune.definition.type.*
 import dev.openrune.definition.MutableTransforms
 import dev.openrune.definition.util.IntListPool
 
-/**
- * The mutable side of [HitSplatType]. Codecs decode into one of these and the packing tools edit
- * one — either fresh or via [HitSplatType.toBuilder] — then [build] produces the immutable
- * definition everything else reads.
- */
 class HitSplatTypeBuilder(var id: Int = -1) : MutableTransforms {
 
     var font: Int = -1

@@ -2,11 +2,6 @@ package dev.openrune.definition.type.builders
 
 import dev.openrune.definition.type.*
 
-/**
- * The mutable side of [DBTableIndexType]. Codecs decode into one of these and the packing tools
- * edit one — either fresh or via [DBTableIndexType.toBuilder] — then [build] produces the
- * immutable definition everything else reads.
- */
 class DBTableIndexTypeBuilder(var id: Int = -1) {
 
     var columns: MutableList<DBTableIndexColumn> = mutableListOf()

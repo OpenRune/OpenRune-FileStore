@@ -2,11 +2,6 @@ package dev.openrune.definition.type.builders
 
 import dev.openrune.definition.type.*
 
-/**
- * The mutable side of [WorldEntityType]. Codecs decode into one of these and the packing tools
- * edit one — either fresh or via [WorldEntityType.toBuilder] — then [build] produces the
- * immutable definition everything else reads.
- */
 class WorldEntityTypeBuilder(var id: Int = -1) {
 
     var name: String = "null"

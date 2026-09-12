@@ -5,10 +5,6 @@ import dev.openrune.definition.util.readSmart
 import dev.openrune.definition.util.readUnsignedShortOrNull
 import io.netty.buffer.ByteBuf
 
-/**
- * The read side of transforms: what an immutable definition exposes. The mutable counterpart for
- * decoding and builders is [MutableTransforms].
- */
 interface Transforms {
     val multiVarBit: Int
     val multiVarp: Int
@@ -20,7 +16,6 @@ interface Transforms {
     }
 }
 
-/** The mutable side of transforms, implemented by builders and the still-mutable types. */
 interface MutableTransforms {
     var multiVarBit: Int
     var multiVarp: Int
@@ -45,7 +40,6 @@ interface MutableTransforms {
     }
 }
 
-/** Standalone form usable with either side of the interface pair. */
 fun writeTransforms(
     writer: ByteBuf,
     smaller: Int,
