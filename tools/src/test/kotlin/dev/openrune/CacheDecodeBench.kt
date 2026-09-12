@@ -79,7 +79,7 @@ class CacheDecodeBench {
 
     private fun <T : Definition> decoder(name: String, cache: Cache, factory: () -> DefinitionDecoder<T>) =
         measure(name, 4) {
-            val target = dev.openrune.cache.SortedIntMap<T>()
+            val target = dev.openrune.cache.DenseIntMap<T>()
             runCatching { factory().load(cache, target) }
             target.size
         }
@@ -138,13 +138,13 @@ class CacheDecodeBench {
         }
 
         measure("interfaces", 3) {
-            val components = dev.openrune.cache.SortedIntMap<InterfaceType>()
+            val components = dev.openrune.cache.DenseIntMap<InterfaceType>()
             ComponentDecoder(cache, rev).load(components)
             components.values.sumOf { it.components.size }
         }
 
         measure("sprites", 3) {
-            val sprites = dev.openrune.cache.SortedIntMap<SpriteType>()
+            val sprites = dev.openrune.cache.DenseIntMap<SpriteType>()
             runCatching { SpriteDecoder().load(cache, sprites) }
             sprites.size
         }

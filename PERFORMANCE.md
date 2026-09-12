@@ -187,10 +187,10 @@ Ten-workload total: 143 MB → 104 MB (-27%). The builder pass and content pooli
 — a full definition load is ~180 ms against ~95 ms before the conversion (and 845 ms at the
 original baseline) — which is what buys the immutability and the sharing.
 
-### SortedIntMap: the definition tables themselves
+### DenseIntMap: the definition tables themselves
 
 Every definition table was a `LinkedHashMap<Int, T>` — a hash node and a boxed `Integer` key per
-entry, roughly 50 bytes of pure structure across 112 000+ definitions. `SortedIntMap` stores two
+entry, roughly 50 bytes of pure structure across 112 000+ definitions. `DenseIntMap` stores two
 parallel arrays instead (sorted int keys, values), binary-searches lookups, appends in O(1) for
 the ascending order a sequential decode produces, and wastes nothing on id gaps (custom content
 jumping from the stock range to 64k+ costs two slots, not a filled array). It implements
@@ -201,18 +201,18 @@ it holds it behind `readOnly()` — a wrapper that only implements `Map`, so a l
 be mutated even by casting. The bulk getters return it directly instead of allocating an
 `unmodifiableMap` per call.
 
-| Type       | LinkedHashMap | SortedIntMap |
+| Type       | LinkedHashMap | DenseIntMap |
 |------------|---------------|--------------|
-| objects    | 21.1 MB       | 17.8 MB      |
-| items      | 16.5 MB       | 15.2 MB      |
-| interfaces | 13.5 MB       | 12.5 MB      |
-| dbrows     | 9.4 MB        | 8.7 MB       |
-| npcs       | 7.7 MB        | 6.9 MB       |
-| anims      | 5.8 MB        | 5.2 MB       |
-| varbits    | 1.6 MB        | 0.8 MB       |
+| objects    | 21.1 MB       | 17.6 MB      |
+| items      | 16.5 MB       | 14.9 MB      |
+| interfaces | 13.5 MB       | 12.3 MB      |
+| dbrows     | 9.4 MB        | 8.6 MB       |
+| npcs       | 7.7 MB        | 6.8 MB       |
+| anims      | 5.8 MB        | 5.1 MB       |
+| varbits    | 1.6 MB        | 0.7 MB       |
 
-Ten-workload total: **143 MB at the original baseline → 95 MB (-33%)**. Load times unchanged
-within noise. `SortedIntMapTest` locks the `Map` contract against reference maps, including a
+Ten-workload total: **143 MB at the original baseline → 94 MB (-34%)**. Load times unchanged
+within noise. `DenseIntMapTest` locks the `Map` contract against reference maps, including a
 20 000-operation randomized agreement check.
 
 ### Round-trip verification

@@ -13,7 +13,7 @@ import dev.openrune.definition.type.*
  *
  */
 fun <T : Definition> MutableMap<Int, T>.withOffset(offset: Int): MutableMap<Int, T> {
-    val result = SortedIntMap<T>(size)
+    val result = DenseIntMap<T>(size)
     for ((key, def) in this) {
         val newId = key + offset
         def.id = newId
@@ -63,10 +63,10 @@ object CacheManager {
     /** Adopts [source] outright on the first init, otherwise merges; the result is read-only. */
     private fun <T : Any> adopt(current: Map<Int, T>, source: MutableMap<Int, T>): Map<Int, T> {
         if (current.isEmpty()) {
-            val table = source as? SortedIntMap<T> ?: SortedIntMap<T>(source.size).apply { putAll(source) }
+            val table = source as? DenseIntMap<T> ?: DenseIntMap<T>(source.size).apply { putAll(source) }
             return table.readOnly()
         }
-        val merged = SortedIntMap<T>(current.size + source.size)
+        val merged = DenseIntMap<T>(current.size + source.size)
         merged.putAll(current)
         merged.putAll(source)
         return merged.readOnly()

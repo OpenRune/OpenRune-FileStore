@@ -104,7 +104,7 @@ class ComponentDecoder(
             val files = cache.files(INTERFACES, group)
             // Child ids are dense per interface, so the array-backed map avoids a hash node and a
             // boxed key per component.
-            val types = dev.openrune.cache.SortedIntMap<ComponentType>(files.size)
+            val types = dev.openrune.cache.DenseIntMap<ComponentType>(files.size)
             val gameval = gamevals.lookupAs<Interface>(group and 0xFFFF)
             for (file in files) {
                 val combinedId = (group shl 16) or file
