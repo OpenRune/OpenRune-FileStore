@@ -1,14 +1,16 @@
-﻿package dev.openrune.definition.codec
+package dev.openrune.definition.codec
 
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.type.SequenceType
+import dev.openrune.definition.type.builders.SequenceTypeBuilder
 import dev.openrune.definition.util.readIntList
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 import kotlin.math.ceil
 
-class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
+class SequenceCodec(private val revision: Int) : BuilderDefinitionCodec<SequenceType, SequenceTypeBuilder> {
 
     private val frameSoundOpcode: Int
     private val skeletalIdOpcode: Int
@@ -29,7 +31,11 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
         }
     }
 
-    override fun SequenceType.read(opcode: Int, buffer: ByteBuf) {
+    override fun builder(id: Int) = SequenceTypeBuilder(id)
+
+    override fun build(builder: SequenceTypeBuilder) = builder.build()
+
+    override fun SequenceTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
                 val frameCount = buffer.readUnsignedShort()

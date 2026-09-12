@@ -1,21 +1,27 @@
 package dev.openrune.definition.codec
 
 import com.github.michaelbull.logging.InlineLogger
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.EntityOpsLoader
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.revisionIsOrBefore
 import dev.openrune.definition.type.BgSound
 import dev.openrune.definition.type.BgSoundFade
 import dev.openrune.definition.type.NpcType
+import dev.openrune.definition.type.builders.NpcTypeBuilder
 import dev.openrune.definition.type.RandomSound
 import dev.openrune.definition.util.*
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
+class NPCCodec(private val revision: Int) : BuilderDefinitionCodec<NpcType, NpcTypeBuilder> {
     private val entityOpsLoader = EntityOpsLoader(revision)
 
-    override fun NpcType.read(opcode: Int, buffer: ByteBuf) {
+    override fun builder(id: Int) = NpcTypeBuilder(id)
+
+    override fun build(builder: NpcTypeBuilder) = builder.build()
+
+    override fun NpcTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
                 val length = buffer.readUnsignedByte().toInt()

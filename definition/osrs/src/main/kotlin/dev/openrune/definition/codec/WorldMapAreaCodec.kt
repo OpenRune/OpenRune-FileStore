@@ -7,14 +7,37 @@ import dev.openrune.definition.type.SingleSquare
 import dev.openrune.definition.type.SingleZone
 import dev.openrune.definition.type.WorldMapSectionType
 import dev.openrune.definition.type.WorldMapAreaType
+import dev.openrune.definition.type.builders.WorldMapAreaTypeBuilder
 import dev.openrune.definition.util.Coord
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
 class WorldMapAreaCodec(val rev : Int) : DefinitionCodec<WorldMapAreaType> {
 
-    override fun WorldMapAreaType.read(opcode: Int, buffer: ByteBuf) {
+    override fun WorldMapAreaType.read(opcode: Int, buffer: ByteBuf) =
+        error("WorldMapAreaType is immutable; decoding goes through WorldMapAreaTypeBuilder")
+
+    override fun loadData(id: Int, data: ByteBuf?): WorldMapAreaType = decode(id, data)
+
+    override fun loadData(id: Int, data: ByteArray?): WorldMapAreaType =
+        decode(id, data?.takeIf { it.isNotEmpty() }?.let { Unpooled.wrappedBuffer(it) })
+
+    /** The record is one fixed layout, not an opcode stream, so it is read in a single pass. */
+    private fun decode(id: Int, data: ByteBuf?): WorldMapAreaType {
+        val builder = WorldMapAreaTypeBuilder(id)
+        if (data != null && data.readableBytes() > 0) {
+            try {
+                builder.read(data)
+            } catch (e: Exception) {
+                throw IllegalStateException("Unable to decode WorldMapAreaType [$id]", e)
+            }
+        }
+        return builder.build()
+    }
+
+    private fun WorldMapAreaTypeBuilder.read(buffer: ByteBuf) {
         this.internalName = buffer.readString()
         this.externalName = buffer.readString()
         this.origin = Coord(buffer.readInt())
@@ -63,8 +86,4 @@ class WorldMapAreaCodec(val rev : Int) : DefinitionCodec<WorldMapAreaType> {
     }
 
     override fun createDefinition() = WorldMapAreaType()
-
-    override fun readLoop(definition: WorldMapAreaType, buffer: ByteBuf) {
-        definition.read(-1, buffer)
-    }
 }

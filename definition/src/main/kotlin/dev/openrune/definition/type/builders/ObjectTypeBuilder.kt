@@ -1,4 +1,6 @@
-package dev.openrune.definition.type
+package dev.openrune.definition.type.builders
+
+import dev.openrune.definition.type.*
 
 import dev.openrune.definition.EntityOpsBuilder
 import dev.openrune.definition.MutableParameterized

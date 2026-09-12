@@ -6,44 +6,24 @@ import dev.openrune.definition.util.IntBackedList
 import dev.openrune.definition.util.readIntList
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.writeColoursTextures
 import dev.openrune.definition.writeParameters
 import dev.openrune.definition.writeTransforms
 import dev.openrune.definition.type.ObjectType
-import dev.openrune.definition.type.ObjectTypeBuilder
+import dev.openrune.definition.type.builders.ObjectTypeBuilder
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 
-class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
+class ObjectCodec(private val revision: Int) : BuilderDefinitionCodec<ObjectType, ObjectTypeBuilder> {
     private val entityOpsLoader = EntityOpsLoader(revision)
 
-    override fun ObjectType.read(opcode: Int, buffer: ByteBuf) =
-        error("ObjectType is immutable; decoding goes through ObjectTypeBuilder")
+    override fun builder(id: Int) = ObjectTypeBuilder(id)
 
-    override fun loadData(id: Int, data: ByteBuf?): ObjectType = decode(id, data)
+    override fun build(builder: ObjectTypeBuilder) = builder.build()
 
-    override fun loadData(id: Int, data: ByteArray?): ObjectType =
-        decode(id, data?.takeIf { it.isNotEmpty() }?.let { Unpooled.wrappedBuffer(it) })
-
-    private fun decode(id: Int, data: ByteBuf?): ObjectType {
-        val builder = ObjectTypeBuilder(id)
-        if (data != null && data.readableBytes() > 0) {
-            try {
-                while (true) {
-                    val opcode = data.readUnsignedByte().toInt()
-                    if (opcode == 0) break
-                    builder.read(opcode, data)
-                }
-            } catch (e: Exception) {
-                throw IllegalStateException("Unable to decode ObjectType [$id]", e)
-            }
-        }
-        return builder.build()
-    }
-
-    private fun ObjectTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
+    override fun ObjectTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()

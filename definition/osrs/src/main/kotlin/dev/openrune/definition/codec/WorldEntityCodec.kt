@@ -1,17 +1,24 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.type.WorldInteractMode
 import dev.openrune.definition.type.WorldInteractTarget
 import dev.openrune.definition.type.WorldEntityType
+import dev.openrune.definition.type.builders.WorldEntityTypeBuilder
 import dev.openrune.definition.util.readNullableLargeSmart
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeNullableLargeSmartCorrect
 import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class WorldEntityCodec : DefinitionCodec<WorldEntityType> {
-    override fun WorldEntityType.read(opcode: Int, buffer: ByteBuf) {
+class WorldEntityCodec : BuilderDefinitionCodec<WorldEntityType, WorldEntityTypeBuilder> {
+
+    override fun builder(id: Int) = WorldEntityTypeBuilder(id)
+
+    override fun build(builder: WorldEntityTypeBuilder) = builder.build()
+
+    override fun WorldEntityTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             2 -> mainLevel = buffer.readUnsignedByte().toInt()
             4 -> mainX = buffer.readShort().toInt()

@@ -166,15 +166,26 @@ Because built instances can never change, `ObjectTypeBuilder.build()` shares equ
 `IntListPool` and `EntityOpsBuilder.build()` shares equal op sets — no freeze flags, no post-load
 compaction pass, nothing for callers to remember.
 
+The pattern now covers every config definition type (28 of them: objects, npcs, items, anims,
+enums, structs, varbits, varps, health bars, hitsplats, inventories, identity kits, spot anims,
+overlays, underlays, textures, map elements, ambience, params, world entities, world map areas,
+var clan/clan settings/client, string vectors, bug templates, db table indexes). The shared
+opcode-loop boilerplate lives in `BuilderDefinitionCodec`; each codec only supplies its builder
+factory, per-opcode read and `build()`. Builders live in `dev.openrune.definition.type.builders`,
+and every type has a `tools` DSL (`npcType { }`, `itemType { }`, `XType.edit { }`, ...).
+`DBRowType`/`DBTableType` deliberately stay mutable — their table-building flows construct and
+fill them by design — as do the non-config `SpriteType`/`FontType`/`ModelType`/`ComponentType`.
+
 | Type    | Before all passes | Now     | Change |
 |---------|-------------------|---------|--------|
-| objects | 35.3 MB           | 21.2 MB | -40%   |
-| npcs    | 14.8 MB           | 9.5 MB  | -36%   |
-| items   | 23.5 MB           | 17.3 MB | -26%   |
+| objects | 35.3 MB           | 21.1 MB | -40%   |
+| npcs    | 14.8 MB           | 7.7 MB  | -48%   |
+| items   | 23.5 MB           | 16.5 MB | -30%   |
+| anims   | 12.9 MB           | 5.8 MB  | -55%   |
 
-Ten-workload total: 143 MB → 109 MB (-24%). Object decode pays a few extra milliseconds for the
-builder pass and content pooling (roughly 30 ms → 55 ms for all 62 400), which is what buys the
-immutability and the sharing.
+Ten-workload total: 143 MB → 104 MB (-27%). The builder pass and content pooling cost decode time
+— a full definition load is ~180 ms against ~95 ms before the conversion (and 845 ms at the
+original baseline) — which is what buys the immutability and the sharing.
 
 ### Round-trip verification
 

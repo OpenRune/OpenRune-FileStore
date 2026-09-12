@@ -1,5 +1,7 @@
 package dev.openrune.definition.type
 
+import dev.openrune.definition.type.builders.WorldMapAreaTypeBuilder
+
 import dev.openrune.definition.Definition
 import dev.openrune.definition.util.Coord
 import io.netty.buffer.ByteBuf
@@ -192,18 +194,27 @@ data class SingleZone(
     }
 }
 
+/**
+ * A loaded world map area definition. Immutable apart from [id] (which the load machinery
+ * assigns): decoding builds one through [WorldMapAreaTypeBuilder], and everything after that
+ * only reads.
+ */
 data class WorldMapAreaType(
     override var id: Int = -1,
-    var backgroundColour : Int = -1,
-    var fillColour : Int = -16777216,
-    var zoom : Int = -1,
-    var origin : Coord? = null,
-    var regionLowX : Int = Integer.MAX_VALUE,
-    var regionHighX : Int = 0,
-    var regionLowY : Int = Integer.MAX_VALUE,
-    var regionHighY : Int = 0,
-    var isMain : Boolean = false,
-    var internalName : String = "",
-    var externalName : String = "",
-    var sections : List<WorldMapSectionType> = emptyList()
-) : Definition
+    val backgroundColour : Int = -1,
+    val fillColour : Int = -16777216,
+    val zoom : Int = -1,
+    val origin : Coord? = null,
+    val regionLowX : Int = Integer.MAX_VALUE,
+    val regionHighX : Int = 0,
+    val regionLowY : Int = Integer.MAX_VALUE,
+    val regionHighY : Int = 0,
+    val isMain : Boolean = false,
+    val internalName : String = "",
+    val externalName : String = "",
+    val sections : List<WorldMapSectionType> = emptyList()
+) : Definition {
+
+    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
+    fun toBuilder(): WorldMapAreaTypeBuilder = WorldMapAreaTypeBuilder.from(this)
+}

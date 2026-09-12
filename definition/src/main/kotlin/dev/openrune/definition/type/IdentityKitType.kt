@@ -1,18 +1,24 @@
 package dev.openrune.definition.type
 
+import dev.openrune.definition.type.builders.IdentityKitTypeBuilder
+
 import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
-import dev.openrune.definition.MutableRecolourable
+import dev.openrune.definition.Recolourable
 
 @RsTableHeaders("idk")
 data class IdentityKitType(
     override var id: Int = -1,
-    override var originalColours: MutableList<Int>? = null,
-    override var modifiedColours: MutableList<Int>? = null,
-    override var originalTextureColours: MutableList<Int>? = null,
-    override var modifiedTextureColours: MutableList<Int>? = null,
-    var bodyPartId : Int = -1,
-    var models: MutableList<Int>? = null,
-    var chatheadModels : MutableList<Int> = mutableListOf(-1, -1, -1, -1, -1),
-    var nonSelectable : Boolean = false
-) : Definition, MutableRecolourable
+    override val originalColours: List<Int>? = null,
+    override val modifiedColours: List<Int>? = null,
+    override val originalTextureColours: List<Int>? = null,
+    override val modifiedTextureColours: List<Int>? = null,
+    val bodyPartId : Int = -1,
+    val models: List<Int>? = null,
+    val chatheadModels : List<Int> = mutableListOf(-1, -1, -1, -1, -1),
+    val nonSelectable : Boolean = false
+) : Definition, Recolourable {
+
+    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
+    fun toBuilder(): IdentityKitTypeBuilder = IdentityKitTypeBuilder.from(this)
+}

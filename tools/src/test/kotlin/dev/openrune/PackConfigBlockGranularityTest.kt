@@ -9,6 +9,7 @@ import dev.openrune.cache.tools.incremental.IncrementalSession
 import dev.openrune.cache.tools.tasks.impl.defs.PackConfig
 import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.codec.ItemCodec
+import dev.openrune.definition.type.ItemType
 import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.definition.constants.MappingProvider
 import dev.openrune.filesystem.Cache
@@ -58,10 +59,7 @@ class PackConfigBlockGranularityTest {
 
     private fun seedItem(id: Int, name: String) {
         val codec = ItemCodec(240)
-        val definition = codec.createDefinition().apply {
-            this.id = id
-            this.name = name
-        }
+        val definition = ItemType(id = id, name = name)
         val buffer = io.netty.buffer.Unpooled.buffer(256)
         with(codec) { buffer.encode(definition) }
         val bytes = ByteArray(buffer.readableBytes())

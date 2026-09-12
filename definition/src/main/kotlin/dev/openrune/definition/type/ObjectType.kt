@@ -1,5 +1,7 @@
 package dev.openrune.definition.type
 
+import dev.openrune.definition.type.builders.ObjectTypeBuilder
+
 import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.toml.serialization.TomlField
 import dev.openrune.definition.Definition

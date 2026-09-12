@@ -2,7 +2,7 @@ package dev.openrune.cache.tools.dsl
 
 import dev.openrune.definition.EntityOpsBuilder
 import dev.openrune.definition.type.ObjectType
-import dev.openrune.definition.type.ObjectTypeBuilder
+import dev.openrune.definition.type.builders.ObjectTypeBuilder
 
 /**
  * Builder DSL for [ObjectType]. Definitions are immutable, so tools assemble one here and get the

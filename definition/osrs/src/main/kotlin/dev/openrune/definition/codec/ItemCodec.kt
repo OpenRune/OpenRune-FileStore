@@ -5,15 +5,21 @@ import dev.openrune.definition.EntityOpsLoader
 import dev.openrune.definition.util.IntBackedList
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.type.ObjStackability
 import dev.openrune.definition.type.ItemType
+import dev.openrune.definition.type.builders.ItemTypeBuilder
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
+class ItemCodec(private val revision: Int) : BuilderDefinitionCodec<ItemType, ItemTypeBuilder> {
     private val entityOpsLoader = EntityOpsLoader(revision)
 
-    override fun ItemType.read(opcode: Int, buffer: ByteBuf) {
+    override fun builder(id: Int) = ItemTypeBuilder(id)
+
+    override fun build(builder: ItemTypeBuilder) = builder.build()
+
+    override fun ItemTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> inventoryModel = buffer.readUnsignedShort()
             2 -> name = buffer.readString()

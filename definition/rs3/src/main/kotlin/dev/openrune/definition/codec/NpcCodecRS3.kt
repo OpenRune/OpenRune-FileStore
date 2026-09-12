@@ -2,11 +2,13 @@ package dev.openrune.definition.codec
 
 import dev.openrune.definition.util.readBigSmart
 import dev.openrune.definition.util.readString
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.EntityOpsLoader
 import dev.openrune.definition.type.NpcType
+import dev.openrune.definition.type.builders.NpcTypeBuilder
 import dev.openrune.definition.util.readSmart
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
 /**
  * Identical to the 718 NpcCodec except it takes a revision to handle npcs with more numbers of transforms
@@ -160,13 +162,17 @@ fun NpcType.getAnInt2862(): Int {
     return getIntProperty("anInt2862")
 }
 
-class NpcCodecRS3(private val revision: Int) : DefinitionCodec<NpcType> {
+class NpcCodecRS3(private val revision: Int) : BuilderDefinitionCodec<NpcType, NpcTypeBuilder> {
 
     private val entityOpsLoader = EntityOpsLoader(1)
     private val extendedTransforms: Boolean = revision > 909
     private val extendedModels: Boolean = revision > 670
 
-    override fun NpcType.read(opcode: Int, buffer: ByteBuf) {
+    override fun builder(id: Int) = NpcTypeBuilder(id)
+
+    override fun build(builder: NpcTypeBuilder) = builder.build()
+
+    override fun NpcTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> {
                 val length = buffer.readUnsignedByte().toInt()

@@ -1,11 +1,18 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.type.VarClientType
+import dev.openrune.definition.type.builders.VarClientTypeBuilder
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class VarClientCodec : DefinitionCodec<VarClientType> {
-    override fun VarClientType.read(opcode: Int, buffer: ByteBuf) {
+class VarClientCodec : BuilderDefinitionCodec<VarClientType, VarClientTypeBuilder> {
+
+    override fun builder(id: Int) = VarClientTypeBuilder(id)
+
+    override fun build(builder: VarClientTypeBuilder) = builder.build()
+
+    override fun VarClientTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when(opcode) {
             2 -> persist = true
         }

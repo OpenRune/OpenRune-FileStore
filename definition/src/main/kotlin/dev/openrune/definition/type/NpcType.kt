@@ -1,83 +1,94 @@
 package dev.openrune.definition.type
 
+import dev.openrune.definition.type.builders.NpcTypeBuilder
+
 import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.toml.serialization.TomlField
 import dev.openrune.definition.Definition
 import dev.openrune.definition.EntityOpsDefinition
-import dev.openrune.definition.MutableParameterized
-import dev.openrune.definition.MutableRecolourable
-import dev.openrune.definition.MutableTransforms
+import dev.openrune.definition.Parameterized
+import dev.openrune.definition.Recolourable
+import dev.openrune.definition.Transforms
 import dev.openrune.seralizer.NpcTypeOptionsTableHook
 import dev.openrune.seralizer.ParamSerializer
 
+/**
+ * A loaded npc definition. Immutable apart from [id] (which the load machinery assigns):
+ * decoding and packing build one through [NpcTypeBuilder], and everything after that only
+ * reads. [actions] is a mutable holder by necessity — the TOML options hook fills it in after
+ * construction — but by convention it is not modified once a definition has been built.
+ */
 @RsTableHeaders(
     "npc",
     rowPostDecode = NpcTypeOptionsTableHook::class,
 )
 data class NpcType(
     override var id: Int = -1,
-    var name: String = "null",
-    var size : Int = 1,
-    var category : Int = -1,
-    var models: MutableList<Int>? = null,
-    var chatheadModels: MutableList<Int>? = null,
-    var standAnim : Int = -1,
-    var rotateLeftAnim : Int = -1,
-    var rotateRightAnim : Int = -1,
-    var walkAnim : Int = -1,
-    var rotateBackAnim : Int = -1,
-    var walkLeftAnim : Int = -1,
-    var walkRightAnim : Int = -1,
+    val name: String = "null",
+    val size : Int = 1,
+    val category : Int = -1,
+    val models: List<Int>? = null,
+    val chatheadModels: List<Int>? = null,
+    val standAnim : Int = -1,
+    val rotateLeftAnim : Int = -1,
+    val rotateRightAnim : Int = -1,
+    val walkAnim : Int = -1,
+    val rotateBackAnim : Int = -1,
+    val walkLeftAnim : Int = -1,
+    val walkRightAnim : Int = -1,
+    // The one non-val: the TOML options hook runs after construction and replaces this with the
+    // parsed op set. The instance itself is immutable, so sharing stays safe.
     var actions : EntityOpsDefinition = EntityOpsDefinition.EMPTY,
-    override var originalColours: MutableList<Int>? = null,
-    override var modifiedColours: MutableList<Int>? = null,
-    override var originalTextureColours: MutableList<Int>? = null,
-    override var modifiedTextureColours: MutableList<Int>? = null,
-    override var multiVarBit: Int = -1,
-    override var multiVarp: Int = -1,
-    override var multiDefault: Int = -1,
-    override var transforms: MutableList<Int>? = null,
-    var isMinimapVisible : Boolean = true,
-    var combatLevel : Int = -1,
-    var widthScale : Int = 128,
-    var heightScale : Int = 128,
-    var renderPriority : Int = 0,
-    var ambient : Int = 0,
-    var contrast : Int = 0,
-    var headIconGraphics: MutableList<Int>? = null,
-    var headIconIndexes: MutableList<Int>? = null,
-    var rotation : Int = 32,
-    var isInteractable : Boolean = true,
-    var isClickable : Boolean = true,
-    var lowPriorityFollowerOps : Boolean = false,
-    var isFollower : Boolean = false,
-    var runSequence : Int = -1,
-    var runBackSequence : Int = -1,
-    var runRightSequence : Int = -1,
-    var runLeftSequence : Int = -1,
-    var crawlSequence : Int = -1,
-    var crawlBackSequence : Int = -1,
-    var crawlRightSequence : Int = -1,
-    var crawlLeftSequence : Int = -1,
+    override val originalColours: List<Int>? = null,
+    override val modifiedColours: List<Int>? = null,
+    override val originalTextureColours: List<Int>? = null,
+    override val modifiedTextureColours: List<Int>? = null,
+    override val multiVarBit: Int = -1,
+    override val multiVarp: Int = -1,
+    override val multiDefault: Int = -1,
+    override val transforms: List<Int>? = null,
+    val isMinimapVisible : Boolean = true,
+    val combatLevel : Int = -1,
+    val widthScale : Int = 128,
+    val heightScale : Int = 128,
+    val renderPriority : Int = 0,
+    val ambient : Int = 0,
+    val contrast : Int = 0,
+    val headIconGraphics: List<Int>? = null,
+    val headIconIndexes: List<Int>? = null,
+    val rotation : Int = 32,
+    val isInteractable : Boolean = true,
+    val isClickable : Boolean = true,
+    val lowPriorityFollowerOps : Boolean = false,
+    val isFollower : Boolean = false,
+    val runSequence : Int = -1,
+    val runBackSequence : Int = -1,
+    val runRightSequence : Int = -1,
+    val runLeftSequence : Int = -1,
+    val crawlSequence : Int = -1,
+    val crawlBackSequence : Int = -1,
+    val crawlRightSequence : Int = -1,
+    val crawlLeftSequence : Int = -1,
+    // Stays MutableMap: ParamSerializer's declared type argument must match the parameter type.
     @param:TomlField(serializer = ParamSerializer::class)
-    override var params: MutableMap<Int, Any>? = null,
-    var height: Int = -1,
-    var attack : Int = 1,
-    var defence : Int = 1,
-    var strength : Int = 1,
-    var hitpoints : Int = 1,
-    var ranged : Int = 1,
-    var magic : Int = 1,
-    var footprintSize : Int = -1,
-    var canHideForOverlap : Boolean = false,
-    var overlapTintHSL : Int = 39188,
-    var readyAnimDuringAnim : Boolean = false,
-    var zbuf : Boolean = true,
-    var bgSound: BgSound? = null,
-    var bgSoundFade: BgSoundFade? = null,
-    var crossWorldSound: Int = 2,
-    var randomSound: RandomSound? = null,
-    ) : Definition, MutableTransforms, MutableRecolourable, MutableParameterized {
+    override val params: MutableMap<Int, Any>? = null,
+    val height: Int = -1,
+    val attack : Int = 1,
+    val defence : Int = 1,
+    val strength : Int = 1,
+    val hitpoints : Int = 1,
+    val ranged : Int = 1,
+    val magic : Int = 1,
+    val footprintSize : Int = -1,
+    val canHideForOverlap : Boolean = false,
+    val overlapTintHSL : Int = 39188,
+    val readyAnimDuringAnim : Boolean = false,
+    val zbuf : Boolean = true,
+    val bgSound: BgSound? = null,
+    val bgSoundFade: BgSoundFade? = null,
+    val crossWorldSound: Int = 2,
+    val randomSound: RandomSound? = null,
+    ) : Definition, Transforms, Recolourable, Parameterized {
 
     var examine : String = ""
 
@@ -86,6 +97,9 @@ data class NpcType(
 
     override val extra: MutableMap<String, Any?>
         get() = extraProperties ?: LinkedHashMap<String, Any?>(8).also { extraProperties = it }
+
+    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
+    fun toBuilder(): NpcTypeBuilder = NpcTypeBuilder.from(this)
 
     fun isAttackable(): Boolean = combatLevel > 0 && actions.opsOrEmpty.any { it?.text == "Attack" }
 

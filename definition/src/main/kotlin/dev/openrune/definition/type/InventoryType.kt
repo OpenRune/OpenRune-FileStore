@@ -1,15 +1,22 @@
 package dev.openrune.definition.type
 
+import dev.openrune.definition.type.builders.InventoryTypeBuilder
+
 import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.toml.serialization.TomlField
 import dev.openrune.definition.Definition
-import dev.openrune.definition.MutableParameterized
+import dev.openrune.definition.Parameterized
 import dev.openrune.seralizer.ParamSerializer
 
 @RsTableHeaders("inventory")
 data class InventoryType(
     override var id: Int = -1,
-    var size: Int = 0,
+    val size: Int = 0,
+    // Stays MutableMap: ParamSerializer's declared type argument must match the parameter type.
     @param:TomlField(serializer = ParamSerializer::class)
-    override var params: MutableMap<Int, Any>? = null,
-) : MutableParameterized, Definition
+    override val params: MutableMap<Int, Any>? = null,
+) : Parameterized, Definition {
+
+    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
+    fun toBuilder(): InventoryTypeBuilder = InventoryTypeBuilder.from(this)
+}

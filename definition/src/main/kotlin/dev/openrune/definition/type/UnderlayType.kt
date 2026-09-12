@@ -1,14 +1,22 @@
 package dev.openrune.definition.type
 
+import dev.openrune.definition.type.builders.UnderlayTypeBuilder
+
 import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
 
 @RsTableHeaders("underlay")
 data class UnderlayType(
     override var id: Int = -1,
-    var rgb: Int = 0
+    val rgb: Int = 0
 ) : Definition {
 
+    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
+    fun toBuilder(): UnderlayTypeBuilder = UnderlayTypeBuilder.from(this)
+
+    // Derived HSL cache, not cache data: [setHsl] fills these in from [rgb] right after the
+    // builder constructs the instance, so they stay body-level vars. By convention they are not
+    // modified once a definition has been built.
     var hue: Int = 0
     var saturation: Int = 0
     var lightness: Int = 0

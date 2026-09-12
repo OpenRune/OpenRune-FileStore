@@ -1,14 +1,21 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.type.SpotAnimType
+import dev.openrune.definition.type.builders.SpotAnimTypeBuilder
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class SpotAnimCodec(val rev : Int) : DefinitionCodec<SpotAnimType> {
-    override fun SpotAnimType.read(opcode: Int, buffer: ByteBuf) {
+class SpotAnimCodec(val rev : Int) : BuilderDefinitionCodec<SpotAnimType, SpotAnimTypeBuilder> {
+
+    override fun builder(id: Int) = SpotAnimTypeBuilder(id)
+
+    override fun build(builder: SpotAnimTypeBuilder) = builder.build()
+
+    override fun SpotAnimTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         when (opcode) {
             1 -> modelId = buffer.readUnsignedShort()
             2 -> animationId = buffer.readUnsignedShort()

@@ -121,22 +121,27 @@ class ItemSpriteFactory(
         decorate
     )
 
-    private fun linkItem(item: ItemType) {
+    /** Applies the note/bought/placeholder links as a copy; the cached definitions stay untouched. */
+    private fun linkItem(item: ItemType): ItemType {
+        if (item.noteTemplateId == -1 && item.notedId == -1 && item.placeholderTemplate == -1) return item
+
+        val builder = item.toBuilder()
         if (item.noteTemplateId != -1) {
-            val template = items[item.noteTemplateId] ?: return
-            val linked = items[item.noteLinkId] ?: return
-            item.linkNote(template, linked)
+            val template = items[item.noteTemplateId] ?: return builder.build()
+            val linked = items[item.noteLinkId] ?: return builder.build()
+            builder.linkNote(template, linked)
         }
         if (item.notedId != -1) {
-            val template = items[item.notedId] ?: return
-            val linked = items[item.unnotedId] ?: return
-            item.linkBought(template, linked)
+            val template = items[item.notedId] ?: return builder.build()
+            val linked = items[item.unnotedId] ?: return builder.build()
+            builder.linkBought(template, linked)
         }
         if (item.placeholderTemplate != -1) {
-            val template = items[item.placeholderTemplate] ?: return
-            val linked = items[item.placeholderLink] ?: return
-            item.linkPlaceholder(template, linked)
+            val template = items[item.placeholderTemplate] ?: return builder.build()
+            val linked = items[item.placeholderLink] ?: return builder.build()
+            builder.linkPlaceholder(template, linked)
         }
+        return builder.build()
     }
 
     @Throws(IOException::class)
@@ -149,9 +154,7 @@ class ItemSpriteFactory(
         background: Int = BACKGROUND_BLACK,
         decorate: Boolean = true
     ): SpritePixels? {
-        var item = items[itemId]?.copy() ?: return null
-
-        linkItem(item)
+        var item = linkItem(items[itemId] ?: return null)
 
         if (quantity > 1 && item.countObj != null) {
             var stackItemID = -1
@@ -163,8 +166,7 @@ class ItemSpriteFactory(
             }
 
             if (stackItemID != -1) {
-                item = items[stackItemID]?.copy() ?: return null
-                linkItem(item)
+                item = linkItem(items[stackItemID] ?: return null)
             }
         }
 

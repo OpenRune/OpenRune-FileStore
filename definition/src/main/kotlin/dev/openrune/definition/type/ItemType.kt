@@ -1,12 +1,14 @@
 package dev.openrune.definition.type
 
+import dev.openrune.definition.type.builders.ItemTypeBuilder
+
 import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.toml.serialization.TomlField
 import dev.openrune.definition.Definition
 import dev.openrune.definition.EntityOpsBuilder
 import dev.openrune.definition.EntityOpsDefinition
-import dev.openrune.definition.MutableParameterized
-import dev.openrune.definition.MutableRecolourable
+import dev.openrune.definition.Parameterized
+import dev.openrune.definition.Recolourable
 import dev.openrune.seralizer.ObjStackabilitySerializer
 import dev.openrune.seralizer.ItemTypeOptionsTableHook
 import dev.openrune.seralizer.ParamSerializer
@@ -14,77 +16,90 @@ import dev.openrune.seralizer.ParamSerializer
 /** The op set every item starts with; shared because [EntityOpsDefinition] is immutable. */
 val DEFAULT_ITEM_OPTIONS: EntityOpsDefinition = EntityOpsBuilder().op(2, "Take").build()
 
+/**
+ * A loaded item definition. Immutable apart from [id] and the handful of fields the TOML options
+ * hook assigns after construction ([options], [equipSlot], [appearanceOverride1],
+ * [appearanceOverride2]; [interfaceOptions] is filled in place). Decoding and packing build one
+ * through [ItemTypeBuilder].
+ */
 @RsTableHeaders(
     "item",
     rowPostDecode = ItemTypeOptionsTableHook::class,
 )
 data class ItemType(
     override var id: Int = -1,
-    var name: String = "null",
-    var examine: String = "null",
-    override var originalColours: MutableList<Int>? = null,
-    override var modifiedColours: MutableList<Int>? = null,
-    override var originalTextureColours: MutableList<Int>? = null,
-    override var modifiedTextureColours: MutableList<Int>? = null,
+    val name: String = "null",
+    val examine: String = "null",
+    override val originalColours: List<Int>? = null,
+    override val modifiedColours: List<Int>? = null,
+    override val originalTextureColours: List<Int>? = null,
+    override val modifiedTextureColours: List<Int>? = null,
+    // Stays MutableMap: ParamSerializer's declared type argument must match the parameter type.
     @param:TomlField(serializer = ParamSerializer::class)
-    override var params: MutableMap<Int, Any>? = null,
-    var resizeX: Int = 128,
-    var resizeY: Int = 128,
-    var resizeZ: Int = 128,
-    var xan2d: Int = 0,
-    var category: Int = -1,
-    var yan2d: Int = 0,
-    var zan2d: Int = 0,
+    override val params: MutableMap<Int, Any>? = null,
+    val resizeX: Int = 128,
+    val resizeY: Int = 128,
+    val resizeZ: Int = 128,
+    val xan2d: Int = 0,
+    val category: Int = -1,
+    val yan2d: Int = 0,
+    val zan2d: Int = 0,
+    // var: the TOML options hook assigns these after construction.
     var equipSlot: Int = -1,
     var appearanceOverride1: Int = -1,
     var appearanceOverride2: Int = -1,
-    var weight: Double = 0.0,
-    var cost: Int = 1,
-    var stockMarket: Boolean = false,
-    var tradeable: Boolean = true,
+    val weight: Double = 0.0,
+    val cost: Int = 1,
+    val stockMarket: Boolean = false,
+    val tradeable: Boolean = true,
     @param:TomlField(serializer = ObjStackabilitySerializer::class)
-    var stacks: ObjStackability = ObjStackability.Sometimes,
-    var inventoryModel: Int = 0,
-    var members: Boolean = false,
-    var zoom2d: Int = 2000,
-    var xOffset2d: Int = 0,
-    var yOffset2d: Int = 0,
-    var ambient: Int = 0,
-    var contrast: Int = 0,
-    var countCo: MutableList<Int>? = null,
-    var countObj: MutableList<Int>? = null,
-    // Immutable and shared: every stock item points at the same default "Take" op set.
+    val stacks: ObjStackability = ObjStackability.Sometimes,
+    val inventoryModel: Int = 0,
+    val members: Boolean = false,
+    val zoom2d: Int = 2000,
+    val xOffset2d: Int = 0,
+    val yOffset2d: Int = 0,
+    val ambient: Int = 0,
+    val contrast: Int = 0,
+    val countCo: List<Int>? = null,
+    val countObj: List<Int>? = null,
+    // var: the TOML options hook replaces it; immutable and shared, every stock item points at
+    // the same default "Take" op set.
     var options : EntityOpsDefinition = DEFAULT_ITEM_OPTIONS,
-    var interfaceOptions: MutableList<String?> = mutableListOf(null, null, null, null, "Drop"),
-    var maleModel0: Int = -1,
-    var maleModel1: Int = -1,
-    var maleModel2: Int = -1,
-    var maleOffset: Int = 0,
-    var maleHeadModel0: Int = -1,
-    var maleHeadModel1: Int = -1,
-    var femaleModel0: Int = -1,
-    var femaleModel1: Int = -1,
-    var femaleModel2: Int = -1,
-    var femaleOffset: Int = 0,
-    var femaleHeadModel0: Int = -1,
-    var femaleHeadModel1: Int = -1,
-    var noteLinkId: Int = -1,
-    var noteTemplateId: Int = -1,
-    var teamCape: Int = 0,
-    var dropOptionIndex: Int = -2,
-    var unnotedId: Int = -1,
-    var notedId: Int = -1,
-    var placeholderLink: Int = -1,
-    var placeholderTemplate: Int = -1,
-    var subops: Array<Array<String?>?>? = null,
+    // The hook fills slots in place, so this stays a mutable list by design.
+    val interfaceOptions: MutableList<String?> = mutableListOf(null, null, null, null, "Drop"),
+    val maleModel0: Int = -1,
+    val maleModel1: Int = -1,
+    val maleModel2: Int = -1,
+    val maleOffset: Int = 0,
+    val maleHeadModel0: Int = -1,
+    val maleHeadModel1: Int = -1,
+    val femaleModel0: Int = -1,
+    val femaleModel1: Int = -1,
+    val femaleModel2: Int = -1,
+    val femaleOffset: Int = 0,
+    val femaleHeadModel0: Int = -1,
+    val femaleHeadModel1: Int = -1,
+    val noteLinkId: Int = -1,
+    val noteTemplateId: Int = -1,
+    val teamCape: Int = 0,
+    val dropOptionIndex: Int = -2,
+    val unnotedId: Int = -1,
+    val notedId: Int = -1,
+    val placeholderLink: Int = -1,
+    val placeholderTemplate: Int = -1,
+    val subops: Array<Array<String?>?>? = null,
 
-    ) : Definition, MutableRecolourable, MutableParameterized {
+    ) : Definition, Recolourable, Parameterized {
 
     // In the body so it stays out of equals/hashCode/toString/copy. Used by the r718 codec.
     private var extraProperties: MutableMap<String, Any?>? = null
 
     override val extra: MutableMap<String, Any?>
         get() = extraProperties ?: LinkedHashMap<String, Any?>(8).also { extraProperties = it }
+
+    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
+    fun toBuilder(): ItemTypeBuilder = ItemTypeBuilder.from(this)
 
     val stackable: Boolean
         get() = stacks == ObjStackability.Always || noteTemplateId > 0
@@ -97,81 +112,6 @@ data class ItemType(
      */
     val isPlaceholder
         get() = placeholderTemplate > 0 && placeholderLink > 0
-
-
-    fun linkNote(notedItem: ItemType, unnotedItem: ItemType) {
-        this.inventoryModel = notedItem!!.inventoryModel
-        this.zoom2d = notedItem.zoom2d
-        this.xan2d = notedItem.xan2d
-        this.yan2d = notedItem.yan2d
-        this.zan2d = notedItem.zan2d
-        this.xOffset2d = notedItem.xOffset2d
-        this.yOffset2d = notedItem.yOffset2d
-        this.originalTextureColours = notedItem.originalTextureColours
-        this.modifiedColours = notedItem.modifiedColours
-        this.originalTextureColours = notedItem.originalTextureColours
-        this.modifiedTextureColours = notedItem.modifiedTextureColours
-        this.name = unnotedItem.name
-        this.members = unnotedItem.members
-        this.cost = unnotedItem.cost
-        this.stacks = ObjStackability.Always
-    }
-
-    fun linkBought(var1: ItemType, var2: ItemType) {
-        this.inventoryModel = var1.inventoryModel
-        this.zoom2d = var1.zoom2d
-        this.xan2d = var1.xan2d
-        this.yan2d = var1.yan2d
-        this.zan2d = var1.zan2d
-        this.xOffset2d = var1.xOffset2d
-        this.yOffset2d = var1.yOffset2d
-        this.originalTextureColours = var2.originalTextureColours
-        this.modifiedColours = var2.modifiedColours
-        this.originalTextureColours = var2.originalTextureColours
-        this.modifiedTextureColours = var2.modifiedTextureColours
-        this.name = var2.name
-        this.members = var2.members
-        this.stacks = var2.stacks
-        this.maleModel0 = var2.maleModel0
-        this.maleModel1 = var2.maleModel1
-        this.maleModel2 = var2.maleModel2
-        this.femaleModel0 = var2.femaleModel0
-        this.femaleModel1 = var2.femaleModel1
-        this.femaleModel2 = var2.femaleModel2
-        this.maleHeadModel0 = var2.maleHeadModel0
-        this.maleHeadModel1 = var2.maleHeadModel1
-        this.femaleHeadModel0 = var2.femaleHeadModel0
-        this.femaleHeadModel1 = var2.femaleHeadModel1
-        this.teamCape = var2.teamCape
-        this.options = var2.options
-        this.interfaceOptions = arrayOfNulls<String>(5).toMutableList()
-        for (var3 in 0..3) {
-            interfaceOptions[var3] = var2.interfaceOptions[var3]
-        }
-
-        interfaceOptions[4] = "Discard"
-        this.cost = 0
-    }
-
-    fun linkPlaceholder(var1: ItemType, var2: ItemType) {
-        this.inventoryModel = var1.inventoryModel
-        this.zoom2d = var1.zoom2d
-        this.xan2d = var1.xan2d
-        this.yan2d = var1.yan2d
-        this.zan2d = var1.zan2d
-        this.xOffset2d = var1.xOffset2d
-        this.yOffset2d = var1.yOffset2d
-        this.originalTextureColours = var1.originalTextureColours
-        this.modifiedTextureColours = var1.modifiedTextureColours
-        this.originalTextureColours = var1.originalTextureColours
-        this.modifiedTextureColours = var1.modifiedTextureColours
-        this.stacks = var1.stacks
-        this.name = var2.name
-        this.cost = 0
-        this.members = false
-        this.stockMarket = false
-    }
-
 }
 
 public enum class ObjStackability(public val id: Int) {

@@ -4,20 +4,39 @@ import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.DBTableIndexColumn
 import dev.openrune.definition.type.DBTableIndexKey
 import dev.openrune.definition.type.DBTableIndexType
+import dev.openrune.definition.type.builders.DBTableIndexTypeBuilder
 import dev.openrune.definition.util.BaseVarType
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.readVarInt
 import dev.openrune.definition.util.writeString
 import dev.openrune.definition.util.writeVarInt
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
 class DBTableIndexCodec : DefinitionCodec<DBTableIndexType> {
 
-    override fun readLoop(definition: DBTableIndexType, buffer: ByteBuf) {
-        definition.read(0, buffer)
+    override fun DBTableIndexType.read(opcode: Int, buffer: ByteBuf) =
+        error("DBTableIndexType is immutable; decoding goes through DBTableIndexTypeBuilder")
+
+    override fun loadData(id: Int, data: ByteBuf?): DBTableIndexType = decode(id, data)
+
+    override fun loadData(id: Int, data: ByteArray?): DBTableIndexType =
+        decode(id, data?.takeIf { it.isNotEmpty() }?.let { Unpooled.wrappedBuffer(it) })
+
+    /** The blob is one fixed layout, not an opcode stream, so it is read in a single pass. */
+    private fun decode(id: Int, data: ByteBuf?): DBTableIndexType {
+        val builder = DBTableIndexTypeBuilder(id)
+        if (data != null && data.readableBytes() > 0) {
+            try {
+                builder.read(data)
+            } catch (e: Exception) {
+                throw IllegalStateException("Unable to decode DBTableIndexType [$id]", e)
+            }
+        }
+        return builder.build()
     }
 
-    override fun DBTableIndexType.read(opcode: Int, buffer: ByteBuf) {
+    private fun DBTableIndexTypeBuilder.read(buffer: ByteBuf) {
         columns.clear()
         val tupleSize = buffer.readVarInt()
         repeat(tupleSize) {

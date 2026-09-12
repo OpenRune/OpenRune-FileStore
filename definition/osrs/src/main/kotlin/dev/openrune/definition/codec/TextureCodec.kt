@@ -1,13 +1,20 @@
 package dev.openrune.definition.codec
 
-import dev.openrune.definition.DefinitionCodec
+import dev.openrune.definition.BuilderDefinitionCodec
 import dev.openrune.definition.revisionIsOrBefore
 import dev.openrune.definition.type.DEFAULT_TEXTURE_SIZE
 import dev.openrune.definition.type.TextureType
+import dev.openrune.definition.type.builders.TextureTypeBuilder
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
 
-class TextureCodec(private val revision: Int) : DefinitionCodec<TextureType> {
-    override fun TextureType.read(opcode: Int, buffer: ByteBuf) {
+class TextureCodec(private val revision: Int) : BuilderDefinitionCodec<TextureType, TextureTypeBuilder> {
+
+    override fun builder(id: Int) = TextureTypeBuilder(id)
+
+    override fun build(builder: TextureTypeBuilder) = builder.build()
+
+    override fun TextureTypeBuilder.read(opcode: Int, buffer: ByteBuf) {
         if (revisionIsOrBefore(revision,232)) {
             averageRgb = buffer.readUnsignedShort()
             isTransparent = buffer.readUnsignedByte().toInt() == 1
@@ -67,8 +74,4 @@ class TextureCodec(private val revision: Int) : DefinitionCodec<TextureType> {
     }
 
     override fun createDefinition() = TextureType()
-
-    override fun readLoop(definition: TextureType, buffer: ByteBuf) {
-        definition.read(-1, buffer)
-    }
 }

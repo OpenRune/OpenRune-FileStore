@@ -1,5 +1,7 @@
 package dev.openrune.definition.type
 
+import dev.openrune.definition.type.builders.TextureTypeBuilder
+
 import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.definition.Definition
 import dev.openrune.definition.game.render.util.JagexColor
@@ -10,13 +12,16 @@ val DEFAULT_TEXTURE_SIZE = 128
 @RsTableHeaders("texture")
 data class TextureType(
     override var id: Int = -1,
-    var isTransparent : Boolean = false,
-    var fileId : Int = -1,
-    var averageRgb : Int = 0,
-    var animationDirection : Int = 0,
-    var animationSpeed : Int = 0,
-    var isLowDetail : Boolean = false
+    val isTransparent : Boolean = false,
+    val fileId : Int = -1,
+    val averageRgb : Int = 0,
+    val animationDirection : Int = 0,
+    val animationSpeed : Int = 0,
+    val isLowDetail : Boolean = false
 ) : Definition {
+
+    /** A mutable copy of this definition, for tools that need to edit and re-pack it. */
+    fun toBuilder(): TextureTypeBuilder = TextureTypeBuilder.from(this)
 
     private var pixels: IntArray? = null
     private var pixelsBrightness: Double = Double.NaN
