@@ -15,6 +15,8 @@ class ItemSpriteBuilder(private val itemSpriteFactory: ItemSpriteFactory, val it
     var xOffset2d = -1
     var yOffset2d = -1
     var autoScaleZoom = false
+    var fitToCanvas = false
+    var fitMargin = 0.0
 
     fun quantity(quantity: Int): ItemSpriteBuilder {
         this.quantity = quantity
@@ -40,6 +42,30 @@ class ItemSpriteBuilder(private val itemSpriteFactory: ItemSpriteFactory, val it
      */
     fun autoScaleZoom(autoScale: Boolean): ItemSpriteBuilder {
         this.autoScaleZoom = autoScale
+        return this
+    }
+
+    /**
+     * Scales the item to fill the sprite without distorting it and centres it, instead of keeping the client's
+     * fixed framing. Leave this off when you need sprites that match what the game draws.
+     *
+     * @param fit Whether the item should be fitted to the sprite.
+     * @return The updated builder instance.
+     */
+    fun fitToCanvas(fit: Boolean): ItemSpriteBuilder {
+        this.fitToCanvas = fit
+        return this
+    }
+
+    /**
+     * Empty space kept on each side when fitting, as a fraction of the sprite's size. 0.05 leaves a 5% margin.
+     * Ignored unless [fitToCanvas] is on.
+     *
+     * @param margin The margin fraction, clamped to below half.
+     * @return The updated builder instance.
+     */
+    fun fitMargin(margin: Double): ItemSpriteBuilder {
+        this.fitMargin = margin
         return this
     }
 

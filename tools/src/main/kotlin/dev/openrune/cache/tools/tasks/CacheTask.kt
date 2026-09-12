@@ -1,6 +1,9 @@
 package dev.openrune.cache.tools.tasks
 
 import dev.openrune.cache.tools.TaskPriority
+import dev.openrune.cache.tools.incremental.IncrementalBuild
+import dev.openrune.cache.tools.progress.CacheProgress
+import dev.openrune.cache.tools.progress.DefaultCacheProgress
 import dev.openrune.filesystem.Cache
 
 abstract class CacheTask(val serverTaskOnly : Boolean = false) {
@@ -11,6 +14,13 @@ abstract class CacheTask(val serverTaskOnly : Boolean = false) {
     open var revision: Int = -1
     internal var serverPass : Boolean = false
     open val priority: TaskPriority = TaskPriority.NORMAL
+
+    var incremental: IncrementalBuild = IncrementalBuild.DISABLED
+        internal set
+
+    var progress: CacheProgress = DefaultCacheProgress()
+        internal set
+
     abstract fun init(cache : Cache)
 
     companion object {

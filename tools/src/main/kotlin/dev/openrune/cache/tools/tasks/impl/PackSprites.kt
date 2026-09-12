@@ -5,12 +5,13 @@ import dev.openrune.toml.tomlMapper
 import dev.openrune.cache.SPRITES
 import dev.openrune.cache.gameval.impl.Sprite as GameValSprite
 import dev.openrune.cache.tools.CacheTool
+import dev.openrune.cache.tools.incremental.Hashing
+import dev.openrune.cache.tools.incremental.PackUnit
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.sprites.Sprite
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteManifest
 import dev.openrune.cache.tools.tasks.impl.sprites.SpriteSet
 import dev.openrune.cache.util.getFiles
-import dev.openrune.cache.util.progress
 import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.filesystem.Cache
@@ -41,34 +42,67 @@ class PackSprites(
 
     companion object {
         val customSprites: MutableMap<Int, SpriteSet> = mutableMapOf()
+
+        private val UNNAMED_SPRITE = Regex("^[_0-9]+\\.png$", RegexOption.IGNORE_CASE)
     }
 
     private var manifest: MutableMap<String, SpriteManifest> = mutableMapOf()
 
+    private var manifestFingerprint: String = "absent"
+
     override fun init(cache: Cache) {
         val files = getFiles(spritesDirectory, "png", "PNG")
-        val alreadyPacked = mutableListOf<String>()
-
-        val progress = progress(
-            "Packing OSRS Sprites",
-            files.filter { it.extension.contains("png", true) }.size
-        )
+        if (files.isEmpty()) return
 
         if (spriteManifest.exists()) {
             loadManifest()
         }
 
-        files.forEach { spriteFile ->
-            progress.extraMessage = spriteFile.name
-            processSpriteFile(spriteFile, alreadyPacked, cache)
-            progress.step()
+        val groups = groupByTarget(files)
+        if (groups.isEmpty()) return
+
+        val units = groups.map { (group, groupFiles) ->
+            PackUnit(key = "group:$group", sources = groupFiles, label = "sprite $group")
         }
 
-        customSprites.forEach { (id, spriteSet) ->
-            cache.write(SPRITES, id, 0, spriteSet.encode().array())
+        incremental.run(
+            task = this,
+            scope = spritesDirectory.absolutePath,
+            label = "Packing OSRS Sprites",
+            cache = cache,
+            units = units,
+            extraFingerprints = mapOf(spriteManifest.absolutePath to manifestFingerprint),
+        ) { packCache, unit ->
+            packGroup(packCache, unit.key.removePrefix("group:").toInt(), unit.sources)
+        }
+    }
+
+    private fun groupByTarget(files: List<File>): Map<Int, List<File>> {
+        val groups = LinkedHashMap<Int, MutableList<File>>()
+
+        files.forEach { file ->
+            val group = manifest[file.nameWithoutExtension.lowercase()]?.id
+                ?: unnamedGroupOf(file)
+                ?: return@forEach
+            groups.getOrPut(group) { mutableListOf() } += file
         }
 
-        progress.close()
+        return groups.mapValues { (_, groupFiles) -> groupFiles.sortedWith(SPRITE_ORDER) }
+    }
+
+    private fun unnamedGroupOf(file: File): Int? {
+        if (!file.name.matches(UNNAMED_SPRITE)) return null
+        return file.nameWithoutExtension.split("_").firstOrNull()?.toIntOrNull()
+    }
+
+    private fun packGroup(cache: Cache, group: Int, groupFiles: List<File>) {
+        customSprites.remove(group)
+
+        groupFiles.forEach { spriteFile -> processSpriteFile(spriteFile, cache) }
+
+        customSprites[group]?.let { spriteSet ->
+            cache.write(SPRITES, group, 0, spriteSet.encode().array())
+        }
     }
 
     private fun loadManifest() {
@@ -82,6 +116,8 @@ class PackSprites(
             val key = match.groupValues[1]
             replacements[key] ?: match.value
         }
+
+        manifestFingerprint = Hashing.hashBytes(replaced.toByteArray())
 
         val raw = mapper.decode<Map<String, Any>>(replaced)
 
@@ -121,7 +157,6 @@ class PackSprites(
 
     private fun processSpriteFile(
         spriteFile: File,
-        alreadyPacked: MutableList<String>,
         cache: Cache
     ) {
         val fileName = spriteFile.nameWithoutExtension.lowercase()
@@ -133,8 +168,6 @@ class PackSprites(
             } else {
                 packNamedSprite(spriteFile, data, fileName)
             }
-
-            alreadyPacked.add(spriteFile.name)
 
         } ?: handleUnNamedSprite(spriteFile, cache)
     }
@@ -201,7 +234,7 @@ class PackSprites(
         spriteFile: File,
         cache: Cache
     ) {
-        if (!spriteFile.name.matches(Regex("^[_0-9]+\\.png$", RegexOption.IGNORE_CASE))) {
+        if (!spriteFile.name.matches(UNNAMED_SPRITE)) {
             return
         }
 
@@ -310,3 +343,8 @@ class PackSprites(
         return ImageIO.read(path)
     }
 }
+
+private val SPRITE_ORDER = compareBy<File>(
+    { it.nameWithoutExtension.substringAfter('_', "0").toIntOrNull() ?: Int.MAX_VALUE },
+    { it.name },
+)

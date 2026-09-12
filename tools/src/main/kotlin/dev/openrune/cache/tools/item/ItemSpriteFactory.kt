@@ -1,6 +1,8 @@
 package dev.openrune.cache.tools.item
 
+import dev.openrune.OsrsCacheProvider
 import dev.openrune.cache.filestore.definition.ModelDecoder
+import dev.openrune.cache.filestore.definition.SpriteDecoder
 import dev.openrune.definition.game.*
 import dev.openrune.definition.game.render.draw.Rasterizer3D
 import dev.openrune.definition.game.render.draw.SpritePixels
@@ -10,9 +12,15 @@ import dev.openrune.definition.game.render.util.JagexColor
 import dev.openrune.definition.type.ItemType
 import dev.openrune.definition.type.SpriteType
 import dev.openrune.definition.type.TextureType
+import dev.openrune.filesystem.Cache
+import readCacheRevision
 import java.awt.image.BufferedImage
 import java.io.IOException
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
+private val ItemType.hasTemplate: Boolean
+    get() = noteTemplateId != -1 || notedId != -1 || placeholderTemplate != -1
 
 class ItemSpriteFactory(
     private val modelDecoder: ModelDecoder,
@@ -20,32 +28,93 @@ class ItemSpriteFactory(
     private val sprites1: MutableMap<Int, SpriteType>,
     val items: Map<Int, ItemType>
 ) {
+    companion object {
+        private const val CLIENT_FRAME_HEIGHT = 32
+
+        private const val CLIENT_FRAME_WIDTH = 36
+
+        private const val CLIENT_PROJECTION_ZOOM = 512
+
+        private const val MAX_PROJECTION_ZOOM = 10_000
+
+        @JvmStatic
+        @JvmOverloads
+        fun fromCache(
+            cache: Cache,
+            revision: Int = readCacheRevision(cache),
+            items: Map<Int, ItemType>? = null
+        ): ItemSpriteFactory {
+            val loadedItems = items ?: mutableMapOf<Int, ItemType>().also {
+                OsrsCacheProvider.ItemDecoder(revision).load(cache, it)
+            }
+            val textures = mutableMapOf<Int, TextureType>().also {
+                OsrsCacheProvider.TextureDecoder(revision).load(cache, it)
+            }
+            val sprites = mutableMapOf<Int, SpriteType>().also { SpriteDecoder().load(cache, it) }
+            return ItemSpriteFactory(ModelDecoder(cache), textures, sprites, loadedItems)
+        }
+    }
+
+    fun item(itemID: Int): ItemSpriteBuilder = ItemSpriteBuilder(this, itemID)
 
     lateinit var itemSpriteFactory : ItemSpriteBuilder
 
+    private var canvasSize = 0
+
+    private var projectionZoom = CLIENT_PROJECTION_ZOOM
+
     @Throws(IOException::class)
     fun createSprite(itemSpriteFactory: ItemSpriteBuilder): BufferedImage? {
-        this.itemSpriteFactory =  itemSpriteFactory
-        val spritePixels = createSpritePixels(
-            itemSpriteFactory.itemID,
-            itemSpriteFactory.quantity,
-            itemSpriteFactory.border,
-            itemSpriteFactory.shadowColor,
-            false
-        )
-        return spritePixels?.toBufferedImage()
+        this.itemSpriteFactory = itemSpriteFactory
+        canvasSize = itemSpriteFactory.size
+        projectionZoom = projectionZoomFor(canvasSize)
+        return try {
+            val sprite = render() ?: return null
+            if (itemSpriteFactory.fitToCanvas) sprite.centerContent()
+            sprite.toBufferedImage()
+        } finally {
+            canvasSize = 0
+            projectionZoom = CLIENT_PROJECTION_ZOOM
+        }
     }
 
+    private fun projectionZoomFor(size: Int): Int {
+        if (size <= 0) return CLIENT_PROJECTION_ZOOM
+
+        val frame = when {
+            itemSpriteFactory.fitToCanvas -> CLIENT_FRAME_WIDTH
+            itemSpriteFactory.autoScaleZoom -> CLIENT_FRAME_HEIGHT
+            else -> return CLIENT_PROJECTION_ZOOM
+        }
+
+        val margin = if (itemSpriteFactory.fitToCanvas) itemSpriteFactory.fitMargin.coerceIn(0.0, 0.49) else 0.0
+        val scaled = CLIENT_PROJECTION_ZOOM.toDouble() * size / frame * (1.0 - 2.0 * margin)
+        return scaled.toInt().coerceIn(1, MAX_PROJECTION_ZOOM)
+    }
+
+    private fun render(): SpritePixels? = createSpritePixels(
+        itemSpriteFactory.itemID,
+        itemSpriteFactory.quantity,
+        itemSpriteFactory.border,
+        itemSpriteFactory.shadowColor,
+        false
+    )
 
     private fun linkItem(item: ItemType) {
-        item.noteTemplateId.takeIf { it != -1 }?.let {
-            item.linkNote(items[it]!!, items[item.noteLinkId]!!)
+        if (item.noteTemplateId != -1) {
+            val template = items[item.noteTemplateId] ?: return
+            val linked = items[item.noteLinkId] ?: return
+            item.linkNote(template, linked)
         }
-        item.notedId.takeIf { it != -1 }?.let {
-            item.linkBought(items[it]!!, items[item.unnotedId]!!)
+        if (item.notedId != -1) {
+            val template = items[item.notedId] ?: return
+            val linked = items[item.unnotedId] ?: return
+            item.linkBought(template, linked)
         }
-        item.placeholderTemplate.takeIf { it != -1 }?.let {
-            item.linkPlaceholder(items[it]!!, items[item.placeholderLink]!!)
+        if (item.placeholderTemplate != -1) {
+            val template = items[item.placeholderTemplate] ?: return
+            val linked = items[item.placeholderLink] ?: return
+            item.linkPlaceholder(template, linked)
         }
     }
 
@@ -57,7 +126,7 @@ class ItemSpriteFactory(
         shadowColor: Int,
         noted: Boolean
     ): SpritePixels? {
-        var item = items[itemId] ?: return null
+        var item = items[itemId]?.copy() ?: return null
 
         linkItem(item)
 
@@ -71,57 +140,59 @@ class ItemSpriteFactory(
             }
 
             if (stackItemID != -1) {
-                item = items[stackItemID] ?: return null
+                item = items[stackItemID]?.copy() ?: return null
+                linkItem(item)
             }
         }
 
         val itemModel = getModel(item) ?: return null
 
-        val auxSpritePixels = createAuxSpritePixels(item)
+        val auxSpritePixels = createAuxSpritePixels(item, quantity, border)
+        if (auxSpritePixels == null && item.hasTemplate) return null
 
-        val spritePixels = SpritePixels(itemSpriteFactory.size, itemSpriteFactory.size)
+        val spritePixels = SpritePixels(canvasSize, canvasSize)
+
+        val centered = itemSpriteFactory.autoScaleZoom || itemSpriteFactory.fitToCanvas
+        val offset = if (centered) canvasSize / 2 else 16
 
         val graphics = Rasterizer3D(textures, sprites1).apply {
             setBrightness(JagexColor.BRIGHTNESS_MAX)
-            setRasterBuffer(spritePixels.pixels, itemSpriteFactory.size, itemSpriteFactory.size)
+            setRasterBuffer(spritePixels.pixels, canvasSize, canvasSize)
             reset()
             setRasterClipping()
-            setOffset(if (itemSpriteFactory.autoScaleZoom) itemSpriteFactory.size / 2 else 16, if (itemSpriteFactory.autoScaleZoom) itemSpriteFactory.size / 2 else 16)
+            setOffset(offset, offset)
             isGouraudShadingLowRes = false
+            zoom = projectionZoom
         }
 
-        auxSpritePixels?.drawAtOn(graphics, 0, 0)
+        if (item.placeholderTemplate != -1) auxSpritePixels?.drawAtOn(graphics, 0, 0)
 
         val zoom = calculateZoom(item, border, noted)
 
         drawItemModel(itemModel, item, graphics, ModelContext(), zoom)
 
+        if (item.notedId != -1) auxSpritePixels?.drawAtOn(graphics, 0, 0)
+
         applyBordersAndShadows(spritePixels, border, shadowColor)
 
-        graphics.setRasterBuffer(spritePixels.pixels, itemSpriteFactory.size, itemSpriteFactory.size)
-        auxSpritePixels?.drawAtOn(graphics, 0, 0)
+        if (item.noteTemplateId != -1) {
+            graphics.setRasterBuffer(spritePixels.pixels, canvasSize, canvasSize)
+            auxSpritePixels?.drawAtOn(graphics, 0, 0)
+        }
 
         return spritePixels
     }
 
     private fun calculateZoom(item: ItemType, border: Int, noted: Boolean): Int {
-        var zoom2d = if (itemSpriteFactory.zoom2d == -1) item.zoom2d else itemSpriteFactory.zoom2d
-        if (itemSpriteFactory.autoScaleZoom) {
-            if (itemSpriteFactory.size > 0) {
-                zoom2d = zoom2d * 32 / itemSpriteFactory.size
-            }
-        }
-        var zoom = zoom2d
-        zoom = when {
+        val zoom = if (itemSpriteFactory.zoom2d == -1) item.zoom2d else itemSpriteFactory.zoom2d
+        return when {
             noted -> (zoom * 1.5).toInt()
             border == 2 -> (zoom * 1.04).toInt()
             else -> zoom
         }
-        return zoom
     }
 
     private fun drawItemModel(itemModel: Model, item: ItemType, graphics: Rasterizer3D, context: ModelContext, zoom: Int) {
-
         val yan2d = if (itemSpriteFactory.yan2d == -1) item.yan2d else itemSpriteFactory.yan2d
         val zan2d = if (itemSpriteFactory.zan2d == -1) item.zan2d else itemSpriteFactory.zan2d
         val xan2d = if (itemSpriteFactory.xan2d == -1) item.xan2d else itemSpriteFactory.xan2d
@@ -145,18 +216,11 @@ class ItemSpriteFactory(
         )
     }
 
-    private fun createAuxSpritePixels(item: ItemType): SpritePixels? {
+    private fun createAuxSpritePixels(item: ItemType, quantity: Int, border: Int): SpritePixels? {
         return when {
-            item.noteTemplateId != -1  -> createSpritePixels(item.noteLinkId, 10, 1, 0, true)
-            item.notedId != -1 -> createSpritePixels(item.unnotedId, item.countObj?.size ?: 0, 1, 0, false)
-            item.placeholderTemplate != -1 -> createSpritePixels(
-                item.placeholderLink,
-                item.countObj?.size ?: 0,
-                0,
-                0,
-                false
-            )
-
+            item.noteTemplateId != -1 -> createSpritePixels(item.noteLinkId, 10, 1, 0, true)
+            item.notedId != -1 -> createSpritePixels(item.unnotedId, quantity, border, 0, false)
+            item.placeholderTemplate != -1 -> createSpritePixels(item.placeholderLink, quantity, 0, 0, false)
             else -> null
         }
     }
@@ -179,13 +243,16 @@ class ItemSpriteFactory(
             }
         }
 
-        return inventoryModel.toModel(item.ambient + 64, item.contrast + 768, -50, -10, -50)
+        return inventoryModel.toModel(item.ambient + 64, item.contrast * 5 + 768, -50, -10, -50)
     }
 
     private fun applyBordersAndShadows(spritePixels: SpritePixels, border: Int, shadowColor: Int) {
-        if (border >= 1) spritePixels.drawBorder(1)
-        if (border >= 2) spritePixels.drawBorder(0xffffff)
-        if (shadowColor != 0) spritePixels.drawShadow(shadowColor)
+        val scale = outlineScale()
+        if (border >= 1) spritePixels.drawBorder(1, scale)
+        if (border >= 2) spritePixels.drawBorder(0xffffff, scale)
+        if (shadowColor != 0) spritePixels.drawShadow(shadowColor, scale)
     }
 
+    private fun outlineScale(): Int =
+        sqrt(projectionZoom.toDouble() / CLIENT_PROJECTION_ZOOM).roundToInt().coerceAtLeast(1)
 }

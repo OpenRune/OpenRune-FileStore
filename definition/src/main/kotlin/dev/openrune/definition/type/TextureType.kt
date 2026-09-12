@@ -19,25 +19,34 @@ data class TextureType(
 ) : Definition {
 
     private var pixels: IntArray? = null
+    private var pixelsBrightness: Double = Double.NaN
+    private var pixelsSize: Int = -1
 
-    fun load(sprites: Map<Int, SpriteType>): IntArray? {
-        return pixels ?: run {
-            initializePixels(JagexColor.BRIGHTNESS_MAX, DEFAULT_TEXTURE_SIZE, sprites)
-            pixels
+    /** Renders and caches the pixels. [brightness] and [textureSize] are part of the cache key. */
+    @JvmOverloads
+    fun load(
+        sprites: Map<Int, SpriteType>,
+        brightness: Double = JagexColor.BRIGHTNESS_LOW,
+        textureSize: Int = DEFAULT_TEXTURE_SIZE
+    ): IntArray? {
+        if (pixels != null && brightness == pixelsBrightness && textureSize == pixelsSize) {
+            return pixels
         }
+        initializePixels(brightness, textureSize, sprites)
+        pixelsBrightness = brightness
+        pixelsSize = textureSize
+        return pixels
     }
 
     private fun initializePixels(brightnessFactor: Double, textureSize: Int, sprites: Map<Int, SpriteType>): Boolean {
         val pixelCount = textureSize * textureSize
         pixels = IntArray(pixelCount)
 
-        val sprite = sprites[fileId]?.sprites?.first() ?: return false
+        // Sampled by absolute coordinate below, so a cropped sprite has to be padded out first.
+        val sprite = (sprites[fileId]?.sprites?.first() ?: return false).normalized()
         val raster = sprite.raster
-        val palette = sprite.palette
-
-        palette.forEachIndexed { idx, color ->
-            palette[idx] = adjustColorBrightness(color, brightnessFactor)
-        }
+        // Into a copy: the palette is shared and gamma is not idempotent.
+        val palette = IntArray(sprite.palette.size) { adjustColorBrightness(sprite.palette[it], brightnessFactor) }
 
         if (textureSize == sprite.width) {
             var pixelIndex = 0

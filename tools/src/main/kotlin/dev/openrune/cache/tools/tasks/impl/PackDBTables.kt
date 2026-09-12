@@ -34,9 +34,11 @@ class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
         val dbtableArchive = library.index(2).archive(DBTABLE) ?: return
         val dbrowArchive = library.index(2).archive(DBROW) ?: return
 
-        val tablesToPack = tables.filter { table -> table.serverOnly == serverPass }
+        // serverOnly=true → server cache only.
+        // serverOnly=false → both caches (client CS2 + server DbHelper), matching PackConfig.
+        val tablesToPack = tables.filter { table -> !table.serverOnly || serverPass }
         if (tablesToPack.isEmpty()) return
-        val progress = progress("Packing DB Tables", tablesToPack.size)
+        val bar = progress.begin("Packing DB Tables", tablesToPack.size)
 
         tablesToPack.forEach { table ->
             try {
@@ -75,9 +77,9 @@ class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
                 e.printStackTrace()
             }
 
-            progress.step()
+            bar.step()
         }
-        progress.close()
+        bar.close()
     }
 
     private fun DBTable.toDbTableType(): DBTableType {

@@ -1,13 +1,23 @@
 package dev.openrune.cache.tools
 
+import dev.openrune.cache.tools.autocert.AutoCertSettings
+import dev.openrune.cache.tools.autocert.CertCandidate
+import dev.openrune.cache.tools.autocert.CertCandidateScanner
+import dev.openrune.cache.tools.gameval.GameValAssigner
+import dev.openrune.cache.tools.incremental.CacheVerification
+import dev.openrune.cache.tools.progress.CacheProgress
+import dev.openrune.cache.tools.progress.DefaultCacheProgress
+import dev.openrune.cache.tools.tasks.impl.defs.PackConfig
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.TaskType
 import dev.openrune.cache.tools.cs2.PackCs2
 import dev.openrune.cache.tools.tasks.impl.PackGameVals
 import dev.openrune.cache.tools.tasks.impl.RemoveBzip
 import dev.openrune.cache.tools.tasks.impl.RemoveXteas
+import dev.openrune.cache.tools.tasks.impl.defs.PackAutoCert
 import dev.openrune.cache.tools.cs2.UnpackDefaultCs2
 import dev.openrune.definition.constants.ConstantProvider
+import dev.openrune.filesystem.Cache
 import java.io.File
 
 fun cacheTool(block: CacheToolDsl.() -> Unit): CacheTool {
@@ -24,6 +34,29 @@ class CacheToolDsl {
     private val removedTasks = mutableListOf<CacheTask>()
 
     private var rscmDir: File? = null
+
+    var autoAssignGameVals: Boolean = false
+
+    var incremental: Boolean = true
+
+    /**
+     * How the cache is checked against recorded state. Set to [CacheVerification.OUTPUT_CRC] for a cache
+     * that is legitimately rewritten between builds, such as a server cache reseeded from a live one.
+     */
+    var verification: CacheVerification = CacheVerification.FINGERPRINT
+
+    /**
+     * Where progress is reported. Replace it to combine every task into a single bar, to render into a UI,
+     * or use [dev.openrune.cache.tools.progress.SilentCacheProgress] to report nothing.
+     */
+    var progress: CacheProgress = DefaultCacheProgress()
+
+    private var incrementalDatabase: File? = null
+
+    var autoCert: Boolean = false
+
+    var autoCertIds: Map<String, Int> = emptyMap()
+        private set
 
     fun tasks(block: TaskBuilder.() -> Unit) {
         TaskBuilder().apply(block).also {
@@ -49,12 +82,26 @@ class CacheToolDsl {
         rscmDir = File(path)
     }
 
+    fun incrementalDatabase(path: String) {
+        incrementalDatabase = File(path)
+    }
+
     fun build(): CacheTool {
         val type = taskType ?: error("`taskType` must be set")
         val revision = revision ?: error("`revision` must be set")
         val cacheLocation = cache ?: error("`cache` must be set")
 
         rscmDir?.let(ConstantProvider::load)
+
+        val certSettings = if (autoCert) AutoCertSettings(packConfigDirectories()) else null
+        if (autoAssignGameVals || certSettings != null) {
+            val candidates = certSettings?.let { scanCertCandidates(it, cacheLocation, revision) }.orEmpty()
+            autoCertIds = GameValAssigner.assign(candidates, certSettings).certIds
+        }
+
+        if (certSettings != null && removedTasks.none { it is PackAutoCert }) {
+            addedTasks += PackAutoCert(certSettings)
+        }
 
         val defaultGameVals = PackGameVals()
 
@@ -85,8 +132,34 @@ class CacheToolDsl {
             revision = revision,
             cacheLocation = cacheLocation,
             serverCacheLocation = serverCache,
-            extraTasks = cleanedTasks
+            extraTasks = cleanedTasks,
+            autoCertIds = autoCertIds,
+            incremental = incremental,
+            incrementalDatabase = incrementalDatabase,
+            verification = verification,
+            progress = progress
         )
+    }
+
+    private fun scanCertCandidates(
+        settings: AutoCertSettings,
+        cacheLocation: File,
+        revision: Int,
+    ): List<CertCandidate> {
+        val cache = runCatching { Cache.load(cacheLocation.toPath()) }.getOrNull()
+        return try {
+            CertCandidateScanner(settings).scan(cache, revision)
+        } finally {
+            runCatching { cache?.close() }
+        }
+    }
+
+    private fun packConfigDirectories(): List<File> {
+        val directories = addedTasks.filterIsInstance<PackConfig>().map { it.directory }.distinct()
+        require(directories.isNotEmpty()) {
+            "autoCert needs at least one PackConfig task to know which configs to scan"
+        }
+        return directories
     }
 
     private fun validateCs2UnpackPackPairing(tasks: List<CacheTask>) {

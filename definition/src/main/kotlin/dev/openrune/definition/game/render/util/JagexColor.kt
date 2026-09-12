@@ -5,6 +5,9 @@ import kotlin.math.pow
 
 object JagexColor {
     const val BRIGHTNESS_MAX = 0.6
+    const val BRIGHTNESS_HIGH = 0.7
+    const val BRIGHTNESS_LOW = 0.8
+    const val BRIGHTNESS_MIN = 0.9
 
     private const val HUE_OFFSET = 0.5 / 64.0
     private const val SATURATION_OFFSET = 0.5 / 8.0

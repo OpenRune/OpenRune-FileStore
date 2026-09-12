@@ -6,6 +6,7 @@ import dev.openrune.definition.Definition
 import dev.openrune.definition.EntityOpsDefinition
 import dev.openrune.definition.Parameterized
 import dev.openrune.definition.Recolourable
+import dev.openrune.seralizer.ObjStackabilitySerializer
 import dev.openrune.seralizer.ItemTypeOptionsTableHook
 import dev.openrune.seralizer.ParamSerializer
 
@@ -37,7 +38,8 @@ data class ItemType(
     var cost: Int = 1,
     var stockMarket: Boolean = false,
     var tradeable: Boolean = true,
-    var stacks: Int = 0,
+    @param:TomlField(serializer = ObjStackabilitySerializer::class)
+    var stacks: ObjStackability = ObjStackability.Sometimes,
     var inventoryModel: Int = 0,
     var members: Boolean = false,
     var zoom2d: Int = 2000,
@@ -74,7 +76,7 @@ data class ItemType(
     ) : Definition, Recolourable, Parameterized {
 
     val stackable: Boolean
-        get() = stacks == 1 || noteTemplateId > 0
+        get() = stacks == ObjStackability.Always || noteTemplateId > 0
 
     val noted: Boolean
         get() = noteTemplateId > 0
@@ -101,7 +103,7 @@ data class ItemType(
         this.name = unnotedItem.name
         this.members = unnotedItem.members
         this.cost = unnotedItem.cost
-        this.stacks = 1
+        this.stacks = ObjStackability.Always
     }
 
     fun linkBought(var1: ItemType, var2: ItemType) {
@@ -159,4 +161,15 @@ data class ItemType(
         this.stockMarket = false
     }
 
+}
+
+public enum class ObjStackability(public val id: Int) {
+    Sometimes(0),
+    Always(1),
+    Never(2);
+
+    public companion object {
+        public fun fromId(id: Int): ObjStackability =
+            entries.firstOrNull { it.id == id } ?: Sometimes
+    }
 }

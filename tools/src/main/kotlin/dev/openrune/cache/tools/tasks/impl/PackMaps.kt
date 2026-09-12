@@ -6,7 +6,8 @@ import dev.openrune.cache.util.XteaLoader
 import dev.openrune.cache.util.decompressGzipToBytes
 import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.logger
-import dev.openrune.cache.util.progress
+import dev.openrune.cache.tools.incremental.IncrementalBuild
+import dev.openrune.cache.tools.incremental.PackUnit
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.filesystem.Cache
 import java.io.File
@@ -66,64 +67,76 @@ class PackMaps(
         val mapFiles = getFiles(mapsDirectory, "gz", "dat")
             .filter { it.name.startsWith("l") }
 
-        val progressMaps = progress("Packing Maps", mapFiles.size)
+        if (mapFiles.isEmpty()) return
 
-        mapFiles.forEach { mapFile ->
-
-            val objectFile = File(
-                mapFile.parent,
-                mapFile.name.replaceFirstChar { "m" }
-            )
-
+        val units = mapFiles.mapNotNull { mapFile ->
+            val objectFile = File(mapFile.parent, mapFile.name.replaceFirstChar { "m" })
             if (!objectFile.exists()) {
                 println("MISSING MAP FILE: $objectFile")
-                return@forEach
+                return@mapNotNull null
             }
-
-            val loc = mapFile.nameWithoutExtension
-                .replace("m", "")
-                .replace("l", "")
-                .split("_")
-
-            val regionX = loc[0].toInt()
-            val regionY = loc[1].toInt()
-
-            val regionId = (regionX shl 8) or regionY
-
-            var tileData = Files.readAllBytes(mapFile.toPath())
-            var objData = Files.readAllBytes(objectFile.toPath())
-
-            if (mapFile.name.endsWith(".gz")) {
-                tileData = decompressGzipToBytes(mapFile.toPath())
-            }
-
-            if (objectFile.name.endsWith(".gz")) {
-                objData = decompressGzipToBytes(objectFile.toPath())
-            }
-
-            val keys: IntArray? = when (xteaType) {
-                XteaType.NO_KEYS -> null
-                XteaType.EMPTY_KEYS -> intArrayOf(0, 0, 0, 0)
-                XteaType.RANDOM_KEYS -> generateRandomIntArray()
-            }
-
-            if (encodeXteas && keys != null) {
-                XteaLoader.xteas[regionId]?.key = keys
-            }
-
-            packMap(
-                cache,
-                regionX,
-                regionY,
-                tileData,
-                objData,
-                if (encodeXteas) keys else null
+            PackUnit(
+                key = mapFile.nameWithoutExtension,
+                sources = listOf(mapFile, objectFile),
+                label = mapFile.nameWithoutExtension,
             )
-
-            progressMaps.step()
         }
 
-        progressMaps.close()
+        val trackable = xteaType != XteaType.RANDOM_KEYS
+        val engine = if (trackable) incremental else IncrementalBuild.DISABLED
+
+        engine.run(
+            task = this,
+            scope = mapsDirectory.absolutePath,
+            label = "Packing Maps",
+            cache = cache,
+            units = units,
+            extraFingerprints = mapOf("xteaType" to xteaType.name),
+        ) { packCache, unit ->
+            packRegion(packCache, unit.sources[0], unit.sources[1], encodeXteas)
+        }
+    }
+
+    private fun packRegion(cache: Cache, mapFile: File, objectFile: File, encodeXteas: Boolean) {
+        val loc = mapFile.nameWithoutExtension
+            .replace("m", "")
+            .replace("l", "")
+            .split("_")
+
+        val regionX = loc[0].toInt()
+        val regionY = loc[1].toInt()
+
+        val regionId = (regionX shl 8) or regionY
+
+        var tileData = Files.readAllBytes(mapFile.toPath())
+        var objData = Files.readAllBytes(objectFile.toPath())
+
+        if (mapFile.name.endsWith(".gz")) {
+            tileData = decompressGzipToBytes(mapFile.toPath())
+        }
+
+        if (objectFile.name.endsWith(".gz")) {
+            objData = decompressGzipToBytes(objectFile.toPath())
+        }
+
+        val keys: IntArray? = when (xteaType) {
+            XteaType.NO_KEYS -> null
+            XteaType.EMPTY_KEYS -> intArrayOf(0, 0, 0, 0)
+            XteaType.RANDOM_KEYS -> generateRandomIntArray()
+        }
+
+        if (encodeXteas && keys != null) {
+            XteaLoader.xteas[regionId]?.key = keys
+        }
+
+        packMap(
+            cache,
+            regionX,
+            regionY,
+            tileData,
+            objData,
+            if (encodeXteas) keys else null
+        )
     }
 
     private fun packPackFiles(cache: Cache, encodeXteas: Boolean) {
@@ -134,21 +147,23 @@ class PackMaps(
             return
         }
 
-        val progressPacks = progress("Packing .pack Maps", packFiles.size)
+        val units = packFiles.map { PackUnit(key = "pack:${it.name}", source = it) }
 
-        packFiles.forEach { file ->
+        val trackable = xteaType != XteaType.RANDOM_KEYS
+        val engine = if (trackable) incremental else IncrementalBuild.DISABLED
+
+        engine.run(
+            task = this,
+            scope = "${mapsDirectory.absolutePath}|pack",
+            label = "Packing .pack Maps",
+            cache = cache,
+            units = units,
+            extraFingerprints = mapOf("xteaType" to xteaType.name),
+        ) { packCache, unit ->
+            val file = unit.sources.single()
             val baseRegionId = parseBaseRegionId(file) ?: error("Unable to determine base region id from ${file.name}")
-            packRSPSiFile(
-                cache,
-                baseRegionId,
-                file.toPath(),
-                encodeXteas
-            )
-
-            progressPacks.step()
+            packRSPSiFile(packCache, baseRegionId, file.toPath(), encodeXteas)
         }
-
-        progressPacks.close()
     }
 
     private fun parseBaseRegionId(file: File): Int? {

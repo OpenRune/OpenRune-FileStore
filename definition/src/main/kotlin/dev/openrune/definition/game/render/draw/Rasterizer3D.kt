@@ -1,6 +1,7 @@
 package dev.openrune.definition.game.render.draw
 
 import dev.openrune.definition.game.render.util.JagexColor
+import dev.openrune.definition.type.DEFAULT_TEXTURE_SIZE
 import dev.openrune.definition.type.SpriteType
 import dev.openrune.definition.type.TextureType
 import kotlin.math.cos
@@ -14,6 +15,12 @@ open class Rasterizer3D(
     var field1909: Boolean = false
     var isLowMem: Boolean = false
     var isGouraudShadingLowRes: Boolean = true
+
+    /** Edge length textures are rendered at. Only 64 and [DEFAULT_TEXTURE_SIZE] are meaningful. */
+    var textureSize: Int = DEFAULT_TEXTURE_SIZE
+
+    /** Gamma for texture palettes. The client uses a lower one here than for the model palette. */
+    var textureBrightness: Double = JagexColor.BRIGHTNESS_LOW
     var alpha: Int = 0
 	var zoom: Int = 512
     var centerX: Int = 0
@@ -1328,7 +1335,7 @@ open class Rasterizer3D(
         var var17 = var17
 
         val textureType = textures[var18]
-        val textureRenderPixels = textures[var18]?.load(sprites)
+        val textureRenderPixels = textureType?.load(sprites, textureBrightness, textureSize)
 
         val var20: Int
         if (textureRenderPixels == null) {
@@ -1345,8 +1352,9 @@ open class Rasterizer3D(
                 method2794(var20, var8)
             )
         } else {
-            isLowMem = textureType!!.isLowMem()
-            field1909 = textureType.isTransparent
+            // Selects the 64x64 sampling path, so it tracks the render size, not the definition's flag.
+            isLowMem = textureSize == 64
+            field1909 = textureType!!.isTransparent
             var20 = var4 - var3
             val var21 = var1 - var0
             val var22 = var5 - var3

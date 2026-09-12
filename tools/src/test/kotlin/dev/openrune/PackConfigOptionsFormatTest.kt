@@ -1,8 +1,7 @@
 package dev.openrune
 
-import dev.openrune.toml.decode
-import dev.openrune.toml.model.TomlValue
-import dev.openrune.toml.serialization.from
+import dev.openrune.toml.rsconfig.decodeRuneScape
+import dev.openrune.toml.rsconfig.decodeRuneScapeBlocks
 import dev.openrune.toml.util.InternalAPI
 import dev.openrune.cache.tools.tasks.impl.defs.PackConfig
 import dev.openrune.definition.codec.ItemCodec
@@ -19,10 +18,10 @@ class PackConfigOptionsFormatTest {
         // Register pack types/mappers via init block
         PackConfig(File("."))
         val packType = PackConfig.packTypes["item"] ?: error("item pack type not registered")
-        val document = TomlValue.from(toml)
-        val itemTable = document.properties["item"] ?: error("Missing [[item]] table")
-        val decoded: List<ItemType> = packType.tomlMapper.decode(packType.kType, itemTable)
-        return decoded.first()
+        // decodeRuneScape, not decode: option/subop/multiop keys are folded into EntityOpsDefinition by the
+        // RsTableHeaders rowPostDecode hook, which plain decode() does not run. This mirrors PackConfig.
+        val block = packType.tomlMapper.decodeRuneScapeBlocks(toml).first { it.name == "item" }
+        return packType.tomlMapper.decodeRuneScape(packType.kType, block.map.properties) as ItemType
     }
 
     private fun roundTrip(codec: ItemCodec, def: ItemType): ItemType {

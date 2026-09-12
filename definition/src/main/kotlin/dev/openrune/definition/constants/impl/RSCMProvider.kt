@@ -1,6 +1,8 @@
 package dev.openrune.definition.constants.impl
 
-import dev.openrune.definition.constants.MappingProvider
+import dev.openrune.definition.constants.GameValWrite
+import dev.openrune.definition.constants.MutableMappingProvider
+import dev.openrune.definition.constants.UnassignedGameVal
 import java.io.File
 
 /**
@@ -15,16 +17,23 @@ import java.io.File
  * 
  * Also tracks sub-types for files that contain sub-property definitions.
  */
-class RSCMProvider : MappingProvider {
+class RSCMProvider : MutableMappingProvider {
     override val mappings: MutableMap<String, MutableMap<String, Int>> = emptyMap<String, MutableMap<String, Int>>().toMutableMap()
+
+    private val tableSources: MutableMap<String, File> = mutableMapOf()
+
+    private val unassigned: MutableList<UnassignedGameVal> = mutableListOf()
 
     override fun load(vararg mappings: File) {
         require(mappings.isNotEmpty()) { "You need at least one mapping file" }
         val mappingsDir = mappings.first()
-        
+
         require(mappingsDir.exists() && mappingsDir.isDirectory) {
             "Mappings directory does not exist or is not a directory: ${mappingsDir.absolutePath}"
         }
+
+        tableSources.clear()
+        unassigned.clear()
 
         mappingsDir.listFiles { _, name -> name.endsWith(".rscm") }?.forEach { file ->
             try {
@@ -50,6 +59,7 @@ class RSCMProvider : MappingProvider {
         val fileSubTypes = mutableSetOf<String>()
 
         mappings[fullType] = emptyMap<String, Int>().toMutableMap()
+        tableSources[fullType] = file
 
         lines.forEachIndexed { lineNumber, line ->
             try {
@@ -59,12 +69,88 @@ class RSCMProvider : MappingProvider {
                 }
 
                 mappings[fullType]?.put("${fullType}.${key}",value)
+                if (value == UNASSIGNED) {
+                    unassigned += UnassignedGameVal(fullType, key, file)
+                }
             } catch (e: Exception) {
                 throw IllegalArgumentException(
                     "Failed to parse line ${lineNumber + 1} in ${file.name}: $line", e
                 )
             }
         }
+    }
+
+    override fun unassignedGameVals(): List<UnassignedGameVal> = unassigned.toList()
+
+    override fun sourceOf(table: String, key: String): File? {
+        if (mappings[table]?.containsKey("$table.$key") != true) return null
+        return tableSources[table]
+    }
+
+    override fun writeGameVals(entries: List<GameValWrite>) {
+        val placed = entries.map { entry ->
+            if (entry.source != null) entry else entry.copy(source = tableSources[entry.table])
+        }
+
+        placed.groupBy { it.source }.forEach { (file, fileEntries) ->
+            if (file == null) {
+                fileEntries.forEach {
+                    println("No .rscm file for table '${it.table}', dropping gameval '${it.key}'")
+                }
+            } else {
+                writeFile(file, fileEntries)
+            }
+        }
+
+        placed.forEach { entry ->
+            mappings.getOrPut(entry.table) { mutableMapOf() }["${entry.table}.${entry.key}"] = entry.id
+            entry.source?.let { tableSources.putIfAbsent(entry.table, it) }
+        }
+
+        unassigned.removeAll { placeholder ->
+            placed.any { it.table == placeholder.table && it.key == placeholder.key }
+        }
+    }
+
+    private fun writeFile(file: File, entries: List<GameValWrite>) {
+        val original = file.readText()
+        val separator = if (original.contains("\r\n")) "\r\n" else "\n"
+        val lines = original.lines().let { if (it.lastOrNull().isNullOrEmpty()) it.dropLast(1) else it }
+            .toMutableList()
+        val format = lines.firstOrNull { it.isNotBlank() }
+            ?.let { detectFormat(it, file.name) }
+            ?: RSCMFormat.V2
+
+        fun indexOfKey(key: String): Int = lines.indexOfFirst { line ->
+            line.isNotBlank() && runCatching { parseKeyOnly(line, format) }.getOrNull() == key
+        }
+
+        val (present, absent) = entries.partition { indexOfKey(it.key) != -1 }
+
+        present.forEach { entry ->
+            lines[indexOfKey(entry.key)] = formatLine(entry.key, entry.id, format)
+        }
+
+        absent.forEach { entry ->
+            require(entry.after != null || entry.generated) {
+                "Cannot assign '${entry.key}' in ${file.name}: that key is not declared in the file"
+            }
+            val anchor = entry.after?.let(::indexOfKey) ?: -1
+            val line = formatLine(entry.key, entry.id, format)
+            if (anchor == -1) lines.add(line) else lines.add(anchor + 1, line)
+        }
+
+        file.writeText(lines.joinToString(separator, postfix = separator))
+    }
+
+    private fun formatLine(key: String, id: Int, format: RSCMFormat): String = when (format) {
+        RSCMFormat.V1 -> "$key:$id"
+        RSCMFormat.V2 -> "$key=$id"
+    }
+
+    private fun parseKeyOnly(line: String, format: RSCMFormat): String = when (format) {
+        RSCMFormat.V1 -> parseRSCMV1Line(line, 0).first
+        RSCMFormat.V2 -> parseRSCMV2Line(line, 0, mutableSetOf()).first
     }
 
     private fun extractBaseType(filename: String): String {
@@ -126,5 +212,9 @@ class RSCMProvider : MappingProvider {
 
     private enum class RSCMFormat {
         V1, V2
+    }
+
+    private companion object {
+        const val UNASSIGNED = -1
     }
 }

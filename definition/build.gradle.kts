@@ -7,8 +7,3 @@ dependencies {
 tasks.withType<JavaCompile> {
     options.annotationProcessorPath = configurations.annotationProcessor.get()
 }
-
-configure<JavaPluginExtension> {
-    sourceCompatibility = JavaVersion.VERSION_20
-    targetCompatibility = JavaVersion.VERSION_20
-}

@@ -2,14 +2,13 @@ package dev.openrune.cache.tools.tasks.impl
 
 import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.cache.MODELS
+import dev.openrune.cache.tools.incremental.PackUnit
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.decompressGzipToBytes
 import dev.openrune.cache.util.getFiles
-import dev.openrune.cache.util.progress
 import dev.openrune.filesystem.Cache
 import java.io.File
 import java.nio.file.Files
-
 
 class PackModels(
     private val modelDirectory: File,
@@ -17,34 +16,42 @@ class PackModels(
 ) : CacheTask() {
     override fun init(cache: Cache) {
         val modelFiles = getFiles(modelDirectory, "gz", "dat")
-        val modelSize = modelFiles.size
-        val progressModels = progress("Packing Models", modelSize)
+        if (modelFiles.isEmpty()) return
 
-        if (modelSize > 0) {
-            modelFiles.forEach { file ->
-                val name = file.nameWithoutExtension
-                val id: Int? = if (name.matches(Regex("-?\\d+"))) {
-                    name.toInt()
-                } else {
-                    ConstantProvider.getMapping(rscmMappingPrefix + name.lowercase().replace(" ", "_"))
-                }
+        val root = modelDirectory.absoluteFile
+        val units = modelFiles.map { file ->
+            PackUnit(key = file.absoluteFile.relativeTo(root).path.replace('\\', '/'), source = file)
+        }
 
-                val buffer = if (file.extension == "gz") {
-                    decompressGzipToBytes(file.toPath())
-                } else {
-                    Files.readAllBytes(file.toPath())
-                }
+        incremental.run(
+            task = this,
+            scope = modelDirectory.absolutePath,
+            label = "Packing Models",
+            cache = cache,
+            units = units,
+        ) { packCache, unit ->
+            packModel(packCache, unit.sources.single())
+        }
+    }
 
-                if (id != null) {
-                    cache.write(MODELS, id, 0, buffer)
-                } else {
-                    println("Unable to pack model")
-                }
+    private fun packModel(cache: Cache, file: File) {
+        val name = file.nameWithoutExtension
+        val id: Int? = if (name.matches(Regex("-?\\d+"))) {
+            name.toInt()
+        } else {
+            ConstantProvider.getMapping(rscmMappingPrefix + name.lowercase().replace(" ", "_"))
+        }
 
-                progressModels.step()
-            }
+        val buffer = if (file.extension == "gz") {
+            decompressGzipToBytes(file.toPath())
+        } else {
+            Files.readAllBytes(file.toPath())
+        }
 
-            progressModels.close()
+        if (id != null) {
+            cache.write(MODELS, id, 0, buffer)
+        } else {
+            println("Unable to pack model ${file.name}")
         }
     }
 }
