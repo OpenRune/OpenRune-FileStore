@@ -24,10 +24,10 @@ class Runescape718Store(private val cache : Cache, override var cacheRevision : 
         var CACHE_REVISION = -1
     }
 
-    override val items: MutableMap<Int, ItemType> = mutableMapOf()
-    override val npcs: MutableMap<Int, NpcType> = mutableMapOf()
-    override val varbits: MutableMap<Int, VarBitType> = mutableMapOf()
-    override val enums: MutableMap<Int, EnumType> = mutableMapOf()
+    override val items: MutableMap<Int, ItemType> = SortedIntMap()
+    override val npcs: MutableMap<Int, NpcType> = SortedIntMap()
+    override val varbits: MutableMap<Int, VarBitType> = SortedIntMap()
+    override val enums: MutableMap<Int, EnumType> = SortedIntMap()
 
     override fun init() {
         try {

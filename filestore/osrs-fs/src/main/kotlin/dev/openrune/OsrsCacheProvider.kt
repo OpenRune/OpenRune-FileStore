@@ -2,6 +2,7 @@ package dev.openrune
 
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.*
+import dev.openrune.cache.SortedIntMap
 import dev.openrune.filesystem.Cache
 import dev.openrune.cache.filestore.definition.ConfigDefinitionDecoder
 import dev.openrune.cache.filestore.definition.DefinitionDecoder
@@ -15,18 +16,18 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
 
     private val logger = InlineLogger()
 
-    override val npcs: MutableMap<Int, NpcType> = mutableMapOf()
-    override val objects: MutableMap<Int, ObjectType> = mutableMapOf()
-    override val items: MutableMap<Int, ItemType> = mutableMapOf()
-    override val varbits: MutableMap<Int, VarBitType> = mutableMapOf()
-    override val varps: MutableMap<Int, VarpType> = mutableMapOf()
-    override val anims: MutableMap<Int, SequenceType> = mutableMapOf()
-    override val enums: MutableMap<Int, EnumType> = mutableMapOf()
-    override val healthBars: MutableMap<Int, HealthBarType> = mutableMapOf()
-    override val hitsplats: MutableMap<Int, HitSplatType> = mutableMapOf()
-    override val structs: MutableMap<Int, StructType> = mutableMapOf()
-    override val dbrows: MutableMap<Int, DBRowType> = mutableMapOf()
-    override val dbtables: MutableMap<Int, DBTableType> = mutableMapOf()
+    override val npcs: MutableMap<Int, NpcType> = SortedIntMap()
+    override val objects: MutableMap<Int, ObjectType> = SortedIntMap()
+    override val items: MutableMap<Int, ItemType> = SortedIntMap()
+    override val varbits: MutableMap<Int, VarBitType> = SortedIntMap()
+    override val varps: MutableMap<Int, VarpType> = SortedIntMap()
+    override val anims: MutableMap<Int, SequenceType> = SortedIntMap()
+    override val enums: MutableMap<Int, EnumType> = SortedIntMap()
+    override val healthBars: MutableMap<Int, HealthBarType> = SortedIntMap()
+    override val hitsplats: MutableMap<Int, HitSplatType> = SortedIntMap()
+    override val structs: MutableMap<Int, StructType> = SortedIntMap()
+    override val dbrows: MutableMap<Int, DBRowType> = SortedIntMap()
+    override val dbtables: MutableMap<Int, DBTableType> = SortedIntMap()
 
     override fun init() {
         try {

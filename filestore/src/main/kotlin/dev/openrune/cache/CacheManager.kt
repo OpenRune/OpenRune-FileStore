@@ -2,7 +2,6 @@ package dev.openrune.cache
 
 import dev.openrune.definition.Definition
 import dev.openrune.definition.type.*
-import java.util.Collections
 
 
 /**
@@ -14,9 +13,7 @@ import java.util.Collections
  *
  */
 fun <T : Definition> MutableMap<Int, T>.withOffset(offset: Int): MutableMap<Int, T> {
-    if (offset == 0) return this.toMutableMap()
-
-    val result = LinkedHashMap<Int, T>(capacityFor(size))
+    val result = SortedIntMap<T>(size)
     for ((key, def) in this) {
         val newId = key + offset
         def.id = newId
@@ -48,26 +45,31 @@ fun <T> getOrDefault(map: Map<Int, T>, id: Int, default: T, typeName: String): T
 
 object CacheManager {
 
-    private var npcs: MutableMap<Int, NpcType> = mutableMapOf()
-    private var objects: MutableMap<Int, ObjectType> = mutableMapOf()
-    private var items: MutableMap<Int, ItemType> = mutableMapOf()
-    private var varbits: MutableMap<Int, VarBitType> = mutableMapOf()
-    private var varps: MutableMap<Int, VarpType> = mutableMapOf()
-    private var anims: MutableMap<Int, SequenceType> = mutableMapOf()
-    private var enums: MutableMap<Int, EnumType> = mutableMapOf()
-    private var healthBars: MutableMap<Int, HealthBarType> = mutableMapOf()
-    private var hitsplats: MutableMap<Int, HitSplatType> = mutableMapOf()
-    private var structs: MutableMap<Int, StructType> = mutableMapOf()
-    private var dbrows: MutableMap<Int, DBRowType> = mutableMapOf()
-    private var dbtables: MutableMap<Int, DBTableType> = mutableMapOf()
+    // Read-only once adopted: the held instance only implements Map, so a loaded table cannot be
+    // mutated even by casting.
+    private var npcs: Map<Int, NpcType> = emptyMap()
+    private var objects: Map<Int, ObjectType> = emptyMap()
+    private var items: Map<Int, ItemType> = emptyMap()
+    private var varbits: Map<Int, VarBitType> = emptyMap()
+    private var varps: Map<Int, VarpType> = emptyMap()
+    private var anims: Map<Int, SequenceType> = emptyMap()
+    private var enums: Map<Int, EnumType> = emptyMap()
+    private var healthBars: Map<Int, HealthBarType> = emptyMap()
+    private var hitsplats: Map<Int, HitSplatType> = emptyMap()
+    private var structs: Map<Int, StructType> = emptyMap()
+    private var dbrows: Map<Int, DBRowType> = emptyMap()
+    private var dbtables: Map<Int, DBTableType> = emptyMap()
 
-    /** Adopts [source] outright on the first init, otherwise merges into the existing map. */
-    private fun <T> adopt(current: MutableMap<Int, T>, source: MutableMap<Int, T>): MutableMap<Int, T> {
+    /** Adopts [source] outright on the first init, otherwise merges; the result is read-only. */
+    private fun <T : Any> adopt(current: Map<Int, T>, source: MutableMap<Int, T>): Map<Int, T> {
         if (current.isEmpty()) {
-            return source
+            val table = source as? SortedIntMap<T> ?: SortedIntMap<T>(source.size).apply { putAll(source) }
+            return table.readOnly()
         }
-        current.putAll(source)
-        return current
+        val merged = SortedIntMap<T>(current.size + source.size)
+        merged.putAll(current)
+        merged.putAll(source)
+        return merged.readOnly()
     }
 
     @JvmStatic
@@ -131,18 +133,18 @@ object CacheManager {
     fun hitsplatSize() = hitsplats.size
     fun structSize() = structs.size
 
-    // Bulk getters. Read-only views rather than a copy per call; the tables are fixed after `init`.
-    fun getNpcs(): Map<Int, NpcType> = Collections.unmodifiableMap(npcs)
-    fun getObjects(): Map<Int, ObjectType> = Collections.unmodifiableMap(objects)
-    fun getItems(): Map<Int, ItemType> = Collections.unmodifiableMap(items)
-    fun getVarbits(): Map<Int, VarBitType> = Collections.unmodifiableMap(varbits)
-    fun getVarps(): Map<Int, VarpType> = Collections.unmodifiableMap(varps)
-    fun getAnims(): Map<Int, SequenceType> = Collections.unmodifiableMap(anims)
-    fun getEnums(): Map<Int, EnumType> = Collections.unmodifiableMap(enums)
-    fun getHealthBars(): Map<Int, HealthBarType> = Collections.unmodifiableMap(healthBars)
-    fun getHitsplats(): Map<Int, HitSplatType> = Collections.unmodifiableMap(hitsplats)
-    fun getStructs(): Map<Int, StructType> = Collections.unmodifiableMap(structs)
-    fun getRows(): Map<Int, DBRowType> = Collections.unmodifiableMap(dbrows)
+    // Bulk getters. The held tables are already read-only, so no wrapper per call is needed.
+    fun getNpcs(): Map<Int, NpcType> = npcs
+    fun getObjects(): Map<Int, ObjectType> = objects
+    fun getItems(): Map<Int, ItemType> = items
+    fun getVarbits(): Map<Int, VarBitType> = varbits
+    fun getVarps(): Map<Int, VarpType> = varps
+    fun getAnims(): Map<Int, SequenceType> = anims
+    fun getEnums(): Map<Int, EnumType> = enums
+    fun getHealthBars(): Map<Int, HealthBarType> = healthBars
+    fun getHitsplats(): Map<Int, HitSplatType> = hitsplats
+    fun getStructs(): Map<Int, StructType> = structs
+    fun getRows(): Map<Int, DBRowType> = dbrows
 
     fun revisionIsOrAfter(cacheRevision : Int,rev: Int) = rev <= cacheRevision
     fun revisionIsOrBefore(cacheRevision : Int,rev: Int) = rev >= cacheRevision

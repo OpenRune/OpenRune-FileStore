@@ -1,4 +1,4 @@
-﻿package dev.openrune
+package dev.openrune
 
 import dev.openrune.cache.CONFIGS
 import dev.openrune.cache.DBROW
@@ -79,7 +79,7 @@ class CacheDecodeBench {
 
     private fun <T : Definition> decoder(name: String, cache: Cache, factory: () -> DefinitionDecoder<T>) =
         measure(name, 4) {
-            val target = mutableMapOf<Int, T>()
+            val target = dev.openrune.cache.SortedIntMap<T>()
             runCatching { factory().load(cache, target) }
             target.size
         }
@@ -138,13 +138,13 @@ class CacheDecodeBench {
         }
 
         measure("interfaces", 3) {
-            val components = mutableMapOf<Int, InterfaceType>()
+            val components = dev.openrune.cache.SortedIntMap<InterfaceType>()
             ComponentDecoder(cache, rev).load(components)
             components.values.sumOf { it.components.size }
         }
 
         measure("sprites", 3) {
-            val sprites = mutableMapOf<Int, SpriteType>()
+            val sprites = dev.openrune.cache.SortedIntMap<SpriteType>()
             runCatching { SpriteDecoder().load(cache, sprites) }
             sprites.size
         }

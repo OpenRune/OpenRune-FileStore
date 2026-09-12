@@ -56,7 +56,7 @@ class CacheMemoryBench {
     }
 
     private fun <T : Definition> defs(factory: () -> DefinitionDecoder<T>): (Cache) -> Pair<Int, Any> = { cache ->
-        val target = HashMap<Int, T>()
+        val target = dev.openrune.cache.SortedIntMap<T>()
         runCatching { factory().load(cache, target) }
         target.size to target
     }
@@ -76,7 +76,7 @@ class CacheMemoryBench {
         measure("dbrows", defs { OsrsCacheProvider.DBRowDecoder() })
         measure("sprites", defs { SpriteDecoder() })
         measure("interfaces") { cache ->
-            val components = HashMap<Int, InterfaceType>()
+            val components = dev.openrune.cache.SortedIntMap<InterfaceType>()
             ComponentDecoder(cache, rev).load(components)
             components.values.sumOf { it.components.size } to components
         }
