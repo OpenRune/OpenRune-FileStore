@@ -42,6 +42,9 @@ class NpcSpriteFactory(
         private const val QUARTER_TURN = 512
         private const val ROTATION_MASK = 2047
 
+        private const val BACKGROUND_BLACK = 0x000000
+        private const val BACKGROUND_WHITE = 0xffffff
+
         @JvmStatic
         @JvmOverloads
         fun fromCache(
@@ -82,18 +85,10 @@ class NpcSpriteFactory(
         val distance = (bounds.extent * builder.cameraDistance).roundToInt().coerceAtLeast(1)
         val projectionZoom = projectionZoom(builder, distance, bounds.extent)
 
-        val spritePixels = SpritePixels(size, size)
-        val graphics = Rasterizer3D(textures, sprites).apply {
-            setBrightness(JagexColor.BRIGHTNESS_MAX)
-            setRasterBuffer(spritePixels.pixels, size, size)
-            reset()
-            setRasterClipping()
-            setOffset(size / 2, size / 2)
-            isGouraudShadingLowRes = false
-            zoom = projectionZoom
-        }
-
-        draw(model, graphics, builder, distance)
+        val spritePixels = SpritePixels.fromOpaquePasses(
+            rasterize(model, builder, size, projectionZoom, distance, BACKGROUND_BLACK),
+            rasterize(model, builder, size, projectionZoom, distance, BACKGROUND_WHITE)
+        )
 
         if (spritePixels.contentBounds() == null) return null
 
@@ -137,6 +132,30 @@ class NpcSpriteFactory(
         }
 
         return mesh
+    }
+
+    private fun rasterize(
+        model: Model,
+        builder: NpcSpriteBuilder,
+        size: Int,
+        projectionZoom: Int,
+        distance: Int,
+        background: Int
+    ): SpritePixels {
+        val spritePixels = SpritePixels(size, size)
+        val graphics = Rasterizer3D(textures, sprites).apply {
+            setBrightness(JagexColor.BRIGHTNESS_MAX)
+            setRasterBuffer(spritePixels.pixels, size, size)
+            reset()
+            setRasterClipping()
+            setOffset(size / 2, size / 2)
+            isGouraudShadingLowRes = false
+            zoom = projectionZoom
+        }
+        spritePixels.pixels.fill(background)
+
+        draw(model, graphics, builder, distance)
+        return spritePixels
     }
 
     private fun draw(model: Model, graphics: Rasterizer3D, builder: NpcSpriteBuilder, distance: Int) {

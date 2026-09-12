@@ -37,6 +37,9 @@ class ItemSpriteFactory(
 
         private const val MAX_PROJECTION_ZOOM = 10_000
 
+        private const val BACKGROUND_BLACK = 0x000000
+        private const val BACKGROUND_WHITE = 0xffffff
+
         @JvmStatic
         @JvmOverloads
         fun fromCache(
@@ -63,18 +66,34 @@ class ItemSpriteFactory(
 
     private var projectionZoom = CLIENT_PROJECTION_ZOOM
 
+    private var usedTemplate = false
+
     @Throws(IOException::class)
     fun createSprite(itemSpriteFactory: ItemSpriteBuilder): BufferedImage? {
         this.itemSpriteFactory = itemSpriteFactory
         canvasSize = itemSpriteFactory.size
         projectionZoom = projectionZoomFor(canvasSize)
         return try {
-            val sprite = render() ?: return null
+            usedTemplate = false
+            val overBlack = render(BACKGROUND_BLACK, decorate = false) ?: return null
+
+            // Templates composite with a zero-means-empty mask, so the white pass would paint
+            // the template's background over the item. Those keep the old single-pass path.
+            val sprite = if (usedTemplate) {
+                render(BACKGROUND_BLACK, decorate = true) ?: return null
+            } else {
+                val overWhite = render(BACKGROUND_WHITE, decorate = false) ?: return null
+                SpritePixels.fromOpaquePasses(overBlack, overWhite).also {
+                    applyBordersAndShadows(it, itemSpriteFactory.border, itemSpriteFactory.shadowColor)
+                }
+            }
+
             if (itemSpriteFactory.fitToCanvas) sprite.centerContent()
             sprite.toBufferedImage()
         } finally {
             canvasSize = 0
             projectionZoom = CLIENT_PROJECTION_ZOOM
+            usedTemplate = false
         }
     }
 
@@ -92,12 +111,14 @@ class ItemSpriteFactory(
         return scaled.toInt().coerceIn(1, MAX_PROJECTION_ZOOM)
     }
 
-    private fun render(): SpritePixels? = createSpritePixels(
+    private fun render(background: Int, decorate: Boolean): SpritePixels? = createSpritePixels(
         itemSpriteFactory.itemID,
         itemSpriteFactory.quantity,
         itemSpriteFactory.border,
         itemSpriteFactory.shadowColor,
-        false
+        false,
+        background,
+        decorate
     )
 
     private fun linkItem(item: ItemType) {
@@ -124,7 +145,9 @@ class ItemSpriteFactory(
         quantity: Int,
         border: Int,
         shadowColor: Int,
-        noted: Boolean
+        noted: Boolean,
+        background: Int = BACKGROUND_BLACK,
+        decorate: Boolean = true
     ): SpritePixels? {
         var item = items[itemId]?.copy() ?: return null
 
@@ -147,6 +170,8 @@ class ItemSpriteFactory(
 
         val itemModel = getModel(item) ?: return null
 
+        if (item.hasTemplate) usedTemplate = true
+
         val auxSpritePixels = createAuxSpritePixels(item, quantity, border)
         if (auxSpritePixels == null && item.hasTemplate) return null
 
@@ -164,6 +189,7 @@ class ItemSpriteFactory(
             isGouraudShadingLowRes = false
             zoom = projectionZoom
         }
+        spritePixels.pixels.fill(background)
 
         if (item.placeholderTemplate != -1) auxSpritePixels?.drawAtOn(graphics, 0, 0)
 
@@ -173,7 +199,7 @@ class ItemSpriteFactory(
 
         if (item.notedId != -1) auxSpritePixels?.drawAtOn(graphics, 0, 0)
 
-        applyBordersAndShadows(spritePixels, border, shadowColor)
+        if (decorate) applyBordersAndShadows(spritePixels, border, shadowColor)
 
         if (item.noteTemplateId != -1) {
             graphics.setRasterBuffer(spritePixels.pixels, canvasSize, canvasSize)
