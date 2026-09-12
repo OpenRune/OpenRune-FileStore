@@ -4,8 +4,9 @@ import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.tools.OpenRS2.findRevision
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.impl.RemoveXteas
-import dev.openrune.cache.util.progress
-import me.tongfei.progressbar.ProgressBar
+import dev.openrune.cache.tools.progress.CacheProgress
+import dev.openrune.cache.tools.progress.DefaultCacheProgress
+import dev.openrune.cache.tools.progress.ProgressTracker
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -19,7 +20,8 @@ class FreshCache(
     val tasks: MutableList<CacheTask> = mutableListOf(),
     val revision: Int = -1,
     val subRev: Int = -1,
-    val cacheEnvironment: CacheEnvironment = CacheEnvironment.LIVE
+    val cacheEnvironment: CacheEnvironment = CacheEnvironment.LIVE,
+    private val progress: CacheProgress = DefaultCacheProgress()
 ) {
 
     private val logger = InlineLogger()
@@ -187,21 +189,22 @@ class FreshCache(
             BuildCache(
                 cacheLocation = cacheOutput,
                 tasks = tasks,
-                revision = revision
+                revision = revision,
+                progress = progress
             ).initialize()
         }
     }
 
     private val downloadListener = object : DownloadListener {
 
-        var progressBar: ProgressBar? = null
+        var progressBar: ProgressTracker? = null
         private var completedDownloads = 0
 
         private val expectedDownloads: Int get() = if (revision < 237) 2 else 1
 
         override fun onProgress(progress: Int, max: Long, current: Long) {
             if (progressBar == null) {
-                progressBar = progress("Downloading Cache", max)
+                progressBar = this@FreshCache.progress.begin("Downloading Cache", max)
             } else {
                 progressBar?.stepTo(current)
             }

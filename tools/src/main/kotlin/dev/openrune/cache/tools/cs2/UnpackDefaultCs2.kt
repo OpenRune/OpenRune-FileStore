@@ -60,10 +60,6 @@ class UnpackDefaultCs2(
                         )
 
                 if (existingRev == major && layoutOk) {
-                    logger.info {
-                        "UnpackDefaultCs2: skip unpack; ${neptune.absolutePath} has client_version=$major and all neptune.toml directory paths exist."
-                    }
-
                     ensureExcludedFromNeptune(neptune)
                     return
                 }

@@ -14,7 +14,7 @@ class RemoveBzip : CacheTask() {
     override fun init(cache: Cache) {
         val library = (cache as CacheDelegate).library
 
-        val progress = progress("Removing Bzip, step:", 2)
+        val bar = progress.begin("Removing Bzip, step:", 2)
         //for the first step loop through and flag the files.
         var indices = 0
         var archives = 0
@@ -40,13 +40,13 @@ class RemoveBzip : CacheTask() {
                 }
             }
         }
-        progress.extraMessage = "  $archives and $indices indices."
-        progress.step()
+        bar.message("  $archives and $indices indices.")
+        bar.step()
         //for the next step actually update the cache
         if (indices > 0 || archives > 0) {
             library.update()
         }
-        progress.step()
-        progress.close()
+        bar.step()
+        bar.close()
     }
 }

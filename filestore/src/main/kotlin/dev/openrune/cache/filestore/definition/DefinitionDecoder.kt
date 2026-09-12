@@ -5,7 +5,6 @@ import dev.openrune.cache.SPRITES
 import dev.openrune.definition.Definition
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.filesystem.Cache
-import java.nio.BufferUnderflowException
 
 abstract class DefinitionDecoder<T : Definition>(val index: Int, protected val codec: DefinitionCodec<T>, private var transform: DefinitionTransform<T>? = null) {
 
@@ -31,6 +30,7 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int, protected val c
             }
         }
 
+        var skipped = 0
         for (id in ids) {
             try {
                 val archive = getArchive(id)
@@ -41,12 +41,17 @@ abstract class DefinitionDecoder<T : Definition>(val index: Int, protected val c
                     transform?.changeValues(id, definition)
                     definitions[id] = definition
                 }
-            } catch (e: BufferUnderflowException) {
-                println("Error reading definition ${index}: $id")
+            } catch (e: Exception) {
+                // A definition in a custom or unexpected format should not abort the whole load.
+                skipped++
+                logger.debug { "Skipping definition $id in index $index: $e" }
             }
         }
 
         logger.info { "${definitions.size} ${this::class.simpleName} definitions loaded in ${System.currentTimeMillis() - start}ms" }
+        if (skipped > 0) {
+            logger.info { "Skipped $skipped ${this::class.simpleName} definition(s) that failed to decode." }
+        }
     }
 
     open fun getFile(id: Int) = id

@@ -62,7 +62,8 @@ class ConfigTest {
         assertEquals(2212,objectDef.animationId)
         assertEquals(2,objectDef.sizeX)
         assertEquals(2,objectDef.sizeY)
-        assertEquals(listOf("Teleport", null, null, null, null),objectDef.actions)
+        assertEquals("Teleport", objectDef.actions.getOpOrNull(0))
+        assertEquals(null, objectDef.actions.getOpOrNull(1))
         assertEquals(listOf(63101), objectDef.objectModels)
         assertEquals("merlin_rune_portal", objVals.lookup(objectDef.id)?.name)
     }

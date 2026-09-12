@@ -8,14 +8,16 @@ import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.*
 import dev.openrune.cache.gameval.GameValElement
 import dev.openrune.cache.tools.CacheTool
+import dev.openrune.cache.tools.incremental.PackUnit
+import dev.openrune.cache.tools.incremental.RecordingCache
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.getFiles
-import dev.openrune.cache.util.progress
 import dev.openrune.definition.Definition
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.EntityOpsDefinition
 import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.codec.*
+import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.definition.type.*
 import dev.openrune.definition.util.toArray
 import dev.openrune.filesystem.Cache
@@ -50,6 +52,8 @@ class PackConfig(
         val raw: Map<String, TomlValue>,
         val packType: PackType,
     )
+
+    private val codecs = HashMap<PackType, DefinitionCodec<*>>()
 
     val mapper = tomlMapper {
         rsconfig {
@@ -86,57 +90,110 @@ class PackConfig(
     @OptIn(InternalAPI::class)
     override fun init(cache: Cache) {
         val files = getFiles(directory, "toml")
+        if (files.isEmpty()) return
 
-        val definitionsToPack = mutableListOf<DefToPack>()
-        val varpConfigById = mutableMapOf<Int, Boolean>()
+        val blocks = files.flatMap(ConfigBlocks::scan).filter { packTypes.containsKey(it.name) }
+        if (blocks.isEmpty()) return
 
-        files.forEach { file ->
-            mapper.decodeRuneScapeBlocks(file.toPath()).forEach { block ->
-                val packType = packTypes[block.name] ?: return@forEach
-                val def = packType.tomlMapper.decodeRuneScape(packType.kType, block.map.properties) as Definition
-                val serverOnly = (block.map.properties["isServerOnly"] as? TomlValue.Bool)?.value ?: false
+        val (varpBlocks, otherBlocks) = blocks.partition { it.name == "varp" }
+        val varpConfigById = varpBlocks.mapNotNull { block -> block.id?.let { it to block.serverOnly } }.toMap()
 
-                if (block.name == "varp" && def.id != -1) {
-                    varpConfigById[def.id] = serverOnly
-                }
+        val order = ConfigBlocks.inheritOrder(blocks)
 
-                if (serverOnly && !serverPass) return@forEach
+        val tokens = tokenizedReplacements.entries.sortedBy { it.key }.joinToString(",") { "${it.key}=${it.value}" }
+        val tokenScope = if (tokens.isEmpty()) "" else "|tokens=${tokens.hashCode()}"
 
-                definitionsToPack += DefToPack(file.name, block.name, def, block.map.properties, packType)
+        val decoded = DecodedBlocks()
+
+        listOf(VARP_PASS to varpBlocks, OTHER_PASS to otherBlocks).forEach { (pass, passBlocks) ->
+            if (passBlocks.isEmpty()) return@forEach
+            val byKey = passBlocks.associateBy { it.unitKey }
+            val units = passBlocks.sortedBy(order).map { block ->
+                PackUnit(
+                    key = block.unitKey,
+                    sources = listOf(block.file),
+                    label = block.label,
+                    fingerprint = block.fingerprint,
+                )
+            }
+            incremental.run(
+                task = this,
+                scope = "${directory.absolutePath}$tokenScope|$pass",
+                label = if (pass == VARP_PASS) "Packing Varps" else "Packing Configs",
+                cache = cache,
+                units = units,
+                extraDeps = listOfNotNull(tokenizedFile?.toFile()),
+            ) { packCache, unit ->
+                packBlock(packCache, byKey.getValue(unit.key), decoded, varpConfigById)
             }
         }
+    }
 
-        if (definitionsToPack.isEmpty()) return
+    @OptIn(InternalAPI::class)
+    private inner class DecodedBlocks {
+        private val byFile = HashMap<File, Map<String, Map<String, TomlValue>>>()
 
-        val (varpEntries, otherEntries) = definitionsToPack.partition { it.tableKey == "varp" }
-        val orderedDefinitionsToPack = varpEntries + otherEntries
+        fun propertiesOf(block: RawBlock): Map<String, TomlValue>? =
+            byFile.getOrPut(block.file) { decode(block.file) }[block.matchKey]
 
-        val progress = progress("Packing Configs", orderedDefinitionsToPack.size)
-
-        // Codecs hold nothing but the revision, so one instance per pack type is enough.
-        val codecs = mutableMapOf<String, DefinitionCodec<*>>()
-
-        orderedDefinitionsToPack.forEach { entry ->
-            val inherit = (entry.raw["inherit"] as? TomlValue.Integer)?.value?.toInt() ?: -1
-            val debugName = (entry.raw["debugName"] as? TomlValue.String)?.value ?: ""
-
-            progress.extraMessage = "${entry.fileName.replace(".toml", "")} (${entry.definition.id})"
-
-            if (entry.tableKey == "varbit") {
-                validateVarbitVarp(entry, cache, varpConfigById)
-            }
-
+        private fun decode(file: File): Map<String, Map<String, TomlValue>> {
+            val listener = ConstantProvider.lookupListener
+            ConstantProvider.lookupListener = null
             try {
-                val codecInstance = codecs.getOrPut(entry.packType.name) { createCodecInstance(entry.packType) }
-                packDefinition(entry.packType, entry.definition, codecInstance, cache, inherit, debugName)
-            } catch (e: Exception) {
-                println("Unable to pack ${entry.packType.name} with ID ${entry.definition.id} due to an error: ${e.message}")
+                return decodeBlocks(file)
+            } finally {
+                ConstantProvider.lookupListener = listener
             }
-
-            progress.step()
         }
 
-        progress.close()
+        private fun decodeBlocks(file: File): Map<String, Map<String, TomlValue>> {
+            val result = HashMap<String, Map<String, TomlValue>>()
+            val ordinals = HashMap<String, Int>()
+            mapper.decodeRuneScapeBlocks(file.toPath()).forEach { decodedBlock ->
+                val properties = decodedBlock.map.properties
+                val ordinal = ordinals.merge(decodedBlock.name, 1, Int::plus)!! - 1
+                val id = (properties["id"] as? TomlValue.Integer)?.value?.toInt()
+                val key = if (id != null) "${decodedBlock.name}#$id" else "${decodedBlock.name}@$ordinal"
+                result.putIfAbsent(key, properties)
+            }
+            return result
+        }
+    }
+
+    @OptIn(InternalAPI::class)
+    private fun packBlock(
+        cache: Cache,
+        block: RawBlock,
+        decoded: DecodedBlocks,
+        varpConfigById: Map<Int, Boolean>,
+    ) {
+        val packType = packTypes[block.name] ?: return
+
+        block.constants.forEach { token ->
+            ConstantProvider.notifyLookup(token, ConstantProvider.peekMapping(token))
+        }
+
+        val properties = decoded.propertiesOf(block)
+            ?: error("Block ${block.label} was found by the scanner but not in the decoded file")
+
+        val serverOnly = (properties["isServerOnly"] as? TomlValue.Bool)?.value ?: false
+        if (serverOnly && !serverPass) return
+
+        val def = packType.tomlMapper.decodeRuneScape(packType.kType, properties) as Definition
+        val entry = DefToPack(block.file.name, block.name, def, properties, packType)
+
+        val inherit = (properties["inherit"] as? TomlValue.Integer)?.value?.toInt() ?: -1
+        val debugName = (properties["debugName"] as? TomlValue.String)?.value ?: ""
+
+        if (entry.tableKey == "varbit") {
+            validateVarbitVarp(entry, cache, varpConfigById)
+        }
+
+        try {
+            packDefinition(packType, def, codecFor(packType), cache, inherit, debugName)
+        } catch (e: Exception) {
+            println("Unable to pack ${packType.name} with ID ${def.id} due to an error: ${e.message}")
+        }
     }
 
     private fun validateVarbitVarp(
@@ -156,7 +213,12 @@ class PackConfig(
             )
         }
 
-        if (cache.data(CONFIGS, VARPLAYER, varpId) == null) {
+        // Existence check only: the varbit's own bytes do not depend on the varp's contents, so this read
+        // must not become a dependency. Recording it would repack every varbit whenever its varp is
+        // repacked, which on a server cache is every build.
+        val varpPresent = RecordingCache.unrecorded(cache) { cache.data(CONFIGS, VARPLAYER, varpId) } != null
+
+        if (!varpPresent) {
             val configHint = when {
                 varpServerOnly == true -> " (varp is marked isServerOnly and was not packed on this pass)"
                 varpServerOnly == false -> " (varp config exists but was not found in cache after packing varps)"
@@ -265,6 +327,10 @@ class PackConfig(
         return a == b
     }
 
+    /** Codecs hold nothing but the revision, so one reflective instantiation per pack type is enough. */
+    private fun codecFor(packType: PackType): DefinitionCodec<*> =
+        codecs.getOrPut(packType) { createCodecInstance(packType) }
+
     private fun createCodecInstance(codec: PackType): DefinitionCodec<*> {
         val constructor = codec.codecClass.constructors.first()
         val params = constructor.parameters.size
@@ -277,6 +343,9 @@ class PackConfig(
     }
 
     companion object {
+        private const val VARP_PASS = "varp"
+        private const val OTHER_PASS = "other"
+
         private val tomlMapperDefault = tomlMapper { }
 
         /** Mergeable instance fields per definition class, reflected and unlocked once. */

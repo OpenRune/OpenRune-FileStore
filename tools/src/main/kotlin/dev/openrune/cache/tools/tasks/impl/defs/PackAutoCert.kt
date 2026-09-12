@@ -40,18 +40,18 @@ class PackAutoCert(private val settings: AutoCertSettings) : CacheTask() {
         val candidates = CertCandidateScanner(settings).scan(cache, revision)
         if (candidates.isEmpty()) return
 
-        val progress = progress("Packing Auto Certs", candidates.size)
+        val bar = progress.begin("Packing Auto Certs", candidates.size)
         var packed = 0
 
         candidates.forEach { candidate ->
-            progress.extraMessage = candidate.certKey
+            bar.message(candidate.certKey)
 
             val itemId = ConstantProvider.getMappingOrNull("${settings.table}.${candidate.itemKey}")
             val certId = ConstantProvider.getMappingOrNull("${settings.table}.${candidate.certKey}")
 
             if (itemId == null || certId == null) {
                 logger.warn { "Auto-cert has no reserved id for '${candidate.certKey}', skipping" }
-                progress.step()
+                bar.step()
                 return@forEach
             }
 
@@ -61,7 +61,7 @@ class PackAutoCert(private val settings: AutoCertSettings) : CacheTask() {
                     "Auto-cert skipped '${candidate.certKey}': item '${candidate.itemKey}' " +
                         "($itemId) was not packed"
                 }
-                progress.step()
+                bar.step()
                 return@forEach
             }
 
@@ -83,10 +83,10 @@ class PackAutoCert(private val settings: AutoCertSettings) : CacheTask() {
             )
 
             packed++
-            progress.step()
+            bar.step()
         }
 
-        progress.close()
+        bar.close()
         logger.info { "Packed $packed auto-cert item(s) from '${settings.template}'" }
     }
 

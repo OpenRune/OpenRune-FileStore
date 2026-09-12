@@ -16,7 +16,7 @@ name = "Custom Pank"
 [[object]]
 id = "objects.merlin_rune_portal"
 name = "Merlin Rune Portal"
-animationId = %ANIMATION%
+animationId = "%ANIMATION%"
 description = "Adventures can use this to loot items, exchange points and invest for rewards."
 sizeX = 2
 sizeY = 2

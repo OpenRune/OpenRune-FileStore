@@ -15,6 +15,17 @@ class OverlayCodec : DefinitionCodec<OverlayType> {
         }
     }
 
+    override fun readLoop(definition: OverlayType, buffer: ByteBuf) {
+        while (true) {
+            val opcode = buffer.readUnsignedByte().toInt()
+            if (opcode == 0) {
+                break
+            }
+            definition.read(opcode, buffer)
+        }
+        definition.calculateHsl()
+    }
+
     override fun ByteBuf.encode(definition: OverlayType) {
         TODO("Not yet implemented")
     }

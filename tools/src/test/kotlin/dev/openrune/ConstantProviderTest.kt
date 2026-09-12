@@ -169,10 +169,11 @@ class ConstantProviderTest {
         val afterAddCount = ConstantProvider.mappings.size
         assertEquals(initialCount, afterAddCount)
         
-        // Clear all providers
+        // Clear all providers. Loading with nothing registered is rejected rather than silently leaving
+        // an empty mapping table, which would turn every later constant lookup into a confusing failure.
         ConstantProvider.clearProviders()
-        ConstantProvider.load(testDir)
-        assertEquals(0, ConstantProvider.mappings.size)
+        val error = assertThrows(IllegalStateException::class.java) { ConstantProvider.load(testDir) }
+        assertEquals("Provider has not loaded any mappings", error.message)
     }
 
     @Test

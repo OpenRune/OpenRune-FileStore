@@ -101,6 +101,14 @@ class CacheDelegate(val library: CacheLibrary) : Cache {
         library.put(index, archive, data, xteas)
     }
 
+    override fun remove(index: Int, archive: Int, file: Int) {
+        library.remove(index, archive, file)
+    }
+
+    override fun remove(index: Int, archive: Int) {
+        library.remove(index, archive)
+    }
+
     override fun update(): Boolean {
         library.update()
         return true

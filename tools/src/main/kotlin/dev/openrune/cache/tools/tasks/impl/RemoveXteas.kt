@@ -30,7 +30,7 @@ class RemoveXteas(private val xteaLocation : File) : CacheTask() {
                 }
             }
         }
-        val mapProgress = progress("Removing Xteas Maps", mapCount)
+        val mapProgress = progress.begin("Removing Xteas Maps", mapCount)
 
         for (x in 0..256) {
             for (y in 0..256) {

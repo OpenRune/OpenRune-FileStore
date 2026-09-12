@@ -40,7 +40,9 @@ class TextureCodec(private val revision: Int) : DefinitionCodec<TextureType> {
         } else {
             fileId = buffer.readUnsignedShort()
             averageRgb = buffer.readUnsignedShort()
-            isLowDetail = buffer.readUnsignedByte().toInt() == 1
+            // Transparency, as in the pre-233 format; detail level is never a cache field.
+            isTransparent = buffer.readUnsignedByte().toInt() == 1
+            isLowDetail = DEFAULT_TEXTURE_SIZE == 64
             animationDirection = buffer.readUnsignedByte().toInt()
             animationSpeed = buffer.readUnsignedByte().toInt()
         }
@@ -56,9 +58,9 @@ class TextureCodec(private val revision: Int) : DefinitionCodec<TextureType> {
             writeByte(definition.animationDirection)
             writeByte(definition.animationSpeed)
         } else {
-            writeByte(definition.fileId)
+            writeShort(definition.fileId)
             writeShort(definition.averageRgb)
-            writeBoolean(definition.isLowDetail)
+            writeByte(if (definition.isTransparent) 1 else 0)
             writeByte(definition.animationDirection)
             writeByte(definition.animationSpeed)
         }

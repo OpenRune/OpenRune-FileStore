@@ -19,6 +19,13 @@ object ConstantProvider {
 
     private var mappingProvider: MappingProvider = defaultProviders()
 
+    @Volatile
+    var lookupListener: ((key: String, value: Int?) -> Unit)? = null
+
+    fun notifyLookup(key: String, value: Int?) {
+        lookupListener?.invoke(key, value)
+    }
+
     fun load(mappingsDir: File) = load(mappingsDir, mappingProvider)
 
     fun load(provider: MappingProvider) {
@@ -130,7 +137,9 @@ object ConstantProvider {
     fun getMapping(key: String): Int {
         ensureProviderInitialized()
         val tableMappings = provider.tableFor(key)
-        return tableMappings[key] ?: error("Missing mapping for key: '$key'")
+        val value = tableMappings[key]
+        notifyLookup(key, value)
+        return value ?: error("Missing mapping for key: '$key'")
     }
 
     fun putMapping(table: String, key: String, id: Int) {
@@ -142,8 +151,14 @@ object ConstantProvider {
 
     fun getMappingOrNull(key: String): Int? {
         if (!::provider.isInitialized) return null
-        val tableMappings = provider.mappings[key.tableName()] ?: return null
-        return tableMappings[key]
+        val value = provider.mappings[key.tableName()]?.get(key)
+        notifyLookup(key, value)
+        return value
+    }
+
+    fun peekMapping(key: String): Int? {
+        if (!::provider.isInitialized) return null
+        return provider.mappings[key.tableName()]?.get(key)
     }
 
     private fun ensureComposite(): CompositeMappingProvider {

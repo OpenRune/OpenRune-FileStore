@@ -252,10 +252,14 @@ class Model : Renderable() {
         graphics.alpha = triangleAlphas?.get(face)?.and(255) ?: 0
 
         if (faceTextures != null && faceTextures!![face] != -1) {
-            val textureIndices = textureCoords?.let {
-                val idx = textureCoords!![face].toInt() and 255
+            // -1 means map onto the face's own vertices rather than index into texIndices.
+            val coord = textureCoords?.get(face)?.toInt() ?: -1
+            val textureIndices = if (coord != -1) {
+                val idx = coord and 255
                 arrayOf(texIndices1[idx], texIndices2[idx], texIndices3[idx])
-            } ?: arrayOf(v1, v2, v3)
+            } else {
+                arrayOf(v1, v2, v3)
+            }
 
             if (faceColors3[face] == -1) {
                 graphics.rasterTextureAffine(

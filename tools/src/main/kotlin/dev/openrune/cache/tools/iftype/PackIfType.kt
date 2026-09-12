@@ -38,7 +38,7 @@ class PackIfType(
 
     override fun init(cache: Cache) {
         val totalInterfaces = interfaces.size
-        val progressInterfaces = progress("Packing iftype's", totalInterfaces)
+        val progressInterfaces = progress.begin("Packing iftype's", totalInterfaces)
         val library = (cache as CacheDelegate).library
         val decoder = ComponentDecoder(cache, revision)
         interfaces.forEach {

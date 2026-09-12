@@ -2,8 +2,8 @@ package dev.openrune.cache.tools.cs2
 
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.cache.CLIENTSCRIPT
-import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.tools.TaskPriority
+import dev.openrune.cache.tools.incremental.Hashing
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.progress
 import dev.openrune.clientscript.compiler.ClientScripts
@@ -54,7 +54,6 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
 
             ensureInstalled(cache)
 
-            val library = (cache as CacheDelegate).library
             val configFile = File(cs2Dir, "neptune.toml")
 
             if (!validateNeptuneLayout(configFile)) {
@@ -71,25 +70,64 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
 
             CustomCs2OverrideSync(cs2Dir, revision).sync()
 
-            val scripts = ClientScripts.compileTask(
-                configFile.toPath(),
-                revision
-            )
-
-            val progress = progress("Packing Cs2 Scripts", scripts.size)
-
-            scripts.forEach { script ->
-                val id = resolveScriptId(script)
-                library.put(CLIENTSCRIPT, id, script.bytes)
-                progress.step()
+            // Neptune compiles the project as a whole and reports no per-script dependencies, so CS2 is one
+            // coarse unit: any source, symbol or library file added, edited or removed recompiles the lot,
+            // and an untouched project skips compilation entirely. The fingerprint is taken after the
+            // symbol dump above, so a config or gameval change that alters a symbol also triggers a rebuild.
+            incremental.runOnce(
+                task = this,
+                scope = cs2Dir.absolutePath,
+                label = "Packing Cs2 Scripts",
+                cache = cache,
+                fingerprint = fingerprintProject(configFile),
+            ) { packCache ->
+                compileAndWrite(packCache, configFile)
             }
-
-            progress.close()
         } catch (e: Exception) {
             logger.error(e) {
                 "PackCs2 failed"
             }
         }
+    }
+
+    private fun compileAndWrite(cache: Cache, configFile: File) {
+        val scripts = ClientScripts.compileTask(configFile.toPath(), revision)
+
+        val bar = this.progress.begin("Packing Cs2 Scripts", scripts.size)
+
+        scripts.forEach { script ->
+            val id = resolveScriptId(script)
+            cache.write(CLIENTSCRIPT, id, script.bytes)
+            bar.step()
+        }
+
+        bar.close()
+    }
+
+    /**
+     * Hashes every file Neptune reads: `neptune.toml` plus the trees named by its `sources`, `symbols` and
+     * `libraries` keys. Generated output under `excluded` is skipped so a rebuild does not appear to change
+     * its own inputs. Falls back to hashing the whole directory if the config cannot be parsed.
+     */
+    private fun fingerprintProject(configFile: File): String {
+        val text = runCatching { configFile.readText() }.getOrNull()
+            ?: return Hashing.hashTree(cs2Dir)
+
+        val excluded = parseNeptuneStringArray(text, "excluded")
+            .map { File(cs2Dir, it.trimEnd('/', ' ')).absoluteFile }
+
+        val roots = listOf("sources", "symbols", "libraries")
+            .flatMap { key -> parseNeptuneStringArray(text, key) }
+            .map { File(cs2Dir, it.trimEnd('/', ' ')) }
+            .filter { it.exists() }
+
+        val files = roots.asSequence()
+            .flatMap { it.walkTopDown() }
+            .filter { it.isFile }
+            .filterNot { file -> excluded.any { file.absoluteFile.startsWith(it) } }
+            .toList()
+
+        return Hashing.hashFiles(files + configFile)
     }
 
     /**

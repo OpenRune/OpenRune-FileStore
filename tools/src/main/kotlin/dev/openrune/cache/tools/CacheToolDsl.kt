@@ -4,6 +4,9 @@ import dev.openrune.cache.tools.autocert.AutoCertSettings
 import dev.openrune.cache.tools.autocert.CertCandidate
 import dev.openrune.cache.tools.autocert.CertCandidateScanner
 import dev.openrune.cache.tools.gameval.GameValAssigner
+import dev.openrune.cache.tools.incremental.CacheVerification
+import dev.openrune.cache.tools.progress.CacheProgress
+import dev.openrune.cache.tools.progress.DefaultCacheProgress
 import dev.openrune.cache.tools.tasks.impl.defs.PackConfig
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.TaskType
@@ -34,6 +37,22 @@ class CacheToolDsl {
 
     var autoAssignGameVals: Boolean = false
 
+    var incremental: Boolean = true
+
+    /**
+     * How the cache is checked against recorded state. Set to [CacheVerification.OUTPUT_CRC] for a cache
+     * that is legitimately rewritten between builds, such as a server cache reseeded from a live one.
+     */
+    var verification: CacheVerification = CacheVerification.FINGERPRINT
+
+    /**
+     * Where progress is reported. Replace it to combine every task into a single bar, to render into a UI,
+     * or use [dev.openrune.cache.tools.progress.SilentCacheProgress] to report nothing.
+     */
+    var progress: CacheProgress = DefaultCacheProgress()
+
+    private var incrementalDatabase: File? = null
+
     var autoCert: Boolean = false
 
     var autoCertIds: Map<String, Int> = emptyMap()
@@ -61,6 +80,10 @@ class CacheToolDsl {
 
     fun rscm(path: String) {
         rscmDir = File(path)
+    }
+
+    fun incrementalDatabase(path: String) {
+        incrementalDatabase = File(path)
     }
 
     fun build(): CacheTool {
@@ -110,7 +133,11 @@ class CacheToolDsl {
             cacheLocation = cacheLocation,
             serverCacheLocation = serverCache,
             extraTasks = cleanedTasks,
-            autoCertIds = autoCertIds
+            autoCertIds = autoCertIds,
+            incremental = incremental,
+            incrementalDatabase = incrementalDatabase,
+            verification = verification,
+            progress = progress
         )
     }
 

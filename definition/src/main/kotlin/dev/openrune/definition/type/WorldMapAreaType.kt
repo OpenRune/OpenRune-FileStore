@@ -4,113 +4,191 @@ import dev.openrune.definition.Definition
 import dev.openrune.definition.util.Coord
 import io.netty.buffer.ByteBuf
 
-abstract class WorldMapSectionType() {
+/**
+ * One rectangle of map data a world map area draws, and where it draws it.
+ *
+ * The four layouts and the byte that selects them come from the client: the record stores the section's id,
+ * which the client maps to a concrete section class (see WorldMapData.method6401). Source coordinates say
+ * where the map data is read from, destination coordinates where it is painted, which is what lets an area
+ * such as the Zanaris map show data that lives elsewhere in the world.
+ */
+abstract class WorldMapSectionType {
+    /** Id written before the section body, used to pick the layout when reading it back. */
+    abstract val sectionId: Int
+
     abstract fun decode(buffer: ByteBuf)
+    abstract fun encode(buffer: ByteBuf)
 }
 
+/** Id 0: a rectangle of whole mapsquares copied to another rectangle of mapsquares. */
 data class MultiSquare(
-    var minPlane : Int = -1,
-    var planes : Int = -1,
-    var regionStartX : Int = -1,
-    var regionStartY : Int = -1,
-    var regionEndX : Int = -1,
-    var regionEndY : Int = -1,
-    var field3344 : Int = -1,
-    var field3350 : Int = -1,
-    var field3353 : Int = -1,
-    var field3352 : Int = -1
+    var level: Int = -1,
+    var levelsCount: Int = -1,
+    var sourceMinX: Int = -1,
+    var sourceMinY: Int = -1,
+    var sourceMaxX: Int = -1,
+    var sourceMaxY: Int = -1,
+    var destinationMinX: Int = -1,
+    var destinationMinY: Int = -1,
+    var destinationMaxX: Int = -1,
+    var destinationMaxY: Int = -1
 ) : WorldMapSectionType() {
+
+    override val sectionId: Int get() = 0
+
     override fun decode(buffer: ByteBuf) {
-        this.minPlane = buffer.readUnsignedByte().toInt()
-        this.planes = buffer.readUnsignedByte().toInt()
-        this.regionStartX = buffer.readUnsignedShort()
-        this.regionStartY = buffer.readUnsignedShort()
-        this.regionEndX = buffer.readUnsignedShort()
-        this.regionEndY = buffer.readUnsignedShort()
-        this.field3344 = buffer.readUnsignedShort()
-        this.field3350 = buffer.readUnsignedShort()
-        this.field3353 = buffer.readUnsignedShort()
-        this.field3352 = buffer.readUnsignedShort()
+        this.level = buffer.readUnsignedByte().toInt()
+        this.levelsCount = buffer.readUnsignedByte().toInt()
+        this.sourceMinX = buffer.readUnsignedShort()
+        this.sourceMinY = buffer.readUnsignedShort()
+        this.sourceMaxX = buffer.readUnsignedShort()
+        this.sourceMaxY = buffer.readUnsignedShort()
+        this.destinationMinX = buffer.readUnsignedShort()
+        this.destinationMinY = buffer.readUnsignedShort()
+        this.destinationMaxX = buffer.readUnsignedShort()
+        this.destinationMaxY = buffer.readUnsignedShort()
+    }
+
+    override fun encode(buffer: ByteBuf) {
+        buffer.writeByte(level)
+        buffer.writeByte(levelsCount)
+        buffer.writeShort(sourceMinX)
+        buffer.writeShort(sourceMinY)
+        buffer.writeShort(sourceMaxX)
+        buffer.writeShort(sourceMaxY)
+        buffer.writeShort(destinationMinX)
+        buffer.writeShort(destinationMinY)
+        buffer.writeShort(destinationMaxX)
+        buffer.writeShort(destinationMaxY)
     }
 }
 
+/** Id 1: a single mapsquare copied to a single mapsquare. */
 data class SingleSquare(
-    var oldZ : Int = -1,
-    var newZ : Int = -1,
-    var oldX : Int = -1,
-    var oldChunkXLow : Int = -1,
-    var oldChunkXHigh : Int = -1,
-    var oldY : Int = -1,
-    var oldChunkYLow : Int = -1,
-    var oldChunkYHigh : Int = -1,
-    var newX : Int = -1,
-    var newChunkXLow : Int = -1,
-    var minPlane : Int = -1,
-    var newY : Int = -1,
-    var newChunkYLow : Int = -1,
-    var newChunkXHigh : Int = -1,
-    var newChunkYHigh : Int = -1
+    var level: Int = -1,
+    var levelsCount: Int = -1,
+    var sourceX: Int = -1,
+    var sourceY: Int = -1,
+    var destinationX: Int = -1,
+    var destinationY: Int = -1
 ) : WorldMapSectionType() {
+
+    override val sectionId: Int get() = 1
+
     override fun decode(buffer: ByteBuf) {
-        this.oldZ = buffer.readUnsignedByte().toInt()
-        this.newZ = buffer.readUnsignedByte().toInt()
-        this.oldX = buffer.readUnsignedShort()
-        this.oldChunkXLow = buffer.readUnsignedByte().toInt()
-        this.oldChunkXHigh = buffer.readUnsignedByte().toInt()
-        this.oldY = buffer.readUnsignedShort()
-        this.oldChunkYLow = buffer.readUnsignedByte().toInt()
-        this.oldChunkYHigh = buffer.readUnsignedByte().toInt()
-        this.newX = buffer.readUnsignedShort()
-        this.newChunkXLow = buffer.readUnsignedByte().toInt()
-        this.newChunkXHigh = buffer.readUnsignedByte().toInt()
-        this.newY = buffer.readUnsignedShort()
-        this.newChunkYLow = buffer.readUnsignedByte().toInt()
-        this.newChunkYHigh = buffer.readUnsignedByte().toInt()
+        this.level = buffer.readUnsignedByte().toInt()
+        this.levelsCount = buffer.readUnsignedByte().toInt()
+        this.sourceX = buffer.readUnsignedShort()
+        this.sourceY = buffer.readUnsignedShort()
+        this.destinationX = buffer.readUnsignedShort()
+        this.destinationY = buffer.readUnsignedShort()
     }
 
+    override fun encode(buffer: ByteBuf) {
+        buffer.writeByte(level)
+        buffer.writeByte(levelsCount)
+        buffer.writeShort(sourceX)
+        buffer.writeShort(sourceY)
+        buffer.writeShort(destinationX)
+        buffer.writeShort(destinationY)
+    }
 }
 
+/** Id 2: a rectangle of zones within one mapsquare copied to a rectangle of zones in another. */
 data class MultiZone(
-    var minPlane : Int = -1,
-    var planes : Int = -1,
-    var regionStartX : Int = -1,
-    var regionStartY : Int = -1,
-    var regionEndX : Int = -1,
-    var regionEndY : Int = -1
+    var level: Int = -1,
+    var levelsCount: Int = -1,
+    var sourceMapsquareX: Int = -1,
+    var sourceZoneMinX: Int = -1,
+    var sourceZoneMaxX: Int = -1,
+    var sourceMapsquareY: Int = -1,
+    var sourceZoneMinY: Int = -1,
+    var sourceZoneMaxY: Int = -1,
+    var destinationMapsquareX: Int = -1,
+    var destinationZoneMinX: Int = -1,
+    var destinationZoneMaxX: Int = -1,
+    var destinationMapsquareY: Int = -1,
+    var destinationZoneMinY: Int = -1,
+    var destinationZoneMaxY: Int = -1
 ) : WorldMapSectionType() {
+
+    override val sectionId: Int get() = 2
+
     override fun decode(buffer: ByteBuf) {
-        this.minPlane = buffer.readUnsignedByte().toInt()
-        this.planes = buffer.readUnsignedByte().toInt()
-        this.regionStartX = buffer.readUnsignedShort()
-        this.regionStartY = buffer.readUnsignedShort()
-        this.regionEndX = buffer.readUnsignedShort()
-        this.regionEndY = buffer.readUnsignedShort()
+        this.level = buffer.readUnsignedByte().toInt()
+        this.levelsCount = buffer.readUnsignedByte().toInt()
+        this.sourceMapsquareX = buffer.readUnsignedShort()
+        this.sourceZoneMinX = buffer.readUnsignedByte().toInt()
+        this.sourceZoneMaxX = buffer.readUnsignedByte().toInt()
+        this.sourceMapsquareY = buffer.readUnsignedShort()
+        this.sourceZoneMinY = buffer.readUnsignedByte().toInt()
+        this.sourceZoneMaxY = buffer.readUnsignedByte().toInt()
+        this.destinationMapsquareX = buffer.readUnsignedShort()
+        this.destinationZoneMinX = buffer.readUnsignedByte().toInt()
+        this.destinationZoneMaxX = buffer.readUnsignedByte().toInt()
+        this.destinationMapsquareY = buffer.readUnsignedShort()
+        this.destinationZoneMinY = buffer.readUnsignedByte().toInt()
+        this.destinationZoneMaxY = buffer.readUnsignedByte().toInt()
+    }
+
+    override fun encode(buffer: ByteBuf) {
+        buffer.writeByte(level)
+        buffer.writeByte(levelsCount)
+        buffer.writeShort(sourceMapsquareX)
+        buffer.writeByte(sourceZoneMinX)
+        buffer.writeByte(sourceZoneMaxX)
+        buffer.writeShort(sourceMapsquareY)
+        buffer.writeByte(sourceZoneMinY)
+        buffer.writeByte(sourceZoneMaxY)
+        buffer.writeShort(destinationMapsquareX)
+        buffer.writeByte(destinationZoneMinX)
+        buffer.writeByte(destinationZoneMaxX)
+        buffer.writeShort(destinationMapsquareY)
+        buffer.writeByte(destinationZoneMinY)
+        buffer.writeByte(destinationZoneMaxY)
     }
 }
 
+/** Id 3: a single zone copied to a single zone. */
 data class SingleZone(
-    var field3412 : Int = -1,
-    var field3407 : Int = -1,
-    var field3418 : Int = -1,
-    var field3408 : Int = -1,
-    var field3409 : Int = -1,
-    var field3413 : Int = -1,
-    var field3410 : Int = -1,
-    var field3414 : Int = -1,
-    var field3411 : Int = -1,
-    var field3415 : Int = -1
+    var level: Int = -1,
+    var levelsCount: Int = -1,
+    var sourceMapsquareX: Int = -1,
+    var sourceZoneX: Int = -1,
+    var sourceMapsquareY: Int = -1,
+    var sourceZoneY: Int = -1,
+    var destinationMapsquareX: Int = -1,
+    var destinationZoneX: Int = -1,
+    var destinationMapsquareY: Int = -1,
+    var destinationZoneY: Int = -1
 ) : WorldMapSectionType() {
+
+    override val sectionId: Int get() = 3
+
     override fun decode(buffer: ByteBuf) {
-        this.field3412 = buffer.readUnsignedByte().toInt()
-        this.field3407 = buffer.readUnsignedByte().toInt()
-        this.field3418 = buffer.readUnsignedShort()
-        this.field3408 = buffer.readUnsignedByte().toInt()
-        this.field3409 = buffer.readUnsignedShort()
-        this.field3413 = buffer.readUnsignedByte().toInt()
-        this.field3410 = buffer.readUnsignedShort()
-        this.field3414 = buffer.readUnsignedByte().toInt()
-        this.field3411 = buffer.readUnsignedShort()
-        this.field3415 = buffer.readUnsignedByte().toInt()
+        this.level = buffer.readUnsignedByte().toInt()
+        this.levelsCount = buffer.readUnsignedByte().toInt()
+        this.sourceMapsquareX = buffer.readUnsignedShort()
+        this.sourceZoneX = buffer.readUnsignedByte().toInt()
+        this.sourceMapsquareY = buffer.readUnsignedShort()
+        this.sourceZoneY = buffer.readUnsignedByte().toInt()
+        this.destinationMapsquareX = buffer.readUnsignedShort()
+        this.destinationZoneX = buffer.readUnsignedByte().toInt()
+        this.destinationMapsquareY = buffer.readUnsignedShort()
+        this.destinationZoneY = buffer.readUnsignedByte().toInt()
+    }
+
+    override fun encode(buffer: ByteBuf) {
+        buffer.writeByte(level)
+        buffer.writeByte(levelsCount)
+        buffer.writeShort(sourceMapsquareX)
+        buffer.writeByte(sourceZoneX)
+        buffer.writeShort(sourceMapsquareY)
+        buffer.writeByte(sourceZoneY)
+        buffer.writeShort(destinationMapsquareX)
+        buffer.writeByte(destinationZoneX)
+        buffer.writeShort(destinationMapsquareY)
+        buffer.writeByte(destinationZoneY)
     }
 }
 
