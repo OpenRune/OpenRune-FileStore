@@ -175,6 +175,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                     }
                 )
             }
+            252 -> entityOpsLoader.decodeConditionalOp(actions, buffer)
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Npcs [${opcode}]" }
         }
@@ -460,6 +461,12 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
 
                 writeByte(it.soundIds.size)
                 it.soundIds.forEach { id -> writeShort(id) }
+            }
+        }
+
+        if (entityOpsLoader.supportsExtendedEntityOps()) {
+            definition.actions.conditionalOps.forEachIndexed { index, conditionalOps ->
+                entityOpsLoader.encodeConditionalOpsOpcode(this, 252, index, conditionalOps)
             }
         }
 

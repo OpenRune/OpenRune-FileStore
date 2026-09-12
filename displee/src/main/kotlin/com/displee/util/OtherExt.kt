@@ -55,7 +55,7 @@ fun InputStream.writeTo(to: OutputStream): Long {
 }
 
 fun String.hashCode317(): Int {
-    val upperCaseString = toUpperCase()
+    val upperCaseString = uppercase()
     var hash = 0
     for (element in upperCaseString) {
         hash = hash * 61 + element.toInt() - 32

@@ -57,12 +57,18 @@ interface ProgressTracker : AutoCloseable {
 /**
  * Renders a `me.tongfei.progressbar` bar per section.
  *
- * A summary is logged only when work was actually skipped: when everything in a section is packed the bar
- * already says so, and repeating it doubles the output of a build with many sections.
+ * Section summaries are accumulated by label and logged once at [buildFinished] rather than per section: a
+ * build has a config section per source directory, so logging each one buries the build in near-identical
+ * "up to date" lines. Only labels that actually skipped work are reported — when everything in a section is
+ * packed the bar already said so.
  */
 open class DefaultCacheProgress : CacheProgress {
 
     private val logger = InlineLogger()
+
+    private data class Tally(var packed: Int = 0, var skipped: Int = 0, var sections: Int = 0)
+
+    private val tallies = LinkedHashMap<String, Tally>()
 
     override fun begin(label: String, total: Long): ProgressTracker {
         if (total <= 0) return ProgressTracker.None
@@ -70,12 +76,27 @@ open class DefaultCacheProgress : CacheProgress {
     }
 
     override fun summary(label: String, packed: Int, skipped: Int) {
-        if (skipped <= 0) return
-        if (packed == 0) {
-            logger.info { "$label: up to date ($skipped unchanged)" }
-        } else {
-            logger.info { "$label: packed $packed, skipped $skipped unchanged" }
+        val tally = tallies.getOrPut(label) { Tally() }
+        tally.packed += packed
+        tally.skipped += skipped
+        tally.sections++
+    }
+
+    override fun buildStarted(revision: Int, serverPass: Boolean) {
+        tallies.clear()
+    }
+
+    override fun buildFinished() {
+        tallies.forEach { (label, tally) ->
+            if (tally.skipped <= 0) return@forEach
+            val sections = if (tally.sections > 1) " across ${tally.sections} sections" else ""
+            if (tally.packed == 0) {
+                logger.info { "$label: up to date [${tally.skipped} unchanged]$sections" }
+            } else {
+                logger.info { "$label: [${tally.packed} packed, ${tally.skipped} unchanged]$sections" }
+            }
         }
+        tallies.clear()
     }
 
     private class BarTracker(private val bar: me.tongfei.progressbar.ProgressBar) : ProgressTracker {

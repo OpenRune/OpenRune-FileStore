@@ -12,7 +12,6 @@ dependencies {
     api("org.xerial:sqlite-jdbc:3.45.3.0")
     implementation(project(":displee"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-
     // logback-classic: clientscript-compiler configureLogLevel() expects Logback LoggerContext (not slf4j-simple).
     implementation("ch.qos.logback:logback-classic:1.5.16")
     implementation("dev.or2:toml-rsconfig:1.1")

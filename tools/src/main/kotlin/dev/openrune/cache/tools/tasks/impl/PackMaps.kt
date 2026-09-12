@@ -8,6 +8,7 @@ import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.logger
 import dev.openrune.cache.tools.incremental.IncrementalBuild
 import dev.openrune.cache.tools.incremental.PackUnit
+import dev.openrune.cache.tools.incremental.PackedMapSquares
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.filesystem.Cache
 import java.io.File
@@ -247,6 +248,8 @@ class PackMaps(
         objData: ByteArray,
         keys: IntArray?
     ) {
+        // Only reached for squares this build actually packs, so it doubles as the changed-square log.
+        PackedMapSquares.record(regionX, regionY)
 
         if (revision < 237) {
 

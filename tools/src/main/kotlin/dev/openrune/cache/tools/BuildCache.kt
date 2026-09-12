@@ -95,6 +95,7 @@ class BuildCache(
                     }
                 }
 
+                session.build.reportRemovals()
                 progress.buildFinished()
 
                 logger.info { "Tasks Finished In: ${formatTime(time)}" }

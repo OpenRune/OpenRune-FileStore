@@ -10,8 +10,36 @@ data class IndexedSprite(
     var averageColor : Int = -1,
     var subHeight: Int = 0,
     var subWidth: Int = 0,
+    var originalWidth: Int = 0,
+    var originalHeight: Int = 0,
     var alpha: ByteArray? = null
 ) {
+
+    fun getHorizontalOffset(alignment: Int): Int {
+        val value = when (alignment) {
+            0 -> 1
+            1 -> 2
+            else -> 0
+        }
+        return when (value) {
+            1 -> 0
+            2 -> -subWidth / 2
+            else -> -subWidth
+        }
+    }
+
+    fun getVerticalOffset(alignment: Int): Int {
+        val value = when (alignment) {
+            0 -> 1
+            1 -> 2
+            else -> 1
+        }
+        return when (value) {
+            1 -> 0
+            2 -> -subHeight / 2
+            else -> -subHeight
+        }
+    }
 
     constructor(width : Int, height : Int) : this() {
         this.width = width

@@ -89,17 +89,25 @@ class MapElementCodec : DefinitionCodec<MapElementType> {
 
         if (definition.textSize != 0) {
             writeByte(6)
-            writeMedium(definition.textSize)
+            writeByte(definition.textSize)
         }
 
-        if (definition.options.any { it != null }) {
-            for (i in definition.options.indices) {
-                writeByte(7 + i)
-                if (definition.options[i] == null) {
-                    continue
-                }
-                writeString(definition.options[i]!!)
+        if (!definition.renderOnWorldMap || definition.renderOnMinimap) {
+            writeByte(7)
+            var flags = 0
+            if (definition.renderOnWorldMap) {
+                flags = flags or 1
             }
+            if (definition.renderOnMinimap) {
+                flags = flags or 2
+            }
+            writeByte(flags)
+        }
+
+        for (i in definition.options.indices) {
+            val option = definition.options[i] ?: continue
+            writeByte(10 + i)
+            writeString(option)
         }
 
         if (definition.menuTargetName != "null") {

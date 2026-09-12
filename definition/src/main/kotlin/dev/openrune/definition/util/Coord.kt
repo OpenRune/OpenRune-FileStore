@@ -10,4 +10,7 @@ data class Coord(
         packed shr 14 and 16383,
         packed and 16383
     )
+
+    val packed: Int
+        get() = (plane shl 28) or (x shl 14) or y
 }

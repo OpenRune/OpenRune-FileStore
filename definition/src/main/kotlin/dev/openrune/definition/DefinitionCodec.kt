@@ -34,7 +34,7 @@ interface DefinitionCodec<T : Definition> {
             try {
                 readLoop(definition, data)
             }catch (e: Exception) {
-                error("Unable to decode ${definition.javaClass.simpleName} [$id]")
+                throw IllegalStateException("Unable to decode ${definition.javaClass.simpleName} [$id]", e)
             }
         }
         return definition
@@ -48,7 +48,7 @@ interface DefinitionCodec<T : Definition> {
             try {
                 readLoop(definition, reader)
             }catch (e: Exception) {
-                error("Unable to decode ${definition.javaClass.simpleName} [$id]")
+                throw IllegalStateException("Unable to decode ${definition.javaClass.simpleName} [$id]", e)
             }
         }
         return definition
