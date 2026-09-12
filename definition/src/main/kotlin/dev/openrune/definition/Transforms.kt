@@ -1,5 +1,6 @@
 package dev.openrune.definition
 
+import dev.openrune.definition.util.IntBackedList
 import dev.openrune.definition.util.readSmart
 import dev.openrune.definition.util.readUnsignedShortOrNull
 import io.netty.buffer.ByteBuf
@@ -15,12 +16,12 @@ interface Transforms {
         multiVarp = buffer.readUnsignedShortOrNull() ?: -1
         multiDefault = if (isLast) buffer.readUnsignedShortOrNull() ?: -1 else -1
         val count = if (extendedTransforms) buffer.readSmart() else buffer.readUnsignedByte().toInt()
-        val ids = ArrayList<Int>(count + 2)
+        val ids = IntArray(count + 2)
         for (i in 0..count) {
-            ids.add(buffer.readUnsignedShortOrNull() ?: -1)
+            ids[i] = buffer.readUnsignedShortOrNull() ?: -1
         }
-        ids.add(multiDefault)
-        transforms = ids
+        ids[count + 1] = multiDefault
+        transforms = IntBackedList(ids)
     }
 
     fun writeTransforms(writer: ByteBuf, smaller: Int, larger: Int) {

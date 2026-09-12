@@ -3,6 +3,7 @@ package dev.openrune.definition.codec
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.revisionIsOrAfter
 import dev.openrune.definition.type.IdentityKitType
+import dev.openrune.definition.util.readIntList
 import io.netty.buffer.ByteBuf
 
 class IdentityKitCodec(val rev : Int) : DefinitionCodec<IdentityKitType> {
@@ -11,14 +12,14 @@ class IdentityKitCodec(val rev : Int) : DefinitionCodec<IdentityKitType> {
             1 -> bodyPartId = buffer.readUnsignedByte().toInt()
             2 -> {
                 val length = buffer.readUnsignedByte().toInt()
-                models = MutableList(length) {
+                models = readIntList(length) {
                     buffer.readUnsignedShort().let { if (it == 65535) -1 else it }
                 }
             }
             3 -> nonSelectable = true
             5 -> {
                 val length = buffer.readUnsignedByte().toInt()
-                models = MutableList(length) {
+                models = readIntList(length) {
                     buffer.readInt().let { if (it == 65535) -1 else it }
                 }
             }

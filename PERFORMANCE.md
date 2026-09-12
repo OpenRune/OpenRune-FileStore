@@ -108,35 +108,40 @@ type and holding only its map, per type, on OSRS 240.
 
 | Type       | Count  | Before  | After   | Change |
 |------------|--------|---------|---------|--------|
-| objects    | 62 400 | 35.3 MB | 30.2 MB | -14%   |
-| items      | 33 971 | 23.5 MB | 20.5 MB | -13%   |
-| npcs       | 16 338 | 14.8 MB | 11.4 MB | -23%   |
-| anims      | 14 468 | 12.9 MB | 11.4 MB | -12%   |
-| dbrows     | 16 790 | 10.3 MB | 9.4 MB  | -9%    |
+| objects    | 62 400 | 35.3 MB | 28.2 MB | -20%   |
+| items      | 33 971 | 23.5 MB | 20.4 MB | -13%   |
+| npcs       | 16 338 | 14.8 MB | 10.5 MB | -29%   |
+| anims      | 14 468 | 12.9 MB | 8.2 MB  | -36%   |
+| dbrows     | 16 790 | 10.3 MB | 9.3 MB  | -10%   |
 | interfaces | 26 407 | 14.6 MB | 13.5 MB | -8%    |
-| enums      | 5 872  | 4.0 MB  | 3.2 MB  | -20%   |
-| structs    | 3 990  | 2.6 MB  | 2.0 MB  | -23%   |
-| sprites    | 8 559  | 23.7 MB | 23.7 MB | 0      |
+| enums      | 5 872  | 4.0 MB  | 3.3 MB  | -18%   |
+| structs    | 3 990  | 2.6 MB  | 1.9 MB  | -27%   |
+| sprites    | 8 559  | 23.7 MB | 23.5 MB | 0      |
 | varbits    | 19 086 | 1.6 MB  | 1.6 MB  | 0      |
-| **total**  |        | **143 MB** | **128 MB** | **-11%** |
+| **total**  |        | **143 MB** | **120 MB** | **-16%** |
 
-What changed — all of it deduplication on the decode path, none of it API changes:
+What changed — deduplication plus primitive-backed storage on the decode path, none of it API
+changes:
 
 - `readString`/`readStringCP` route through a small direct-mapped pool, so the tens of thousands of
   repeated op names, entity names and examine lines collapse to one instance each.
 - `EntityOpsDefinition.Op` instances are pooled the same way (`Op.of`), including the default
   "Take" op every item used to allocate.
-- Boxed integers above the JVM's -128..127 cache are pooled (`BoxedInts`) at the choke points where
-  the same values recur across definitions: recolour palettes, model/type/sound id lists, enum keys
-  and values, params, db row cells, and animation frame ids and delays.
+- Boxed integers above the JVM's -128..127 cache are pooled (`BoxedInts`) where the same values
+  recur across maps and cells: enum keys and values, params, and db row cells.
+- Every decoded id, colour, transform and frame list is an `IntBackedList` — the declared field
+  type stays `MutableList<Int>`, but the storage is a plain `IntArray`: four bytes per element
+  instead of a boxed `Integer` and a reference. Equality follows the `List` contract, so it
+  compares equal to any other list with the same values, and the TOML, merge and consumer code
+  is untouched.
 
 The pools are bounded, lock free and race tolerant — entries are immutable and equality-checked
 before reuse, so a race costs a slot, never correctness. Load times are unchanged within noise.
 
-What was left alone, deliberately: `sprites` is raw pixel data; the per-definition floor of the
-config types is their fifty-plus declared fields plus their `MutableList<Int>` collections, and
-narrowing those to primitive arrays would break the public definition API. That is where the next
-meaningful saving lives if an API break is ever acceptable.
+What was left alone, deliberately: `sprites` is raw pixel data, and the remaining per-definition
+cost of the config types is their fifty-plus declared scalar fields — the floor for the current
+type shapes. Converting the fields to raw `IntArray` was considered and rejected: it would break
+the public definition API for the same bytes the array-backed lists already save.
 
 ### Round-trip verification
 

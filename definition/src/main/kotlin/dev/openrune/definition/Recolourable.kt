@@ -1,6 +1,6 @@
 package dev.openrune.definition
 
-import dev.openrune.definition.util.BoxedInts
+import dev.openrune.definition.util.IntBackedList
 import io.netty.buffer.ByteBuf
 
 interface Recolourable {
@@ -21,26 +21,17 @@ interface Recolourable {
         modifiedTextureColours = modified
     }
 
-    /**
-     * The same palette values recolour thousands of definitions, so the boxes are pooled. The
-     * unchecked view only widens the element type; the list still holds `Integer`s.
-     */
+    /** Palette pairs are stored array-backed, so the lists hold no boxed elements. */
     private fun readPairs(buffer: ByteBuf): Pair<MutableList<Int>, MutableList<Int>> {
         val length = buffer.readUnsignedByte().toInt()
-        val original = ArrayList<Int>(length)
-        val modified = ArrayList<Int>(length)
-
-        @Suppress("UNCHECKED_CAST")
-        val originalSink = original as ArrayList<Any>
-
-        @Suppress("UNCHECKED_CAST")
-        val modifiedSink = modified as ArrayList<Any>
+        val original = IntArray(length)
+        val modified = IntArray(length)
 
         for (count in 0 until length) {
-            originalSink.add(BoxedInts.of(buffer.readShort().toInt()))
-            modifiedSink.add(BoxedInts.of(buffer.readShort().toInt()))
+            original[count] = buffer.readShort().toInt()
+            modified[count] = buffer.readShort().toInt()
         }
-        return original to modified
+        return IntBackedList(original) to IntBackedList(modified)
     }
 
     fun writeColoursTextures(writer: ByteBuf) {

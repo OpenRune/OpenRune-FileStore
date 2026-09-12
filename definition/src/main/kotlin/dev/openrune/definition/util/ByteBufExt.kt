@@ -84,23 +84,6 @@ internal fun dedupDecodedString(value: String): String {
     return value
 }
 
-/**
- * Reads [length] values into an `Int` list whose boxes come from the shared pool — model, type
- * and sound id lists repeat across many definitions. The unchecked view only widens the element
- * type; the list still holds `Integer`s.
- */
-inline fun readPooledIntList(length: Int, read: (Int) -> Int): MutableList<Int> {
-    val list = ArrayList<Int>(length)
-
-    @Suppress("UNCHECKED_CAST")
-    val sink = list as ArrayList<Any>
-
-    for (i in 0 until length) {
-        sink.add(BoxedInts.of(read(i)))
-    }
-    return list
-}
-
 // 0 terminated string.
 fun ByteBuf.readString(): String {
     if (!isReadable) {

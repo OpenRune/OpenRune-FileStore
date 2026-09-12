@@ -2,6 +2,7 @@ package dev.openrune.definition.codec
 
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.definition.EntityOpsLoader
+import dev.openrune.definition.util.IntBackedList
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
@@ -113,8 +114,8 @@ class ItemCodec(private val revision: Int) : DefinitionCodec<ItemType> {
             98 -> noteTemplateId = buffer.readUnsignedShort()
             in 100..109 -> {
                 if (countCo == null) {
-                    countObj = MutableList(10) { 0 }
-                    countCo = MutableList(10) { 0 }
+                    countObj = IntBackedList(IntArray(10))
+                    countCo = IntBackedList(IntArray(10))
                 }
                 countObj!![opcode - 100] = buffer.readUnsignedShort()
                 countCo!![opcode - 100] = buffer.readUnsignedShort()

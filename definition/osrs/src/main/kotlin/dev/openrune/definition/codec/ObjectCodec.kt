@@ -1,8 +1,9 @@
-package dev.openrune.definition.codec
+﻿package dev.openrune.definition.codec
 
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.definition.EntityOpsLoader
-import dev.openrune.definition.util.readPooledIntList
+import dev.openrune.definition.util.IntBackedList
+import dev.openrune.definition.util.readIntList
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
@@ -18,8 +19,8 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
             1 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
                 if (length > 0) {
-                    val types = ArrayList<Int>(length)
-                    val models = readPooledIntList(length) {
+                    val types = IntBackedList(length)
+                    val models = readIntList(length) {
                         val model = buffer.readUnsignedShort()
                         types.add(buffer.readUnsignedByte().toInt())
                         model
@@ -34,14 +35,14 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
                 val length: Int = buffer.readUnsignedByte().toInt()
                 if (length > 0) {
                     objectTypes = null
-                    objectModels = readPooledIntList(length) { buffer.readUnsignedShort() }
+                    objectModels = readIntList(length) { buffer.readUnsignedShort() }
                 }
             }
             6 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
                 if (length > 0) {
-                    val types = ArrayList<Int>(length)
-                    val models = readPooledIntList(length) {
+                    val types = IntBackedList(length)
+                    val models = readIntList(length) {
                         val model = buffer.readInt()
                         types.add(buffer.readUnsignedByte().toInt())
                         model
@@ -54,7 +55,7 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
                 val length: Int = buffer.readUnsignedByte().toInt()
                 if (length > 0) {
                     objectTypes = null
-                    objectModels = readPooledIntList(length) { buffer.readInt() }
+                    objectModels = readIntList(length) { buffer.readInt() }
                 }
             }
 
@@ -116,7 +117,7 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
                     soundRetain = buffer.readUnsignedByte().toInt()
                 }
                 val length: Int = buffer.readUnsignedByte().toInt()
-                ambientSoundIds = readPooledIntList(length) { buffer.readUnsignedShort() }
+                ambientSoundIds = readIntList(length) { buffer.readUnsignedShort() }
             }
             81 -> clipType = (buffer.readUnsignedByte().toInt()) * 256
             89 -> randomizeAnimStart = true
@@ -388,3 +389,4 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
         internal val logger = InlineLogger()
     }
 }
+

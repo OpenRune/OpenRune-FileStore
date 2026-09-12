@@ -1,4 +1,4 @@
-package dev.openrune.definition.codec
+﻿package dev.openrune.definition.codec
 
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.definition.DefinitionCodec
@@ -19,7 +19,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
         when (opcode) {
             1 -> {
                 val length = buffer.readUnsignedByte().toInt()
-                models = readPooledIntList(length) {
+                models = readIntList(length) {
                     val model = buffer.readUnsignedShort()
                     if (model == 65535) -1 else model
                 }
@@ -44,15 +44,15 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             41 -> readTextures(buffer)
             60 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                chatheadModels = readPooledIntList(length) { buffer.readUnsignedShort() }
+                chatheadModels = readIntList(length) { buffer.readUnsignedShort() }
             }
             61 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                models = readPooledIntList(length) { buffer.readInt() }
+                models = readIntList(length) { buffer.readInt() }
             }
             62 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                chatheadModels = readPooledIntList(length) { buffer.readInt() }
+                chatheadModels = readIntList(length) { buffer.readInt() }
             }
             74 -> attack = buffer.readUnsignedShort()
             75 -> defence = buffer.readUnsignedShort()
@@ -69,14 +69,14 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             101 -> contrast = buffer.readByte().toInt()
             102 -> {
                 if (revisionIsOrBefore(revision, 210)) {
-                    headIconGraphics = mutableListOf(0)
-                    headIconIndexes = mutableListOf(buffer.readUnsignedShort())
+                    headIconGraphics = IntBackedList(intArrayOf(0))
+                    headIconIndexes = IntBackedList(intArrayOf(buffer.readUnsignedShort()))
                 } else {
 
                     val bits = buffer.readUnsignedByte().toInt()
                     val length = 32 - Integer.numberOfLeadingZeros(bits)
-                    val iconGroups = ArrayList<Int>(length)
-                    val iconIndexes = ArrayList<Int>(length)
+                    val iconGroups = IntBackedList(length)
+                    val iconIndexes = IntBackedList(length)
 
                     for (index in 0 until length) {
                         if ((bits and (1 shl index)) == 0) {
@@ -158,9 +158,7 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
                     maxDelay = buffer.readUnsignedShort(),
                     minVolume = buffer.readUnsignedByte().toInt(),
                     maxVolume = buffer.readUnsignedByte().toInt(),
-                    soundIds = MutableList(buffer.readUnsignedByte().toInt()) {
-                        buffer.readUnsignedShort()
-                    }
+                    soundIds = readIntList(buffer.readUnsignedByte().toInt()) { buffer.readUnsignedShort() }
                 )
             }
             252 -> entityOpsLoader.decodeConditionalOp(actions, buffer)

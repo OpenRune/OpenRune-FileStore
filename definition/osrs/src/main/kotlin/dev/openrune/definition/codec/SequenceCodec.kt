@@ -1,8 +1,8 @@
-package dev.openrune.definition.codec
+﻿package dev.openrune.definition.codec
 
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.SequenceType
-import dev.openrune.definition.util.readPooledIntList
+import dev.openrune.definition.util.readIntList
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
@@ -33,17 +33,17 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
         when (opcode) {
             1 -> {
                 val frameCount = buffer.readUnsignedShort()
-                val delays = readPooledIntList(frameCount) { buffer.readUnsignedShort() }
+                val delays = readIntList(frameCount) { buffer.readUnsignedShort() }
                 val lows = IntArray(frameCount) { buffer.readUnsignedShort() }
 
                 frameDelays = delays
-                frameIDs = readPooledIntList(frameCount) { i -> lows[i] + (buffer.readUnsignedShort() shl 16) }
+                frameIDs = readIntList(frameCount) { i -> lows[i] + (buffer.readUnsignedShort() shl 16) }
             }
 
             2 -> frameStep = buffer.readUnsignedShort()
             3 -> {
                 val count = buffer.readUnsignedByte().toInt()
-                interleaveLeave = readPooledIntList(count + 1) { i ->
+                interleaveLeave = readIntList(count + 1) { i ->
                     if (i < count) buffer.readUnsignedByte().toInt() else 0x98967f
                 }
             }
@@ -59,7 +59,7 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
             12 -> {
                 val count = buffer.readUnsignedByte().toInt()
                 val lows = IntArray(count) { buffer.readUnsignedShort() }
-                chatFrameIds = readPooledIntList(count) { i -> lows[i] + (buffer.readUnsignedShort() shl 16) }
+                chatFrameIds = readIntList(count) { i -> lows[i] + (buffer.readUnsignedShort() shl 16) }
             }
 
             frameSoundOpcode -> {

@@ -4,6 +4,7 @@ import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.AmbienceType
 import dev.openrune.definition.type.RandomSound
 import dev.openrune.definition.type.VarpType
+import dev.openrune.definition.util.readIntList
 import io.netty.buffer.ByteBuf
 
 class AmbienceCodec : DefinitionCodec<AmbienceType> {
@@ -20,7 +21,7 @@ class AmbienceCodec : DefinitionCodec<AmbienceType> {
                 val delayMin = buffer.readUnsignedShort()
                 val delayMax = buffer.readUnsignedShort()
                 val count = buffer.readUnsignedByte().toInt()
-                val sounds = MutableList(count) { buffer.readUnsignedShort() }
+                val sounds = readIntList(count) { buffer.readUnsignedShort() }
 
                 randomSounds = RandomSound(delayMin, delayMax, soundIds = sounds)
             }
