@@ -1,5 +1,6 @@
 package dev.openrune.definition
 
+import dev.openrune.definition.util.BoxedInts
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.readUnsignedBoolean
 import dev.openrune.definition.util.writeByte
@@ -16,6 +17,11 @@ interface Parameterized {
 
         val params = LinkedHashMap<Int, Any>(if (length < 3) 4 else (length / 0.75f).toInt() + 1)
 
+        // Param ids repeat across thousands of definitions, so their key boxes are pooled. The
+        // unchecked view only widens the key type; equality semantics are unchanged.
+        @Suppress("UNCHECKED_CAST")
+        val target = params as MutableMap<Any, Any>
+
         repeat(length) {
             val type = buffer.readUnsignedByte().toInt()
             val id = buffer.readUnsignedMedium()
@@ -23,10 +29,10 @@ interface Parameterized {
             val value: Any = when (type) {
                 1 -> buffer.readString()
                 2 -> buffer.readLong()
-                else -> buffer.readInt()
+                else -> BoxedInts.of(buffer.readInt())
             }
 
-            params[id] = value
+            target[BoxedInts.of(id)] = value
         }
 
         this.params = params

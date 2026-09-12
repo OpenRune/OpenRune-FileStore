@@ -2,6 +2,7 @@ package dev.openrune.definition.codec
 
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.definition.EntityOpsLoader
+import dev.openrune.definition.util.readPooledIntList
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import dev.openrune.definition.DefinitionCodec
@@ -18,10 +19,10 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
                 val length: Int = buffer.readUnsignedByte().toInt()
                 if (length > 0) {
                     val types = ArrayList<Int>(length)
-                    val models = ArrayList<Int>(length)
-                    repeat(length) {
-                        models.add(buffer.readUnsignedShort())
+                    val models = readPooledIntList(length) {
+                        val model = buffer.readUnsignedShort()
                         types.add(buffer.readUnsignedByte().toInt())
+                        model
                     }
                     objectTypes = types
                     objectModels = models
@@ -33,19 +34,17 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
                 val length: Int = buffer.readUnsignedByte().toInt()
                 if (length > 0) {
                     objectTypes = null
-                    val models = ArrayList<Int>(length)
-                    repeat(length) { models.add(buffer.readUnsignedShort()) }
-                    objectModels = models
+                    objectModels = readPooledIntList(length) { buffer.readUnsignedShort() }
                 }
             }
             6 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
                 if (length > 0) {
                     val types = ArrayList<Int>(length)
-                    val models = ArrayList<Int>(length)
-                    repeat(length) {
-                        models.add(buffer.readInt())
+                    val models = readPooledIntList(length) {
+                        val model = buffer.readInt()
                         types.add(buffer.readUnsignedByte().toInt())
+                        model
                     }
                     objectTypes = types
                     objectModels = models
@@ -55,9 +54,7 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
                 val length: Int = buffer.readUnsignedByte().toInt()
                 if (length > 0) {
                     objectTypes = null
-                    val models = ArrayList<Int>(length)
-                    repeat(length) { models.add(buffer.readInt()) }
-                    objectModels = models
+                    objectModels = readPooledIntList(length) { buffer.readInt() }
                 }
             }
 
@@ -119,9 +116,7 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
                     soundRetain = buffer.readUnsignedByte().toInt()
                 }
                 val length: Int = buffer.readUnsignedByte().toInt()
-                val soundIds = ArrayList<Int>(length)
-                repeat(length) { soundIds.add(buffer.readUnsignedShort()) }
-                ambientSoundIds = soundIds
+                ambientSoundIds = readPooledIntList(length) { buffer.readUnsignedShort() }
             }
             81 -> clipType = (buffer.readUnsignedByte().toInt()) * 256
             89 -> randomizeAnimStart = true
@@ -227,8 +222,10 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
         writeByte(29)
         writeByte(definition.ambient)
 
+        // The decoder stores the raw byte (consumers apply their own scale), so the encoder must
+        // not divide it: contrast values under 25 were collapsing to zero on a round trip.
         writeByte(39)
-        writeByte(definition.contrast / 25)
+        writeByte(definition.contrast)
 
 
         definition.actions.opsOrEmpty.forEachIndexed { index, action ->
@@ -352,10 +349,17 @@ class ObjectCodec(private val revision: Int) : DefinitionCodec<ObjectType> {
         )
 
         if (values.indices.any { values[it] != defaults[it] }) {
+            // The opcode byte itself was missing, so the fade payload was read back as opcodes.
+            writeByte(93)
             writeByte(definition.soundFadeInCurve)
             writeShort(definition.soundFadeInDuration)
             writeByte(definition.soundFadeOutCurve)
             writeShort(definition.soundFadeOutDuration)
+        }
+
+        if (definition.rasie != 0) {
+            writeByte(96)
+            writeByte(definition.rasie)
         }
 
 

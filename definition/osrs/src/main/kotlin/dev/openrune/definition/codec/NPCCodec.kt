@@ -19,12 +19,10 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
         when (opcode) {
             1 -> {
                 val length = buffer.readUnsignedByte().toInt()
-                val ids = ArrayList<Int>(length)
-                repeat(length) {
+                models = readPooledIntList(length) {
                     val model = buffer.readUnsignedShort()
-                    ids.add(if (model == 65535) -1 else model)
+                    if (model == 65535) -1 else model
                 }
-                models = ids
             }
 
             2 -> name = buffer.readString()
@@ -46,15 +44,15 @@ class NPCCodec(private val revision: Int) : DefinitionCodec<NpcType> {
             41 -> readTextures(buffer)
             60 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                chatheadModels = MutableList(length) { buffer.readUnsignedShort() }
+                chatheadModels = readPooledIntList(length) { buffer.readUnsignedShort() }
             }
             61 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                models = MutableList(length) { buffer.readInt() }
+                models = readPooledIntList(length) { buffer.readInt() }
             }
             62 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
-                chatheadModels = MutableList(length) { buffer.readInt() }
+                chatheadModels = readPooledIntList(length) { buffer.readInt() }
             }
             74 -> attack = buffer.readUnsignedShort()
             75 -> defence = buffer.readUnsignedShort()

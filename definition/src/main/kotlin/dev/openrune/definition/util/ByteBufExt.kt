@@ -63,6 +63,44 @@ public fun ByteBuf.readUnsignedShortOrNull(): Int? {
     return if (value == 65535) null else value
 }
 
+/**
+ * Decoded strings repeat heavily — op names, entity names, examine lines — and every decode used
+ * to build a fresh instance, so a cache full of definitions held tens of thousands of copies of
+ * "Attack" and friends. A small direct-mapped table hands back the previous instance when the
+ * same text comes around again. It is bounded, lock free, and safe under races: entries are
+ * immutable and equality-checked before reuse, so the worst a race costs is a lost slot.
+ */
+private val decodedStringPool = arrayOfNulls<String>(4096)
+
+private const val DEDUP_MAX_LENGTH = 64
+
+internal fun dedupDecodedString(value: String): String {
+    if (value.isEmpty()) return ""
+    if (value.length > DEDUP_MAX_LENGTH) return value
+    val slot = value.hashCode() and (decodedStringPool.size - 1)
+    val cached = decodedStringPool[slot]
+    if (cached == value) return cached
+    decodedStringPool[slot] = value
+    return value
+}
+
+/**
+ * Reads [length] values into an `Int` list whose boxes come from the shared pool — model, type
+ * and sound id lists repeat across many definitions. The unchecked view only widens the element
+ * type; the list still holds `Integer`s.
+ */
+inline fun readPooledIntList(length: Int, read: (Int) -> Int): MutableList<Int> {
+    val list = ArrayList<Int>(length)
+
+    @Suppress("UNCHECKED_CAST")
+    val sink = list as ArrayList<Any>
+
+    for (i in 0 until length) {
+        sink.add(BoxedInts.of(read(i)))
+    }
+    return list
+}
+
 // 0 terminated string.
 fun ByteBuf.readString(): String {
     if (!isReadable) {
@@ -74,11 +112,11 @@ fun ByteBuf.readString(): String {
     if (nul == -1) {
         val value = toString(start, writerIndex() - start, Charsets.ISO_8859_1)
         readerIndex(writerIndex())
-        return value
+        return dedupDecodedString(value)
     }
     val value = toString(start, nul - start, Charsets.ISO_8859_1)
     readerIndex(nul + 1)
-    return value
+    return dedupDecodedString(value)
 }
 
 public fun ByteBuf.readStringCP(charset: Charset = Cp1252Charset): String {
@@ -91,7 +129,7 @@ public fun ByteBuf.readStringCP(charset: Charset = Cp1252Charset): String {
 
     val s = toString(start, end - start, charset)
     readerIndex(end + 1)
-    return s
+    return dedupDecodedString(s)
 }
 
 public fun ByteBuf.readUnsignedShortSmart(): Int {
@@ -251,7 +289,7 @@ fun Any?.debugString(): String = when (this) {
 }
 
 fun ByteBuf.readDbCell(type: CacheVarLiteral): Any = when (type.baseType) {
-    BaseVarType.INTEGER -> readInt()
+    BaseVarType.INTEGER -> BoxedInts.of(readInt())
     BaseVarType.LONG -> readLong()
     BaseVarType.STRING -> readString()
     BaseVarType.ARRAY -> error("Array Type ${type.name} is not yet defined in db row")

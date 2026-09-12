@@ -2,6 +2,7 @@ package dev.openrune.definition.codec
 
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.EnumType
+import dev.openrune.definition.util.BoxedInts
 import dev.openrune.definition.util.CacheVarLiteral
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
@@ -16,12 +17,16 @@ class EnumCodec : DefinitionCodec<EnumType> {
             4 -> defaultInt = buffer.readInt()
             5, 6 -> {
                 val count = buffer.readUnsignedShort()
+                // The same ids appear as keys across many enums, so their boxes are pooled too.
+                // The unchecked view only widens the key type; equality semantics are unchanged.
+                @Suppress("UNCHECKED_CAST")
+                val target = values as MutableMap<Any, Any>
                 for (i in 0 until count) {
-                    val key = buffer.readInt()
+                    val key = BoxedInts.of(buffer.readInt())
                     if (opcode == 5) {
-                        values[key] = buffer.readString()
+                        target[key] = buffer.readString()
                     } else {
-                        values[key] = buffer.readInt()
+                        target[key] = BoxedInts.of(buffer.readInt())
                     }
                 }
             }

@@ -2,6 +2,7 @@ package dev.openrune.definition.codec
 
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.type.SequenceType
+import dev.openrune.definition.util.readPooledIntList
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
@@ -32,24 +33,19 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
         when (opcode) {
             1 -> {
                 val frameCount = buffer.readUnsignedShort()
-                val delays = MutableList(frameCount) { buffer.readUnsignedShort() }
-                val ids = MutableList(frameCount) { buffer.readUnsignedShort() }
-
-                for (i in 0 until frameCount) {
-                    ids[i] = ids[i] + (buffer.readUnsignedShort() shl 16)
-                }
+                val delays = readPooledIntList(frameCount) { buffer.readUnsignedShort() }
+                val lows = IntArray(frameCount) { buffer.readUnsignedShort() }
 
                 frameDelays = delays
-                frameIDs = ids
+                frameIDs = readPooledIntList(frameCount) { i -> lows[i] + (buffer.readUnsignedShort() shl 16) }
             }
 
             2 -> frameStep = buffer.readUnsignedShort()
             3 -> {
                 val count = buffer.readUnsignedByte().toInt()
-                val leave = ArrayList<Int>(count + 1)
-                repeat(count) { leave.add(buffer.readUnsignedByte().toInt()) }
-                leave.add(0x98967f)
-                interleaveLeave = leave
+                interleaveLeave = readPooledIntList(count + 1) { i ->
+                    if (i < count) buffer.readUnsignedByte().toInt() else 0x98967f
+                }
             }
 
             4 -> stretches = true
@@ -62,11 +58,8 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
             11 -> replyMode = buffer.readUnsignedByte().toInt()
             12 -> {
                 val count = buffer.readUnsignedByte().toInt()
-                val ids = MutableList(count) { buffer.readUnsignedShort() }
-                for (i in 0 until count) {
-                    ids[i] = ids[i] + (buffer.readUnsignedShort() shl 16)
-                }
-                chatFrameIds = ids
+                val lows = IntArray(count) { buffer.readUnsignedShort() }
+                chatFrameIds = readPooledIntList(count) { i -> lows[i] + (buffer.readUnsignedShort() shl 16) }
             }
 
             frameSoundOpcode -> {
@@ -123,10 +116,14 @@ class SequenceCodec(private val revision: Int) : DefinitionCodec<SequenceType> {
         }
 
         if (definition.interleaveLeave != null) {
+            // The decoder appends a 0x98967f sentinel; it is not part of the payload, and writing
+            // it back grew the list by one entry per round trip.
+            val leave = definition.interleaveLeave!!
+            val count = if (leave.lastOrNull() == 0x98967f) leave.size - 1 else leave.size
             writeByte(3)
-            writeByte(definition.interleaveLeave!!.size)
-            for (i in 0 until definition.interleaveLeave!!.size) {
-                writeByte(definition.interleaveLeave!![i])
+            writeByte(count)
+            for (i in 0 until count) {
+                writeByte(leave[i])
             }
         }
 

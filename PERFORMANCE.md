@@ -96,18 +96,64 @@ figure in the harness, moving between roughly 140 ms and 175 ms across runs.
 
 ## Memory
 
-Measured by the `retained heap` section of the harness, after loading objects, items and npcs
-(112 709 definitions):
+Held by the cache after a load: 18 MB — the decoded payloads for the archives just read, which the
+bounded LRU keeps resident. Bounding that cache by bytes rather than by entry count was tried and
+reverted: the config archives fit inside any budget worth setting, so it reclaimed nothing while
+adding per-insert bookkeeping.
 
-| What                                     | Heap   |
-|------------------------------------------|--------|
-| definitions                              | 90 MB  |
-| held by the cache after the load          | 18 MB  |
+### Memory pass over the definitions themselves
 
-The 18 MB is the decoded payloads for the archives just read, which the bounded LRU keeps resident.
-Bounding that cache by bytes rather than by entry count was tried and reverted: the three config
-archives fit inside any budget worth setting, so it reclaimed nothing while adding per-insert
-bookkeeping. The remaining 90 MB is the definition objects themselves and is not a cache concern.
+Measured by `CacheMemoryBench` (`-Dbench=true`): the settled heap delta from loading one definition
+type and holding only its map, per type, on OSRS 240.
+
+| Type       | Count  | Before  | After   | Change |
+|------------|--------|---------|---------|--------|
+| objects    | 62 400 | 35.3 MB | 30.2 MB | -14%   |
+| items      | 33 971 | 23.5 MB | 20.5 MB | -13%   |
+| npcs       | 16 338 | 14.8 MB | 11.4 MB | -23%   |
+| anims      | 14 468 | 12.9 MB | 11.4 MB | -12%   |
+| dbrows     | 16 790 | 10.3 MB | 9.4 MB  | -9%    |
+| interfaces | 26 407 | 14.6 MB | 13.5 MB | -8%    |
+| enums      | 5 872  | 4.0 MB  | 3.2 MB  | -20%   |
+| structs    | 3 990  | 2.6 MB  | 2.0 MB  | -23%   |
+| sprites    | 8 559  | 23.7 MB | 23.7 MB | 0      |
+| varbits    | 19 086 | 1.6 MB  | 1.6 MB  | 0      |
+| **total**  |        | **143 MB** | **128 MB** | **-11%** |
+
+What changed — all of it deduplication on the decode path, none of it API changes:
+
+- `readString`/`readStringCP` route through a small direct-mapped pool, so the tens of thousands of
+  repeated op names, entity names and examine lines collapse to one instance each.
+- `EntityOpsDefinition.Op` instances are pooled the same way (`Op.of`), including the default
+  "Take" op every item used to allocate.
+- Boxed integers above the JVM's -128..127 cache are pooled (`BoxedInts`) at the choke points where
+  the same values recur across definitions: recolour palettes, model/type/sound id lists, enum keys
+  and values, params, db row cells, and animation frame ids and delays.
+
+The pools are bounded, lock free and race tolerant — entries are immutable and equality-checked
+before reuse, so a race costs a slot, never correctness. Load times are unchanged within noise.
+
+What was left alone, deliberately: `sprites` is raw pixel data; the per-definition floor of the
+config types is their fifty-plus declared fields plus their `MutableList<Int>` collections, and
+narrowing those to primitive arrays would break the public definition API. That is where the next
+meaningful saving lives if an API break is ever acceptable.
+
+### Round-trip verification
+
+`CodecByteRoundTripTest` locks the pooling down over every definition in a real cache:
+`encode(decode(encode(x)))` must equal `encode(x)` byte for byte, for objects, npcs, items, anims,
+enums, structs and db rows. Writing it surfaced five pre-existing encoder bugs, now fixed:
+
+- `SoundData.writeSound` wrote a one byte sound id where the decoder reads two, and dropped the
+  loop count entirely, so any encoded sequence with sounds could not be decoded again; the pre-220
+  packed form also masked the loop count to zero.
+- `ObjectCodec` wrote the sound-fade payload without its opcode 93 byte, corrupting the stream of
+  any object with non-default fades.
+- `ObjectCodec` divided `contrast` by 25 on encode while the decoder stores the raw byte, so small
+  values collapsed to zero.
+- `ObjectCodec` never wrote opcode 96 (`rasie`), silently dropping it on every pack.
+- `SequenceCodec` wrote the decoder's internal 0x98967f sentinel as payload, growing
+  `interleaveLeave` by one entry per round trip.
 
 ## What changed
 

@@ -36,12 +36,12 @@ class EntityOpsDefinition {
 
     fun op(index: Int, text: String) = apply {
         ops.ensureSize(index) { null }
-        ops[index] = Op(text)
+        ops[index] = Op.of(text)
     }
 
     fun setOp(index: Int, text: String) {
         ops.ensureSize(index) { null }
-        ops[index] = Op(text)
+        ops[index] = Op.of(text)
     }
 
     fun getOpOrNull(index: Int): String? = _ops?.getOrNull(index)?.text
@@ -191,7 +191,23 @@ class EntityOpsDefinition {
         return true
     }
 
-    data class Op(val text: String)
+    data class Op(val text: String) {
+        companion object {
+            private val pool = arrayOfNulls<Op>(512)
+
+            /**
+             * Ops are immutable and drawn from a tiny vocabulary ("Attack", "Take", ...), so equal
+             * ones share an instance instead of every definition holding its own. Direct-mapped
+             * and race-tolerant: a lost slot only costs the sharing, never correctness.
+             */
+            fun of(text: String): Op {
+                val slot = text.hashCode() and (pool.size - 1)
+                val cached = pool[slot]
+                if (cached != null && cached.text == text) return cached
+                return Op(text).also { pool[slot] = it }
+            }
+        }
+    }
 
     data class SubOp(
         val text: String,
