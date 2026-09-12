@@ -24,6 +24,12 @@ class IncrementalBuild internal constructor(
     private val writtenThisBuild = HashSet<CacheTarget>()
     private val presence = HashMap<Long, Set<Int>>()
 
+    // Pruning runs per unit, so reporting it there produces one line per definition. Counted here and
+    // reported once by [reportRemovals] at the end of the build instead.
+    private var removedOutputs = 0
+    private var removedGameVals = 0
+    private var deletedSources = 0
+
     val enabled: Boolean get() = state != null && !forced
 
     fun run(
@@ -49,7 +55,7 @@ class IncrementalBuild internal constructor(
             extraDeps.associate { it.invariantPath() to Hashing.hashTree(it) } + extraFingerprints
         val hashes = units.associate { it.key to (it.fingerprint ?: Hashing.hashFiles(it.sources)) }
 
-        val dirty = selectDirty(cache, units, stored, hashes, extraDepHashes)
+        val dirty = selectDirty(label, cache, units, stored, hashes, extraDepHashes)
         val skipped = units.filterNot { it.key in dirty }
 
         pruneRemoved(cache, store, taskKey, stored, units.map { it.key }.toSet())
@@ -141,7 +147,8 @@ class IncrementalBuild internal constructor(
                 .onFailure { logger.warn(it) { "Could not remove stale cache entry $target" } }
         }
         if (gone.isNotEmpty()) {
-            logger.info { "Removed ${gone.size} cache entries no longer produced by $key" }
+            removedOutputs += gone.size
+            logger.debug { "Removed ${gone.size} cache entries no longer produced by $key" }
         }
 
         val claimedGameVals = stored.asSequence()
@@ -177,10 +184,26 @@ class IncrementalBuild internal constructor(
             runCatching { cache.remove(target.index, target.archive, target.file) }
                 .onFailure { logger.warn(it) { "Could not remove stale gameval $target" } }
         }
-        logger.info { "Removed ${targets.size} stale gameval entries" }
+        removedGameVals += targets.size
+        logger.debug { "Removed ${targets.size} stale gameval entries" }
+    }
+
+    /** Logs what pruning removed over the whole build. Called once, after every task has run. */
+    fun reportRemovals() {
+        if (removedOutputs == 0 && removedGameVals == 0 && deletedSources == 0) return
+        val parts = buildList {
+            if (removedOutputs > 0) add("$removedOutputs cache entries")
+            if (removedGameVals > 0) add("$removedGameVals gamevals")
+            if (deletedSources > 0) add("for $deletedSources deleted source(s)")
+        }
+        logger.info { "Incremental cleanup: removed ${parts.joinToString(", ")}" }
+        removedOutputs = 0
+        removedGameVals = 0
+        deletedSources = 0
     }
 
     private fun selectDirty(
+        label: String,
         cache: Cache,
         units: List<PackUnit>,
         stored: Map<String, StoredUnit>,
@@ -188,6 +211,9 @@ class IncrementalBuild internal constructor(
         extraDepHashes: Map<String, String>,
     ): Set<String> {
         val dirty = LinkedHashSet<String>()
+        // Grouped by reason rather than logged per unit: a first build marks every definition dirty, and one
+        // line each turns the reason — the only useful part — into thousands of lines of noise.
+        val reasons = LinkedHashMap<String, MutableList<String>>()
 
         units.forEach { unit ->
             val previous = stored[unit.key]
@@ -203,8 +229,17 @@ class IncrementalBuild internal constructor(
             }
             if (reason != null) {
                 dirty += unit.key
-                // Enable dev.openrune.cache.tools.incremental at DEBUG to see why each unit was repacked.
-                logger.debug { "dirty: ${unit.label} [${unit.key}] ($reason)" }
+                reasons.getOrPut(reason) { mutableListOf() } += unit.label
+            }
+        }
+
+        if (reasons.isNotEmpty()) {
+            logger.debug {
+                "$label: ${dirty.size} dirty - " + reasons.entries.joinToString("; ") { (reason, labels) ->
+                    val sample = labels.take(DIRTY_SAMPLE).joinToString()
+                    val more = if (labels.size > DIRTY_SAMPLE) ", +${labels.size - DIRTY_SAMPLE} more" else ""
+                    "$reason (${labels.size}): $sample$more"
+                }
             }
         }
 
@@ -297,7 +332,9 @@ class IncrementalBuild internal constructor(
                 .onFailure { logger.warn(it) { "Could not remove stale cache entry $target" } }
         }
         if (orphans.isNotEmpty()) {
-            logger.info { "Removed ${orphans.size} cache entries for ${removed.size} deleted source(s)" }
+            removedOutputs += orphans.size
+            deletedSources += removed.size
+            logger.debug { "Removed ${orphans.size} cache entries for ${removed.size} deleted source(s)" }
         }
 
         val claimedGameVals = stored.filterKeys { it in currentKeys }
@@ -357,6 +394,7 @@ class IncrementalBuild internal constructor(
     companion object {
         private const val BASE_KIND = "base"
         private const val SPRITE_KIND = "sprite"
+        private const val DIRTY_SAMPLE = 5
 
         val DISABLED = IncrementalBuild(null, forced = true)
     }

@@ -9,6 +9,7 @@ import dev.openrune.definition.type.WorldMapSectionType
 import dev.openrune.definition.type.WorldMapAreaType
 import dev.openrune.definition.util.Coord
 import dev.openrune.definition.util.readString
+import dev.openrune.definition.util.writeString
 import io.netty.buffer.ByteBuf
 
 class WorldMapAreaCodec(val rev : Int) : DefinitionCodec<WorldMapAreaType> {
@@ -28,6 +29,9 @@ class WorldMapAreaCodec(val rev : Int) : DefinitionCodec<WorldMapAreaType> {
         val sections : MutableList<WorldMapSectionType> = emptyList<WorldMapSectionType>().toMutableList()
         for (i in 0 until count) {
             val typeId = buffer.readUnsignedByte().toInt()
+            // Ids map to layouts as the client does it (WorldMapData.method6401): 0 whole mapsquare
+            // rectangles, 1 a single mapsquare, 2 zone rectangles, 3 a single zone. Reading 1 and 2 with
+            // each other's layout silently overruns the record and fails every area that uses them.
             val section: WorldMapSectionType = when (typeId) {
                 0 -> MultiSquare()
                 1 -> SingleSquare()
@@ -42,7 +46,20 @@ class WorldMapAreaCodec(val rev : Int) : DefinitionCodec<WorldMapAreaType> {
     }
 
     override fun ByteBuf.encode(definition: WorldMapAreaType) {
-
+        writeString(definition.internalName)
+        writeString(definition.externalName)
+        writeInt(definition.origin?.packed ?: 0)
+        writeInt(definition.backgroundColour)
+        writeInt(definition.fillColour)
+        // Always one in every cache checked; the client reads and discards it.
+        writeByte(1)
+        writeByte(if (definition.isMain) 1 else 0)
+        writeByte(definition.zoom)
+        writeByte(definition.sections.size)
+        for (section in definition.sections) {
+            writeByte(section.sectionId)
+            section.encode(this)
+        }
     }
 
     override fun createDefinition() = WorldMapAreaType()

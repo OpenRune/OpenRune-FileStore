@@ -11,12 +11,13 @@ import dev.openrune.cache.worldmap.worldmap.ZoneMultiSection
 import dev.openrune.cache.worldmap.worldmap.ZoneSingleSection
 import dev.openrune.cache.worldmap.worldmap.utils.Coordinate
 import dev.openrune.definition.constants.ConstantProvider
-import kotlinx.serialization.Serializable
 
 /**
+ * Decoded by `dev.openrune.toml`'s mapper, which reads these off the declared properties directly, so the
+ * shapes below need no serializer annotations.
+ *
  * @author Kris | 25/08/2022
  */
-@Serializable
 class TomlWorldMap {
     val display_name: String? = null
     val origin: IntArray = intArrayOf()
@@ -72,7 +73,6 @@ data class WorldMapAreaBlock(
     val mapElements: List<WorldMapElement>
 )
 
-@Serializable
 data class TomlMapElement(
     val name: String?,
     val location: IntArray = intArrayOf(),
@@ -96,7 +96,6 @@ data class TomlMapElement(
     }
 }
 
-@Serializable
 data class TomlMapsquareSingleSection(
     val level: Int?,
     val levels_count: Int?,
@@ -123,7 +122,6 @@ data class TomlMapsquareSingleSection(
     }
 }
 
-@Serializable
 data class TomlMapsquareMultiSection(
     val level: Int?,
     val levels_count: Int?,
@@ -162,7 +160,6 @@ data class TomlMapsquareMultiSection(
     }
 }
 
-@Serializable
 data class TomlZoneSingleSection(
     val level: Int?,
     val levels_count: Int?,
@@ -201,7 +198,6 @@ data class TomlZoneSingleSection(
     }
 }
 
-@Serializable
 data class TomlZoneMultiSection(
     val level: Int?,
     val levels_count: Int?,

@@ -25,7 +25,7 @@ class PackWorldMap(
     override val priority: TaskPriority = TaskPriority.END
 
     override fun init(cache: Cache) {
-        val packer = WorldMapPacker(cache)
+        val packer = WorldMapPacker(cache, progress)
         if (all) {
             packer.repack(imageOutputDir)
             return

@@ -1,8 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "2.1.0"
-    kotlin("plugin.serialization") version "2.1.0" apply false
+    kotlin("jvm") version "1.9.0"
     id("maven-publish")
 }
 
@@ -15,12 +14,11 @@ subprojects {
     apply(plugin = "idea")
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "maven-publish")
-    apply(plugin = "org.jetbrains.kotlin.plugin.serialization")
 
     group = "dev.or2"
     version = buildNumber
 
-    java.sourceCompatibility = JavaVersion.VERSION_20
+    java.sourceCompatibility = JavaVersion.VERSION_11
 
     dependencies {
         implementation(kotlin("stdlib-jdk8"))
@@ -30,7 +28,7 @@ subprojects {
 
     tasks.withType<KotlinCompile> {
         kotlinOptions {
-            jvmTarget = "20"
+            jvmTarget = "11"
         }
     }
 

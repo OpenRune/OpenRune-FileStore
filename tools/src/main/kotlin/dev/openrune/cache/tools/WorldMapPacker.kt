@@ -29,6 +29,8 @@ import dev.openrune.cache.worldmap.rasterizer.provider.FontMetrics
 import dev.openrune.cache.worldmap.rasterizer.provider.FontMetricsProvider
 import dev.openrune.cache.worldmap.rasterizer.provider.SpriteProvider
 import dev.openrune.cache.worldmap.worldmap.utils.Coordinate
+import dev.openrune.cache.tools.progress.CacheProgress
+import dev.openrune.cache.tools.progress.DefaultCacheProgress
 import dev.openrune.cache.tools.worldmap.packing.FullMapDefinition
 import dev.openrune.cache.worldmap.worldmap.providers.MapElement
 import dev.openrune.cache.worldmap.worldmap.providers.MapElementConfigProvider
@@ -55,7 +57,10 @@ import javax.imageio.ImageIO
 /**
  * @author Kris | 22/08/2022
  */
-class WorldMapPacker(val cache: Cache) {
+class WorldMapPacker(
+    val cache: Cache,
+    private val progress: CacheProgress = DefaultCacheProgress(),
+) {
     val mapProvider = CachedMapProvider(cache)
 
     /** Builds every provider the renderer and packer need from the supplied cache. */
@@ -85,21 +90,29 @@ class WorldMapPacker(val cache: Cache) {
         val config = buildConfig()
         val worldMap = WorldMap(config, cache)
         outputDir.toFile().mkdirs()
-        for (block in loadAreaBlocks(cache).sortedBy { it.details.id }) {
-            val details = block.details
-            if (!worldMap.exists(providers, details.id, details.internalName)) continue
-            val outputFile = outputDir.resolve("${details.id}_${details.exportBaseName()}.png").toFile()
-            try {
-                val image = worldMap.generateImageFromExistingData(
-                    details.id,
-                    details.internalName,
-                    providers,
-                    pixelsPerTile,
-                )
-                ImageIO.write(image, "png", outputFile)
-                logger.info { "Wrote ${outputFile.name} (${image.width}x${image.height})" }
-            } catch (e: Exception) {
-                logger.warn { "Failed to render area ${details.id} (${details.internalName}): $e" }
+        val blocks = loadAreaBlocks(cache).sortedBy { it.details.id }
+        progress.begin("Rendering World Map", blocks.size).use { tracker ->
+            for (block in blocks) {
+                val details = block.details
+                tracker.message(details.displayName)
+                if (!worldMap.exists(providers, details.id, details.internalName)) {
+                    tracker.step()
+                    continue
+                }
+                val outputFile = outputDir.resolve("${details.id}_${details.exportBaseName()}.png").toFile()
+                try {
+                    val image = worldMap.generateImageFromExistingData(
+                        details.id,
+                        details.internalName,
+                        providers,
+                        pixelsPerTile,
+                    )
+                    ImageIO.write(image, "png", outputFile)
+                    logger.debug { "Wrote ${outputFile.name} (${image.width}x${image.height})" }
+                } catch (e: Exception) {
+                    logger.warn { "Failed to render area ${details.id} (${details.internalName}): $e" }
+                }
+                tracker.step()
             }
         }
     }
@@ -114,68 +127,85 @@ class WorldMapPacker(val cache: Cache) {
         dirtySourceMapsquares: Set<Int>? = null,
     ) {
         val startedAt = System.nanoTime()
+        logger.info { "Loading world map providers (sprites, fonts, configs)..." }
         val providers = buildProviders()
         val config = buildConfig()
         val worldMap = WorldMap(config, cache)
         val providersMs = (System.nanoTime() - startedAt) / 1_000_000
+        logger.info { "World map providers ready in ${providersMs}ms; packing ${blocks.size} area(s)." }
         var encodeNanos = 0L
         var imageNanos = 0L
         var updated = 0
         var added = 0
 
-        for (block in blocks.sortedBy { it.details.id }) {
-            if (worldMap.exists(providers, block.details.id, block.details.internalName)) {
-                logger.info { "Updating ${block.details.displayName} map area." }
-                updated++
+        val sorted = blocks.sortedBy { it.details.id }
+        progress.begin("Packing World Map", sorted.size).use { tracker ->
+            for ((index, block) in sorted.withIndex()) {
+                tracker.message(block.details.displayName)
+                if (worldMap.exists(providers, block.details.id, block.details.internalName)) {
+                    updated++
 
-                val areaStartedAt = System.nanoTime()
-                worldMap.update(
-                    block.details.id,
-                    block.details.internalName,
-                    providers,
-                    detailsTransformer = { details ->
-                        require(details.id == block.details.id)
-                        require(details.internalName == block.details.internalName)
-                        details.copy(
-                            displayName = block.details.displayName,
-                            origin = block.details.origin,
-                            backgroundColour = block.details.backgroundColour,
-                            mapBackgroundColour = block.details.mapBackgroundColour,
-                            zoom = block.details.zoom,
-                            // The block carries the full section list, so replace rather than append;
-                            // appending would duplicate every section each time an area is repacked.
-                            sections = block.details.sections,
-                        )
-                    },
-                    labelsTransformer = { labels ->
-                        if (block.mapElements.isEmpty()) labels else block.mapElements
-                    },
-                    dirtySourceMapsquares = dirtySourceMapsquares,
-                )
-                encodeNanos += System.nanoTime() - areaStartedAt
-
-                if (imageOutputDir != null) {
-                    val imageStartedAt = System.nanoTime()
-                    val outputFile = imageOutputDir
-                        .resolve("${block.details.id}_${block.details.exportBaseName()}.png")
-                        .toFile()
-                    outputFile.parentFile?.mkdirs()
-                    ImageIO.write(
-                        worldMap.generateImageFromExistingData(block.details.id, block.details.internalName, providers, 4),
-                        "png",
-                        outputFile,
+                    val areaStartedAt = System.nanoTime()
+                    worldMap.update(
+                        block.details.id,
+                        block.details.internalName,
+                        providers,
+                        detailsTransformer = { details ->
+                            require(details.id == block.details.id)
+                            require(details.internalName == block.details.internalName)
+                            details.copy(
+                                displayName = block.details.displayName,
+                                origin = block.details.origin,
+                                backgroundColour = block.details.backgroundColour,
+                                mapBackgroundColour = block.details.mapBackgroundColour,
+                                zoom = block.details.zoom,
+                                // The block carries the full section list, so replace rather than append;
+                                // appending would duplicate every section each time an area is repacked.
+                                sections = block.details.sections,
+                            )
+                        },
+                        labelsTransformer = { labels ->
+                            if (block.mapElements.isEmpty()) labels else block.mapElements
+                        },
+                        dirtySourceMapsquares = dirtySourceMapsquares,
                     )
-                    imageNanos += System.nanoTime() - imageStartedAt
+                    val areaMs = (System.nanoTime() - areaStartedAt) / 1_000_000
+                    encodeNanos += System.nanoTime() - areaStartedAt
+                    logger.debug {
+                        "[${index + 1}/${sorted.size}] Updated ${block.details.displayName} " +
+                            "(id ${block.details.id}) in ${areaMs}ms"
+                    }
+
+                    if (imageOutputDir != null) {
+                        val imageStartedAt = System.nanoTime()
+                        val outputFile = imageOutputDir
+                            .resolve("${block.details.id}_${block.details.exportBaseName()}.png")
+                            .toFile()
+                        outputFile.parentFile?.mkdirs()
+                        ImageIO.write(
+                            worldMap.generateImageFromExistingData(block.details.id, block.details.internalName, providers, 4),
+                            "png",
+                            outputFile,
+                        )
+                        imageNanos += System.nanoTime() - imageStartedAt
+                        logger.debug { "Wrote ${outputFile.name}" }
+                    }
+                } else {
+                    added++
+                    val areaStartedAt = System.nanoTime()
+                    worldMap.add(providers, block.details, block.mapElements)
+                    encodeNanos += System.nanoTime() - areaStartedAt
+                    logger.debug {
+                        "[${index + 1}/${sorted.size}] Added ${block.details.displayName} " +
+                            "(id ${block.details.id}) in ${(System.nanoTime() - areaStartedAt) / 1_000_000}ms"
+                    }
                 }
-            } else {
-                added++
-                val areaStartedAt = System.nanoTime()
-                worldMap.add(providers, block.details, block.mapElements)
-                encodeNanos += System.nanoTime() - areaStartedAt
+                tracker.step()
             }
         }
 
         val flushStartedAt = System.nanoTime()
+        logger.info { "Flushing world map changes to cache..." }
         cache.update()
         val flushMs = (System.nanoTime() - flushStartedAt) / 1_000_000
         val encodeMs = encodeNanos / 1_000_000
