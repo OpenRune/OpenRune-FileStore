@@ -8,6 +8,7 @@ import dev.openrune.filesystem.util.readUnsignedByte
 import dev.openrune.filesystem.util.secure.VersionTableBuilder
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
+import java.util.Arrays
 
 /**
  * [Cache] which efficiently stores information about its indexes, archives and files.
@@ -20,6 +21,9 @@ abstract class ReadOnlyCache(
     val archives: Array<IntArray?> = arrayOfNulls(indexCount)
     val fileCounts: Array<IntArray?> = arrayOfNulls(indexCount)
     val files: Array<Array<IntArray?>?> = arrayOfNulls(indexCount)
+
+    /** Per archive shape of its file id table, so [fileIndex] can avoid a linear scan. */
+    private val fileIdKinds: Array<ByteArray?> = arrayOfNulls(indexCount)
     private val hashes: MutableMap<Int, Int> = mapFactory()
 
     override lateinit var versionTable: ByteArray
@@ -29,14 +33,14 @@ abstract class ReadOnlyCache(
         context: DecompressionContext,
         main: RandomAccessFile,
         mainLength: Long,
-        indexRaf: RandomAccessFile,
+        indexTable: ByteArray,
         indexId: Int,
         archiveId: Int,
         xteas: Map<Int, IntArray>?,
         sectors: Array<Array<ByteArray?>?>? = null
     ): Array<ByteArray?>? {
         val keys = if (xteas != null && indexId == MAPS) xteas[archiveId] else null
-        return fileData(context, main, mainLength, indexRaf, indexId, archiveId, keys, sectors)
+        return fileData(context, main, mainLength, indexTable, indexId, archiveId, keys, sectors)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -44,7 +48,7 @@ abstract class ReadOnlyCache(
         context: DecompressionContext,
         main: RandomAccessFile,
         mainLength: Long,
-        indexRaf: RandomAccessFile,
+        indexTable: ByteArray,
         indexId: Int,
         archiveId: Int,
         xtea: IntArray?,
@@ -53,7 +57,7 @@ abstract class ReadOnlyCache(
         val fileCounts = fileCounts[indexId] ?: return null
         val fileIds = files[indexId] ?: return null
         val fileCount = fileCounts.getOrNull(archiveId) ?: return null
-        val sectorData = readSector(main, mainLength, indexRaf, indexId, archiveId) ?: return null
+        val sectorData = readSector(main, mainLength, indexTable, indexId, archiveId) ?: return null
         if (sectors != null) {
             sectors[indexId]!![archiveId] = sectorData
         }
@@ -105,12 +109,12 @@ abstract class ReadOnlyCache(
         context: DecompressionContext,
         main: RandomAccessFile,
         length: Long,
-        index255: RandomAccessFile,
+        index255Table: ByteArray,
         indexId: Int,
         versionTable: VersionTableBuilder?,
         sectors: Array<ByteArray?>? = null
     ): Int {
-        val archiveSector = readSector(main, length, index255, 255, indexId)
+        val archiveSector = readSector(main, length, index255Table, 255, indexId)
         if (sectors != null) {
             sectors[indexId] = archiveSector
         }
@@ -169,16 +173,36 @@ abstract class ReadOnlyCache(
         fileCounts[indexId] = archiveSizes
         val fileIds = arrayOfNulls<IntArray>(highest + 1)
         files[indexId] = fileIds
+        val kinds = ByteArray(highest + 1) { KIND_UNSORTED }
+        fileIdKinds[indexId] = kinds
         for (i in 0 until archiveCount) {
             var fileId = 0
             val archiveId = archiveIds[i]
             val fileCount = archiveSizes[archiveId]
-            fileIds[archiveId] = IntArray(fileCount) {
+            val ids = IntArray(fileCount) {
                 fileId += reader.readSmart(version)
                 fileId
             }
+            fileIds[archiveId] = ids
+            kinds[archiveId] = classify(ids)
         }
         return highest
+    }
+
+    /**
+     * Position of [file] within the archive's file id table, or -1 when it holds no such file.
+     *
+     * File ids are cumulative deltas, so in practice a table is either the identity mapping or at
+     * least ascending, and both answer without scanning. The linear fallback keeps a table built
+     * from a negative delta correct.
+     */
+    fun fileIndex(index: Int, archive: Int, file: Int): Int {
+        val ids = files.getOrNull(index)?.getOrNull(archive) ?: return -1
+        return when (fileIdKinds.getOrNull(index)?.getOrNull(archive)?.toInt() ?: KIND_UNSORTED.toInt()) {
+            KIND_IDENTITY.toInt() -> if (file in ids.indices) file else -1
+            KIND_SORTED.toInt() -> Arrays.binarySearch(ids, file).let { if (it < 0) -1 else it }
+            else -> ids.indexOf(file)
+        }
     }
 
     override fun indexCount() = indices.size
@@ -242,6 +266,26 @@ abstract class ReadOnlyCache(
         private const val SIZE_FLAG: Int = 0x4
         private const val HASH_FLAG: Int = 0x8
 
+        private const val KIND_UNSORTED: Byte = 0
+        private const val KIND_SORTED: Byte = 1
+        private const val KIND_IDENTITY: Byte = 2
+
+        private fun classify(ids: IntArray): Byte {
+            var identity = true
+            for (i in ids.indices) {
+                if (ids[i] != i) {
+                    identity = false
+                    break
+                }
+            }
+            if (identity) return KIND_IDENTITY
+
+            for (i in 1 until ids.size) {
+                if (ids[i] <= ids[i - 1]) return KIND_UNSORTED
+            }
+            return KIND_SORTED
+        }
+
         const val INDEX_SIZE = 6
         const val WHIRLPOOL_SIZE = 64
         private const val SECTOR_SIZE = 520
@@ -268,21 +312,38 @@ abstract class ReadOnlyCache(
 
         private fun ByteBuffer.skip(amount: Int) = position(position() + amount)
 
+        private fun ByteArray.readUnsignedMedium(offset: Int) =
+            ((this[offset].toInt() and 0xFF) shl 16) or
+                ((this[offset + 1].toInt() and 0xFF) shl 8) or
+                (this[offset + 2].toInt() and 0xFF)
+
         /**
          * Reads a section of a cache's archive
          */
-        internal fun readSector(mainFile: RandomAccessFile, length: Long, raf: RandomAccessFile, indexId: Int, sectorId: Int): ByteArray? {
-            if (length < INDEX_SIZE * sectorId + INDEX_SIZE) {
+        /**
+         * Reads an index file whole so its six byte entries can be looked up without a seek and a
+         * read per archive. An index file is six bytes per archive, so even the largest is under a
+         * megabyte.
+         */
+        internal fun readIndexTable(raf: RandomAccessFile): ByteArray {
+            val table = ByteArray(raf.length().toInt())
+            raf.seek(0)
+            raf.readFully(table)
+            return table
+        }
+
+        internal fun readSector(mainFile: RandomAccessFile, length: Long, table: ByteArray, indexId: Int, sectorId: Int): ByteArray? {
+            val entry = sectorId * INDEX_SIZE
+            if (sectorId < 0 || entry + INDEX_SIZE > table.size) {
                 return null
             }
-            raf.seek(sectorId.toLong() * INDEX_SIZE)
-            val sectorData = ByteArray(SECTOR_SIZE)
-            raf.read(sectorData, 0, INDEX_SIZE)
             val bigSector = sectorId > 65535
+            val sectorData = ByteArray(SECTOR_SIZE)
             val buffer = ByteBuffer.wrap(sectorData)
-            val sectorSize = buffer.readUnsignedMedium()
-            var sectorPosition = buffer.readUnsignedMedium()
-            if (sectorSize < 0 || sectorPosition <= 0 || sectorPosition > mainFile.length() / SECTOR_SIZE) {
+            val sectorSize = table.readUnsignedMedium(entry)
+            var sectorPosition = table.readUnsignedMedium(entry + 3)
+            val sectorLimit = length / SECTOR_SIZE
+            if (sectorSize < 0 || sectorPosition <= 0 || sectorPosition > sectorLimit) {
                 return null
             }
             var read = 0
@@ -307,7 +368,7 @@ abstract class ReadOnlyCache(
                 val sectorIndex = buffer.readUnsignedByte()
                 if (sectorIndex != indexId || id != sectorId || sectorChunk != chunk) {
                     return null
-                } else if (sectorNextPosition < 0 || sectorNextPosition > mainFile.length() / SECTOR_SIZE) {
+                } else if (sectorNextPosition < 0 || sectorNextPosition > sectorLimit) {
                     return null
                 }
                 System.arraycopy(sectorData, sectorHeaderSize, output, read, requiredToRead)
