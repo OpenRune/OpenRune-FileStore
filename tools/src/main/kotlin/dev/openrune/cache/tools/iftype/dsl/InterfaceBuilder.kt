@@ -153,6 +153,7 @@ class InterfaceBuilder(
     val components = mutableListOf<ComponentTypeBuilder>()
     internal val edits = mutableListOf<EditComponent>()
     internal val fromComponents = mutableMapOf<String, String>()
+    internal val placements = mutableMapOf<String, Placement>()
     internal val layerNestedChildren = mutableMapOf<ComponentTypeBuilder, MutableList<ComponentTypeBuilder>>()
 
     fun setOffset(block: () -> Pair<Int, Int>) {
@@ -175,6 +176,12 @@ class InterfaceBuilder(
     internal fun registerFrom(componentName: String, from: String?) {
         if (from != null) {
             fromComponents[componentName] = from
+        }
+    }
+
+    internal fun registerPlacement(componentName: String, placement: Placement?) {
+        if (placement != null) {
+            placements[componentName] = placement
         }
     }
 
@@ -228,6 +235,7 @@ fun buildInterface(internalName: String, width: Int, height: Int,builder: Interf
     bld.inheritFrom?.let { InterfaceInherit.register(id, it) }
     registerEdits(bld, id)
     InterfaceFrom.register(id, bld.fromComponents.toMap())
+    InterfacePlacements.register(id, bld.placements.toMap())
 
     return InterfaceType(
         components = componentsMap,
@@ -267,6 +275,7 @@ fun buildInterface(id: Int, interfaceName: String, width: Int, height: Int,build
     bld.inheritFrom?.let { InterfaceInherit.register(id, it) }
     registerEdits(bld, id)
     InterfaceFrom.register(id, bld.fromComponents.toMap())
+    InterfacePlacements.register(id, bld.placements.toMap())
 
     return InterfaceType(
         components = componentsMap,

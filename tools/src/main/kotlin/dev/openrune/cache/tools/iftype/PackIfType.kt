@@ -15,9 +15,12 @@ import dev.openrune.cache.tools.iftype.dsl.EditComponent
 import dev.openrune.cache.tools.iftype.dsl.InterfaceEdits
 import dev.openrune.cache.tools.iftype.dsl.InterfaceFrom
 import dev.openrune.cache.tools.iftype.dsl.InterfaceInherit
+import dev.openrune.cache.tools.iftype.dsl.InterfacePlacements
+import dev.openrune.cache.tools.iftype.dsl.Placement
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.GameValGroupTypes
+import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.definition.type.widget.ComponentType
 import dev.openrune.definition.util.toArray
 import dev.openrune.filesystem.Cache
@@ -35,6 +38,8 @@ class PackIfType(
         interfaces.associate { it.id to InterfaceEdits.take(it.id) }
     private val fromById =
         interfaces.associate { it.id to InterfaceFrom.take(it.id) }
+    private val placementsById =
+        interfaces.associate { it.id to InterfacePlacements.take(it.id) }
 
     override fun init(cache: Cache) {
         val totalInterfaces = interfaces.size
@@ -50,6 +55,50 @@ class PackIfType(
         progressInterfaces.close()
     }
 
+    /**
+     * Resolves these interfaces without packing them and feeds the resulting ids into
+     * [ConstantProvider], so `component.<interface>:<name>` references decode anywhere in the build.
+     *
+     * Resolution is deterministic — inherit bases come from [cache] and the overlay directives were
+     * captured at construction — so the ids published here are the ones [init] goes on to write.
+     * This matters most when `insertAfter`/`insertBefore` renumbers a base interface's children:
+     * both the inserted component and the siblings it shifted are only discoverable by performing
+     * the merge, and the mappings loaded from the previous build's gamevals are stale for them.
+     */
+    fun publishComponentIds(cache: Cache, revision: Int) {
+        val decoder = ComponentDecoder(cache, revision)
+        var published = 0
+        interfaces.forEach { interf ->
+            val resolved = resolveInherit(cache, decoder, interf)
+            ConstantProvider.putMapping(INTERFACE_TABLE, resolved.internalName, resolved.id)
+            for ((_, component) in resolved.components) {
+                val name = component.internalName ?: continue
+                ConstantProvider.putMapping(
+                    COMPONENT_TABLE,
+                    "${resolved.internalName}:$name",
+                    component.packed,
+                )
+                published++
+            }
+        }
+        logger.info { "Published $published component ids for ${interfaces.size} interfaces" }
+    }
+
+    private fun gameValElement(inf: InterfaceType): Interface {
+        val components =
+            inf.components
+                .toList()
+                .sortedBy { (_, component) -> component.component }
+                .map { (_, component) ->
+                    Interface.InterfaceComponent(
+                        component.internalName ?: "com_${component.component}",
+                        component.component,
+                        component.interfaceId,
+                    )
+                }
+        return Interface(inf.internalName, inf.id, components)
+    }
+
     private fun resolveInherit(
         cache: Cache,
         decoder: ComponentDecoder,
@@ -58,9 +107,12 @@ class PackIfType(
         val inheritName = inheritById[overlay.id]
         val edits = editsById[overlay.id].orEmpty()
         val fromByName = fromById[overlay.id].orEmpty()
+        val placements = placementsById[overlay.id].orEmpty()
         if (inheritName == null) {
-            if (edits.isNotEmpty() || fromByName.isNotEmpty()) {
-                logger.warn { "edit()/from() without inherit() for ${overlay.internalName} — ignored" }
+            if (edits.isNotEmpty() || fromByName.isNotEmpty() || placements.isNotEmpty()) {
+                logger.warn {
+                    "edit()/from()/insertAfter() without inherit() for ${overlay.internalName} — ignored"
+                }
             }
             return overlay
         }
@@ -74,7 +126,7 @@ class PackIfType(
                     "children (cache may already be overwritten) — restore vanilla interface before packing"
             }
         }
-        return mergeInherited(base, overlay, edits, fromByName)
+        return mergeInherited(base, overlay, edits, fromByName, placements)
     }
 
     private fun loadInterface(
@@ -109,6 +161,7 @@ class PackIfType(
         overlay: InterfaceType,
         edits: List<EditComponent>,
         fromByName: Map<String, String>,
+        placements: Map<String, Placement>,
     ): InterfaceType {
         val result = base.components.toMutableMap()
         val byName =
@@ -147,6 +200,14 @@ class PackIfType(
                         y = dsl.y,
                         width = if (dsl.width > 0) dsl.width else baseComp.width,
                         height = if (dsl.height > 0) dsl.height else baseComp.height,
+                        // Layout modes and parent must track the DSL too. Without this an overlay
+                        // packed over its own previous output can never correct them, so a component
+                        // keeps whatever anchoring it was first created with.
+                        xMode = dsl.xMode,
+                        yMode = dsl.yMode,
+                        widthMode = dsl.widthMode,
+                        heightMode = dsl.heightMode,
+                        layer = if (dsl.layer == -1) baseComp.layer else dsl.layer,
                         op = if (dsl.op.any { it.isNotBlank() }) dsl.op else baseComp.op,
                         events = if (dsl.events != 0) dsl.events else baseComp.events,
                         graphic =
@@ -190,12 +251,132 @@ class PackIfType(
                 if (donorName == null) {
                     added = remapHookSelfRefs(added, fromPacked = dsl.packed, toPacked = packed)
                 }
+                logger.info {
+                    "merge ${base.internalName}: added \"$name\" at $newIndex " +
+                        "donor=${donorName ?: "none"} dsl=${dsl.width}x${dsl.height} " +
+                        "added=${added.width}x${added.height} layer=${added.layer}"
+                }
                 result[newIndex] = added
                 byName[name] = newIndex
             }
         }
 
-        return InterfaceType(result, base.id, base.internalName)
+        return InterfaceType(applyPlacements(base.id, result, placements), base.id, base.internalName)
+    }
+
+    /**
+     * Moves each `insertAfter`/`insertBefore` component to its anchor's sibling slot.
+     *
+     * Draw order among siblings is child-index order, so repositioning means renumbering. The
+     * existing (sparse) index set is reused as the slot pool and components are reassigned to it in
+     * the new order, which keeps every index before the insertion point untouched and shifts only
+     * the tail. Every reference that lives inside this group — `layer` parents and packed ids
+     * embedded in hook argument arrays — is rewritten to match. References from *outside* the group
+     * (CS2 that hardcodes a packed component id) cannot be seen from here and will still point at
+     * the old index.
+     */
+    private fun applyPlacements(
+        interfaceId: Int,
+        components: Map<Int, ComponentType>,
+        placements: Map<String, Placement>,
+    ): Map<Int, ComponentType> {
+        if (placements.isEmpty()) return components
+
+        val indexByName =
+            components.values
+                .mapNotNull { comp -> comp.internalName?.let { it to comp.component } }
+                .toMap()
+
+        val slots = components.keys.sorted()
+        val order = slots.toMutableList()
+        for ((name, placement) in placements) {
+            val moving = indexByName[name]
+            if (moving == null) {
+                logger.warn { "insert(\"$name\") — component not found after merge" }
+                continue
+            }
+            val anchor = indexByName[placement.anchor]
+            if (anchor == null) {
+                logger.warn { "insert anchor \"${placement.anchor}\" not found for \"$name\"" }
+                continue
+            }
+            if (anchor == moving) {
+                logger.warn { "insert anchor for \"$name\" is itself — ignored" }
+                continue
+            }
+            order.remove(moving)
+            val at = order.indexOf(anchor)
+            order.add(if (placement.before) at else at + 1, moving)
+            val comp = components.getValue(moving)
+            logger.info {
+                "placement on $interfaceId: \"$name\" from $moving to after \"${placement.anchor}\" " +
+                    "($anchor), carrying ${comp.width}x${comp.height}"
+            }
+        }
+
+        val remap = order.withIndex().associate { (position, old) -> old to slots[position] }
+        if (remap.all { (old, new) -> old == new }) return components
+
+        val moved = remap.count { (old, new) -> old != new }
+        logger.warn {
+            "insert() renumbered $moved component(s) on interface $interfaceId — CS2 that " +
+                "references these by hardcoded packed id must be updated"
+        }
+
+        val packedRemap =
+            remap.entries.associate { (old, new) ->
+                ((interfaceId shl 16) or old) to ((interfaceId shl 16) or new)
+            }
+
+        val relocated =
+            components.entries.associate { (oldIndex, comp) ->
+                val newIndex = remap.getValue(oldIndex)
+                newIndex to relocate(comp, newIndex, interfaceId, packedRemap)
+            }
+        check(relocated.size == components.size) {
+            "insert() on interface $interfaceId collapsed ${components.size} components into " +
+                "${relocated.size}; the slot remap is not one-to-one and components would be lost"
+        }
+        return relocated
+    }
+
+    private fun relocate(
+        component: ComponentType,
+        newIndex: Int,
+        interfaceId: Int,
+        packedRemap: Map<Int, Int>,
+    ): ComponentType {
+        val packed = (interfaceId shl 16) or newIndex
+        fun remapHook(hook: Array<Any>?): Array<Any>? {
+            if (hook == null) return null
+            return Array(hook.size) { i ->
+                val value = hook[i]
+                if (value is Int) packedRemap[value] ?: value else value
+            }
+        }
+        return component.copy(
+            internalId = packed,
+            id = newIndex,
+            layer = packedRemap[component.layer] ?: component.layer,
+            onLoad = remapHook(component.onLoad),
+            onMouseOver = remapHook(component.onMouseOver),
+            onMouseLeave = remapHook(component.onMouseLeave),
+            onTargetLeave = remapHook(component.onTargetLeave),
+            onTargetEnter = remapHook(component.onTargetEnter),
+            onVarTransmit = remapHook(component.onVarTransmit),
+            onInvTransmit = remapHook(component.onInvTransmit),
+            onStatTransmit = remapHook(component.onStatTransmit),
+            onTimer = remapHook(component.onTimer),
+            onOp = remapHook(component.onOp),
+            onMouseRepeat = remapHook(component.onMouseRepeat),
+            onClick = remapHook(component.onClick),
+            onClickRepeat = remapHook(component.onClickRepeat),
+            onRelease = remapHook(component.onRelease),
+            onHold = remapHook(component.onHold),
+            onDrag = remapHook(component.onDrag),
+            onDragComplete = remapHook(component.onDragComplete),
+            onScrollWheel = remapHook(component.onScrollWheel),
+        )
     }
 
     private fun cloneFromDonor(
@@ -264,24 +445,19 @@ class PackIfType(
     ) {
         val archive = Archive(inf.id)
 
-        val components = emptyList<Interface.InterfaceComponent>().toMutableList()
-
         inf.components.toList().sortedBy { (_, component) -> component.component }.forEach { (_, component) ->
             val writer = Unpooled.buffer(4096)
             codec.encode(component, writer)
-            components.add(
-                Interface.InterfaceComponent(
-                    component.internalName ?: "com_${component.component}",
-                    component.component,
-                    component.interfaceId,
-                ),
-            )
-
             archive.add(component.component, writer.toArray())
         }
 
-        CacheTool.addGameValMapping(GameValGroupTypes.IFTYPES, Interface(inf.internalName, inf.id, components))
+        CacheTool.addGameValMapping(GameValGroupTypes.IFTYPES, gameValElement(inf))
         cacheLibrary.index(INTERFACES).add(archive)
         cacheLibrary.update()
+    }
+
+    private companion object {
+        private const val INTERFACE_TABLE = "interface"
+        private const val COMPONENT_TABLE = "component"
     }
 }

@@ -51,9 +51,22 @@ open class BaseComponent {
     var fromComponent: String? = null
         private set
 
+    var placement: Placement? = null
+        private set
+
     fun from(name: String) {
         fromComponent = name.removePrefix("component.").substringAfter(":")
     }
+
+    fun insertAfter(name: String) {
+        placement = Placement(anchorName(name), before = false)
+    }
+
+    fun insertBefore(name: String) {
+        placement = Placement(anchorName(name), before = true)
+    }
+
+    private fun anchorName(name: String) = name.removePrefix("component.").substringAfter(":")
 
     fun size(block: () -> Pair<Int, Int>) {
         val (newX, newY) = block()

@@ -94,6 +94,7 @@ fun InterfaceBuilder.text(
     block: TextComponent.() -> Unit
 ) {
     val bld = TextComponent().apply(block)
+    registerPlacement(componentName, bld.placement)
     val component = applyText(componentName, bld)
     bld.repeatType?.generateComponents(component.width ?: 0, component.height ?: 0, componentName, component)?.forEach {
         targetList.add(it)
@@ -123,6 +124,7 @@ fun InterfaceBuilder.layer(
 
     val bld = Layer.LayerComponent(this).apply(block)
     registerFrom(componentName, bld.fromComponent)
+    registerPlacement(componentName, bld.placement)
     val component = applyLayer(componentName, bld)
     bld.repeatType?.generateComponents(component.width ?: 0, component.height ?: 0, componentName, component)?.forEach {
         targetList.add(it)
@@ -159,6 +161,7 @@ fun InterfaceBuilder.model(
     block: Model.ModelComponent.() -> Unit
 ) {
     val bld = Model.ModelComponent().apply(block)
+    registerPlacement(componentName, bld.placement)
     val component = applyModel(componentName, bld)
     bld.repeatType?.generateComponents(component.width ?: 0, component.height ?: 0, componentName, component)?.forEach {
         targetList.add(it)
@@ -171,6 +174,7 @@ fun InterfaceBuilder.input(
     block: Input.InputComponent.() -> Unit
 ) {
     val bld = Input.InputComponent().apply(block)
+    registerPlacement(componentName, bld.placement)
     val component = applyInput(componentName, bld)
     bld.repeatType?.generateComponents(component.width ?: 0, component.height ?: 0, componentName, component)?.forEach {
         targetList.add(it)
@@ -183,6 +187,7 @@ fun InterfaceBuilder.rectangle(
     block: Rectangle.RectangleComponent.() -> Unit
 ) {
     val bld = Rectangle.RectangleComponent().apply(block)
+    registerPlacement(componentName, bld.placement)
     val component = applyRectangle(componentName, bld)
     bld.repeatType?.generateComponents(component.width ?: 0, component.height ?: 0, componentName, component)?.forEach {
         targetList.add(it)
@@ -195,6 +200,7 @@ fun InterfaceBuilder.line(
     block: Line.LineComponent.() -> Unit
 ) {
     val bld = Line.LineComponent().apply(block)
+    registerPlacement(componentName, bld.placement)
     val component = applyLine(componentName, bld)
     bld.repeatType?.generateComponents(component.width ?: 0, component.height ?: 0, componentName, component)?.forEach {
         targetList.add(it)
@@ -208,6 +214,7 @@ fun InterfaceBuilder.graphic(
 ) {
     val bld = Graphic.GraphicComponent().apply(block)
     registerFrom(componentName, bld.fromComponent)
+    registerPlacement(componentName, bld.placement)
     val component = applyGraphic(componentName, bld)
     bld.repeatType?.generateComponents(component.width ?: 0, component.height ?: 0, componentName, component)?.forEach {
         targetList.add(it)
