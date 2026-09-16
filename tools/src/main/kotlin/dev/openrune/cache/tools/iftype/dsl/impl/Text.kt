@@ -27,18 +27,41 @@ object Text {
 
     open class TextComponent : BaseComponent() {
         var text: String = ""
+        var secondaryText: String = ""
         var font: FontType = FontType.FONT_REGULAR
         var lineHeight: Int = 0
         var xAllignment: Int = TextAlignment.CENTER.value
         var yAllignment: Int = TextAlignment.CENTER.value
         var textShadowed: Boolean = true
         var color: Int = 0
+        var mouseOverColour: Int = 0
+        var mouseOverSecondaryColour: Int = 0
         private val options = mutableListOf<String>()
         private var hoverNormalColor: Color? = null
         private var hoverHoverColor: Color? = null
 
         fun display(bld: () -> String) {
             text = bld()
+        }
+
+        fun secondaryDisplay(bld: () -> String) {
+            secondaryText = bld()
+        }
+
+        fun mouseOverColor(value: Int) {
+            mouseOverColour = value
+        }
+
+        fun mouseOverColor(value: Color) {
+            mouseOverColour = value.toJagexColor()
+        }
+
+        fun mouseOverSecondaryColor(value: Int) {
+            mouseOverSecondaryColour = value
+        }
+
+        fun mouseOverSecondaryColor(value: Color) {
+            mouseOverSecondaryColour = value.toJagexColor()
         }
 
         fun font(bld: () -> FontType) {
@@ -98,12 +121,15 @@ object Text {
                 applyCommonProperties(this)
                 type = 4
                 text = this@TextComponent.text
+                secondaryText = this@TextComponent.secondaryText
                 textFont = this@TextComponent.font.value
                 textLineHeight = this@TextComponent.lineHeight
                 textAlignH = this@TextComponent.xAllignment
                 textAlignV = this@TextComponent.yAllignment
                 textShadow = this@TextComponent.textShadowed
                 colour1 = this@TextComponent.color
+                mouseOverColour1 = this@TextComponent.mouseOverColour
+                mouseOverColour2 = this@TextComponent.mouseOverSecondaryColour
                 
                 // Apply options
                 this@TextComponent.options.forEachIndexed { index, option ->

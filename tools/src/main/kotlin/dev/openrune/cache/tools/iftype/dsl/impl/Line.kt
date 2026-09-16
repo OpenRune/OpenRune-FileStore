@@ -12,6 +12,7 @@ object Line {
     open class LineComponent : BaseComponent() {
         var lineWidth: Int = 1
         var color: Int = 0
+        var secondaryColor: Int = 0
         var lineDirection: Boolean = false
 
         fun lineWidth(bld: () -> Int) {
@@ -26,6 +27,14 @@ object Line {
             this.color = value.toJagexColor()
         }
 
+        fun secondaryColor(value: Int) {
+            this.secondaryColor = value
+        }
+
+        fun secondaryColor(value: Color) {
+            this.secondaryColor = value.toJagexColor()
+        }
+
         fun lineDirection(bld: () -> Boolean) {
             this.lineDirection = bld()
         }
@@ -36,6 +45,7 @@ object Line {
                 type = 9
                 lineWid = this@LineComponent.lineWidth
                 colour1 = this@LineComponent.color
+                colour2 = this@LineComponent.secondaryColor
                 lineDirection = this@LineComponent.lineDirection
             }
         }

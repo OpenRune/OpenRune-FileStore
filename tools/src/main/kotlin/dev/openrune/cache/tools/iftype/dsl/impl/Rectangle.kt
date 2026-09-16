@@ -11,6 +11,7 @@ object Rectangle {
 
     open class RectangleComponent : BaseComponent() {
         var color: Int = 0
+        var secondaryColor: Int = 0
         var filled: Boolean = false
         var opacity: Int = 0
 
@@ -20,6 +21,14 @@ object Rectangle {
 
         fun color(value: Color) {
             this.color = value.toJagexColor()
+        }
+
+        fun secondaryColor(value: Int) {
+            this.secondaryColor = value
+        }
+
+        fun secondaryColor(value: Color) {
+            this.secondaryColor = value.toJagexColor()
         }
 
         fun opacity(bld: () -> Int) {
@@ -37,6 +46,7 @@ object Rectangle {
                 applyCommonProperties(this)
                 type = 3
                 colour1 = this@RectangleComponent.color
+                colour2 = this@RectangleComponent.secondaryColor
                 fill = this@RectangleComponent.filled
                 trans1 = this@RectangleComponent.opacity
             }

@@ -19,8 +19,12 @@ open class BaseComponent {
     var heightMode: Int = 0
     var layer: Int? = null
     var hide: Boolean = false
+    var buttonType: Int = 0
+    var mouseOverRedirect: Int = -1
     var opBase: String? = ""
     var targetVerb: String? = ""
+    var targetBase: String? = ""
+    var buttonText: String? = null
     var dragDeadZone: Int = 0
     var dragDeadTime: Int = 0
     var draggableBehavior: Boolean = false
@@ -89,8 +93,12 @@ open class BaseComponent {
     fun heightMode(block: () -> Int) { heightMode = block() }
     fun layer(block: () -> Int) { layer = block() }
     fun hide(block: () -> Boolean) { hide = block() }
+    fun buttonType(block: () -> Int) { buttonType = block() }
+    fun mouseOverRedirect(block: () -> Int) { mouseOverRedirect = block() }
     fun opBase(block: () -> String?) { opBase = block() }
     fun targetVerb(block: () -> String?) { targetVerb = block() }
+    fun targetBase(block: () -> String?) { targetBase = block() }
+    fun buttonText(block: () -> String?) { buttonText = block() }
     fun dragDeadZone(block: () -> Int) { dragDeadZone = block() }
     fun dragDeadTime(block: () -> Int) { dragDeadTime = block() }
     fun draggableBehavior(block: () -> Boolean) { draggableBehavior = block() }
@@ -152,6 +160,9 @@ open class BaseComponent {
         repeatType = block()
     }
 
+    /** Raw event bitmask. Prefer `addOption(...)` on layer/text/graphic components, which manages this for you. */
+    fun events(block: () -> Int) { events = block() }
+
     /**
      * Applies common properties from this component to a ComponentTypeBuilder
      */
@@ -168,8 +179,12 @@ open class BaseComponent {
         builder.heightMode = heightMode
         builder.layer = layer
         builder.hide = hide
+        builder.buttonType = buttonType
+        builder.mouseOverRedirect = mouseOverRedirect
         builder.opBase = opBase
         builder.targetVerb = targetVerb
+        builder.targetBase = targetBase
+        builder.buttonText = buttonText
         builder.dragDeadZone = dragDeadZone
         builder.dragDeadTime = dragDeadTime
         builder.draggableBehavior = draggableBehavior

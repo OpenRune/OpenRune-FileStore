@@ -18,6 +18,7 @@ object Graphic {
 
     open class GraphicComponent : BaseComponent() {
         var spriteId: Int = -1
+        var secondarySpriteId: Int = -1
         var textureId: Int = 0
         var spriteTiling: Boolean = false
         var borderType: Int = 0
@@ -34,6 +35,10 @@ object Graphic {
             val value = bld()
             require(value != -1) { "spriteId must be set to a valid value, but was -1" }
             this.spriteId = value
+        }
+
+        fun secondarySpriteId(bld: () -> Int) {
+            this.secondarySpriteId = bld()
         }
 
         fun textureId(bld: () -> Int) {
@@ -89,6 +94,9 @@ object Graphic {
                 type = 5
                 if (this@GraphicComponent.spriteId != -1) {
                     graphic = this@GraphicComponent.spriteId
+                }
+                if (this@GraphicComponent.secondarySpriteId != -1) {
+                    secondaryGraphic = this@GraphicComponent.secondarySpriteId
                 }
                 angle2d = this@GraphicComponent.textureId
                 tiling = this@GraphicComponent.spriteTiling

@@ -17,29 +17,45 @@ import dev.openrune.cache.tools.iftype.dsl.InterfaceFrom
 import dev.openrune.cache.tools.iftype.dsl.InterfaceInherit
 import dev.openrune.cache.tools.iftype.dsl.InterfacePlacements
 import dev.openrune.cache.tools.iftype.dsl.Placement
+import dev.openrune.cache.tools.iftype.toml.indexCs2ParamTypes
+import dev.openrune.cache.tools.iftype.toml.loadInterfaceToml
 import dev.openrune.cache.tools.tasks.CacheTask
+import dev.openrune.cache.util.getFiles
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.definition.type.widget.ComponentType
 import dev.openrune.definition.util.toArray
 import dev.openrune.filesystem.Cache
+import dev.openrune.toml.rsconfig.rsconfig
+import dev.openrune.toml.tomlMapper
 import io.netty.buffer.Unpooled
+import java.io.File
+import java.nio.file.Path
 
 class PackIfType(
-    private val interfaces: List<InterfaceType>,
+    interfaces: List<InterfaceType> = emptyList(),
+    tomlDirectories: List<File> = emptyList(),
+    cs2Directory: File? = null,
+    tokenizedReplacements: Map<String, String> = emptyMap(),
+    tokenizedFile: Path? = null,
 ) : CacheTask() {
     private val logger = InlineLogger()
 
-    /** Captured once at construction — BUILD packs client then server with the same task instance. */
+    private val interfaces: List<InterfaceType> = run {
+        val cs2ParamTypes = cs2Directory?.let { indexCs2ParamTypes(it) }.orEmpty()
+        interfaces + tomlDirectories.flatMap { resolveTomlInterfaces(it, cs2ParamTypes, tokenizedReplacements, tokenizedFile) }
+    }
+
+    // `this.` is load-bearing: the constructor parameter of the same name shadows the property here.
     private val inheritById =
-        interfaces.associate { it.id to InterfaceInherit.take(it.id) }
+        this.interfaces.associate { it.id to InterfaceInherit.take(it.id) }
     private val editsById =
-        interfaces.associate { it.id to InterfaceEdits.take(it.id) }
+        this.interfaces.associate { it.id to InterfaceEdits.take(it.id) }
     private val fromById =
-        interfaces.associate { it.id to InterfaceFrom.take(it.id) }
+        this.interfaces.associate { it.id to InterfaceFrom.take(it.id) }
     private val placementsById =
-        interfaces.associate { it.id to InterfacePlacements.take(it.id) }
+        this.interfaces.associate { it.id to InterfacePlacements.take(it.id) }
 
     override fun init(cache: Cache) {
         val totalInterfaces = interfaces.size
@@ -116,15 +132,11 @@ class PackIfType(
             }
             return overlay
         }
-        val base = loadInterface(cache, decoder, inheritName) ?: run {
-            logger.warn { "inherit($inheritName) failed for ${overlay.internalName} — packing overlay only" }
-            return overlay
-        }
-        if (base.components.size <= overlay.components.size) {
-            logger.warn {
-                "inherit($inheritName) base for ${overlay.internalName} only has ${base.components.size} " +
-                    "children (cache may already be overwritten) — restore vanilla interface before packing"
-            }
+        val base = loadInterface(cache, decoder, inheritName)
+            ?: error("inherit($inheritName) failed for ${overlay.internalName}")
+        check(base.components.size > overlay.components.size) {
+            "inherit($inheritName) base for ${overlay.internalName} only has ${base.components.size} " +
+                "children - restore the vanilla interface before packing"
         }
         return mergeInherited(base, overlay, edits, fromByName, placements)
     }
@@ -459,5 +471,30 @@ class PackIfType(
     private companion object {
         private const val INTERFACE_TABLE = "interface"
         private const val COMPONENT_TABLE = "component"
+    }
+}
+
+private fun resolveTomlInterfaces(
+    directory: File,
+    cs2ParamTypes: Map<String, List<String>>,
+    tokenizedReplacements: Map<String, String>,
+    tokenizedFile: Path?,
+): List<InterfaceType> {
+    val files = getFiles(directory, "if3")
+    if (files.isEmpty()) return emptyList()
+
+    val mapper = tomlMapper {
+        rsconfig {
+            enableConstantProvider()
+            enabledTokenizedReplacement(tokenizedReplacements, tokenizedFile)
+        }
+    }
+
+    return files.map { file ->
+        try {
+            loadInterfaceToml(file.toPath(), mapper, cs2ParamTypes)
+        } catch (e: Exception) {
+            error("Failed to load interface TOML '${file.name}': ${e.message}")
+        }
     }
 }

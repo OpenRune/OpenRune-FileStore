@@ -29,6 +29,14 @@ class EditComponent(val name: String) {
         y = pair.second
     }
 
+    fun x(block: () -> Int) {
+        x = block()
+    }
+
+    fun y(block: () -> Int) {
+        y = block()
+    }
+
     fun size(block: () -> Pair<Int, Int>) {
         val (w, h) = block()
         width = w
@@ -74,6 +82,8 @@ object InterfaceEdits {
     }
 
     fun take(interfaceId: Int): List<EditComponent> = byId.remove(interfaceId).orEmpty()
+
+    fun peek(interfaceId: Int): List<EditComponent> = byId[interfaceId].orEmpty()
 }
 
 object InterfaceFrom {
