@@ -1,5 +1,6 @@
 dependencies {
     implementation(project(":definition"))
+    implementation(project(":definition:rs2"))
     implementation("org.openrs2:openrs2-cache:0.1.0")
     implementation("org.openrs2:openrs2-cache-550:0.1.0")
     implementation("com.google.code.gson:gson:2.10.1")
@@ -15,6 +16,8 @@ tasks.test {
     System.getProperty("scan")?.let { systemProperty("scan", it) }
     // Opt in to Rs2ManifestScanTest with `-Dmanifestscan=true`; it is skipped otherwise.
     System.getProperty("manifestscan")?.let { systemProperty("manifestscan", it) }
+    // Opt in to Rs2QuickChatScanTest with `-Dqcscan=true`; it is skipped otherwise.
+    System.getProperty("qcscan")?.let { systemProperty("qcscan", it) }
     // Rs2AllBuildsSpriteScanTest prints per-build progress as it runs - stream it live
     // instead of buffering everything until the (long-running) test method finishes.
     testLogging {

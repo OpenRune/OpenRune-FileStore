@@ -86,6 +86,7 @@ val filesystemVersion = buildNumber
 val definitionVersion = buildNumber
 val definitionOpcodeVersion = buildNumber
 val definitionOsrsVersion = buildNumber
+val definitionRs2Version = buildNumber
 val filestoreVersion = buildNumber
 val filestoreOsrsFsVersion = buildNumber
 val filestoreRs2FsVersion = buildNumber
@@ -137,6 +138,12 @@ publishing {
                         definitionOSRS.appendNode("artifactId", "osrs")
                         definitionOSRS.appendNode("version", definitionOsrsVersion)
                         definitionOSRS.appendNode("scope", "compile")
+
+                        val definitionRs2 = appendNode("dependency")
+                        definitionRs2.appendNode("groupId", "dev.or2")
+                        definitionRs2.appendNode("artifactId", "rs2")
+                        definitionRs2.appendNode("version", definitionRs2Version)
+                        definitionRs2.appendNode("scope", "compile")
 
                         val filestore = appendNode("dependency")
                         filestore.appendNode("groupId", "dev.or2")

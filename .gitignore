@@ -32,3 +32,4 @@ tools/build/*
 /data
 worldmap-out/
 /filestore/rs2-fs/build
+/definition/rs2/build

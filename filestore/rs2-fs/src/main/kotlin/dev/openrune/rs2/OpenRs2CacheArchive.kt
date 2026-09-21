@@ -54,9 +54,9 @@ object OpenRs2CacheArchive {
         return entries
     }
 
-    fun findByBuild(build: Int, game: String = "runescape", scope: String = "runescape", environment: String = "live"): CacheEntry? =
+    fun findByBuild(build: Int, game: String = "runescape", scope: String = "runescape", environment: String = "live", language: String = "en"): CacheEntry? =
         list()
-            .filter { it.scope == scope && it.game == game && it.environment == environment }
+            .filter { it.scope == scope && it.game == game && it.environment == environment && it.language == language }
             .filter { entry -> entry.builds.any { it.major == build } }
             .maxByOrNull { it.id }
 
@@ -88,9 +88,9 @@ object OpenRs2CacheArchive {
         }
 
     /** One [CacheEntry] per build, restricted to caches archive.openrs2.org considers completely archived. */
-    fun validCaches(game: String = "runescape", scope: String = "runescape", environment: String = "live"): List<CacheEntry> =
+    fun validCaches(game: String = "runescape", scope: String = "runescape", environment: String = "live", language: String = "en"): List<CacheEntry> =
         list()
-            .filter { it.scope == scope && it.game == game && it.environment == environment }
+            .filter { it.scope == scope && it.game == game && it.environment == environment && it.language == language }
             .filter { it.diskStoreValid && it.groups > 0 && it.validGroups == it.groups }
             .filter { it.builds.isNotEmpty() }
             .groupBy { it.builds.first().major }
@@ -99,9 +99,9 @@ object OpenRs2CacheArchive {
             .sortedBy { it.builds.first().major }
 
     /** One [CacheEntry] per build - unlike [validCaches], includes incomplete/unverified captures too. */
-    fun allBuilds(game: String = "runescape", scope: String = "runescape", environment: String = "live"): List<CacheEntry> =
+    fun allBuilds(game: String = "runescape", scope: String = "runescape", environment: String = "live", language: String = "en"): List<CacheEntry> =
         list()
-            .filter { it.scope == scope && it.game == game && it.environment == environment }
+            .filter { it.scope == scope && it.game == game && it.environment == environment && it.language == language }
             .filter { it.builds.isNotEmpty() }
             .groupBy { it.builds.first().major }
             .values

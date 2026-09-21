@@ -1,5 +1,9 @@
 package dev.openrune
 
+import dev.openrune.definition.codec.QuickChatCategoryCodec
+import dev.openrune.definition.codec.QuickChatPhraseCodec
+import dev.openrune.definition.type.QuickChatCategoryType
+import dev.openrune.definition.type.QuickChatPhraseType
 import dev.openrune.definition.type.SpriteType
 import dev.openrune.rs2.OpenRs2ArchiveStore
 import dev.openrune.rs2.OpenRs2CacheArchive
@@ -14,6 +18,9 @@ import java.nio.file.Path
 class Rs2Cache private constructor(val cache: Cache, val build: Int? = null) : AutoCloseable {
 
     companion object {
+        private const val QUICKCHAT_CATEGORY_GROUP = 0
+        private const val QUICKCHAT_PHRASE_GROUP = 1
+
         fun load(root: Path, build: Int? = null): Rs2Cache = Rs2Cache(Cache.open(root), build)
 
         /** @param id the opaque archive.openrs2.org cache id - see [loadRemoteFromRev] for a build number instead. */
@@ -22,10 +29,10 @@ class Rs2Cache private constructor(val cache: Cache, val build: Int? = null) : A
             return Rs2Cache(Cache.open(OpenRs2ArchiveStore(scope, id)), build)
         }
 
-        /** @param build the client build/revision number, e.g. `822`. */
-        fun loadRemoteFromRev(build: Int, game: String = "runescape", scope: String = "runescape", environment: String = "live"): Rs2Cache {
-            val entry = OpenRs2CacheArchive.findByBuild(build, game, scope, environment)
-                ?: throw java.io.FileNotFoundException("No $scope/$game/$environment cache found for build $build")
+        /** @param build the client build/revision number, e.g. `822`. Defaults to the English cache unless [language] is given. */
+        fun loadRemoteFromRev(build: Int, game: String = "runescape", scope: String = "runescape", environment: String = "live", language: String = "en"): Rs2Cache {
+            val entry = OpenRs2CacheArchive.findByBuild(build, game, scope, environment, language)
+                ?: throw java.io.FileNotFoundException("No $scope/$game/$environment/$language cache found for build $build")
             return Rs2Cache(Cache.open(OpenRs2ArchiveStore(scope, entry.id)), build)
         }
     }
@@ -51,6 +58,30 @@ class Rs2Cache private constructor(val cache: Cache, val build: Int? = null) : A
 
     fun spriteGroups(archive: Int = Rs2Index.SPRITES): List<Int> =
         cache.list(archive).asSequence().map { it.id }.sorted().toList()
+
+    fun quickChatCategoryIds(): List<Int> =
+        cache.list(Rs2Index.QUICKCHAT, QUICKCHAT_CATEGORY_GROUP).asSequence().map { it.id }.sorted().toList()
+
+    fun quickChatPhraseIds(): List<Int> =
+        cache.list(Rs2Index.QUICKCHAT, QUICKCHAT_PHRASE_GROUP).asSequence().map { it.id }.sorted().toList()
+
+    fun readQuickChatCategory(id: Int): QuickChatCategoryType {
+        val buf = cache.read(Rs2Index.QUICKCHAT, QUICKCHAT_CATEGORY_GROUP, id)
+        try {
+            return QuickChatCategoryCodec().loadData(id, buf)
+        } finally {
+            buf.release()
+        }
+    }
+
+    fun readQuickChatPhrase(id: Int): QuickChatPhraseType {
+        val buf = cache.read(Rs2Index.QUICKCHAT, QUICKCHAT_PHRASE_GROUP, id)
+        try {
+            return QuickChatPhraseCodec().loadData(id, buf)
+        } finally {
+            buf.release()
+        }
+    }
 
     fun warnIfArchiveTooEarly(archiveName: String) {
         build?.let { Rs2Manifest.warnIfArchiveTooEarly(archiveName, it) }
