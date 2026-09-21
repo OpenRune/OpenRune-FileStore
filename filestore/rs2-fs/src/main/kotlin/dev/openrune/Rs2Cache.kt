@@ -1,12 +1,15 @@
 package dev.openrune
 
+import dev.openrune.definition.codec.MapSceneIconCodec
 import dev.openrune.definition.codec.QuickChatCategoryCodec
 import dev.openrune.definition.codec.QuickChatPhraseCodec
+import dev.openrune.definition.type.MapSceneIconType
 import dev.openrune.definition.type.QuickChatCategoryType
 import dev.openrune.definition.type.QuickChatPhraseType
 import dev.openrune.definition.type.SpriteType
 import dev.openrune.rs2.OpenRs2ArchiveStore
 import dev.openrune.rs2.OpenRs2CacheArchive
+import dev.openrune.rs2.Rs2ConfigGroup
 import dev.openrune.rs2.Rs2Index
 import dev.openrune.rs2.Rs2Manifest
 import dev.openrune.rs2.Rs2Sprite
@@ -78,6 +81,18 @@ class Rs2Cache private constructor(val cache: Cache, val build: Int? = null) : A
         val buf = cache.read(Rs2Index.QUICKCHAT, QUICKCHAT_PHRASE_GROUP, id)
         try {
             return QuickChatPhraseCodec().loadData(id, buf)
+        } finally {
+            buf.release()
+        }
+    }
+
+    fun mapSceneIconIds(): List<Int> =
+        cache.list(Rs2Index.CONFIG, Rs2ConfigGroup.MSITYPE).asSequence().map { it.id }.sorted().toList()
+
+    fun readMapSceneIcon(id: Int): MapSceneIconType {
+        val buf = cache.read(Rs2Index.CONFIG, Rs2ConfigGroup.MSITYPE, id)
+        try {
+            return MapSceneIconCodec().loadData(id, buf)
         } finally {
             buf.release()
         }

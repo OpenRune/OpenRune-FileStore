@@ -18,6 +18,8 @@ tasks.test {
     System.getProperty("manifestscan")?.let { systemProperty("manifestscan", it) }
     // Opt in to Rs2QuickChatScanTest with `-Dqcscan=true`; it is skipped otherwise.
     System.getProperty("qcscan")?.let { systemProperty("qcscan", it) }
+    // Opt in to Rs2MapSceneIconScanTest with `-Dmsiscan=true`; it is skipped otherwise.
+    System.getProperty("msiscan")?.let { systemProperty("msiscan", it) }
     // Rs2AllBuildsSpriteScanTest prints per-build progress as it runs - stream it live
     // instead of buffering everything until the (long-running) test method finishes.
     testLogging {
