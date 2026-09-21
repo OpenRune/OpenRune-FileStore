@@ -12,7 +12,16 @@ data class IndexedSprite(
     var subWidth: Int = 0,
     var originalWidth: Int = 0,
     var originalHeight: Int = 0,
-    var alpha: ByteArray? = null
+    var alpha: ByteArray? = null,
+    /**
+     * Set instead of [raster]/[palette] for sprite formats that only ever
+     * hand us a fully composed image rather than an indexed palette+raster
+     * breakdown to rebuild - e.g. RS3's raw-RGB sprite layout, or any
+     * already-decoded [java.awt.image.BufferedImage] (openrs2's own indexed
+     * sprite decoder doesn't expose its internal palette either). When set,
+     * [toBufferedImage] uses it directly instead of the palette lookup.
+     */
+    var argb: IntArray? = null
 ) {
 
     fun getHorizontalOffset(alignment: Int): Int {
@@ -50,6 +59,17 @@ data class IndexedSprite(
         raster = ByteArray(width * height)
     }
 
+    /** Wraps an already-composed image (see [argb]); no cropping/offset data available for these. */
+    constructor(width: Int, height: Int, argb: IntArray) : this() {
+        this.width = width
+        this.height = height
+        this.offsetX = 0
+        this.offsetY = 0
+        this.argb = argb
+        palette = IntArray(0)
+        raster = ByteArray(0)
+    }
+
     lateinit var raster: ByteArray
     lateinit var palette: IntArray
 
@@ -58,7 +78,7 @@ data class IndexedSprite(
 
     /** Expands the cropped raster back out to the full sheet, for anything sampling by absolute coordinate. */
     fun normalized(): IndexedSprite {
-        if (width == fullWidth && height == fullHeight) return this
+        if (argb != null || (width == fullWidth && height == fullHeight)) return this
 
         val padded = ByteArray(fullWidth * fullHeight)
         var source = 0
@@ -82,6 +102,13 @@ data class IndexedSprite(
         }
 
         val bi = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+
+        val direct = argb
+        if (direct != null) {
+            bi.setRGB(0, 0, width, height, direct, 0, width)
+            return bi
+        }
+
         for (x in 0 until width) {
             for (y in 0 until height) {
                 val i = x + y * width
@@ -114,6 +141,10 @@ data class IndexedSprite(
             if (other.alpha == null) return false
             if (!alpha.contentEquals(other.alpha)) return false
         } else if (other.alpha != null) return false
+        if (argb != null) {
+            if (other.argb == null) return false
+            if (!argb.contentEquals(other.argb)) return false
+        } else if (other.argb != null) return false
         if (!raster.contentEquals(other.raster)) return false
         if (!palette.contentEquals(other.palette)) return false
 
@@ -128,6 +159,7 @@ data class IndexedSprite(
         result = 31 * result + subHeight
         result = 31 * result + subWidth
         result = 31 * result + (alpha?.contentHashCode() ?: 0)
+        result = 31 * result + (argb?.contentHashCode() ?: 0)
         result = 31 * result + raster.contentHashCode()
         result = 31 * result + palette.contentHashCode()
         return result

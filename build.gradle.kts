@@ -1,7 +1,8 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.9.0"
+    kotlin("jvm") version "2.2.0"
     id("maven-publish")
 }
 
@@ -27,8 +28,8 @@ subprojects {
 
 
     tasks.withType<KotlinCompile> {
-        kotlinOptions {
-            jvmTarget = "11"
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
         }
     }
 
@@ -87,6 +88,7 @@ val definitionOpcodeVersion = buildNumber
 val definitionOsrsVersion = buildNumber
 val filestoreVersion = buildNumber
 val filestoreOsrsFsVersion = buildNumber
+val filestoreRs2FsVersion = buildNumber
 val toolsVersion = buildNumber
 val displeeVersion = buildNumber
 
@@ -147,6 +149,12 @@ publishing {
                         filestoreOSRS.appendNode("artifactId", "osrs-fs")
                         filestoreOSRS.appendNode("version", filestoreOsrsFsVersion)
                         filestoreOSRS.appendNode("scope", "compile")
+
+                        val filestoreRs2 = appendNode("dependency")
+                        filestoreRs2.appendNode("groupId", "dev.or2")
+                        filestoreRs2.appendNode("artifactId", "rs2-fs")
+                        filestoreRs2.appendNode("version", filestoreRs2FsVersion)
+                        filestoreRs2.appendNode("scope", "compile")
 
                         val tools = appendNode("dependency")
                         tools.appendNode("groupId", "dev.or2")

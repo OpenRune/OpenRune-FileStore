@@ -2,7 +2,7 @@ rootProject.name = "filestore"
 
 include("filesystem")
 include("definition", "definition:osrs", "definition:opcode")
-include("filestore", "filestore:osrs-fs")
+include("filestore", "filestore:osrs-fs", "filestore:rs2-fs")
 
 include("tools")
 include("displee")
@@ -14,5 +14,6 @@ dependencyResolutionManagement {
         mavenLocal()
         maven("https://raw.githubusercontent.com/OpenRune/hosting/master")
         maven("https://jitpack.io")
+        maven("https://repo.openrs2.org/repository/openrs2")
     }
 }
