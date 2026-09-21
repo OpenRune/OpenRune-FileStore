@@ -13,6 +13,9 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -24,12 +27,27 @@ import java.util.concurrent.ConcurrentHashMap
  * through the content-addressed `versions/.../checksums/...` endpoint,
  * using version/checksum from the parent index (master index for per-archive
  * indexes, each archive's own index for its groups).
+ *
+ * Every fetched group is cached under [cacheDir] (`~/openrs2/rs3/{build}/`
+ * by default, mirroring the request's URL path underneath), so re-reading
+ * the same archive/group - across process runs, not just within one - never
+ * re-fetches it. Safe to cache indefinitely: content-addressed groups are
+ * immutable by construction, and the plain endpoint is only ever used here
+ * for frozen/historical snapshots.
  */
 class OpenRs2ArchiveStore(
     private val scope: String,
     private val id: Int,
-    private val client: HttpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build()
+    private val client: HttpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build(),
+    private val cacheDir: Path? = null
 ) : Store {
+
+    private val resolvedCacheDir: Path? by lazy {
+        cacheDir ?: run {
+            val build = OpenRs2CacheArchive.buildFor(scope, id) ?: id
+            Paths.get(System.getProperty("user.home"), "openrs2", "rs3", build.toString())
+        }
+    }
 
     private val archiveIndexes = ConcurrentHashMap<Int, Js5Index>()
 
@@ -131,14 +149,26 @@ class OpenRs2ArchiveStore(
     }
 
     private fun fetch(request: HttpRequest, archive: Int, group: Int): ByteBuf {
+        cachePath(request.uri())?.let { path ->
+            if (Files.isRegularFile(path)) return Unpooled.wrappedBuffer(Files.readAllBytes(path))
+        }
+
         val response = send(request, HttpResponse.BodyHandlers.ofByteArray())
 
         return when (response.statusCode()) {
-            200 -> Unpooled.wrappedBuffer(response.body())
+            200 -> {
+                cachePath(request.uri())?.let { path ->
+                    Files.createDirectories(path.parent)
+                    Files.write(path, response.body())
+                }
+                Unpooled.wrappedBuffer(response.body())
+            }
             404 -> throw FileNotFoundException("Archive $archive group $group not found for $scope/$id")
             else -> throw IOException("Unexpected status ${response.statusCode()} fetching archive $archive group $group")
         }
     }
+
+    private fun cachePath(uri: URI): Path? = resolvedCacheDir?.resolve(uri.path.removePrefix("/"))
 
     private fun <T> send(request: HttpRequest, bodyHandler: HttpResponse.BodyHandler<T>): HttpResponse<T> {
         return try {

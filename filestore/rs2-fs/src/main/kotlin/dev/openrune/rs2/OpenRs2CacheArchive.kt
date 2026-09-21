@@ -8,6 +8,9 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
 
 /** Looks up cache ids/metadata on [archive.openrs2.org](https://archive.openrs2.org), so callers can work in build numbers instead of opaque cache ids. */
@@ -36,22 +39,44 @@ object OpenRs2CacheArchive {
         val keys: Long
     )
 
+    private val cacheDir: Path = Paths.get(System.getProperty("user.home"), "openrs2")
+    private val cachesJsonFile: Path = cacheDir.resolve("caches.json")
+    private const val CACHES_JSON_TTL_MILLIS = 60 * 60 * 1000L // 1 hour - archive.openrs2.org keeps adding new caches
+
     @Volatile
     private var cached: List<CacheEntry>? = null
 
+    /** [caches.json](https://archive.openrs2.org/caches.json) is ~1.3 MB, so this is cached in-memory for the
+     * process lifetime and on disk (with a TTL, since it's a growing/live list) across process runs. */
     fun list(): List<CacheEntry> {
         cached?.let { return it }
 
-        val request = HttpRequest.newBuilder(URI.create(CACHES_URL)).GET().build()
-        val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+        val body = readCachedFile(cachesJsonFile, CACHES_JSON_TTL_MILLIS) ?: run {
+            val request = HttpRequest.newBuilder(URI.create(CACHES_URL)).GET().build()
+            val response = client.send(request, HttpResponse.BodyHandlers.ofString())
 
-        if (response.statusCode() != 200) {
-            throw java.io.IOException("Unexpected status ${response.statusCode()} fetching $CACHES_URL")
+            if (response.statusCode() != 200) {
+                throw IOException("Unexpected status ${response.statusCode()} fetching $CACHES_URL")
+            }
+
+            writeCachedFile(cachesJsonFile, response.body())
+            response.body()
         }
 
-        val entries = gson.fromJson(response.body(), Array<CacheEntry>::class.java).toList()
+        val entries = gson.fromJson(body, Array<CacheEntry>::class.java).toList()
         cached = entries
         return entries
+    }
+
+    private fun readCachedFile(path: Path, ttlMillis: Long): String? {
+        if (!Files.isRegularFile(path)) return null
+        if (System.currentTimeMillis() - Files.getLastModifiedTime(path).toMillis() > ttlMillis) return null
+        return Files.readString(path)
+    }
+
+    private fun writeCachedFile(path: Path, content: String) {
+        Files.createDirectories(path.parent)
+        Files.writeString(path, content)
     }
 
     fun findByBuild(build: Int, game: String = "runescape", scope: String = "runescape", environment: String = "live", language: String = "en"): CacheEntry? =
@@ -72,9 +97,14 @@ object OpenRs2CacheArchive {
     // The master index's binary layout isn't self-describing, and guessing it from build
     // number or byte length is unreliable (the trailing RSA signature block's size varies
     // by era). archive.openrs2.org's cache detail page states the real format though, so
-    // we scrape that instead - cached per (scope, id) since it can't change once archived.
+    // we scrape that instead - cached per (scope, id), on disk with no TTL since it can't
+    // change once archived, plus in-memory for the process lifetime.
     fun masterIndexFormat(scope: String, id: Int): MasterIndexFormat =
         masterIndexFormats.computeIfAbsent(scope to id) {
+            val file = cacheDir.resolve(scope).resolve("$id-format.txt")
+            val cachedName = readCachedFile(file, Long.MAX_VALUE)
+            if (cachedName != null) return@computeIfAbsent MasterIndexFormat.valueOf(cachedName)
+
             val request = HttpRequest.newBuilder(URI.create("https://archive.openrs2.org/caches/$scope/$id")).GET().build()
             val response = client.send(request, HttpResponse.BodyHandlers.ofString())
 
@@ -84,6 +114,7 @@ object OpenRs2CacheArchive {
 
             val name = masterIndexFormatRegex.find(response.body())?.groupValues?.get(1)
                 ?: error("Could not find master index format on cache page for $scope/$id")
+            writeCachedFile(file, name)
             MasterIndexFormat.valueOf(name)
         }
 
