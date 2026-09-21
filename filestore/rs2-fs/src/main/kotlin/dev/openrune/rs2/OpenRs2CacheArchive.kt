@@ -10,14 +10,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * Looks up cache ids on [archive.openrs2.org](https://archive.openrs2.org) by
- * revision, so callers only need to know a build/revision number rather than
- * an opaque archive id - mirrors how
- * [zwyz/rs3-cache](https://github.com/zwyz/rs3-cache)'s `Main`/`data/caches.txt`
- * resolve a build number to a cache id before unpacking, except this queries
- * OpenRS2's `caches.json` endpoint directly instead of a pinned local table.
- */
+/** Looks up cache ids/metadata on [archive.openrs2.org](https://archive.openrs2.org), so callers can work in build numbers instead of opaque cache ids. */
 object OpenRs2CacheArchive {
 
     private const val CACHES_URL = "https://archive.openrs2.org/caches.json"
@@ -38,16 +31,14 @@ object OpenRs2CacheArchive {
         val indexes: Int,
         @SerializedName("disk_store_valid") val diskStoreValid: Boolean,
         @SerializedName("valid_groups") val validGroups: Long,
-        val groups: Long
+        val groups: Long,
+        @SerializedName("valid_keys") val validKeys: Long,
+        val keys: Long
     )
 
     @Volatile
     private var cached: List<CacheEntry>? = null
 
-    /**
-     * Fetches (and caches for the lifetime of the process) the full list of
-     * caches known to archive.openrs2.org.
-     */
     fun list(): List<CacheEntry> {
         cached?.let { return it }
 
@@ -63,49 +54,25 @@ object OpenRs2CacheArchive {
         return entries
     }
 
-    /**
-     * Finds the most recent cache matching [scope]/[game]/[environment] whose
-     * builds include [build] as a major revision.
-     */
     fun findByBuild(build: Int, game: String = "runescape", scope: String = "runescape", environment: String = "live"): CacheEntry? =
         list()
             .filter { it.scope == scope && it.game == game && it.environment == environment }
             .filter { entry -> entry.builds.any { it.major == build } }
             .maxByOrNull { it.id }
 
-    /**
-     * Finds a cache by its exact [scope]/[id], used by [OpenRs2ArchiveStore]
-     * to work out how many archives a cache has (so it can answer
-     * `list(Store.ARCHIVESET)` without downloading the whole cache).
-     */
     fun findById(scope: String, id: Int): CacheEntry? =
         list().firstOrNull { it.scope == scope && it.id == id }
 
-    /**
-     * Looks up the major build/revision number a cache belongs to, straight
-     * from its archive.openrs2.org manifest entry - no need to track it
-     * separately alongside the cache id.
-     */
     fun buildFor(scope: String, id: Int): Int? =
         findById(scope, id)?.builds?.firstOrNull()?.major
 
     private val masterIndexFormats = ConcurrentHashMap<Pair<String, Int>, MasterIndexFormat>()
     private val masterIndexFormatRegex = Regex("""Format</th>\s*<td>(\w+)</td>""")
 
-    /**
-     * The master index's binary layout isn't self-describing, and guessing
-     * it from either the client build number or the decompressed byte
-     * length turns out to be unreliable: the layout has more variation
-     * across cache generations than either approach accounts for (e.g. the
-     * trailing RSA signature block's size isn't fixed - it varies by era -
-     * so it can't be subtracted out to solve for the entry width).
-     *
-     * archive.openrs2.org's cache detail page renders the actual format
-     * it detected (as one of [MasterIndexFormat]'s names) in a "Format" row,
-     * which is the one genuinely reliable source for this - so we scrape
-     * that instead of guessing. Cached per (scope, id) for the process
-     * lifetime, since it can't change for an already-archived cache.
-     */
+    // The master index's binary layout isn't self-describing, and guessing it from build
+    // number or byte length is unreliable (the trailing RSA signature block's size varies
+    // by era). archive.openrs2.org's cache detail page states the real format though, so
+    // we scrape that instead - cached per (scope, id) since it can't change once archived.
     fun masterIndexFormat(scope: String, id: Int): MasterIndexFormat =
         masterIndexFormats.computeIfAbsent(scope to id) {
             val request = HttpRequest.newBuilder(URI.create("https://archive.openrs2.org/caches/$scope/$id")).GET().build()
@@ -120,19 +87,7 @@ object OpenRs2CacheArchive {
             MasterIndexFormat.valueOf(name)
         }
 
-    /**
-     * One [CacheEntry] per major build/revision, matching [scope]/[game]/
-     * [environment], restricted to caches archive.openrs2.org considers
-     * completely and correctly archived (`disk_store_valid: true` and every
-     * group present, not just most of them). Still-updating snapshots of the
-     * live game are excluded - their master/archive indexes and data groups
-     * can genuinely disagree with each other, which is a real inconsistency
-     * in the archived data rather than anything a client can work around.
-     *
-     * Where multiple caches exist for the same build, the one with the most
-     * archived groups is preferred, since a more complete capture is more
-     * likely to include the sprite groups being scanned.
-     */
+    /** One [CacheEntry] per build, restricted to caches archive.openrs2.org considers completely archived. */
     fun validCaches(game: String = "runescape", scope: String = "runescape", environment: String = "live"): List<CacheEntry> =
         list()
             .filter { it.scope == scope && it.game == game && it.environment == environment }
@@ -143,16 +98,7 @@ object OpenRs2CacheArchive {
             .map { candidates -> candidates.maxBy { it.groups } }
             .sortedBy { it.builds.first().major }
 
-    /**
-     * One [CacheEntry] per major build/revision, matching [scope]/[game]/
-     * [environment] - unlike [validCaches], every build is included, even
-     * ones archive.openrs2.org doesn't consider completely/correctly
-     * archived (`disk_store_valid: false`, e.g. still-updating snapshots of
-     * the live game, such as the most recent build). For those, whichever
-     * candidate has the most archived groups is used on a best-effort basis;
-     * it may still fail to decode, which is exactly the point of scanning
-     * every build rather than only the known-good ones.
-     */
+    /** One [CacheEntry] per build - unlike [validCaches], includes incomplete/unverified captures too. */
     fun allBuilds(game: String = "runescape", scope: String = "runescape", environment: String = "live"): List<CacheEntry> =
         list()
             .filter { it.scope == scope && it.game == game && it.environment == environment }

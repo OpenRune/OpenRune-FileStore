@@ -13,6 +13,8 @@ tasks.test {
     useJUnitPlatform()
     // Opt in to Rs2AllBuildsSpriteScanTest with `-Dscan=true`; it is skipped otherwise.
     System.getProperty("scan")?.let { systemProperty("scan", it) }
+    // Opt in to Rs2ManifestScanTest with `-Dmanifestscan=true`; it is skipped otherwise.
+    System.getProperty("manifestscan")?.let { systemProperty("manifestscan", it) }
     // Rs2AllBuildsSpriteScanTest prints per-build progress as it runs - stream it live
     // instead of buffering everything until the (long-running) test method finishes.
     testLogging {

@@ -16,27 +16,14 @@ import java.net.http.HttpResponse
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * A read-only [Store] that fetches individual JS5 archive/group files on
- * demand from [archive.openrs2.org](https://archive.openrs2.org), instead of
- * downloading an entire cache up front. RS3 caches in particular can be tens
- * of gigabytes, so an [org.openrs2.cache.Cache] built on top of this only
- * ever pulls the specific groups it is asked to read (plus the small master
- * and per-archive JS5 indexes needed to locate them) - see
- * [zwyz/rs3-cache](https://github.com/zwyz/rs3-cache)'s
- * `OpenRS2Js5ResourceProvider`/`Js5MasterIndex` for the reference
- * implementation this mirrors.
- *
- * The plain `/caches/{scope}/{id}/...` endpoint turns out to serve whatever
- * content is *currently* behind an (archive, group) pair rather than the
- * exact snapshot [id] pinned - fine for the one-off master index fetch below,
- * but wrong for everything else. So every other read is resolved through the
- * content-addressed `versions/.../checksums/...` endpoint instead, using the
- * version/checksum recorded for it in its parent index: per-archive indexes
- * are looked up in the master index (archive 255, group 255), and individual
- * groups are looked up in their own archive's index.
- *
- * @param scope the archive.openrs2.org scope, e.g. "runescape" or "oldschool".
- * @param id the numeric cache id within that scope; see https://archive.openrs2.org.
+ * A read-only [Store] that fetches individual JS5 archive/group files from
+ * [archive.openrs2.org](https://archive.openrs2.org) on demand, instead of
+ * downloading the whole cache. The plain `/caches/{scope}/{id}/...` endpoint
+ * only serves current content, not the pinned snapshot [id] - only safe to
+ * use here for the one-off master index fetch - so everything else goes
+ * through the content-addressed `versions/.../checksums/...` endpoint,
+ * using version/checksum from the parent index (master index for per-archive
+ * indexes, each archive's own index for its groups).
  */
 class OpenRs2ArchiveStore(
     private val scope: String,
@@ -57,13 +44,6 @@ class OpenRs2ArchiveStore(
 
     override fun list(): List<Int> = unsupported()
 
-    /**
-     * [org.openrs2.cache.Cache] calls `list(Store.ARCHIVESET)` once on open
-     * to discover which archives exist. Rather than requiring a directory
-     * listing (which this HTTP endpoint doesn't offer), we use the master
-     * index, which records an entry (possibly empty/zeroed) for every
-     * archive slot the cache has.
-     */
     override fun list(archive: Int): List<Int> {
         if (archive != Store.ARCHIVESET) unsupported()
         val entries = master.index.entries
@@ -81,11 +61,8 @@ class OpenRs2ArchiveStore(
             val entry = master.index.entries.getOrNull(group)
                 ?: throw FileNotFoundException("Archive $group not found for $scope/$id")
 
-            // ORIGINAL master indexes only ever stored a checksum, no version -
-            // there's no real version to build a content-addressed request from,
-            // so fall back to the plain per-id endpoint for these archives' indexes
-            // specifically. Fine here: these builds are long frozen, so the plain
-            // endpoint's "whatever is currently there" isn't a moving target.
+            // ORIGINAL master indexes have no version field, so fall back to the
+            // plain endpoint here - these builds are long frozen, not moving targets.
             return if (master.format == MasterIndexFormat.ORIGINAL) {
                 fetch(HttpRequest.newBuilder(simpleUri(archive, group)).GET().build(), archive, group)
             } else {
@@ -140,16 +117,8 @@ class OpenRs2ArchiveStore(
         }
     }
 
-    /**
-     * The content-addressed endpoint returns the bare compressed group, with
-     * no trailer. [org.openrs2.cache.CacheArchive.verifyCompressed] expects
-     * every group [Store.read] returns to end with the 2-byte version
-     * trailer that on-disk JS5 stores always carry (see
-     * [org.openrs2.cache.VersionTrailer]), and strips/compares it - so we
-     * append it ourselves from the version we already resolved to build this
-     * request, rather than let it misread the tail of real compressed data
-     * as a bogus version.
-     */
+    // Content-addressed responses have no version trailer, but CacheArchive.verifyCompressed
+    // expects one - append it ourselves rather than let it misread real data as a bogus version.
     private fun fetchVersioned(archive: Int, group: Int, version: Int, checksum: Int): ByteBuf {
         val body = fetch(HttpRequest.newBuilder(versionedUri(archive, group, version, checksum)).GET().build(), archive, group)
         return try {

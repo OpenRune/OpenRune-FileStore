@@ -13,14 +13,7 @@ data class IndexedSprite(
     var originalWidth: Int = 0,
     var originalHeight: Int = 0,
     var alpha: ByteArray? = null,
-    /**
-     * Set instead of [raster]/[palette] for sprite formats that only ever
-     * hand us a fully composed image rather than an indexed palette+raster
-     * breakdown to rebuild - e.g. RS3's raw-RGB sprite layout, or any
-     * already-decoded [java.awt.image.BufferedImage] (openrs2's own indexed
-     * sprite decoder doesn't expose its internal palette either). When set,
-     * [toBufferedImage] uses it directly instead of the palette lookup.
-     */
+    /** Set instead of [raster]/[palette] when only a composed image is available to rebuild from. */
     var argb: IntArray? = null
 ) {
 

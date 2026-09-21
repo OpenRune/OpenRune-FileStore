@@ -7,32 +7,16 @@ import java.io.File
 import java.io.FileNotFoundException
 
 /**
- * Attempts to read sprite archive 8 for every distinct "runescape" (main
- * game) build archive.openrs2.org has a validly archived cache for, and
- * records which builds succeed vs fail against this module's
- * [dev.openrune.rs2.OpenRs2ArchiveStore]/[Rs2Cache].
- *
- * Not part of the normal test suite - it makes a large number of real
- * network requests (one build per client revision, ever) and can take a
- * long time. Run it explicitly:
- *
- * ```
- * ./gradlew :filestore:rs2-fs:test --tests dev.openrune.Rs2AllBuildsSpriteScanTest -Dscan=true --rerun-tasks
- * ```
- *
- * Results are written to `build/sprite-scan/report.md` as well as printed to
- * stdout, since a scan this long is worth keeping a persisted copy of rather
- * than scrolling back through console output. See `README.md` in this module
- * for what a failure here usually means and where to look when the cache
- * format changes again.
+ * Attempts to read sprite archive 8 for every "runescape" build, recording
+ * which succeed vs fail. Not part of the normal test suite - slow and
+ * network-heavy. Run explicitly:
+ * `./gradlew :filestore:rs2-fs:test --tests dev.openrune.Rs2AllBuildsSpriteScanTest -Dscan=true --rerun-tasks`
  */
 @EnabledIfSystemProperty(named = "scan", matches = "true")
 class Rs2AllBuildsSpriteScanTest {
 
     @Test
     fun `scan every runescape build for sprite decode failures`() {
-        // Builds below ~400 predate JS5 (flat .idx/.dat format); OpenRs2ArchiveStore
-        // doesn't support that format at all, so there's nothing to learn from them.
         val caches = OpenRs2CacheArchive.allBuilds().filter { it.builds.first().major >= 400 }
         println("Scanning ${caches.size} builds (in build order)...")
 
@@ -52,11 +36,7 @@ class Rs2AllBuildsSpriteScanTest {
                 }
                 Status.Ok
             } catch (e: FileNotFoundException) {
-                // A specific resource archive.openrs2.org's public HTTP mirror doesn't
-                // actually serve, even though our fetch chain correctly resolved which
-                // resource to ask for. Confirmed (see README) to be a gap in what's
-                // publicly reachable for some older caches, not a decode bug - so it
-                // doesn't belong in the failure list, just noted separately.
+                // Resource genuinely missing from archive.openrs2.org's public mirror - not a decode bug.
                 Status.Skipped("${e.javaClass.simpleName}: ${e.message}")
             } catch (e: Throwable) {
                 Status.Failed("${e.javaClass.simpleName}: ${e.message}")
