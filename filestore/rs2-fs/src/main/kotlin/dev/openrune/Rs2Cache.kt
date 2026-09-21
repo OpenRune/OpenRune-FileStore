@@ -3,7 +3,9 @@ package dev.openrune
 import dev.openrune.definition.codec.MapSceneIconCodec
 import dev.openrune.definition.codec.QuickChatCategoryCodec
 import dev.openrune.definition.codec.QuickChatPhraseCodec
+import dev.openrune.definition.codec.Rs2MapElementCodec
 import dev.openrune.definition.type.MapSceneIconType
+import dev.openrune.definition.type.Rs2MapElementType
 import dev.openrune.definition.type.QuickChatCategoryType
 import dev.openrune.definition.type.QuickChatPhraseType
 import dev.openrune.definition.type.SpriteType
@@ -93,6 +95,18 @@ class Rs2Cache private constructor(val cache: Cache, val build: Int? = null) : A
         val buf = cache.read(Rs2Index.CONFIG, Rs2ConfigGroup.MSITYPE, id)
         try {
             return MapSceneIconCodec().loadData(id, buf)
+        } finally {
+            buf.release()
+        }
+    }
+
+    fun mapElementIds(): List<Int> =
+        cache.list(Rs2Index.CONFIG, Rs2ConfigGroup.MELTYPE).asSequence().map { it.id }.sorted().toList()
+
+    fun readMapElement(id: Int): Rs2MapElementType {
+        val buf = cache.read(Rs2Index.CONFIG, Rs2ConfigGroup.MELTYPE, id)
+        try {
+            return Rs2MapElementCodec(build ?: Int.MAX_VALUE).loadData(id, buf)
         } finally {
             buf.release()
         }
