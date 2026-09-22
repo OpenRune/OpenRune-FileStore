@@ -3,6 +3,7 @@ package dev.openrune.cache.tools.iftype.toml
 import dev.openrune.cache.filestore.definition.InterfaceType
 import dev.openrune.cache.tools.iftype.dsl.BaseComponent
 import dev.openrune.cache.tools.iftype.dsl.InterfaceBuilder
+import dev.openrune.cache.tools.iftype.dsl.SelfRef
 import dev.openrune.cache.tools.iftype.dsl.buildInterface
 import dev.openrune.cache.tools.iftype.dsl.impl.Graphic
 import dev.openrune.cache.tools.iftype.dsl.impl.Layer
@@ -64,12 +65,23 @@ fun validateInterfaceToml(file: TomlInterfaceFile) {
 
     val byName = file.component.associateBy { it.name }
     for (c in file.component) {
+        val placement = listOfNotNull(c.insert_before, c.insert_after)
+        require(placement.size <= 1) {
+            "Component '${c.name}' in '${header.name}' sets both insert_before and insert_after — pick one."
+        }
+        require(placement.isEmpty() || header.inherit != null) {
+            "Component '${c.name}' in '${header.name}' uses insert_before/insert_after but the interface has " +
+                "no 'inherit' — placement only reorders the children of an inherited base."
+        }
         val parentName = c.parent ?: continue
         val parent = byName[parentName]
-            ?: error(
+        if (parent == null) {
+            require(header.inherit != null) {
                 "Component '${c.name}' declares parent = \"$parentName\", but no component with that name " +
-                    "exists in '${header.name}'. Available: ${byName.keys.sorted()}",
-            )
+                    "exists in '${header.name}'. Available: ${byName.keys.sorted()}"
+            }
+            continue
+        }
         require(parent.type == "layer") {
             "Component '${c.name}' declares parent = \"$parentName\", but '$parentName' is type " +
                 "'${parent.type}', not 'layer' — only layer components can hold children."
@@ -100,8 +112,11 @@ fun buildInterfaceFromToml(file: TomlInterfaceFile): InterfaceType {
 
     val displayName = resolveInterfaceName(header.name) ?: header.name.toString()
 
-    val childrenByParent = file.component.filter { it.parent != null }.groupBy { it.parent!! }
-    val roots = file.component.filter { it.parent == null }
+    // Under `inherit`, a parent that is not declared in this file names a component of the base;
+    // such components are placed at the root and re-parented by name during the merge.
+    val declared = file.component.map { it.name }.toSet()
+    val childrenByParent = file.component.filter { it.parent in declared }.groupBy { it.parent!! }
+    val roots = file.component.filter { it.parent !in declared }
 
     val rootLayerOverride = if (header.inherit != null) (header.name shl 16) else null
 
@@ -173,10 +188,17 @@ private fun normalizeScriptRefs(rawToml: String): String {
 }
 
 private val INTERFACE_NAME_LINE = Regex("""^name\s*=\s*"interface\.([A-Za-z0-9_]+)"\s*$""")
+private val INHERIT_LINE = Regex("""^inherit\s*=.*$""")
 private val COMPONENT_NAME_LINE = Regex("""^name\s*=\s*"([^"]*)"\s*$""")
 private val PARENT_LINE = Regex("""^parent\s*=\s*"([^"]*)"\s*$""")
 private val COMPONENT_BLOCK_HEADER = Regex("""^\[\[component]]\s*$""")
 
+/**
+ * Replaces `"component.<this interface>:<name>"` with the child index the DSL will assign, so a
+ * file can reference its own components before they exist. Overlays with `inherit` get their final
+ * indexes from the merge instead, so their self references are written as [SelfRef] placeholders
+ * that [dev.openrune.cache.tools.iftype.PackIfType] resolves.
+ */
 private fun resolveSelfComponentRefs(rawToml: String): String {
     val interfaceName = rawToml.lineSequence()
         .map { it.trim() }
@@ -188,6 +210,7 @@ private fun resolveSelfComponentRefs(rawToml: String): String {
 
     val nodes = mutableListOf<Node>()
     var inComponentBlock = false
+    var inherits = false
     var pendingName: String? = null
     var pendingParent: String? = null
 
@@ -204,15 +227,19 @@ private fun resolveSelfComponentRefs(rawToml: String): String {
             inComponentBlock = true
             return@forEach
         }
-        if (!inComponentBlock) return@forEach
+        if (!inComponentBlock) {
+            if (INHERIT_LINE.matches(line)) inherits = true
+            return@forEach
+        }
         COMPONENT_NAME_LINE.matchEntire(line)?.let { pendingName = it.groupValues[1] }
         PARENT_LINE.matchEntire(line)?.let { pendingParent = it.groupValues[1] }
     }
     flush()
     if (nodes.isEmpty()) return rawToml
 
-    val childrenByParent = nodes.filter { it.parent != null }.groupBy { it.parent!! }
-    val roots = nodes.filter { it.parent == null }
+    val declared = nodes.map { it.name }.toSet()
+    val childrenByParent = nodes.filter { it.parent in declared }.groupBy { it.parent!! }
+    val roots = nodes.filter { it.parent !in declared }
     val indexByName = mutableMapOf<String, Int>()
     var nextIndex = 1
 
@@ -224,7 +251,7 @@ private fun resolveSelfComponentRefs(rawToml: String): String {
 
     var result = rawToml
     indexByName.forEach { (name, index) ->
-        val packed = (interfaceId shl 16) or index
+        val packed = if (inherits) SelfRef.encode(index) else (interfaceId shl 16) or index
         result = result.replace("\"component.$interfaceName:$name\"", packed.toString())
     }
     return result
@@ -236,21 +263,25 @@ private fun placeAtRoot(
     childrenByParent: Map<String, List<TomlComponent>>,
     rootLayerOverride: Int?,
 ) {
+    fun BaseComponent.attachRoot() {
+        val baseParent = node.parent
+        if (baseParent != null) parent(baseParent) else rootLayerOverride?.let { layer { it } }
+    }
     when (node.type) {
         "layer" -> host.layer(node.name) {
             configureLayer(this, node)
-            rootLayerOverride?.let { layer { it } }
+            attachRoot()
             childrenByParent[node.name].orEmpty().forEach { placeInLayer(this, it, childrenByParent) }
         }
-        "text" -> host.text(node.name) { configureText(this, node); rootLayerOverride?.let { layer { it } } }
-        "graphic" -> host.graphic(node.name) { configureGraphic(this, node); rootLayerOverride?.let { layer { it } } }
-        "rectangle" -> host.rectangle(node.name) { configureRectangle(this, node); rootLayerOverride?.let { layer { it } } }
-        "line" -> host.line(node.name) { configureLine(this, node); rootLayerOverride?.let { layer { it } } }
-        "model" -> host.model(node.name) { configureModel(this, node); rootLayerOverride?.let { layer { it } } }
+        "text" -> host.text(node.name) { configureText(this, node); attachRoot() }
+        "graphic" -> host.graphic(node.name) { configureGraphic(this, node); attachRoot() }
+        "rectangle" -> host.rectangle(node.name) { configureRectangle(this, node); attachRoot() }
+        "line" -> host.line(node.name) { configureLine(this, node); attachRoot() }
+        "model" -> host.model(node.name) { configureModel(this, node); attachRoot() }
         "input" -> host.input(node.name) {
             configureCommon(this, node)
             applyExplicitEvents(this, node)
-            rootLayerOverride?.let { layer { it } }
+            attachRoot()
         }
         else -> error("Unknown component type '${node.type}' for '${node.name}'")
     }
@@ -279,6 +310,8 @@ private fun placeInLayer(
 }
 
 private fun configureCommon(bld: BaseComponent, node: TomlComponent) {
+    node.insert_before?.let { bld.insertBefore(it) }
+    node.insert_after?.let { bld.insertAfter(it) }
     bld.position { node.x to node.y }
     bld.size { node.width to node.height }
     bld.xMode { node.x_mode }

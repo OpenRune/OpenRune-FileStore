@@ -31,3 +31,5 @@ tools/build/*
 /definition/opcode/build
 /data
 worldmap-out/
+/definition/rs2/build
+/filestore/rs2-fs/build

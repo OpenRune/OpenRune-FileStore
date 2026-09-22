@@ -154,6 +154,7 @@ class InterfaceBuilder(
     internal val edits = mutableListOf<EditComponent>()
     internal val fromComponents = mutableMapOf<String, String>()
     internal val placements = mutableMapOf<String, Placement>()
+    internal val parentComponents = mutableMapOf<String, String>()
     internal val layerNestedChildren = mutableMapOf<ComponentTypeBuilder, MutableList<ComponentTypeBuilder>>()
 
     fun setOffset(block: () -> Pair<Int, Int>) {
@@ -182,6 +183,12 @@ class InterfaceBuilder(
     internal fun registerPlacement(componentName: String, placement: Placement?) {
         if (placement != null) {
             placements[componentName] = placement
+        }
+    }
+
+    internal fun registerParent(componentName: String, parent: String?) {
+        if (parent != null) {
+            parentComponents[componentName] = parent
         }
     }
 
@@ -236,6 +243,7 @@ fun buildInterface(internalName: String, width: Int, height: Int,builder: Interf
     registerEdits(bld, id)
     InterfaceFrom.register(id, bld.fromComponents.toMap())
     InterfacePlacements.register(id, bld.placements.toMap())
+    registerParents(bld, id)
 
     return InterfaceType(
         components = componentsMap,
@@ -276,6 +284,7 @@ fun buildInterface(id: Int, interfaceName: String, width: Int, height: Int,build
     registerEdits(bld, id)
     InterfaceFrom.register(id, bld.fromComponents.toMap())
     InterfacePlacements.register(id, bld.placements.toMap())
+    registerParents(bld, id)
 
     return InterfaceType(
         components = componentsMap,
@@ -288,4 +297,9 @@ private fun registerEdits(bld: InterfaceBuilder, interfaceId: Int) {
     if (bld.edits.isEmpty()) return
     require(bld.inheritFrom != null) { "edit() requires inherit()" }
     InterfaceEdits.register(interfaceId, bld.edits.toList())
+}
+
+private fun registerParents(bld: InterfaceBuilder, interfaceId: Int) {
+    if (bld.inheritFrom == null) return
+    InterfaceParents.register(interfaceId, bld.parentComponents.toMap())
 }

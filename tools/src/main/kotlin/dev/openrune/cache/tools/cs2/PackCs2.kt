@@ -23,7 +23,7 @@ import kotlin.io.path.Path
  * - required directories from neptune.toml are missing.
  */
 
-class PackCs2(private val cs2Dir: File) : CacheTask() {
+class PackCs2(private val cs2Dir: File, private val overrides: Cs2Overrides = Cs2Overrides()) : CacheTask() {
 
     private val logger = InlineLogger()
 
@@ -64,11 +64,16 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
 
             SymDumper.dumpCacheVals(File(cs2Dir, "symbols"), cache, revision)
 
+            // Everything the project contributes is written into neptune.toml and symbols_custom/
+            // rather than passed to the compiler directly, so an IDE reading the same config sees
+            // exactly what the build does.
+            NeptuneProjectManifest.update(configFile, cs2Dir, overrides)
+
             // SymDumper may re-emit plugin gamevals into symbols/; drop overlaps so
             // symbols_custom wins (Neptune rejects duplicate ids/names).
             SymbolsCustomConflictStrip.strip(cs2Dir)
 
-            CustomCs2OverrideSync(cs2Dir, revision).sync()
+            CustomCs2OverrideSync(cs2Dir, revision, overrides.sources).sync()
 
             // Neptune compiles the project as a whole and reports no per-script dependencies, so CS2 is one
             // coarse unit: any source, symbol or library file added, edited or removed recompiles the lot,
@@ -92,8 +97,9 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
 
     private fun compileAndWrite(cache: Cache, configFile: File) {
         val scripts = ClientScripts.compileTask(configFile.toPath(), revision)
+        val changedLibraries = scripts.count { it.library }
 
-        val bar = this.progress.begin("Packing Cs2 Scripts", scripts.size)
+        val bar = this.progress.begin("Packing Cs2 Scripts ($changedLibraries changed library scripts)", scripts.size)
 
         scripts.forEach { script ->
             val id = resolveScriptId(script)
@@ -114,11 +120,11 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
             ?: return Hashing.hashTree(cs2Dir)
 
         val excluded = parseNeptuneStringArray(text, "excluded")
-            .map { File(cs2Dir, it.trimEnd('/', ' ')).absoluteFile }
+            .map { NeptuneTomlClientVersion.resolveEntry(cs2Dir, it).absoluteFile }
 
         val roots = listOf("sources", "symbols", "libraries")
             .flatMap { key -> parseNeptuneStringArray(text, key) }
-            .map { File(cs2Dir, it.trimEnd('/', ' ')) }
+            .map { NeptuneTomlClientVersion.resolveEntry(cs2Dir, it) }
             .filter { it.exists() }
 
         val files = roots.asSequence()
@@ -217,12 +223,13 @@ class PackCs2(private val cs2Dir: File) : CacheTask() {
 
         for (key in NeptuneTomlClientVersion.neptuneDirectoryArrayKeys) {
             for (rel in parseNeptuneStringArray(text, key)) {
-                val dir = File(
-                    cs2Dir,
-                    rel.trimEnd('/', ' ')
-                )
+                // pack paths are absolute and may be single files; they are the packs' to provide
+                if (File(rel).isAbsolute) {
+                    continue
+                }
+                val dir = NeptuneTomlClientVersion.resolveEntry(cs2Dir, rel)
 
-                if (dir.isDirectory) {
+                if (dir.exists()) {
                     continue
                 }
 

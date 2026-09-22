@@ -16,7 +16,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.5.16")
     implementation("dev.or2:toml-rsconfig:1.1")
 
-    implementation("me.filby:clientscript-compiler:0.0.6-openrune")
+    implementation("me.filby:clientscript-compiler:0.0.7-openrune")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.7.0")

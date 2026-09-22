@@ -36,12 +36,26 @@ internal object NeptuneTomlClientVersion {
         return readClientVersionFromText(text)
     }
 
-    /** Every path listed under [neptuneDirectoryArrayKeys] exists as a directory under [cs2Root]. */
+    /**
+     * A config entry as a file: relative ones sit under [cs2Root], absolute ones (the pack paths
+     * [NeptuneProjectManifest] writes) are taken as they are.
+     */
+    internal fun resolveEntry(cs2Root: File, entry: String): File {
+        val trimmed = entry.trimEnd('/', ' ')
+        val direct = File(trimmed)
+        return if (direct.isAbsolute) direct else File(cs2Root, trimmed)
+    }
+
+    /**
+     * Every path listed under [neptuneDirectoryArrayKeys] exists. Only the project's own relative
+     * entries decide whether the layout needs reinstalling; pack paths are absolute, may be single
+     * files, and come and go with the packs.
+     */
     internal fun allNeptunePathDirectoriesExist(cs2Root: File, neptuneText: String): Boolean {
         for (key in neptuneDirectoryArrayKeys) {
-            for (rel in parseTomlStringArray(neptuneText, key)) {
-                val dir = File(cs2Root, rel.trimEnd('/', ' '))
-                if (!dir.isDirectory) return false
+            for (entry in parseTomlStringArray(neptuneText, key)) {
+                if (File(entry).isAbsolute || entry.trimEnd('/') == NeptuneProjectManifest.CUSTOM_SYMBOLS) continue
+                if (!resolveEntry(cs2Root, entry).exists()) return false
             }
         }
         return true

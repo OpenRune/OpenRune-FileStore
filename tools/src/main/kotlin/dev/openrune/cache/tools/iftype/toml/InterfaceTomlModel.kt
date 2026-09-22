@@ -12,6 +12,8 @@ data class TomlComponent(
     val name: String,
     val type: String = "layer",
     val parent: String? = null,
+    val insert_before: String? = null,
+    val insert_after: String? = null,
     val x: Int = 0,
     val y: Int = 0,
     val width: Int = 0,

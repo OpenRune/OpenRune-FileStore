@@ -5,7 +5,8 @@ import java.io.File
 
 class CustomCs2OverrideSync(
     private val cs2Dir: File,
-    private val revision: Int
+    private val revision: Int,
+    private val overrideSources: List<File> = emptyList(),
 ) {
 
     private val logger = InlineLogger()
@@ -29,7 +30,8 @@ class CustomCs2OverrideSync(
 
     private fun collectCustomOverrides(): Set<String> {
         val result = mutableSetOf<String>()
-        customDir.walkTopDown().filter { it.isFile && it.extension.equals("cs2", true) }.forEach { file ->
+        val roots = listOf(customDir) + overrideSources
+        roots.asSequence().flatMap { it.walkTopDown() }.filter { it.isFile && it.extension.equals("cs2", true) }.forEach { file ->
             val text = runCatching {
                 file.readText()
             }.getOrNull() ?: return@forEach

@@ -197,7 +197,12 @@ internal object Cs2InstallBundles {
         }
 
         if (subRevision != null) {
-            return candidates.firstOrNull { it.sub == subRevision }?.stem
+            candidates.firstOrNull { it.sub == subRevision }?.let { return it.stem }
+            // Sub revisions whose client update changed no scripts have no bundle of their own;
+            // the closest earlier sub rev holds the identical scripts. Below the earliest bundle,
+            // the earliest one is the best available.
+            return (candidates.filter { it.sub < subRevision }.maxByOrNull { it.sub }
+                ?: candidates.minByOrNull { it.sub })?.stem
         }
 
         candidates.firstOrNull { it.sub == 0 }?.let { return it.stem }
