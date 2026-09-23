@@ -70,7 +70,7 @@ class IncrementalSession private constructor(
                     .any { it }
             }
 
-            if (removed) logger.info { "Incremental packing: cleared state at $database" }
+            if (removed) logger.debug { "Incremental packing: cleared state at $database" }
         }
 
         fun open(
@@ -107,10 +107,13 @@ class IncrementalSession private constructor(
             }
 
             if (reset != null) {
-                logger.info { "Incremental packing: full repack ($reset)" }
+                logger.info { "Full repack: $reset" }
                 runCatching { state.clearUnits() }
+                // The reference index describes the cache's configs; a cache this state no longer
+                // describes needs it rebuilt from scratch too.
+                runCatching { state.clearConfigRefs() }
             } else {
-                logger.info { "Incremental packing enabled (state: ${state.file})" }
+                logger.debug { "Incremental packing enabled (state: ${state.file})" }
             }
 
             return IncrementalSession(

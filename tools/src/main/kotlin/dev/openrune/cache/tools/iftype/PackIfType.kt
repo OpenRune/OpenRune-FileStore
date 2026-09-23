@@ -11,6 +11,7 @@ import dev.openrune.cache.gameval.GameValHandler.lookup
 import dev.openrune.cache.gameval.GameValHandler.lookupAs
 import dev.openrune.cache.gameval.impl.Interface
 import dev.openrune.cache.tools.CacheTool
+import dev.openrune.cache.tools.TaskPriority
 import dev.openrune.cache.tools.iftype.dsl.EditComponent
 import dev.openrune.cache.tools.iftype.dsl.InterfaceEdits
 import dev.openrune.cache.tools.iftype.dsl.InterfaceFrom
@@ -61,6 +62,10 @@ class PackIfType(
     private val parentsById =
         this.interfaces.associate { it.id to InterfaceParents.take(it.id) }
 
+    /** Interfaces pack before configs so `component.*` ids they define resolve everywhere else. */
+    override val priority: TaskPriority
+        get() = TaskPriority.INTERFACES
+
     override fun init(cache: Cache) {
         val totalInterfaces = interfaces.size
         val progressInterfaces = progress.begin("Packing iftype's", totalInterfaces)
@@ -101,7 +106,7 @@ class PackIfType(
                 published++
             }
         }
-        logger.info { "Published $published component ids for ${interfaces.size} interfaces" }
+        logger.debug { "Published $published component ids for ${interfaces.size} interfaces" }
     }
 
     private fun gameValElement(inf: InterfaceType): Interface {

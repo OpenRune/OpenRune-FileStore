@@ -12,7 +12,7 @@ import java.nio.file.Path
  * Renders every world map area in the cache to a PNG in [outputDir].
  *
  * Read-only: nothing is written back to the cache, so this is safe to leave in a build. It runs at
- * [TaskPriority.END] so the images show the cache as the build left it, world map included.
+ * [TaskPriority.MAPS] so the images show the cache as the build left it, world map included.
  *
  * [pixelsPerTile] is the render scale; 4 matches what the client draws at full zoom, and 1 produces a
  * minimap-sized image roughly a sixteenth the size.
@@ -24,7 +24,7 @@ class DumpWorldMap(
 
     constructor(outputDir: File, pixelsPerTile: Int = 4) : this(outputDir.toPath(), pixelsPerTile)
 
-    override val priority: TaskPriority = TaskPriority.END
+    override val priority: TaskPriority = TaskPriority.MAPS
 
     override fun init(cache: Cache) {
         require(pixelsPerTile > 0) { "pixelsPerTile must be positive, was $pixelsPerTile" }

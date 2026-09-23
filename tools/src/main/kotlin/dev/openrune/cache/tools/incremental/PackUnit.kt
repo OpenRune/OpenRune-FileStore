@@ -29,6 +29,17 @@ internal class UnitRecord {
     val gameVals = LinkedHashSet<GameValEmit>()
 }
 
+/** A cache config tracked by the gameval reference index: [kind] is a `ConfigRefKind` name. */
+internal data class ConfigKey(val kind: String, val id: Int)
+
+/**
+ * One gameval-typed value inside a config. [slot] says where in the config it sits, [table] and [name]
+ * identify the gameval, [id] is the id the config held when last seen.
+ */
+internal data class ConfigRef(val slot: String, val table: String, val name: String, val id: Int)
+
+internal class StoredConfigRefs(val crc: Int, val refs: List<ConfigRef>)
+
 internal class StoredUnit(
     val rowId: Long,
     val hash: String,
@@ -40,9 +51,11 @@ internal class StoredUnit(
 )
 
 internal object Hashing {
-    fun hashFiles(files: List<File>): String {
+    /** [onFile] runs after each file is folded in, for progress reporting on large trees. */
+    fun hashFiles(files: List<File>, onFile: () -> Unit = {}): String {
         val digest = MessageDigest.getInstance("SHA-256")
         files.sortedBy { it.invariantPath() }.forEach { file ->
+            onFile()
             digest.update(file.invariantPath().toByteArray())
             if (file.isFile) {
                 file.inputStream().use { input ->

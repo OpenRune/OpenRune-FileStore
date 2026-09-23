@@ -29,7 +29,7 @@ object NeptuneProjectManifest {
             .replaceArray("symbols", symbols)
         if (updated != text) {
             configFile.writeText(updated)
-            logger.info { "neptune.toml: ${sources.size} sources, ${symbols.size} symbol dirs" }
+            logger.debug { "neptune.toml: ${sources.size} sources, ${symbols.size} symbol dirs" }
         }
     }
 

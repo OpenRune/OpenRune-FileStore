@@ -8,6 +8,7 @@ import dev.openrune.cache.DBTABLEINDEX
 import dev.openrune.cache.gameval.GameValElement
 import dev.openrune.cache.gameval.impl.Table
 import dev.openrune.cache.tools.CacheTool
+import dev.openrune.cache.tools.TaskPriority
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.util.progress
 import dev.openrune.definition.GameValGroupTypes
@@ -27,6 +28,10 @@ class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
     private val rowCodec = DBRowCodec()
     private val tableCodec = DBTableCodec()
 
+    /** Tables pack before configs so `dbtable.*`, `dbcol.*` and `dbrow.*` ids resolve everywhere else. */
+    override val priority: TaskPriority
+        get() = TaskPriority.DBTABLES
+
     override fun init(cache: Cache) {
         val library = (cache as CacheDelegate).library
 
@@ -35,8 +40,9 @@ class PackDBTables(private val tables : List<DBTable>) : CacheTask() {
         val dbrowArchive = library.index(2).archive(DBROW) ?: return
 
         // serverOnly=true → server cache only.
-        // serverOnly=false → both caches (client CS2 + server DbHelper), matching PackConfig.
-        val tablesToPack = tables.filter { table -> !table.serverOnly || serverPass }
+        // serverOnly=false → both caches (client CS2 + server DbHelper); the server pass builds on a copy of
+        // the live cache that already holds them, so it only packs the server-only tables. Matches PackConfig.
+        val tablesToPack = tables.filter { table -> table.serverOnly == serverPass }
         if (tablesToPack.isEmpty()) return
         val bar = progress.begin("Packing DB Tables", tablesToPack.size)
 

@@ -47,18 +47,17 @@ internal object NeptuneTomlClientVersion {
     }
 
     /**
-     * Every path listed under [neptuneDirectoryArrayKeys] exists. Only the project's own relative
-     * entries decide whether the layout needs reinstalling; pack paths are absolute, may be single
-     * files, and come and go with the packs.
+     * Creates every relative directory listed under [neptuneDirectoryArrayKeys] that is missing. Pack
+     * paths are absolute and may be single files, so they are left to the packs.
      */
-    internal fun allNeptunePathDirectoriesExist(cs2Root: File, neptuneText: String): Boolean {
+    internal fun ensureListedDirectories(cs2Root: File, neptuneText: String) {
         for (key in neptuneDirectoryArrayKeys) {
             for (entry in parseTomlStringArray(neptuneText, key)) {
-                if (File(entry).isAbsolute || entry.trimEnd('/') == NeptuneProjectManifest.CUSTOM_SYMBOLS) continue
-                if (!resolveEntry(cs2Root, entry).exists()) return false
+                if (File(entry).isAbsolute) continue
+                val dir = resolveEntry(cs2Root, entry)
+                if (!dir.exists()) dir.mkdirs()
             }
         }
-        return true
     }
 
     fun ensureNeptuneToml(configFile: File, rev: Int) {
@@ -96,7 +95,7 @@ internal object NeptuneTomlClientVersion {
         val body = templateClientVersionLine.replace(text) { "client_version = $rev" }
         configFile.parentFile?.mkdirs()
         configFile.writeText(body.trimEnd() + "\n")
-        logger.info { "NeptuneToml: created default neptune.toml at ${configFile.absolutePath}" }
+        logger.debug { "NeptuneToml: created default neptune.toml at ${configFile.absolutePath}" }
         return true
     }
 

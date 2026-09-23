@@ -7,6 +7,7 @@ import dev.openrune.cache.CacheDelegate
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.cs2.PackCs2
 import dev.openrune.cache.tools.cs2.UnpackDefaultCs2
+import dev.openrune.cache.tools.gameval.GameValReferenceIndex
 import dev.openrune.cache.tools.incremental.CacheVerification
 import dev.openrune.cache.tools.incremental.IncrementalSession
 import dev.openrune.cache.tools.progress.CacheProgress
@@ -19,6 +20,7 @@ import kotlin.system.measureTimeMillis
 
 class BuildCache(
     private val cacheLocation: File,
+    @Suppress("unused") @Deprecated("No longer used; the cache is updated in place.")
     private val tempLocation: File = File(cacheLocation, "temp"),
     val tasks: MutableList<CacheTask> = mutableListOf(),
     var revision: Int = -1,
@@ -33,15 +35,7 @@ class BuildCache(
     private val logger = InlineLogger()
 
     fun initialize() {
-        tempLocation.deleteRecursively()
-        tempLocation.mkdirs()
-
         try {
-            cacheLocation.listFiles { f -> f.extension in listOf("dat", "idx") }
-                ?.forEach { file ->
-                    file.copyTo(File(tempLocation, file.name), overwrite = true)
-                }
-
             val library = CacheLibrary(cacheLocation.absolutePath)
 
             if (revision == -1) {
@@ -53,9 +47,9 @@ class BuildCache(
                 )
             }
 
-            logger.info {
-                "Building ${if (serverPass) "Server " else ""}Cache (revision=$revision, tasks=${describeTasks()})"
-            }
+            val label = if (serverPass) "server cache" else "cache"
+            logger.info { "Building $label (revision $revision, ${tasks.size} tasks)" }
+            logger.debug { "Tasks in run order: ${describeTasks()}" }
 
             if (revision >= RemoveXteas.OBSOLETE_FROM_REVISION && tasks.any { it is RemoveXteas }) {
                 logger.warn {
@@ -87,6 +81,10 @@ class BuildCache(
 
             try {
                 val time = measureTimeMillis {
+                    // Snapshot which gamevals the cache's configs reference before anything touches them.
+                    // A server pass starts from a copy of the live cache whose configs were relinked already.
+                    if (!serverPass) GameValReferenceIndex.index(delegate, revision, session.build, progress)
+
                     tasks.forEach { task ->
                         task.revision = revision
                         task.subRevision = subRevision
@@ -95,48 +93,66 @@ class BuildCache(
                         task.progress = progress
                         task.init(delegate)
                     }
+
+                    // Every id is now final; re-encode configs whose referenced gamevals moved.
+                    if (!serverPass) GameValReferenceIndex.relink(delegate, revision, session.build)
+
+                    session.build.reportRemovals()
+
+                    // The library is updated in place. It used to also be rebuilt into a temp directory that
+                    // was deleted straight after, which cost a full copy of the cache per pass for nothing.
+                    writeCache(library)
+                    progress.buildFinished()
+                    val versionTable = library.generateUkeys()
+                    library.close()
+
+                    // Recorded state is committed only now, once the cache it describes is written and closed.
+                    // Anything that throws before this point leaves the transaction uncommitted, so the next
+                    // build repacks rather than trusting records for a cache that was never finished.
+                    session.finish(versionTable)
                 }
 
-                session.build.reportRemovals()
-                progress.buildFinished()
-
-                logger.info { "Tasks Finished In: ${formatTime(time)}" }
-                logger.info { "Cleaning Up..." }
-
-                library.update()
-                val versionTable = library.generateUkeys()
-                library.rebuild(File(tempLocation, "rebuilt"))
-                library.close()
-
-                File(tempLocation, "rebuilt").listFiles { file -> file.extension in listOf("dat", "idx") }?.forEach { file ->
-                    file.copyTo(File(tempLocation, file.name), overwrite = true)
-                }
-
-                // Recorded state is committed only now, once the cache it describes is written and closed.
-                // Anything that throws before this point leaves the transaction uncommitted, so the next
-                // build repacks rather than trusting records for a cache that was never finished.
-                session.finish(versionTable)
-
-                logger.info { "Build finished in ${formatTime(time)}" }
+                logger.info { "Built $label in ${formatTime(time)}" }
             } finally {
                 session.close()
             }
         } catch (ex: Exception) {
             ex.printStackTrace()
-        } finally {
-            tempLocation.deleteRecursively()
         }
     }
 
     /**
-     * Task names for logging, collapsed so a build with one PackConfig per content plugin reads
-     * `PackConfig x6` instead of listing it six times. Affects the log line only; every task still runs.
+     * Flushes every flagged index to disk, one progress step per index. Equivalent to `library.update()`
+     * but visible: on a big change this is the longest silent stretch of the build otherwise.
      */
-    private fun describeTasks(): String =
-        tasks.groupingBy { it.javaClass.simpleName }
-            .eachCount()
-            .entries
-            .joinToString { (name, count) -> if (count > 1) "$name x$count" else name }
+    private fun writeCache(library: CacheLibrary) {
+        val pending = library.indices().filter { it.flagged() || it.flaggedArchives().isNotEmpty() }
+        if (pending.isEmpty()) return
+        val bar = progress.begin("Writing cache", pending.size.toLong())
+        pending.forEach { index ->
+            bar.message("index ${index.id} (${index.flaggedArchives().size} archives)")
+            index.update()
+            bar.step()
+        }
+        bar.close()
+    }
+
+    /**
+     * Task names in run order for the debug log, collapsed so a build with one PackConfig per content
+     * plugin reads `PackConfig x6` instead of listing it six times. Every task still runs.
+     */
+    private fun describeTasks(): String {
+        val parts = mutableListOf<String>()
+        var index = 0
+        while (index < tasks.size) {
+            val name = tasks[index].javaClass.simpleName
+            var count = 1
+            while (index + count < tasks.size && tasks[index + count].javaClass.simpleName == name) count++
+            parts += if (count > 1) "$name x$count" else name
+            index += count
+        }
+        return parts.joinToString()
+    }
 
     fun formatTime(time : Long) : String {
         val hours = time / 3600000
@@ -146,8 +162,8 @@ class BuildCache(
         return buildString {
             if (hours > 0) append("${hours}h ")
             if (minutes > 0) append("${minutes}m ")
-            if (seconds > 0) append("${seconds}s")
-        }
+            if (seconds > 0 || isEmpty()) append("${seconds}s")
+        }.trim()
     }
 
 }

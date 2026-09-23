@@ -15,8 +15,8 @@ import java.time.LocalDate
 
 /**
  * Builds a Neptune-style CS2 project directory for every OSRS revision / sub revision found
- * by [OsrsDumpsRevisionIndex], laid out the same way as the bundled zips under
- * `packcs2/install/`:
+ * by [OsrsDumpsRevisionIndex], laid out the same way as the bundle zips [Cs2BundleSource] fetches
+ * from the CDN (or from `packcs2/install/` on the classpath as a local override):
  *
  * ```
  * <output>/<rev>.<subRev>/
@@ -54,7 +54,7 @@ class Cs2PackageBuilder(
      */
     private val allSymbols: Boolean = false,
     /**
-     * Directory of bundles that already exist, normally `tools/src/main/resources/packcs2/install`.
+     * Directory of bundles that already exist, normally the folder that is uploaded to the CDN.
      * Sub revisions that already have a `<rev>.<sub>.zip` there are left out, so a run only produces
      * what is missing.
      */
@@ -468,8 +468,9 @@ class Cs2PackageBuilder(
          * symbol file from the dump (standalone testing only) and `-DzwyzRef=<sha|branch|beforeNext>`
          * to choose the zwyz command table commit.
          *
-         * For install resources: `-DzipOutput=true` writes each package as a bundle zip with no
-         * cache-derived symbols, and `-DexistingBundles=<dir>` skips the sub revisions already there.
+         * For CDN bundles: `-DzipOutput=true` writes each package as a bundle zip with no cache-derived
+         * symbols and regenerates `manifest.json` in the output folder; `-DexistingBundles=<dir>` skips
+         * the sub revisions already there. Upload the zips and the manifest together.
          */
         @JvmStatic
         fun main(args: Array<String>) {
@@ -510,6 +511,10 @@ class Cs2PackageBuilder(
             val fresh = built.count { !it.skipped }
             val unchanged = built.count { it.unchanged }
             println("Done: ${built.size} sub revs ($fresh built, ${built.size - fresh - unchanged} already present, $unchanged without script changes)")
+            if (zipOutput) {
+                val manifest = Cs2BundleSource.writeManifest(output)
+                println("Wrote ${manifest.absolutePath}; upload it with the bundles")
+            }
         }
     }
 }

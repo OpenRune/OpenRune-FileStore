@@ -1,5 +1,7 @@
 package dev.openrune.cache.tools.cs2
 
+import dev.openrune.cache.tools.progress.CacheProgress
+import dev.openrune.cache.tools.progress.DefaultCacheProgress
 import net.lingala.zip4j.ZipFile
 import java.io.File
 
@@ -14,11 +16,15 @@ import java.io.File
  */
 internal object Cs2BundleExtract {
 
-    fun extract(zipFile: ZipFile, destRoot: File) {
+    /** Extracts every file entry, one progress step each: a bundle is close to ten thousand files. */
+    fun extract(zipFile: ZipFile, destRoot: File, progress: CacheProgress = DefaultCacheProgress()) {
         destRoot.mkdirs()
-        for (header in zipFile.fileHeaders) {
-            if (header.isDirectory) continue
+        val files = zipFile.fileHeaders.filter { !it.isDirectory }
+        val bar = progress.begin("Unpacking CS2 project", files.size.toLong())
+        for (header in files) {
             zipFile.extractFile(header, destRoot.absolutePath)
+            bar.step()
         }
+        bar.close()
     }
 }

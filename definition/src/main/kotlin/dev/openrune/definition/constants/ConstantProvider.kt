@@ -37,7 +37,7 @@ object ConstantProvider {
             refreshTypes(provider)
         }
         val timeLog = if (timeNs < 1_000_000) "$timeNs ns" else "${timeNs / 1_000_000} ms"
-        logger.info { "Loaded provider '${provider::class.simpleName}' with ${mappings.size} tables in $timeLog" }
+        logger.debug { "Loaded provider '${provider::class.simpleName}' with ${mappings.size} tables in $timeLog" }
     }
 
     private fun MappingProvider.assertNoDuplicateKeys() {
@@ -64,7 +64,7 @@ object ConstantProvider {
             load(provider)
         }
         val timeLog = if (timeNs < 1_000_000) "$timeNs ns" else "${timeNs / 1_000_000} ms"
-        logger.info { "Loaded provider '${provider::class.simpleName}' from directory '${mappingsDir.path}' in $timeLog" }
+        logger.debug { "Loaded provider '${provider::class.simpleName}' from directory '${mappingsDir.path}' in $timeLog" }
     }
 
     inline fun <reified T : MappingProvider> loadWith(

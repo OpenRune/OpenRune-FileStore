@@ -87,7 +87,7 @@ class PackAutoCert(private val settings: AutoCertSettings) : CacheTask() {
         }
 
         bar.close()
-        logger.info { "Packed $packed auto-cert item(s) from '${settings.template}'" }
+        logger.debug { "Packed $packed auto-cert item(s) from '${settings.template}'" }
     }
 
     private fun Cache.load(id: Int, codec: ItemCodec): ItemType? =

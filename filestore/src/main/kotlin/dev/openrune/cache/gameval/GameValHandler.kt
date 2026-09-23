@@ -62,7 +62,7 @@ object GameValHandler {
         if (type.revision != -1) {
             val rev = if (cacheRevision == -1) readCacheRevision(cache,"${type.name} is unsupported in this revision") else cacheRevision
             if (rev < type.revision) {
-                logger.info {
+                logger.debug {
                     "Skipping GameVal group '${type.name}' (id=${type.id}): " +
                             "requires cache revision ${type.revision}, but cache revision is $rev"
                 }
@@ -177,7 +177,7 @@ object GameValHandler {
             else cacheRevision
 
             if (rev < resolvedType.revision) {
-                logger.info {
+                logger.debug {
                     "Skipping encoding of GameVal group '${resolvedType.name}' " +
                      "(requires rev ${resolvedType.revision}, cache rev=$rev)"
                 }

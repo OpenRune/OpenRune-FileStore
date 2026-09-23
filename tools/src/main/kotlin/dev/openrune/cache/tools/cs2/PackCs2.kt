@@ -11,6 +11,7 @@ import dev.openrune.clientscript.compiler.ScriptEntry
 import dev.openrune.definition.constants.ConstantProvider
 import dev.openrune.filesystem.Cache
 import java.io.File
+import java.security.MessageDigest
 import kotlin.io.path.Path
 
 /**
@@ -19,8 +20,12 @@ import kotlin.io.path.Path
  * Automatically installs or refreshes the bundled default CS2 project when:
  * - this is the first run,
  * - neptune.toml is missing,
- * - client_version differs from the cache revision,
- * - required directories from neptune.toml are missing.
+ * - client_version differs from the cache revision.
+ *
+ * Directories listed in neptune.toml that are missing are simply recreated.
+ *
+ * Runs at [TaskPriority.CS2], the last stage: the symbol dump reads gamevals from the cache, so every
+ * packer and [dev.openrune.cache.tools.tasks.impl.PackGameVals] must already have run.
  */
 
 class PackCs2(private val cs2Dir: File, private val overrides: Cs2Overrides = Cs2Overrides()) : CacheTask() {
@@ -28,7 +33,7 @@ class PackCs2(private val cs2Dir: File, private val overrides: Cs2Overrides = Cs
     private val logger = InlineLogger()
 
     override val priority: TaskPriority
-        get() = TaskPriority.CS2_LAST
+        get() = TaskPriority.CS2
 
     private companion object {
         private val SCRIPT_ARCHIVE = Regex("""\[(\w+),([^\]]+)]""")
@@ -62,7 +67,7 @@ class PackCs2(private val cs2Dir: File, private val overrides: Cs2Overrides = Cs
 
             NeptuneTomlClientVersion.patch(configFile, revision)
 
-            SymDumper.dumpCacheVals(File(cs2Dir, "symbols"), cache, revision)
+            SymDumper.dumpCacheVals(File(cs2Dir, "symbols"), cache, revision, progress)
 
             // Everything the project contributes is written into neptune.toml and symbols_custom/
             // rather than passed to the compiler directly, so an IDE reading the same config sees
@@ -96,6 +101,9 @@ class PackCs2(private val cs2Dir: File, private val overrides: Cs2Overrides = Cs
     }
 
     private fun compileAndWrite(cache: Cache, configFile: File) {
+        // Neptune's own progress is kept out of the log, and a full compile is the longest quiet
+        // stretch of a build, so say what is happening before it starts.
+        logger.info { "Compiling CS2 scripts" }
         val scripts = ClientScripts.compileTask(configFile.toPath(), revision)
         val changedLibraries = scripts.count { it.library }
 
@@ -111,9 +119,15 @@ class PackCs2(private val cs2Dir: File, private val overrides: Cs2Overrides = Cs
     }
 
     /**
-     * Hashes every file Neptune reads: `neptune.toml` plus the trees named by its `sources`, `symbols` and
-     * `libraries` keys. Generated output under `excluded` is skipped so a rebuild does not appear to change
-     * its own inputs. Falls back to hashing the whole directory if the config cannot be parsed.
+     * Fingerprints every file Neptune reads: `neptune.toml` plus the trees named by its `sources`, `symbols`
+     * and `libraries` keys. Generated output under `excluded` is skipped so a rebuild does not appear to
+     * change its own inputs.
+     *
+     * The fingerprint is over each file's path, size and modification time rather than its contents. A
+     * project is close to ten thousand files, and reading each one took a minute on Windows where a stat
+     * is a fraction of a millisecond; an edit that keeps both size and mtime identical is not something a
+     * save produces. `script/` is normally listed under both `sources` and `libraries`, so roots are
+     * de-duplicated before walking.
      */
     private fun fingerprintProject(configFile: File): String {
         val text = runCatching { configFile.readText() }.getOrNull()
@@ -124,16 +138,25 @@ class PackCs2(private val cs2Dir: File, private val overrides: Cs2Overrides = Cs
 
         val roots = listOf("sources", "symbols", "libraries")
             .flatMap { key -> parseNeptuneStringArray(text, key) }
-            .map { NeptuneTomlClientVersion.resolveEntry(cs2Dir, it) }
+            .map { NeptuneTomlClientVersion.resolveEntry(cs2Dir, it).absoluteFile }
+            .distinct()
             .filter { it.exists() }
 
         val files = roots.asSequence()
             .flatMap { it.walkTopDown() }
             .filter { it.isFile }
             .filterNot { file -> excluded.any { file.absoluteFile.startsWith(it) } }
-            .toList()
+            .plus(configFile.absoluteFile)
+            .distinctBy { it.absolutePath }
+            .sortedBy { it.absolutePath }
 
-        return Hashing.hashFiles(files + configFile)
+        val digest = MessageDigest.getInstance("SHA-256")
+        for (file in files) {
+            digest.update(file.absolutePath.replace('\\', '/').toByteArray())
+            digest.update(file.length().toString().toByteArray())
+            digest.update(file.lastModified().toString().toByteArray())
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
     /**
@@ -163,20 +186,13 @@ class PackCs2(private val cs2Dir: File, private val overrides: Cs2Overrides = Cs
             if (text == null) {
                 needsInstall = true
             } else {
+                // Missing directories are recreated by validateNeptuneLayout; only a missing config or a
+                // different client version means the bundled project has to be installed again.
                 val existingVersion =
                     NeptuneTomlClientVersion
                         .readClientVersionFromText(text)
 
-                val layoutOk =
-                    NeptuneTomlClientVersion
-                        .allNeptunePathDirectoriesExist(
-                            cs2Dir,
-                            text
-                        )
-
-                needsInstall =
-                    existingVersion != revision ||
-                            !layoutOk
+                needsInstall = existingVersion != revision
             }
         }
 
@@ -184,7 +200,7 @@ class PackCs2(private val cs2Dir: File, private val overrides: Cs2Overrides = Cs
             return
         }
 
-        logger.info {
+        logger.debug {
             "PackCs2: CS2 project missing or outdated, unpacking bundled defaults."
         }
 
@@ -195,6 +211,7 @@ class PackCs2(private val cs2Dir: File, private val overrides: Cs2Overrides = Cs
 
         unpack.revision = revision
         unpack.subRevision = subRevision
+        unpack.progress = progress
         unpack.init(cache)
     }
 
@@ -241,7 +258,7 @@ class PackCs2(private val cs2Dir: File, private val overrides: Cs2Overrides = Cs
                     return false
                 }
 
-                logger.info {
+                logger.debug {
                     "PackCs2: created missing $key directory ${dir.absolutePath}"
                 }
             }

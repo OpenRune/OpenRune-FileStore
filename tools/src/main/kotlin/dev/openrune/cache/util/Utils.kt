@@ -76,7 +76,6 @@ fun String.replaceLastLetter(newLetter: String): String {
  */
 fun getFiles(dir: File, vararg typeList: String): List<File> {
     if (!dir.exists() || !dir.isDirectory) {
-        println("Unable to find dir: $dir")
         return emptyList()
     }
 

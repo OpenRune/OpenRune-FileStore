@@ -92,7 +92,11 @@ class PackConfig(
         val files = getFiles(directory, "toml")
         if (files.isEmpty()) return
 
-        val blocks = files.flatMap(ConfigBlocks::scan).filter { packTypes.containsKey(it.name) }
+        // A server pass builds on a copy of the live cache, which already holds every shared definition
+        // exactly as this task would write it again. Only the server-only blocks are left to do.
+        val blocks = files.flatMap(ConfigBlocks::scan)
+            .filter { packTypes.containsKey(it.name) }
+            .filter { !serverPass || it.serverOnly }
         if (blocks.isEmpty()) return
 
         val (varpBlocks, otherBlocks) = blocks.partition { it.name == "varp" }

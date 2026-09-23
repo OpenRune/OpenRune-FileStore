@@ -42,7 +42,7 @@ class FreshCache(
         }
 
         if (isCachePresent(cacheDir, uuid)) {
-            logger.info { "Using cached zip for revision $revision ($uuid)" }
+            logger.debug { "Using cached zip for revision $revision ($uuid)" }
 
             prepareWorkingDirectory()
 
@@ -175,7 +175,7 @@ class FreshCache(
                 }
             }
 
-            logger.info { "Unzipped successfully" }
+            logger.debug { "Unzipped successfully" }
             true
         } catch (e: IOException) {
             logger.error { "Error while unzipping: ${e.message}" }
@@ -186,11 +186,14 @@ class FreshCache(
     private fun runTasks() {
         tasks.removeAll { revision >= RemoveXteas.OBSOLETE_FROM_REVISION && it is RemoveXteas }
         if (tasks.isNotEmpty()) {
+            // A fresh install's tasks (bzip removal, xtea stripping) transform the whole cache once; there is
+            // nothing for incremental state or the gameval reference index to record about them.
             BuildCache(
                 cacheLocation = cacheOutput,
                 tasks = tasks,
                 revision = revision,
                 subRevision = subRev,
+                incremental = false,
                 progress = progress
             ).initialize()
         }

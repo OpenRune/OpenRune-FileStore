@@ -4,11 +4,22 @@ import com.displee.io.impl.InputBuffer
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.util.zip.Deflater
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 import java.util.zip.Inflater
 
 class GZIPCompressor : Compressor {
+
+    companion object {
+        /**
+         * Deflate level used when writing archives. Left at the JDK default: [Deflater.BEST_COMPRESSION]
+         * shaves a little off the cache size but makes a full recompression several times slower (a
+         * fresh install's bzip removal went from 30s to 2 minutes). Raise it for a release build.
+         */
+        @JvmStatic
+        var compressionLevel: Int = Deflater.DEFAULT_COMPRESSION
+    }
 
     private var inflater: Inflater? = null
     private var gzipBuffer: ByteArray? = null
@@ -39,7 +50,11 @@ class GZIPCompressor : Compressor {
     override fun compress(bytes: ByteArray): ByteArray {
         val compressed = ByteArrayOutputStream()
         try {
-            val gzipOutputStream = GZIPOutputStream(compressed)
+            val gzipOutputStream = object : GZIPOutputStream(compressed) {
+                init {
+                    def.setLevel(compressionLevel)
+                }
+            }
             gzipOutputStream.write(bytes)
             gzipOutputStream.finish()
             gzipOutputStream.close()

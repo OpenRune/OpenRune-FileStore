@@ -29,7 +29,7 @@ object SymbolsCustomConflictStrip {
             val baseSym = File(symbolsDir, customSym.name)
             val removed = stripOverlaps(baseSym, owned)
             if (removed > 0) {
-                logger.info {
+                logger.debug {
                     "Stripped $removed symbol(s) from symbols/${customSym.name} that overlap symbols_custom"
                 }
             }

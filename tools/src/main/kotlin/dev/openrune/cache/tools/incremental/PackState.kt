@@ -32,8 +32,89 @@ internal class PackState private constructor(
             }
     }
 
+    fun deleteMeta(key: String) {
+        connection.prepareStatement("DELETE FROM meta WHERE key = ?").use { statement ->
+            statement.setString(1, key)
+            statement.executeUpdate()
+        }
+    }
+
     fun clearUnits() {
         connection.createStatement().use { it.executeUpdate("DELETE FROM unit") }
+    }
+
+    // ---- gameval reference index (see GameValReferences / RelinkGameValReferences) ----
+
+    fun clearConfigRefs() {
+        connection.createStatement().use {
+            it.executeUpdate("DELETE FROM gv_cfg")
+            it.executeUpdate("DELETE FROM meta WHERE key LIKE '${META_REF_INDEX}%'")
+        }
+    }
+
+    fun hasConfigRefIndex(): Boolean = meta(META_REF_INDEX) != null
+
+    fun markConfigRefIndexed() = putMeta(META_REF_INDEX, "1")
+
+    fun loadConfigRefs(): Map<ConfigKey, StoredConfigRefs> {
+        val configs = LinkedHashMap<ConfigKey, MutableList<ConfigRef>>()
+        val crcs = HashMap<ConfigKey, Int>()
+        connection.createStatement().use { statement ->
+            statement.executeQuery("SELECT kind, cfg_id, crc FROM gv_cfg").use { rows ->
+                while (rows.next()) {
+                    val key = ConfigKey(rows.getString(1), rows.getInt(2))
+                    crcs[key] = rows.getInt(3)
+                    configs[key] = mutableListOf()
+                }
+            }
+            statement.executeQuery("SELECT kind, cfg_id, slot, tbl, name, gv_id FROM gv_ref").use { rows ->
+                while (rows.next()) {
+                    val key = ConfigKey(rows.getString(1), rows.getInt(2))
+                    configs[key]?.add(ConfigRef(rows.getString(3), rows.getString(4), rows.getString(5), rows.getInt(6)))
+                }
+            }
+        }
+        return configs.mapValues { (key, refs) -> StoredConfigRefs(crcs.getValue(key), refs) }
+    }
+
+    fun saveConfigRefs(key: ConfigKey, crc: Int, refs: Collection<ConfigRef>) {
+        connection.prepareStatement("INSERT INTO gv_cfg(kind, cfg_id, crc) VALUES(?, ?, ?) ON CONFLICT(kind, cfg_id) DO UPDATE SET crc = excluded.crc")
+            .use { statement ->
+                statement.setString(1, key.kind)
+                statement.setInt(2, key.id)
+                statement.setInt(3, crc)
+                statement.executeUpdate()
+            }
+        connection.prepareStatement("DELETE FROM gv_ref WHERE kind = ? AND cfg_id = ?").use { statement ->
+            statement.setString(1, key.kind)
+            statement.setInt(2, key.id)
+            statement.executeUpdate()
+        }
+        if (refs.isEmpty()) return
+        connection.prepareStatement("INSERT OR REPLACE INTO gv_ref(kind, cfg_id, slot, tbl, name, gv_id) VALUES(?, ?, ?, ?, ?, ?)").use { statement ->
+            refs.forEach { ref ->
+                statement.setString(1, key.kind)
+                statement.setInt(2, key.id)
+                statement.setString(3, ref.slot)
+                statement.setString(4, ref.table)
+                statement.setString(5, ref.name)
+                statement.setInt(6, ref.id)
+                statement.addBatch()
+            }
+            statement.executeBatch()
+        }
+    }
+
+    fun deleteConfigRefs(keys: Collection<ConfigKey>) {
+        if (keys.isEmpty()) return
+        connection.prepareStatement("DELETE FROM gv_cfg WHERE kind = ? AND cfg_id = ?").use { statement ->
+            keys.forEach { key ->
+                statement.setString(1, key.kind)
+                statement.setInt(2, key.id)
+                statement.addBatch()
+            }
+            statement.executeBatch()
+        }
     }
 
     fun loadTask(task: String): Map<String, StoredUnit> {
@@ -79,6 +160,17 @@ internal class PackState private constructor(
             statement.setString(1, task)
             statement.executeQuery().use { rows -> while (rows.next()) consume(rows) }
         }
+    }
+
+    /** Every cache entry any recorded unit wrote, across all tasks. */
+    fun allOutputs(): Set<CacheTarget> {
+        val targets = LinkedHashSet<CacheTarget>()
+        connection.createStatement().use { statement ->
+            statement.executeQuery("SELECT DISTINCT idx, archive, file FROM output").use { rows ->
+                while (rows.next()) targets += CacheTarget(rows.getInt(1), rows.getInt(2), rows.getInt(3))
+            }
+        }
+        return targets
     }
 
     fun deleteUnits(task: String, keys: Collection<String>) {
@@ -188,7 +280,10 @@ internal class PackState private constructor(
     }
 
     companion object {
-        const val SCHEMA_VERSION = "1"
+        // 2: server passes record only server-only units; older records would prune shared outputs.
+        const val SCHEMA_VERSION = "2"
+
+        private const val META_REF_INDEX = "gvref.indexed"
 
         private val logger = InlineLogger()
 
@@ -249,6 +344,19 @@ internal class PackState private constructor(
                    gv_id INTEGER NOT NULL, sub_id INTEGER NOT NULL,
                    PRIMARY KEY (unit_id, grp, name, gv_id, sub_id)
                )""",
+            // Cache configs whose typed values reference gamevals, keyed by name so they can be
+            // re-encoded when the name resolves to a different id. crc is of the bytes last seen.
+            """CREATE TABLE IF NOT EXISTS gv_cfg (
+                   kind TEXT NOT NULL, cfg_id INTEGER NOT NULL, crc INTEGER NOT NULL,
+                   PRIMARY KEY (kind, cfg_id)
+               )""",
+            """CREATE TABLE IF NOT EXISTS gv_ref (
+                   kind TEXT NOT NULL, cfg_id INTEGER NOT NULL,
+                   slot TEXT NOT NULL, tbl TEXT NOT NULL, name TEXT NOT NULL, gv_id INTEGER NOT NULL,
+                   PRIMARY KEY (kind, cfg_id, slot),
+                   FOREIGN KEY (kind, cfg_id) REFERENCES gv_cfg(kind, cfg_id) ON DELETE CASCADE
+               )""",
+            "CREATE INDEX IF NOT EXISTS gv_ref_name ON gv_ref(tbl, name)",
         )
     }
 }
