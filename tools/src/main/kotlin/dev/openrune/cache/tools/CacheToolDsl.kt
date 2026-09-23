@@ -27,6 +27,8 @@ fun cacheTool(block: CacheToolDsl.() -> Unit): CacheTool {
 class CacheToolDsl {
     var taskType: TaskType? = null
     var revision: Int? = null
+
+    var subRevision: Int = -1
     private var cache: File? = null
     private var serverCache: File? = null
 
@@ -75,6 +77,10 @@ class CacheToolDsl {
 
     fun revision(revision: Int) {
         this.revision = revision
+    }
+
+    fun subRevision(subRevision: Int) {
+        this.subRevision = subRevision
     }
 
 
@@ -130,6 +136,7 @@ class CacheToolDsl {
         return CacheTool(
             type = type,
             revision = revision,
+            subRevision = subRevision,
             cacheLocation = cacheLocation,
             serverCacheLocation = serverCache,
             extraTasks = cleanedTasks,

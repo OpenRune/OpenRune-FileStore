@@ -190,6 +190,7 @@ class FreshCache(
                 cacheLocation = cacheOutput,
                 tasks = tasks,
                 revision = revision,
+                subRevision = subRev,
                 progress = progress
             ).initialize()
         }

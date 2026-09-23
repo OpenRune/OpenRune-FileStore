@@ -67,6 +67,7 @@ class CacheTool(
                     serverPass = type == TaskType.SERVER_CACHE_BUILD,
                     tasks = sortedTasks.toMutableList(),
                     revision = revision,
+                    subRevision = subRevision,
                     incremental = incremental,
                     incrementalDatabase = incrementalDatabase,
                     verification = verification,

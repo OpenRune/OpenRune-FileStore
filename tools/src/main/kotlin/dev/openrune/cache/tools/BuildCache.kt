@@ -22,6 +22,7 @@ class BuildCache(
     private val tempLocation: File = File(cacheLocation, "temp"),
     val tasks: MutableList<CacheTask> = mutableListOf(),
     var revision: Int = -1,
+    var subRevision: Int = -1,
     var serverPass: Boolean = false,
     private val incremental: Boolean = true,
     private val incrementalDatabase: File? = null,
@@ -88,6 +89,7 @@ class BuildCache(
                 val time = measureTimeMillis {
                     tasks.forEach { task ->
                         task.revision = revision
+                        task.subRevision = subRevision
                         task.serverPass = serverPass
                         task.incremental = session.build
                         task.progress = progress

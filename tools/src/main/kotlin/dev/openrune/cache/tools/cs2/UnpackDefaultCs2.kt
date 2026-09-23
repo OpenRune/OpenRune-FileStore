@@ -9,7 +9,7 @@ import java.io.File
 
 class UnpackDefaultCs2(
     private val cs2Directory: File,
-    private val subRevision: Int? = null,
+    private val subRevisionOverride: Int? = null,
     private val force: Boolean = false,
 ) : CacheTask() {
 
@@ -84,19 +84,25 @@ class UnpackDefaultCs2(
 
         val loader = UnpackDefaultCs2::class.java.classLoader
 
+        val wantedSub = subRevisionOverride ?: subRevision.takeIf { it > 0 }
+
         val bundleKey = Cs2InstallBundles.resolveBundleKey(
             major,
-            subRevision,
+            wantedSub,
             loader
         )
 
         if (bundleKey == null) {
-            logger.warn {
-                "UnpackDefaultCs2: no default CS2 bundle for revision $major on the classpath " +
-                        "(expected packcs2/install/$major.zip or packcs2/install/$major.<sub>.zip). " +
-                        "Install a CS2 project manually under ${cs2Directory.absolutePath}"
-            }
-            return
+            error(
+                "UnpackDefaultCs2: no CS2 bundle for revision $major on the classpath " +
+                    "(expected packcs2/install/$major.zip or packcs2/install/$major.<sub>.zip). " +
+                    "Install a CS2 project manually under ${cs2Directory.absolutePath}"
+            )
+        }
+
+        val wantedLabel = if (wantedSub != null) "$major.$wantedSub" else "$major"
+        if (bundleKey != wantedLabel) {
+            logger.info { "UnpackDefaultCs2: no bundle for $wantedLabel, using the closest one in revision $major: $bundleKey" }
         }
 
         val resourcePath = "packcs2/install/$bundleKey.zip"
@@ -196,20 +202,21 @@ internal object Cs2InstallBundles {
             return null
         }
 
-        if (subRevision != null) {
-            candidates.firstOrNull { it.sub == subRevision }?.let { return it.stem }
-            // Sub revisions whose client update changed no scripts have no bundle of their own;
-            // the closest earlier sub rev holds the identical scripts. Below the earliest bundle,
-            // the earliest one is the best available.
-            return (candidates.filter { it.sub < subRevision }.maxByOrNull { it.sub }
-                ?: candidates.minByOrNull { it.sub })?.stem
+        // Sub revision unknown: the generic <major>.zip if there is one, else the newest sub rev.
+        if (subRevision == null || subRevision <= 0) {
+            return (candidates.firstOrNull { it.sub == 0 } ?: candidates.maxByOrNull { it.sub })?.stem
         }
 
-        candidates.firstOrNull { it.sub == 0 }?.let { return it.stem }
+        candidates.firstOrNull { it.sub == subRevision }?.let { return it.stem }
 
-        return candidates
-            .maxByOrNull { it.sub }
-            ?.stem
+        // A sub revision only gets a bundle when its client update changed scripts, so a missing one
+        // means the scripts are still those of the sub revision before it. Going back is therefore
+        // exact, while going forward would pull in changes this cache does not have; forward is only
+        // a last resort for a sub revision older than every bundle. [probeZips] looks at this major
+        // revision alone, so the search can never cross into another one.
+        val nearestBelow = candidates.filter { it.sub in 1 until subRevision }.maxByOrNull { it.sub }
+        val nearestAbove = candidates.filter { it.sub > subRevision }.minByOrNull { it.sub }
+        return (nearestBelow ?: candidates.firstOrNull { it.sub == 0 } ?: nearestAbove)?.stem
     }
 
     private data class BundleRef(

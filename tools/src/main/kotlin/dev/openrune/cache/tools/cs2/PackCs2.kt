@@ -194,6 +194,7 @@ class PackCs2(private val cs2Dir: File, private val overrides: Cs2Overrides = Cs
         )
 
         unpack.revision = revision
+        unpack.subRevision = subRevision
         unpack.init(cache)
     }
 
