@@ -38,7 +38,10 @@ internal data class ConfigKey(val kind: String, val id: Int)
  */
 internal data class ConfigRef(val slot: String, val table: String, val name: String, val id: Int)
 
-internal class StoredConfigRefs(val crc: Int, val refs: List<ConfigRef>)
+internal class StoredConfigRefs(
+    override val crc: Int,
+    override val refs: List<ConfigRef>,
+) : dev.openrune.cache.tools.gameval.InterfaceReferences.StoredRefsLike
 
 internal class StoredUnit(
     val rowId: Long,

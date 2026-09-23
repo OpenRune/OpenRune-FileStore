@@ -24,13 +24,23 @@ object InterfaceParents {
  *
  * The overlay shares its id with the base, so an overlay-local index packed the normal way is
  * indistinguishable from a reference to the base component in that slot. Self references are
- * instead encoded far below any legal hook argument and swapped for the merged packed id in
+ * instead encoded in a range no real hook argument uses and swapped for the merged packed id in
  * [PackIfType] after every overlay component has been placed.
+ *
+ * The range is bounded on both sides: hook arguments also carry the client's `event_*` placeholders
+ * (`-2147483648` upwards, filled in by the client when the hook fires), which sit far below [BASE]
+ * and must pass through untouched.
  */
 object SelfRef {
     private const val BASE = -0x100000
 
-    fun encode(overlayIndex: Int): Int = BASE - overlayIndex
+    /** Component indexes are 16-bit, so no placeholder ever encodes below this. */
+    private const val LOWEST = BASE - 0xFFFF
 
-    fun decode(value: Int): Int? = if (value <= BASE) BASE - value else null
+    fun encode(overlayIndex: Int): Int {
+        require(overlayIndex in 0..0xFFFF) { "component index $overlayIndex is out of range" }
+        return BASE - overlayIndex
+    }
+
+    fun decode(value: Int): Int? = if (value in LOWEST..BASE) BASE - value else null
 }

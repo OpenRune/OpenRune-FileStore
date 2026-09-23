@@ -8,6 +8,7 @@ import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.cs2.PackCs2
 import dev.openrune.cache.tools.cs2.UnpackDefaultCs2
 import dev.openrune.cache.tools.gameval.GameValReferenceIndex
+import dev.openrune.cache.tools.iftype.PackIfType
 import dev.openrune.cache.tools.incremental.CacheVerification
 import dev.openrune.cache.tools.incremental.IncrementalSession
 import dev.openrune.cache.tools.progress.CacheProgress
@@ -65,6 +66,7 @@ class BuildCache(
             }
 
             CacheTool.gameValMappings.clear()
+            PackIfType.packedThisBuild.clear()
 
             val delegate = CacheDelegate(library)
 
@@ -79,7 +81,17 @@ class BuildCache(
 
             progress.buildStarted(revision, serverPass)
 
-            try {
+            // Neptune's library baseline records the ids the cache's scripts were compiled with. When the
+            // build state is fresh the cache is being treated as pristine, so a baseline left over from an
+            // earlier cache would be stale: drop it and let UnpackDefaultCs2 record a new one before packing.
+            if (session.fresh && !serverPass) {
+                tasks.filterIsInstance<PackCs2>().forEach { task ->
+                    val baseline = File(task.cs2Root, PackCs2.LIBRARY_STATE_FILE)
+                    if (baseline.delete()) logger.debug { "Dropped stale CS2 library baseline ${baseline.absolutePath}" }
+                }
+            }
+
+            session.use { session ->
                 val time = measureTimeMillis {
                     // Snapshot which gamevals the cache's configs reference before anything touches them.
                     // A server pass starts from a copy of the live cache whose configs were relinked already.
@@ -94,8 +106,17 @@ class BuildCache(
                         task.init(delegate)
                     }
 
-                    // Every id is now final; re-encode configs whose referenced gamevals moved.
-                    if (!serverPass) GameValReferenceIndex.relink(delegate, revision, session.build)
+                    // Every id is now final; re-encode configs and interface hooks whose referenced gamevals moved.
+                    if (!serverPass) {
+                        GameValReferenceIndex.relink(
+                            delegate,
+                            revision,
+                            session.build,
+                            cs2Dir = tasks.filterIsInstance<PackCs2>().firstOrNull()?.cs2Root,
+                            repackedInterfaces = PackIfType.packedThisBuild.toSet(),
+                            progress = progress,
+                        )
+                    }
 
                     session.build.reportRemovals()
 
@@ -113,8 +134,6 @@ class BuildCache(
                 }
 
                 logger.info { "Built $label in ${formatTime(time)}" }
-            } finally {
-                session.close()
             }
         } catch (ex: Exception) {
             ex.printStackTrace()

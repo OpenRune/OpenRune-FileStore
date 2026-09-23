@@ -7,8 +7,10 @@ import dev.openrune.cache.tools.incremental.ConfigRef
 import dev.openrune.cache.tools.incremental.IncrementalBuild
 import dev.openrune.cache.tools.incremental.StoredConfigRefs
 import dev.openrune.cache.tools.progress.CacheProgress
+import dev.openrune.cache.tools.progress.DefaultCacheProgress
 import dev.openrune.definition.type.ParamType
 import dev.openrune.filesystem.Cache
+import java.io.File
 import java.util.zip.CRC32
 
 /**
@@ -73,12 +75,28 @@ internal object GameValReferenceIndex {
         logger.debug { "Indexed gameval references in $indexed config(s)${if (failed > 0) ", $failed undecodable" else ""}" }
     }
 
-    fun relink(cache: Cache, revision: Int, incremental: IncrementalBuild) {
+    /**
+     * [cs2Dir] is the CS2 project, whose script headers type the hook arguments on interface components;
+     * without it only configs are relinked. [repackedInterfaces] are the interfaces a packer wrote this
+     * build, whose new components get indexed.
+     */
+    fun relink(
+        cache: Cache,
+        revision: Int,
+        incremental: IncrementalBuild,
+        cs2Dir: File? = null,
+        repackedInterfaces: Set<Int> = emptySet(),
+        progress: CacheProgress = DefaultCacheProgress(),
+    ) {
         if (revision < MIN_REVISION) return
         val store = incremental.store ?: return
         if (!store.hasConfigRefIndex()) return
 
-        val stored = store.loadConfigRefs()
+        val all = store.loadConfigRefs()
+        val (interfaceRecords, stored) = all.entries.partition { it.key.kind == InterfaceReferences.KIND }
+            .let { (a, b) -> a.associate { it.toPair() } to b.associate { it.toPair() } }
+
+        InterfaceReferences.relink(cache, revision, store, cs2Dir, repackedInterfaces, progress, interfaceRecords)
         val fresh = incremental.writtenTargets()
             .asSequence()
             .filter { it.index == CONFIGS }
@@ -127,7 +145,7 @@ internal object GameValReferenceIndex {
         if (relinked > 0) {
             val sample = relinkedNames.take(SAMPLE).joinToString()
             val more = if (relinkedNames.size > SAMPLE) ", +${relinkedNames.size - SAMPLE} more" else ""
-            logger.info { "Relinked $relinked config(s) to renumbered gamevals: $sample$more" }
+            logger.debug { "Relinked $relinked config(s) to renumbered gamevals: $sample$more" }
         }
         logger.debug { "Gameval reference index: $reindexed re-read, ${removed.size} dropped, $relinked relinked" }
     }

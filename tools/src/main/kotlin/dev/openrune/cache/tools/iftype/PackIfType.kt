@@ -182,6 +182,9 @@ class PackIfType(
      * Lays the overlay over the cache base: named matches are edited in place, everything else is
      * appended. Parents and hook self-references are resolved by name at the end because an
      * overlay only knows its own numbering, which is meaningless once merged into the base.
+     *
+     * A component that gives an insert anchor but no parent adopts the anchor's parent, so slotting
+     * a component in beside an existing one only takes the anchor's name.
      */
     private fun mergeInherited(
         base: InterfaceType,
@@ -198,8 +201,22 @@ class PackIfType(
                 .toMap()
                 .toMutableMap()
 
+        fun anchorParent(name: String): Int? {
+            val anchor = placements[name]?.anchor ?: return null
+            val anchorIndex =
+                byName[anchor]
+                    ?: run {
+                        logger.warn {
+                            "insert anchor \"$anchor\" for \"$name\" — component not found on " +
+                                "${base.internalName}; cannot inherit its parent"
+                        }
+                        return null
+                    }
+            return result[anchorIndex]?.layer
+        }
+
         fun resolveParent(name: String, fallback: Int): Int {
-            val parentName = parents[name] ?: return fallback
+            val parentName = parents[name] ?: return anchorParent(name) ?: fallback
             val parentIndex =
                 byName[parentName]
                     ?: run {
@@ -296,7 +313,7 @@ class PackIfType(
                     added = remapHookSelfRefs(added, fromPacked = dsl.packed, toPacked = packed)
                 }
                 added = added.copy(layer = resolveParent(name, added.layer))
-                logger.info {
+                logger.debug {
                     "merge ${base.internalName}: added \"$name\" at $newIndex " +
                         "donor=${donorName ?: "none"} dsl=${dsl.width}x${dsl.height} " +
                         "added=${added.width}x${added.height} layer=${added.layer}"
@@ -399,7 +416,7 @@ class PackIfType(
             val at = order.indexOf(anchor)
             order.add(if (placement.before) at else at + 1, moving)
             val comp = components.getValue(moving)
-            logger.info {
+            logger.debug {
                 "placement on $interfaceId: \"$name\" from $moving to after \"${placement.anchor}\" " +
                     "($anchor), carrying ${comp.width}x${comp.height}"
             }
@@ -407,12 +424,6 @@ class PackIfType(
 
         val remap = order.withIndex().associate { (position, old) -> old to slots[position] }
         if (remap.all { (old, new) -> old == new }) return components
-
-        val moved = remap.count { (old, new) -> old != new }
-        logger.warn {
-            "insert() renumbered $moved component(s) on interface $interfaceId — CS2 that " +
-                "references these by hardcoded packed id must be updated"
-        }
 
         val packedRemap =
             remap.entries.associate { (old, new) ->
@@ -545,11 +556,18 @@ class PackIfType(
         CacheTool.addGameValMapping(GameValGroupTypes.IFTYPES, gameValElement(inf))
         cacheLibrary.index(INTERFACES).add(archive)
         cacheLibrary.update()
+        packedThisBuild += inf.id
     }
 
-    private companion object {
+    companion object {
         private const val INTERFACE_TABLE = "interface"
         private const val COMPONENT_TABLE = "component"
+
+        /**
+         * Interfaces written this build. Interfaces bypass the recording cache, so the gameval reference
+         * index reads this to know which ones may have new components to track. Cleared per build.
+         */
+        val packedThisBuild: MutableSet<Int> = LinkedHashSet()
     }
 }
 

@@ -11,12 +11,18 @@ class UnpackDefaultCs2(
     private val cs2Directory: File,
     private val subRevisionOverride: Int? = null,
     private val force: Boolean = false,
+    /** Snapshot the pre-build symbols for Neptune's library baseline if the project has none; see [PackCs2.snapshotBaselineSymbols]. */
+    private val recordBaseline: Boolean = true,
 ) : CacheTask() {
 
     private val logger = InlineLogger()
 
+    /**
+     * Runs first, not in the CS2 stage: installing the project touches no cache data, and doing it before
+     * any packer lets the library baseline be recorded against the cache's original ids.
+     */
     override val priority: TaskPriority
-        get() = TaskPriority.CS2
+        get() = TaskPriority.GAMEVALS_COLLECT
 
     val cs2Root: File
         get() = cs2Directory
@@ -58,6 +64,7 @@ class UnpackDefaultCs2(
                     // over; reinstalling would wipe the user's scripts.
                     NeptuneTomlClientVersion.ensureListedDirectories(cs2Directory, text)
                     ensureExcludedFromNeptune(neptune)
+                    if (recordBaseline) PackCs2.snapshotBaselineSymbols(cs2Directory, cache, major, progress)
                     return
                 }
 
@@ -116,6 +123,8 @@ class UnpackDefaultCs2(
             logger.debug {
                 "UnpackDefaultCs2: unpacked $bundleKey into ${cs2Directory.absolutePath}"
             }
+
+            if (recordBaseline) PackCs2.snapshotBaselineSymbols(cs2Directory, cache, major, progress)
         } catch (e: Exception) {
             logger.error(e) {
                 "UnpackDefaultCs2: failed to unpack $bundleKey: ${e.message}"

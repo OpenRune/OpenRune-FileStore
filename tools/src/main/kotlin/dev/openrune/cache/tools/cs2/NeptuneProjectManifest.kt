@@ -53,6 +53,14 @@ object NeptuneProjectManifest {
         return if (isDirectory && !slashed.endsWith("/")) "$slashed/" else slashed
     }
 
+    /**
+     * A copy of [configFile]'s text reading its symbols from [symbolDirs] instead of the usual
+     * `symbols/` + `symbols_custom/`. Used to compile the library baseline against a snapshot of the
+     * symbol tables taken before this build renumbered anything.
+     */
+    internal fun configWithSymbols(configFile: File, symbolDirs: List<String>): String =
+        configFile.readText().replaceArray("symbols", symbolDirs)
+
     private fun String.replaceArray(key: String, values: List<String>): String {
         val line = "$key = [" + values.joinToString(", ") { "\"$it\"" } + "]"
         val regex = Regex("""(?m)^\s*$key\s*=\s*\[.*?]\s*(?:#.*)?$""")

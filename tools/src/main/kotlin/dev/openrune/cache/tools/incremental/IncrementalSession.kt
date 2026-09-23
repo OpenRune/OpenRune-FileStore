@@ -8,6 +8,8 @@ class IncrementalSession private constructor(
     val build: IncrementalBuild,
     private val revision: Int,
     private val scope: String = "",
+    /** True when nothing recorded about a previous build applies: incremental is off or the state was reset, so the whole cache is repacked. */
+    val fresh: Boolean = true,
 ) : AutoCloseable {
     private val logger = InlineLogger()
 
@@ -121,6 +123,7 @@ class IncrementalSession private constructor(
                 IncrementalBuild(state, forced = false, verification = verification),
                 revision,
                 scope,
+                fresh = reset != null,
             )
         }
     }
