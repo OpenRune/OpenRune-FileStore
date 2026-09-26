@@ -10,6 +10,15 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
 }
 
+tasks.register<JavaExec>("collectRs3GroupIronData") {
+    group = "rs3"
+    description = "Dumps RS3 quest and achievement data from the latest openrs2 build as JSON. Optional: -Pout=<dir>"
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("dev.openrune.rs2.tasks.CollectRs3GroupIronData")
+    val out = (project.findProperty("out") as String?) ?: layout.buildDirectory.dir("rs3-data").get().asFile.path
+    args("--out", out)
+}
+
 tasks.test {
     useJUnitPlatform()
     // Opt in to Rs2AllBuildsSpriteScanTest with `-Dscan=true`; it is skipped otherwise.
