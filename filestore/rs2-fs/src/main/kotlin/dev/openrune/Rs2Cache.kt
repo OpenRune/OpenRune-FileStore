@@ -3,9 +3,13 @@ package dev.openrune
 import dev.openrune.definition.codec.MapSceneIconCodec
 import dev.openrune.definition.codec.QuickChatCategoryCodec
 import dev.openrune.definition.codec.QuickChatPhraseCodec
+import dev.openrune.definition.codec.Rs2AchievementCodec
 import dev.openrune.definition.codec.Rs2MapElementCodec
+import dev.openrune.definition.codec.Rs2QuestCodec
 import dev.openrune.definition.type.MapSceneIconType
+import dev.openrune.definition.type.Rs2AchievementType
 import dev.openrune.definition.type.Rs2MapElementType
+import dev.openrune.definition.type.Rs2QuestType
 import dev.openrune.definition.type.QuickChatCategoryType
 import dev.openrune.definition.type.QuickChatPhraseType
 import dev.openrune.definition.type.SpriteType
@@ -25,6 +29,7 @@ class Rs2Cache private constructor(val cache: Cache, val build: Int? = null) : A
     companion object {
         private const val QUICKCHAT_CATEGORY_GROUP = 0
         private const val QUICKCHAT_PHRASE_GROUP = 1
+        private const val ACHIEVEMENT_FILE_BITS = 7
 
         fun load(root: Path, build: Int? = null): Rs2Cache = Rs2Cache(Cache.open(root), build)
 
@@ -107,6 +112,43 @@ class Rs2Cache private constructor(val cache: Cache, val build: Int? = null) : A
         val buf = cache.read(Rs2Index.CONFIG, Rs2ConfigGroup.MELTYPE, id)
         try {
             return Rs2MapElementCodec(build ?: Int.MAX_VALUE).loadData(id, buf)
+        } finally {
+            buf.release()
+        }
+    }
+
+    fun questIds(): List<Int> =
+        cache.list(Rs2Index.CONFIG, Rs2ConfigGroup.QUESTTYPE).asSequence().map { it.id }.sorted().toList()
+
+    fun readQuest(id: Int): Rs2QuestType {
+        val buf = cache.read(Rs2Index.CONFIG, Rs2ConfigGroup.QUESTTYPE, id)
+        try {
+            return Rs2QuestCodec().loadData(id, buf)
+        } finally {
+            buf.release()
+        }
+    }
+
+    private fun achievementsPromoted(): Boolean = runCatching {
+        cache.exists(Rs2Index.CONFIG_ACHIEVEMENT) && cache.list(Rs2Index.CONFIG_ACHIEVEMENT).hasNext()
+    }.getOrDefault(false)
+
+    fun achievementIds(): List<Int> = if (achievementsPromoted()) {
+        cache.list(Rs2Index.CONFIG_ACHIEVEMENT).asSequence().flatMap { group ->
+            cache.list(Rs2Index.CONFIG_ACHIEVEMENT, group.id).asSequence().map { (group.id shl ACHIEVEMENT_FILE_BITS) or it.id }
+        }.sorted().toList()
+    } else {
+        cache.list(Rs2Index.CONFIG, Rs2ConfigGroup.ACHIEVEMENTTYPE).asSequence().map { it.id }.sorted().toList()
+    }
+
+    fun readAchievement(id: Int): Rs2AchievementType {
+        val buf = if (achievementsPromoted()) {
+            cache.read(Rs2Index.CONFIG_ACHIEVEMENT, id ushr ACHIEVEMENT_FILE_BITS, id and ((1 shl ACHIEVEMENT_FILE_BITS) - 1))
+        } else {
+            cache.read(Rs2Index.CONFIG, Rs2ConfigGroup.ACHIEVEMENTTYPE, id)
+        }
+        try {
+            return Rs2AchievementCodec().loadData(id, buf)
         } finally {
             buf.release()
         }

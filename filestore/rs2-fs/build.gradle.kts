@@ -22,6 +22,8 @@ tasks.test {
     System.getProperty("msiscan")?.let { systemProperty("msiscan", it) }
     // Opt in to Rs2MapElementScanTest with `-Dmelscan=true`; it is skipped otherwise.
     System.getProperty("melscan")?.let { systemProperty("melscan", it) }
+    System.getProperty("questscan")?.let { systemProperty("questscan", it) }
+    System.getProperty("achscan")?.let { systemProperty("achscan", it) }
     // Rs2AllBuildsSpriteScanTest prints per-build progress as it runs - stream it live
     // instead of buffering everything until the (long-running) test method finishes.
     testLogging {

@@ -191,6 +191,29 @@ public fun ByteBuf.readNullableLargeSmartCorrect(): Int? = if (getByte(readerInd
     if (result == 32767) null else result
 }
 
+public fun ByteBuf.readSmart2or4(): Int = if (getByte(readerIndex()) < 0) {
+    readInt() and Integer.MAX_VALUE
+} else {
+    readUnsignedShort()
+}
+
+public fun ByteBuf.writeSmart2or4(value: Int): ByteBuf {
+    require(value >= 0) { "writeSmart2or4 out of range: $value" }
+    if (value < 0x8000) writeShort(value) else writeInt(value or Int.MIN_VALUE)
+    return this
+}
+
+public fun ByteBuf.readPrefixedStringCP(charset: Charset = Cp1252Charset): String {
+    val version = readUnsignedByte().toInt()
+    require(version == 0) { "Unsupported string version $version" }
+    return readStringCP(charset)
+}
+
+public fun ByteBuf.writePrefixedStringCP(s: CharSequence, charset: Charset = Cp1252Charset): ByteBuf {
+    writeByte(0)
+    return writeStringCP(s, charset)
+}
+
 
 //dbtable/row bytebuf extensions
 
