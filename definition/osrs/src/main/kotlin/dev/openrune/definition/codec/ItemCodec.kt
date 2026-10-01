@@ -3,6 +3,7 @@ package dev.openrune.definition.codec
 import com.github.michaelbull.logging.InlineLogger
 import dev.openrune.definition.EntityOpsLoader
 import dev.openrune.definition.util.IntBackedList
+import dev.openrune.definition.util.readIntList
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.writeString
 import dev.openrune.definition.BuilderDefinitionCodec
@@ -118,6 +119,7 @@ class ItemCodec(private val revision: Int) : BuilderDefinitionCodec<ItemType, It
             95 -> zan2d = buffer.readUnsignedShort()
             97 -> noteLinkId = buffer.readUnsignedShort()
             98 -> noteTemplateId = buffer.readUnsignedShort()
+            99 -> recolAll = buffer.readUnsignedShort()
             in 100..109 -> {
                 if (countCo == null) {
                     countObj = IntBackedList(IntArray(10))
@@ -138,6 +140,11 @@ class ItemCodec(private val revision: Int) : BuilderDefinitionCodec<ItemType, It
             148 -> placeholderLink = buffer.readUnsignedShort()
             149 -> placeholderTemplate = buffer.readUnsignedShort()
             160 -> stacks = ObjStackability.Never
+            161 -> {
+                val length = buffer.readUnsignedShort()
+                keepOnlyDuringSeqs = readIntList(length) { buffer.readUnsignedShort() }
+            }
+            251 -> unlockable = true
             200 -> options = options.toBuilder().also { entityOpsLoader.decodeSubOp(it, buffer) }.build()
             201 -> options = options.toBuilder().also { entityOpsLoader.decodeConditionalOp(it, buffer) }.build()
             202 -> options = options.toBuilder().also { entityOpsLoader.decodeConditionalSubOp(it, buffer) }.build()
@@ -404,6 +411,11 @@ class ItemCodec(private val revision: Int) : BuilderDefinitionCodec<ItemType, It
             writeShort(definition.noteTemplateId)
         }
 
+        if (definition.recolAll != -1) {
+            writeByte(99)
+            writeShort(definition.recolAll)
+        }
+
         if (definition.countObj != null) {
             for (i in definition.countObj!!.indices) {
                 writeByte(100 + i)
@@ -464,6 +476,18 @@ class ItemCodec(private val revision: Int) : BuilderDefinitionCodec<ItemType, It
 
         if (definition.stacks == ObjStackability.Never) {
             writeByte(160)
+        }
+
+        definition.keepOnlyDuringSeqs?.let { seqs ->
+            writeByte(161)
+            writeShort(seqs.size)
+            for (seq in seqs) {
+                writeShort(seq)
+            }
+        }
+
+        if (definition.unlockable) {
+            writeByte(251)
         }
 
         definition.writeParameters(this)

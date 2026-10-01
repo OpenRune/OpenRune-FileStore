@@ -20,6 +20,7 @@ class SpotAnimTypeBuilder(var id: Int = -1) : MutableRecolourable {
     var ambient: Int = 0
     var contrast: Int = 0
     var debugName: String = ""
+    var recolAll: Int = -1
 
     fun build(): SpotAnimType = SpotAnimType(
         id = id,
@@ -36,6 +37,7 @@ class SpotAnimTypeBuilder(var id: Int = -1) : MutableRecolourable {
         ambient = ambient,
         contrast = contrast,
         debugName = debugName,
+        recolAll = recolAll,
     )
 
     companion object {
@@ -55,6 +57,7 @@ class SpotAnimTypeBuilder(var id: Int = -1) : MutableRecolourable {
             builder.ambient = type.ambient
             builder.contrast = type.contrast
             builder.debugName = type.debugName
+            builder.recolAll = type.recolAll
             return builder
         }
     }

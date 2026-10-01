@@ -58,6 +58,9 @@ class ItemTypeBuilder(var id: Int = -1) : MutableRecolourable, MutableParameteri
     var placeholderLink: Int = -1
     var placeholderTemplate: Int = -1
     var subops: Array<Array<String?>?>? = null
+    var recolAll: Int = -1
+    var keepOnlyDuringSeqs: MutableList<Int>? = null
+    var unlockable: Boolean = false
 
     override var originalColours: MutableList<Int>? = null
     override var modifiedColours: MutableList<Int>? = null
@@ -196,6 +199,9 @@ class ItemTypeBuilder(var id: Int = -1) : MutableRecolourable, MutableParameteri
             placeholderLink = placeholderLink,
             placeholderTemplate = placeholderTemplate,
             subops = subops,
+            recolAll = recolAll,
+            keepOnlyDuringSeqs = IntListPool.of(keepOnlyDuringSeqs),
+            unlockable = unlockable,
         )
         if (extras.isNotEmpty()) {
             built.extra.putAll(extras)
@@ -260,6 +266,9 @@ class ItemTypeBuilder(var id: Int = -1) : MutableRecolourable, MutableParameteri
             builder.placeholderLink = type.placeholderLink
             builder.placeholderTemplate = type.placeholderTemplate
             builder.subops = type.subops
+            builder.recolAll = type.recolAll
+            builder.keepOnlyDuringSeqs = type.keepOnlyDuringSeqs?.toMutableList()
+            builder.unlockable = type.unlockable
             return builder
         }
     }

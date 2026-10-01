@@ -29,6 +29,7 @@ class SpotAnimCodec(val rev : Int) : BuilderDefinitionCodec<SpotAnimType, SpotAn
             10 -> rotate = false
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
+            42 -> recolAll = buffer.readUnsignedShort()
         }
     }
 
@@ -71,6 +72,11 @@ class SpotAnimCodec(val rev : Int) : BuilderDefinitionCodec<SpotAnimType, SpotAn
             writeString(definition.debugName)
         }
         definition.writeColoursTextures(this)
+
+        if (definition.recolAll != -1) {
+            writeByte(42)
+            writeShort(definition.recolAll)
+        }
 
         writeByte(0)
     }

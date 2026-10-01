@@ -48,6 +48,7 @@ class NPCCodec(private val revision: Int) : BuilderDefinitionCodec<NpcType, NpcT
             in 30..34 -> actions = actions.toBuilder().also { entityOpsLoader.decodeBaseOp(it, buffer, opcode - 30) }.build()
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
+            42 -> recolAll = buffer.readUnsignedShort()
             60 -> {
                 val length: Int = buffer.readUnsignedByte().toInt()
                 chatheadModels = readIntList(length) { buffer.readUnsignedShort() }
@@ -238,6 +239,11 @@ class NPCCodec(private val revision: Int) : BuilderDefinitionCodec<NpcType, NpcT
         }
 
         definition.writeColoursTextures(this)
+
+        if (definition.recolAll != -1) {
+            writeByte(42)
+            writeShort(definition.recolAll)
+        }
 
         if (definition.chatheadModels != null) {
             if (entityOpsLoader.supportsExtendedEntityOps()) {

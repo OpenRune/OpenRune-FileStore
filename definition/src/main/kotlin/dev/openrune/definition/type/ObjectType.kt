@@ -75,6 +75,7 @@ data class ObjectType(
     override val transforms: List<Int>? = null,
     @param:TomlField(serializer = ParamSerializer::class)
     override val params: MutableMap<Int, Any>? = null,
+    val recolAll: Int = -1,
 ) : Definition, Transforms, Recolourable, Parameterized {
 
     fun toBuilder(): ObjectTypeBuilder = ObjectTypeBuilder.from(this)

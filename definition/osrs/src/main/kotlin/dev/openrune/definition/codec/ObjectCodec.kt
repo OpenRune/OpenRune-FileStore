@@ -95,6 +95,7 @@ class ObjectCodec(private val revision: Int) : BuilderDefinitionCodec<ObjectType
 
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
+            42 -> recolAll = buffer.readUnsignedShort()
             61 -> category = buffer.readUnsignedShort()
             62 -> isRotated = true
             64 -> clipped = false
@@ -247,6 +248,11 @@ class ObjectCodec(private val revision: Int) : BuilderDefinitionCodec<ObjectType
             definition.originalTextureColours,
             definition.modifiedTextureColours,
         )
+
+        if (definition.recolAll != -1) {
+            writeByte(42)
+            writeShort(definition.recolAll)
+        }
 
         if (definition.category != -1) {
             writeByte(61)
