@@ -80,7 +80,7 @@ class PackConfig(
         registerPackType(IDENTKIT, IdentityKitCodec::class, "idk", kType = typeOf<List<IdentityKitType>>())
         registerPackType(INV, InventoryCodec::class, "inventory", GameValGroupTypes.INVTYPES, kType = typeOf<List<InventoryType>>())
         registerPackType(OVERLAY, OverlayCodec::class, "overlay", kType = typeOf<List<OverlayType>>())
-        registerPackType(UNDERLAY, OverlayCodec::class, "underlay", kType = typeOf<List<UnderlayType>>())
+        registerPackType(UNDERLAY, UnderlayCodec::class, "underlay", kType = typeOf<List<UnderlayType>>())
         registerPackType(PARAMS, ParamCodec::class, "params", kType = typeOf<List<ParamType>>())
         registerPackType(VARPLAYER, VarCodec::class, "varp", GameValGroupTypes.VARPTYPES, kType = typeOf<List<VarpType>>())
         registerPackType(VARCLIENT, VarClientCodec::class, "varclient", kType = typeOf<List<VarClientType>>())
