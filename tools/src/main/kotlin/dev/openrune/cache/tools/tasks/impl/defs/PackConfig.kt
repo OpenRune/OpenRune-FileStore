@@ -67,6 +67,7 @@ class PackConfig(
         registerPackType(index = TEXTURES, archive = 0, codec = TextureCodec::class, name = "texture", kType = typeOf<List<TextureType>>())
         registerPackType(OBJECT, ObjectCodec::class, "object", GameValGroupTypes.LOCTYPES, kType = typeOf<List<ObjectType>>())
         registerPackType(ENUM, EnumCodec::class, "enum", kType = typeOf<List<EnumType>>())
+        registerPackType(STRUCT, StructCodec::class, "struct", kType = typeOf<List<StructType>>())
         registerPackType(SPOTANIM, SpotAnimCodec::class, "graphics", GameValGroupTypes.SPOTTYPES, kType = typeOf<List<SpotAnimType>>())
         registerPackType(SPOTANIM, SpotAnimCodec::class, "graphic", GameValGroupTypes.SPOTTYPES, kType = typeOf<List<SpotAnimType>>())
         registerPackType(SEQUENCE, SequenceCodec::class, "animation", GameValGroupTypes.SEQTYPES, kType = typeOf<List<SequenceType>>())
