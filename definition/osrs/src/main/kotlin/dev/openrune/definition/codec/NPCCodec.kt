@@ -168,7 +168,9 @@ class NPCCodec(private val revision: Int) : BuilderDefinitionCodec<NpcType, NpcT
                     soundIds = readIntList(buffer.readUnsignedByte().toInt()) { buffer.readUnsignedShort() }
                 )
             }
+            251 -> actions = actions.toBuilder().also { entityOpsLoader.decodeSubOp(it, buffer) }.build()
             252 -> actions = actions.toBuilder().also { entityOpsLoader.decodeConditionalOp(it, buffer) }.build()
+            253 -> actions = actions.toBuilder().also { entityOpsLoader.decodeConditionalSubOp(it, buffer) }.build()
             249 -> readParameters(buffer)
             else -> logger.info { "Unable to decode Npcs [${opcode}]" }
         }
@@ -463,8 +465,14 @@ class NPCCodec(private val revision: Int) : BuilderDefinitionCodec<NpcType, NpcT
         }
 
         if (entityOpsLoader.supportsExtendedEntityOps()) {
-            definition.actions.conditionalOps.forEachIndexed { index, conditionalOps ->
+            definition.actions.subOpsOrEmpty.forEachIndexed { index, subOps ->
+                entityOpsLoader.encodeSubOpsOpcode(this, 251, index, subOps)
+            }
+            definition.actions.conditionalOpsOrEmpty.forEachIndexed { index, conditionalOps ->
                 entityOpsLoader.encodeConditionalOpsOpcode(this, 252, index, conditionalOps)
+            }
+            definition.actions.conditionalSubOpsOrEmpty.forEachIndexed { index, conditionalSubOps ->
+                entityOpsLoader.encodeConditionalSubOpsOpcode(this, 253, index, conditionalSubOps)
             }
         }
 

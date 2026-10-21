@@ -118,6 +118,8 @@ class UnpackDefaultCs2(
                 )
             }
 
+            Cs2DumpFixups.apply(cs2Directory)
+
             syncNeptuneClientVersion(major)
 
             logger.debug {

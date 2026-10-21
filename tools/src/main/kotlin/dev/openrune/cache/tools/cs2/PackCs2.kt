@@ -162,55 +162,79 @@ class PackCs2(private val cs2Dir: File, private val overrides: Cs2Overrides = Cs
         get() = cs2Dir
 
     override fun init(cache: Cache) {
-        try {
-            if (revision < 0) {
-                logger.warn {
-                    "PackCs2: cache revision is unset (-1). BuildCache must assign revision before CS2 tasks run."
-                }
-                return
+        if (revision < 0) {
+            logger.warn {
+                "PackCs2: cache revision is unset (-1). BuildCache must assign revision before CS2 tasks run."
             }
-
-            if (revision < CacheTask.CS2_MIN_CACHE_REVISION) {
-                logger.warn {
-                    "PackCs2: cache revision $revision is not supported (minimum ${CacheTask.CS2_MIN_CACHE_REVISION})."
-                }
-                return
-            }
-
-            ensureInstalled(cache)
-
-            val configFile = File(cs2Dir, "neptune.toml")
-
-            if (!validateNeptuneLayout(configFile)) {
-                return
-            }
-
-            NeptuneTomlClientVersion.patch(configFile, revision)
-
-            SymDumper.dumpCacheVals(File(cs2Dir, "symbols"), cache, revision, progress)
-
-            // Everything the project contributes is written into neptune.toml and symbols_custom/
-            // rather than passed to the compiler directly, so an IDE reading the same config sees
-            // exactly what the build does.
-            NeptuneProjectManifest.update(configFile, cs2Dir, overrides)
-
-            // SymDumper may re-emit plugin gamevals into symbols/; drop overlaps so
-            // symbols_custom wins (Neptune rejects duplicate ids/names).
-            SymbolsCustomConflictStrip.strip(cs2Dir)
-
-            CustomCs2OverrideSync(cs2Dir, revision, overrides.sources).sync()
-
-            recordLibraryBaseline(configFile)
-
-            // Always compiled, never skipped by the incremental engine: Neptune decides for itself which
-            // library scripts need writing (see LibrarySymbolState), and a project-level fingerprint skip
-            // sat in front of that and left the cache stale.
-            compileAndWrite(cache, configFile)
-        } catch (e: Exception) {
-            logger.error(e) {
-                "PackCs2 failed"
-            }
+            return
         }
+
+        if (revision < CacheTask.CS2_MIN_CACHE_REVISION) {
+            logger.warn {
+                "PackCs2: cache revision $revision is not supported (minimum ${CacheTask.CS2_MIN_CACHE_REVISION})."
+            }
+            return
+        }
+
+        // A compile failure is usually the project itself being stale or half-written, so the one
+        // retry starts from a clean install. A second failure is the sources' own and propagates.
+        try {
+            buildProject(cache)
+        } catch (e: Exception) {
+            logger.warn(e) { "PackCs2 failed; wiping the CS2 project and retrying once from a clean install" }
+            reinstall(cache)
+            buildProject(cache)
+        }
+    }
+
+    /**
+     * Deletes the whole project rather than letting [UnpackDefaultCs2] merge over it: a stale or
+     * half-written file is what a retry is trying to get rid of. Nothing here is the only copy of
+     * anything — the bundle brings back `script/`, the build regenerates `symbols/`, `symbols_custom/`
+     * and `neptune.toml`, and `.backup/` only holds the vanilla scripts the packs override.
+     */
+    private fun reinstall(cache: Cache) {
+        if (cs2Dir.exists() && !cs2Dir.deleteRecursively()) {
+            logger.warn { "PackCs2: could not fully delete ${cs2Dir.absolutePath}" }
+        }
+
+        val unpack = UnpackDefaultCs2(cs2Directory = cs2Dir, force = true, recordBaseline = false)
+        unpack.revision = revision
+        unpack.subRevision = subRevision
+        unpack.progress = progress
+        unpack.init(cache)
+    }
+
+    private fun buildProject(cache: Cache) {
+        ensureInstalled(cache)
+
+        val configFile = File(cs2Dir, "neptune.toml")
+
+        if (!validateNeptuneLayout(configFile)) {
+            return
+        }
+
+        NeptuneTomlClientVersion.patch(configFile, revision)
+
+        SymDumper.dumpCacheVals(File(cs2Dir, "symbols"), cache, revision, progress)
+
+        // Everything the project contributes is written into neptune.toml and symbols_custom/
+        // rather than passed to the compiler directly, so an IDE reading the same config sees
+        // exactly what the build does.
+        NeptuneProjectManifest.update(configFile, cs2Dir, overrides)
+
+        // SymDumper may re-emit plugin gamevals into symbols/; drop overlaps so
+        // symbols_custom wins (Neptune rejects duplicate ids/names).
+        SymbolsCustomConflictStrip.strip(cs2Dir)
+
+        CustomCs2OverrideSync(cs2Dir, revision, overrides.sources).sync()
+
+        recordLibraryBaseline(configFile)
+
+        // Always compiled, never skipped by the incremental engine: Neptune decides for itself which
+        // library scripts need writing (see LibrarySymbolState), and a project-level fingerprint skip
+        // sat in front of that and left the cache stale.
+        compileAndWrite(cache, configFile)
     }
 
     private fun compileAndWrite(cache: Cache, configFile: File) {

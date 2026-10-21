@@ -9,6 +9,7 @@ class EnumTypeBuilder(var id: Int = -1) {
     var keyType: CacheVarLiteral = CacheVarLiteral.INT
     var valueType: CacheVarLiteral = CacheVarLiteral.INT
     var defaultInt: Int = 0
+    var defaultLong: Long = 0L
     var defaultString: String = ""
     val values: MutableMap<Int, Any> = HashMap()
 
@@ -17,6 +18,7 @@ class EnumTypeBuilder(var id: Int = -1) {
         keyType = keyType,
         valueType = valueType,
         defaultInt = defaultInt,
+        defaultLong = defaultLong,
         defaultString = defaultString,
         values = values,
     )
@@ -27,6 +29,7 @@ class EnumTypeBuilder(var id: Int = -1) {
             builder.keyType = type.keyType
             builder.valueType = type.valueType
             builder.defaultInt = type.defaultInt
+            builder.defaultLong = type.defaultLong
             builder.defaultString = type.defaultString
             builder.values.putAll(type.values)
             return builder
