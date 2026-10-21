@@ -41,7 +41,9 @@ object ParamSerializer : TomlFieldSerializer<MutableMap<Int, Any>> {
     private fun coerceParamValue(v: TomlValue): Any =
         when (v) {
             is TomlValue.Bool -> if (v.value) 1 else 0
-            is TomlValue.Integer -> v.value.toInt()
+            // Narrow to Int where it fits so the binary codec keeps writing param type 0;
+            // anything wider has to stay a Long or it would silently wrap.
+            is TomlValue.Integer -> if (v.value in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()) v.value.toInt() else v.value
             is TomlValue.String -> v.value
             else -> ""
         }

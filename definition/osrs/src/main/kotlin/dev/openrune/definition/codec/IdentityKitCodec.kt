@@ -26,13 +26,12 @@ class IdentityKitCodec(val rev : Int) : BuilderDefinitionCodec<IdentityKitType, 
             3 -> nonSelectable = true
             5 -> {
                 val length = buffer.readUnsignedByte().toInt()
-                models = readIntList(length) {
-                    buffer.readInt().let { if (it == 65535) -1 else it }
-                }
+                models = readIntList(length) { buffer.readInt() }
             }
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
-            in 60..70 -> chatheadModels[opcode - 60] = buffer.readUnsignedShort()
+            in 60..69 -> chatheadModels[opcode - 60] = buffer.readUnsignedShort().let { if (it == 65535) -1 else it }
+            in 70..79 -> chatheadModels[opcode - 70] = buffer.readInt()
         }
     }
 
@@ -42,21 +41,14 @@ class IdentityKitCodec(val rev : Int) : BuilderDefinitionCodec<IdentityKitType, 
             writeByte(definition.bodyPartId)
         }
 
-        if (revisionIsOrAfter(rev, 237)) {
-            if (definition.models != null && definition.models!!.isNotEmpty()) {
-                writeByte(1)
-                writeByte(definition.models!!.size)
-                for (i in definition.models!!.indices) {
-                    writeShort(definition.models!![i])
-                }
-            }
-        } else {
-            if (definition.models != null && definition.models!!.isNotEmpty()) {
-                writeByte(1)
-                writeByte(definition.models!!.size)
-                for (i in definition.models!!.indices) {
-                    writeInt(definition.models!![i])
-                }
+        val extended = revisionIsOrAfter(rev, 237)
+
+        val models = definition.models
+        if (models != null && models.isNotEmpty()) {
+            writeByte(if (extended) 5 else 2)
+            writeByte(models.size)
+            for (model in models) {
+                if (extended) writeInt(model) else writeShort(model)
             }
         }
 
@@ -66,10 +58,15 @@ class IdentityKitCodec(val rev : Int) : BuilderDefinitionCodec<IdentityKitType, 
 
         definition.writeColoursTextures(this)
 
-        if (definition.chatheadModels.any { it != -1 }) {
-            for (i in 0 until definition.chatheadModels.size) {
-                writeByte(60 + i)
-                writeShort(definition.chatheadModels[i])
+        definition.chatheadModels.forEachIndexed { index, model ->
+            if (model != -1) {
+                if (extended) {
+                    writeByte(70 + index)
+                    writeInt(model)
+                } else {
+                    writeByte(60 + index)
+                    writeShort(model)
+                }
             }
         }
         writeByte(0)

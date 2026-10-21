@@ -15,7 +15,7 @@ data class IdentityKitType(
     override val modifiedTextureColours: List<Int>? = null,
     val bodyPartId : Int = -1,
     val models: List<Int>? = null,
-    val chatheadModels : List<Int> = mutableListOf(-1, -1, -1, -1, -1),
+    val chatheadModels : List<Int> = mutableListOf(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1),
     val nonSelectable : Boolean = false
 ) : Definition, Recolourable {
 

@@ -58,7 +58,6 @@ fun <T> DefinitionOpcodeEntityOps(
                         payload.writeByte(index)
                         payload.writeByte(subID + 1)
                         payload.writeString(text)
-                        payload.writeByte(0)
                         entityOpsLoader.decodeSubOp(ops, payload)
                     }
                 }

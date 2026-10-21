@@ -23,16 +23,16 @@ class EntityOpsLoader(private val revision: Int) {
         buffer.writeString(op.text)
     }
 
+    /**
+     * The extended sub-op opcodes (loc 100, obj 200, npc 251) carry exactly one sub-op each, unlike
+     * the older obj opcode 43, which packs a whole zero-terminated list behind a single op index.
+     */
     fun decodeSubOp(ops: EntityOpsBuilder, buffer: ByteBuf) {
         val index = buffer.readUnsignedByte().toInt()
-        while (true) {
-            val subID = buffer.readUnsignedByte().toInt() - 1
-            if (subID == -1) {
-                break
-            }
-            val text = buffer.readString()
-            ops.setSubOp(index, subID, text)
-        }
+        val subID = buffer.readUnsignedByte().toInt() - 1
+        val text = buffer.readString()
+
+        ops.setSubOp(index, subID, text)
     }
 
     fun decodeConditionalOp(ops: EntityOpsBuilder, buffer: ByteBuf) {
@@ -68,13 +68,12 @@ class EntityOpsLoader(private val revision: Int) {
             return
         }
 
-        buffer.writeByte(opcode)
-        buffer.writeByte(index)
         subOps.sortedBy { it.subID }.forEach { subOp ->
+            buffer.writeByte(opcode)
+            buffer.writeByte(index)
             buffer.writeByte(subOp.subID + 1)
             buffer.writeString(subOp.text)
         }
-        buffer.writeByte(0)
     }
 
     fun encodeConditionalOpsOpcode(
