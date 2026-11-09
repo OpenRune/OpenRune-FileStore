@@ -277,7 +277,7 @@ internal object GameValReferences {
             tables.getOrPut(table) { HashMap() }.putIfAbsent(id, name)
         }
         for (group in GameValGroupTypes.entries) {
-            if (group == GameValGroupTypes.IFTYPES_V2) continue
+            if (group == GameValGroupTypes.IFTYPES_V2 || group == GameValGroupTypes.JINGLETYPES) continue
             if (group.revision != -1 && revision < group.revision) continue
             val elements = runCatching { GameValHandler.readGameVal(group, cache, revision) }.getOrNull() ?: continue
             val table = GameValPublisher.tableOf(group)

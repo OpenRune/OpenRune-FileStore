@@ -349,12 +349,20 @@ class SymDumper {
             SymDumper().dumpAll(basePath, cache, rev, progress)
         }
 
+        /**
+         * The cache's gameval index has one interface table, but CS2 types distinguish `interface`
+         * from `overlayinterface`, so the split has to be declared here. Keep it in step with
+         * `symbols/overlayinterface.sym` in the Joshua-F dump, which is where the real typing lives;
+         * a name missing from this set lands in `interface.sym` and every call passing it to a proc
+         * that wants an `overlayinterface` fails to compile.
+         */
         private val OVERLAY_INTERFACE_NAMES = setOf(
             "settings",
             "chatbox",
             "worldmap",
             "collection",
             "reportabuse",
+            "displayname_menu", // added in 242
         )
 
         private const val STAT_ENUM_ID = 680

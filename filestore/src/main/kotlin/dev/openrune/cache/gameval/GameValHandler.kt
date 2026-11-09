@@ -51,6 +51,47 @@ object GameValHandler {
             }
         }
     }
+    /**
+     * Groups that were renumbered rather than redesigned, so the old id stays the way callers ask for
+     * the group and this resolves it to the archive the cache in hand actually uses.
+     *
+     * - [IFTYPES] (13) -> [IFTYPES_V2] (14) at 232, a format change.
+     * - [SOUNDTYPES] (11) -> [JINGLETYPES] (18) at 242, when the single sound group was split into
+     *   sfx / midi / jingle / ambient. Archive 11 only ever held jingles, so it maps straight across.
+     */
+    private fun replacementGroup(type: GameValGroupTypes): GameValGroupTypes? = when (type) {
+        IFTYPES -> IFTYPES_V2
+        SOUNDTYPES -> JINGLETYPES
+        else -> null
+    }
+
+    /**
+     * Reads go by which archive holds data: that stays right for a cache whose revision disagrees with
+     * its gameval layout, which happens whenever an older tool packed it.
+     */
+    private fun resolveGroupForRead(type: GameValGroupTypes, cache: Cache): GameValGroupTypes {
+        val replacement = replacementGroup(type) ?: return type
+        return if (cache.files(GAMEVALS, type.id).isEmpty()) replacement else type
+    }
+
+    /**
+     * Writes also stay with whichever archive already holds data, so a write never lands in the
+     * archive a read would ignore. Only when neither is populated — a cache being built from
+     * scratch, where emptiness says nothing — does the revision pick the target.
+     */
+    private fun resolveGroupForWrite(type: GameValGroupTypes, cache: Cache, cacheRevision: Int): GameValGroupTypes {
+        val replacement = replacementGroup(type) ?: return type
+        if (cache.files(GAMEVALS, type.id).isNotEmpty()) return type
+        if (cache.files(GAMEVALS, replacement.id).isNotEmpty()) return replacement
+
+        val rev = if (cacheRevision == -1) {
+            readCacheRevision(cache, "${type.name} is unsupported in this revision")
+        } else {
+            cacheRevision
+        }
+        return if (rev >= replacement.revision) replacement else type
+    }
+
     fun readGameVal(
         type: GameValGroupTypes,
         cache: Cache,
@@ -70,11 +111,7 @@ object GameValHandler {
         }
 
 
-        if (type == IFTYPES) {
-            if (cache.files(GAMEVALS, IFTYPES.id).isEmpty()) {
-                type = IFTYPES_V2
-            }
-        }
+        type = resolveGroupForRead(type, cache)
 
         val archive = type.id
         val files = cache.files(GAMEVALS, archive)
@@ -162,13 +199,7 @@ object GameValHandler {
 
     fun encodeGameVals(type: GameValGroupTypes, values: List<GameValElement>, cache: Cache, cacheRevision : Int = -1) {
 
-        var resolvedType = type
-
-        if (resolvedType == IFTYPES) {
-            if (cache.files(GAMEVALS, resolvedType.id).isEmpty()) {
-                resolvedType = IFTYPES_V2
-            }
-        }
+        val resolvedType = resolveGroupForWrite(type, cache, cacheRevision)
 
         assertNoDuplicateGameValKeys(resolvedType,values)
         if (resolvedType.revision != -1) {

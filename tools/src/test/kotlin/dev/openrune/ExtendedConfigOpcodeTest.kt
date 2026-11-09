@@ -4,7 +4,11 @@ import dev.openrune.definition.Definition
 import dev.openrune.definition.DefinitionCodec
 import dev.openrune.definition.codec.EnumCodec
 import dev.openrune.definition.codec.IdentityKitCodec
+import dev.openrune.definition.codec.ItemCodec
 import dev.openrune.definition.codec.NPCCodec
+import dev.openrune.definition.codec.ObjectCodec
+import dev.openrune.definition.codec.SequenceCodec
+import dev.openrune.definition.codec.SpotAnimCodec
 import dev.openrune.definition.util.CacheVarLiteral
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
@@ -13,8 +17,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 /**
- * The 237 config opcodes that widen a field: enum long values (7/8), identity kit chathead models
- * read as ints (70-79) and the npc sub-op opcodes (251/253).
+ * Config opcodes that widen a field in a recent revision: enum long values (7/8), identity kit
+ * chathead models read as ints (70-79) and the npc sub-op opcodes (251/253) from 237, plus the
+ * medium-width loc transforms (97/98) from 242.
  *
  * [CodecByteRoundTripTest] covers the same ground against a real cache, but only when one is
  * checked out, and no shipped cache exercises these yet. These build the bytes by hand instead.
@@ -129,6 +134,143 @@ class ExtendedConfigOpcodeTest {
         assertEquals(2, conditional.maxValue)
 
         reencode(codec, raw)
+    }
+
+    @Test
+    fun `loc reads medium width transforms with a default`() {
+        val codec = ObjectCodec(242)
+        val raw = buffer {
+            writeByte(2); writeCString("Door")
+            writeByte(98)
+            writeShort(65535)          // multivarbit, none
+            writeShort(300)            // multivarp
+            writeMedium(1234)          // multidefault
+            writeByte(1)               // count, so two transforms follow
+            writeMedium(70_000)        // past what opcode 92 could hold
+            writeMedium(-1)
+        }
+
+        val decoded = codec.loadData(1, raw.copy())
+
+        assertEquals(-1, decoded.multiVarBit)
+        assertEquals(300, decoded.multiVarp)
+        assertEquals(1234, decoded.multiDefault)
+        assertEquals(listOf(70_000, -1, 1234), decoded.transforms)
+
+        reencode(codec, raw)
+    }
+
+    @Test
+    fun `loc reads medium width transforms without a default`() {
+        val codec = ObjectCodec(242)
+        val raw = buffer {
+            writeByte(2); writeCString("Door")
+            writeByte(97)
+            writeShort(65535)
+            writeShort(300)
+            writeByte(1)
+            writeMedium(70_000)
+            writeMedium(70_001)
+        }
+
+        val decoded = codec.loadData(1, raw.copy())
+
+        assertEquals(-1, decoded.multiDefault)
+        assertEquals(listOf(70_000, 70_001, -1), decoded.transforms)
+
+        reencode(codec, raw)
+    }
+
+    @Test
+    fun `loc still writes short width transforms before 242`() {
+        val codec = ObjectCodec(241)
+        val raw = buffer {
+            writeByte(2); writeCString("Door")
+            writeByte(92)
+            writeShort(65535)
+            writeShort(300)
+            writeShort(1234)
+            writeByte(1)
+            writeShort(2000)
+            writeShort(65535)
+        }
+
+        val decoded = codec.loadData(1, raw.copy())
+
+        assertEquals(1234, decoded.multiDefault)
+        assertEquals(listOf(2000, -1, 1234), decoded.transforms)
+
+        val asShorts = reencode(codec, raw)
+
+        // Three ids go out (the default plus two transforms), each one byte wider at 242.
+        val asMediums = encode(ObjectCodec(242), decoded)
+        assertEquals(asShorts.size + 3, asMediums.size)
+    }
+
+    /**
+     * Named fields that decoded into a definition but were never written back, so a repack silently
+     * dropped them. Each of these asserts the opcode survives a decode/encode round trip.
+     */
+    @Test
+    fun `flag only opcodes survive a repack`() {
+        val spotAnim = SpotAnimCodec(revision)
+        val spotRaw = buffer {
+            writeByte(1); writeShort(100)
+            writeByte(10)              // rotate=no
+        }
+        assertEquals(false, spotAnim.loadData(1, spotRaw.copy()).rotate)
+        assertEquals(false, spotAnim.loadData(1, Unpooled.wrappedBuffer(reencode(spotAnim, spotRaw))).rotate)
+
+        val npc = NPCCodec(revision)
+        val npcRaw = buffer {
+            writeByte(2); writeCString("Guard")
+            writeByte(130)
+        }
+        assertEquals(true, npc.loadData(1, npcRaw.copy()).readyAnimDuringAnim)
+        assertEquals(true, npc.loadData(1, Unpooled.wrappedBuffer(reencode(npc, npcRaw))).readyAnimDuringAnim)
+    }
+
+    /**
+     * Opcodes neither zwyz nor RuneLite has identified (loc 94, npc 129, obj 9). They are matched
+     * only so the reader stays aligned and they stop being logged as undecodable — nothing is stored,
+     * so a repack drops them. What matters is that the fields around them still decode.
+     */
+    @Test
+    fun `unidentified opcodes are consumed without desyncing the reader`() {
+        val loc = ObjectCodec(revision)
+        val locDecoded = loc.loadData(1, buffer {
+            writeByte(94)
+            writeByte(2); writeCString("Door")
+        })
+        assertEquals("Door", locDecoded.name)
+
+        val npc = NPCCodec(revision)
+        val npcDecoded = npc.loadData(1, buffer {
+            writeByte(129)
+            writeByte(2); writeCString("Guard")
+        })
+        assertEquals("Guard", npcDecoded.name)
+
+        // The one with a payload, so the only one that could actually corrupt the rest of the record.
+        val item = ItemCodec(revision)
+        val itemDecoded = item.loadData(1, buffer {
+            writeByte(2); writeCString("Bucket")
+            writeByte(9); writeCString("whatever")
+            writeByte(12); writeInt(55)
+        })
+        assertEquals("Bucket", itemDecoded.name)
+        assertEquals(55, itemDecoded.cost)
+    }
+
+    @Test
+    fun `sequence vertical offset survives a repack`() {
+        val codec = SequenceCodec(revision)
+        val raw = buffer {
+            writeByte(16); writeByte(-7)
+        }
+
+        assertEquals(-7, codec.loadData(1, raw.copy()).verticalOffset)
+        assertEquals(-7, codec.loadData(1, Unpooled.wrappedBuffer(reencode(codec, raw))).verticalOffset)
     }
 
     private fun ByteBuf.writeCString(value: String) {

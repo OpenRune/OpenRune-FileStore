@@ -71,6 +71,9 @@ class SpotAnimCodec(val rev : Int) : BuilderDefinitionCodec<SpotAnimType, SpotAn
             writeByte(9)
             writeString(definition.debugName)
         }
+        if (!definition.rotate) {
+            writeByte(10)
+        }
         definition.writeColoursTextures(this)
 
         if (definition.recolAll != -1) {

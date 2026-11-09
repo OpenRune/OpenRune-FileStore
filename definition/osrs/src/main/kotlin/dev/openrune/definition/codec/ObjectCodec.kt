@@ -111,6 +111,7 @@ class ObjectCodec(private val revision: Int) : BuilderDefinitionCodec<ObjectType
             74 -> isHollow = true
             75 -> supportsItems = buffer.readUnsignedByte().toInt()
             77, 92 -> readTransforms(buffer, opcode == 92)
+            97, 98 -> readTransforms(buffer, opcode == 98, mediumIds = true)
             78 -> {
                 ambientSoundId = buffer.readUnsignedShort()
                 soundDistance = buffer.readUnsignedByte().toInt()
@@ -395,9 +396,14 @@ class ObjectCodec(private val revision: Int) : BuilderDefinitionCodec<ObjectType
             }
         }
 
+        // 242 moved loc transforms to opcodes 97/98, which carry medium-width ids.
+        val mediumTransforms = revisionIsOrAfter(revision, 242)
         writeTransforms(
-            this, 77, 92,
+            this,
+            if (mediumTransforms) 97 else 77,
+            if (mediumTransforms) 98 else 92,
             definition.multiVarBit, definition.multiVarp, definition.multiDefault, definition.transforms,
+            mediumTransforms,
         )
         writeParameters(this, definition.params)
 

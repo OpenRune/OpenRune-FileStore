@@ -35,7 +35,12 @@ object GameValPublisher {
         GameValGroupTypes.SPOTTYPES -> "spotanim"
         GameValGroupTypes.ROWTYPES -> "dbrow"
         GameValGroupTypes.TABLETYPES -> "dbtable"
-        GameValGroupTypes.SOUNDTYPES -> "jingle"
+        // 242 split the single sound group (archive 11, jingles only) into four; jingles kept their
+        // table so every existing `jingle.name` reference still resolves.
+        GameValGroupTypes.SOUNDTYPES, GameValGroupTypes.JINGLETYPES -> "jingle"
+        GameValGroupTypes.SYNTHTYPES -> "synth"
+        GameValGroupTypes.MIDITYPES -> "midi"
+        GameValGroupTypes.AMBIENTSOUNDTYPES -> "ambience"
         GameValGroupTypes.SPRITETYPES -> "sprites"
         GameValGroupTypes.IFTYPES, GameValGroupTypes.IFTYPES_V2 -> "interface"
         GameValGroupTypes.VARCS -> "varcs"

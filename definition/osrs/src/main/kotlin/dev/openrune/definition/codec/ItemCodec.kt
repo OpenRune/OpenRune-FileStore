@@ -42,6 +42,7 @@ class ItemCodec(private val revision: Int) : BuilderDefinitionCodec<ItemType, It
                 }
             }
 
+            9 -> buffer.readString()
             11 -> stacks = ObjStackability.Always
             12 -> cost = buffer.readInt()
             13 -> equipSlot = buffer.readUnsignedByte().toInt()

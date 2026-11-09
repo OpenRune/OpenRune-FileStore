@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf
 
 data class SoundData(
     var id: Int,
-    var unknown : Int,
+    var weight : Int,
     var loops: Int,
     var location: Int,
     var retain: Int,
@@ -16,7 +16,7 @@ data class SoundData(
         } else {
             writer.writeShort(id)
             if (revisionIsOrAfter(revision, 226)) {
-                writer.writeByte(unknown)
+                writer.writeByte(weight)
             }
             writer.writeByte(loops)
             writer.writeByte(location)
@@ -33,10 +33,10 @@ interface Sound {
         val loops: Int
         val location: Int
         val retain: Int
-        var unknown : Int = 0
+        var weight : Int = 0
 
         if (!revisionIsOrAfter(revision, 220)) {
-            val payload: Int = buffer.readMedium()
+            val payload: Int = buffer.readUnsignedMedium()
             retain = 0
             location = payload and 15
             id = payload shr 8
@@ -44,14 +44,14 @@ interface Sound {
         } else {
             id = buffer.readUnsignedShort()
             if (revisionIsOrAfter(revision, 226)) {
-                unknown = buffer.readUnsignedByte().toInt()
+                weight = buffer.readUnsignedByte().toInt()
             }
             loops = buffer.readUnsignedByte().toInt()
             location = buffer.readUnsignedByte().toInt()
             retain = buffer.readUnsignedByte().toInt()
         }
 
-        return if (id >= 1 && loops >= 1 && location >= 0 && retain >= 0) { SoundData(id, unknown, loops, location, retain) } else { null }
+        return if (id >= 1 && loops >= 1 && location >= 0 && retain >= 0) { SoundData(id, weight, loops, location, retain) } else { null }
     }
 
 }

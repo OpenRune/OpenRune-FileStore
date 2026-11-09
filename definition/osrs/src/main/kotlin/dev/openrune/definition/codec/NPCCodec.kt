@@ -408,6 +408,10 @@ class NPCCodec(private val revision: Int) : BuilderDefinitionCodec<NpcType, NpcT
             writeShort(definition.footprintSize)
         }
 
+        if (definition.readyAnimDuringAnim) {
+            writeByte(130)
+        }
+
         if (definition.canHideForOverlap) {
             writeByte(145)
         }

@@ -177,7 +177,10 @@ class ZwyzCommandTable private constructor(
         // A name whose opcode was later claimed by another name (e.g. db_find_with_count -> db_find at 228)
         // is no longer reachable by the decompiler, so it is dropped.
         val effective = byName.values.filter { byOpcode[it.opcode] === it }
-        return Resolved(revision, effective, commitSha)
+        val extra = effective.mapNotNull { command ->
+            DUMP_ALIASES[command.name]?.let { command.opcode to it }
+        }.toMap()
+        return Resolved(revision, effective, commitSha, extra)
     }
 
     private fun parse(line: String, file: String, revision: Int): Command? {
@@ -213,6 +216,23 @@ class ZwyzCommandTable private constructor(
         )
 
         fun neptuneName(name: String): String = NAME_MAP[name] ?: name
+
+        /**
+         * zwyz command name -> extra names the dumped scripts use for the same opcode.
+         *
+         * [Resolved.withAliases] only recovers names an opcode had elsewhere in zwyz history, so a
+         * name the dumps use that zwyz never published has to be declared here. Additive: both names
+         * end up in `commands.sym` and the prelude, so a dump produced either side of the rename
+         * resolves. Prefer this over [NAME_MAP], which renames and would break the other spelling.
+         *
+         * Also read by [Cs2DumpFixups], which applies the same aliases to an already extracted
+         * project so a bundle built before the rename does not have to be rebuilt.
+         */
+        internal val DUMP_ALIASES: Map<String, Set<String>> = mapOf(
+            // Renamed in 242. zwyz master still publishes only seq_prefetch (3189), while the dumps
+            // call it preload_keyframeset; same opcode and the same (seq) signature.
+            "seq_prefetch" to setOf("preload_keyframeset"),
+        )
 
         /** Commands that get a `.name` secondary variant, matching the hand-written Neptune prelude. */
         private val SECONDARY_NON_CC = setOf("if_find", "if_find_entityoverlay", "if_query_next", "text_pronoun", "pronoun")
