@@ -21,7 +21,8 @@ data class SpotAnimType(
     val modelId: Int = 0,
     val ambient: Int = 0,
     val contrast: Int = 0,
-    val debugName : String = ""
+    val debugName : String = "",
+    val recolAll: Int = -1
 ) : Definition, Recolourable {
 
     fun toBuilder(): SpotAnimTypeBuilder = SpotAnimTypeBuilder.from(this)

@@ -79,6 +79,7 @@ data class NpcType(
     val bgSoundFade: BgSoundFade? = null,
     val crossWorldSound: Int = 2,
     val randomSound: RandomSound? = null,
+    val recolAll: Int = -1,
     ) : Definition, Transforms, Recolourable, Parameterized {
 
     var examine : String = ""

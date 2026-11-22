@@ -8,6 +8,8 @@ class IncrementalSession private constructor(
     val build: IncrementalBuild,
     private val revision: Int,
     private val scope: String = "",
+    /** True when nothing recorded about a previous build applies: incremental is off or the state was reset, so the whole cache is repacked. */
+    val fresh: Boolean = true,
 ) : AutoCloseable {
     private val logger = InlineLogger()
 
@@ -70,7 +72,7 @@ class IncrementalSession private constructor(
                     .any { it }
             }
 
-            if (removed) logger.info { "Incremental packing: cleared state at $database" }
+            if (removed) logger.debug { "Incremental packing: cleared state at $database" }
         }
 
         fun open(
@@ -107,10 +109,13 @@ class IncrementalSession private constructor(
             }
 
             if (reset != null) {
-                logger.info { "Incremental packing: full repack ($reset)" }
+                logger.info { "Full repack: $reset" }
                 runCatching { state.clearUnits() }
+                // The reference index describes the cache's configs; a cache this state no longer
+                // describes needs it rebuilt from scratch too.
+                runCatching { state.clearConfigRefs() }
             } else {
-                logger.info { "Incremental packing enabled (state: ${state.file})" }
+                logger.debug { "Incremental packing enabled (state: ${state.file})" }
             }
 
             return IncrementalSession(
@@ -118,6 +123,7 @@ class IncrementalSession private constructor(
                 IncrementalBuild(state, forced = false, verification = verification),
                 revision,
                 scope,
+                fresh = reset != null,
             )
         }
     }

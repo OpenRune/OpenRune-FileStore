@@ -21,6 +21,7 @@ data class EnumType(
     @param:TomlField(serializer = CacheVarLiteralSeralizier::class)
     val valueType: CacheVarLiteral = CacheVarLiteral.INT,
     val defaultInt: Int = 0,
+    val defaultLong: Long = 0L,
     val defaultString: String = "",
     @param:TomlField(serializer = ParamSerializer::class)
     val values: MutableMap<Int, Any> = HashMap()
@@ -31,6 +32,8 @@ data class EnumType(
     fun getSize() = values.size
 
     fun getInt(key: Int): Int = values.get(key) as? Int ?: defaultInt
+
+    fun getLong(key: Int): Long = values.get(key) as? Long ?: defaultLong
 
     fun getString(key: Int): String = values.get(key) as? String ?: defaultString
 }

@@ -56,6 +56,7 @@ class ObjectTypeBuilder(var id: Int = -1) : MutableTransforms, MutableRecolourab
     var impenetrable: Boolean = true
     var soundVisibility: Int = 2
     var rasie: Int = 0
+    var recolAll: Int = -1
 
     override var originalColours: MutableList<Int>? = null
     override var modifiedColours: MutableList<Int>? = null
@@ -124,6 +125,7 @@ class ObjectTypeBuilder(var id: Int = -1) : MutableTransforms, MutableRecolourab
         multiDefault = multiDefault,
         transforms = IntListPool.of(transforms),
         params = params,
+        recolAll = recolAll,
     )
 
     companion object {
@@ -185,6 +187,7 @@ class ObjectTypeBuilder(var id: Int = -1) : MutableTransforms, MutableRecolourab
             builder.multiDefault = type.multiDefault
             builder.transforms = type.transforms?.toMutableList()
             builder.params = type.params?.toMutableMap()
+            builder.recolAll = type.recolAll
             return builder
         }
     }

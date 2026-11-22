@@ -71,15 +71,23 @@ interface BuilderDefinitionCodec<T : Definition, B> : DefinitionCodec<T> {
     override fun loadData(id: Int, data: ByteArray?): T =
         decodeWithBuilder(id, data?.takeIf { it.isNotEmpty() }?.let { Unpooled.wrappedBuffer(it) })
 
+    /**
+     * Drives [read] over [buffer]. Flat, opcode-less formats (textures) override this with a single
+     * read, since there is no leading opcode to consume nor a terminating 0 to stop on.
+     */
+    fun readLoop(builder: B, buffer: ByteBuf) {
+        while (true) {
+            val opcode = buffer.readUnsignedByte().toInt()
+            if (opcode == 0) break
+            builder.read(opcode, buffer)
+        }
+    }
+
     private fun decodeWithBuilder(id: Int, data: ByteBuf?): T {
         val builder = builder(id)
         if (data != null && data.readableBytes() > 0) {
             try {
-                while (true) {
-                    val opcode = data.readUnsignedByte().toInt()
-                    if (opcode == 0) break
-                    builder.read(opcode, data)
-                }
+                readLoop(builder, data)
             } catch (e: Exception) {
                 throw IllegalStateException(
                     "Unable to decode ${createDefinition().javaClass.simpleName} [$id]", e

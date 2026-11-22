@@ -31,7 +31,7 @@ class OsrsCacheProvider(private val cache : Cache, override var cacheRevision : 
 
     override fun init() {
         try {
-            logger.info { "Cache loaded (revision $cacheRevision)" }
+            logger.debug { "Cache loaded (revision $cacheRevision)" }
             ObjectDecoder(cacheRevision).load(cache, objects)
             NPCDecoder(cacheRevision).load(cache, npcs)
             ItemDecoder(cacheRevision).load(cache, items)

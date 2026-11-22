@@ -95,21 +95,27 @@ fun InterfaceBuilder.text(
 ) {
     val bld = TextComponent().apply(block)
     registerPlacement(componentName, bld.placement)
+    registerParent(componentName, bld.parentName)
     val component = applyText(componentName, bld)
     bld.repeatType?.generateComponents(component.width ?: 0, component.height ?: 0, componentName, component)?.forEach {
         targetList.add(it)
     } ?: targetList.add(component)
 }
 
-private fun InterfaceBuilder.flattenLayerSubtree(parentOneBased: Int, children: List<ComponentTypeBuilder>) {
+private fun InterfaceBuilder.flattenLayerSubtree(
+    parentOneBased: Int,
+    parentName: String,
+    children: List<ComponentTypeBuilder>,
+) {
     for (child in children) {
         if (child.layer == null) {
             child.layer = (id shl 16) or parentOneBased
+            child.internal?.let { registerParent(it, parentName) }
         }
         components.add(child)
         val nested = layerNestedChildren.remove(child)
         if (!nested.isNullOrEmpty()) {
-            flattenLayerSubtree(components.size, nested)
+            flattenLayerSubtree(components.size, child.internal ?: parentName, nested)
         }
     }
 }
@@ -125,6 +131,7 @@ fun InterfaceBuilder.layer(
     val bld = Layer.LayerComponent(this).apply(block)
     registerFrom(componentName, bld.fromComponent)
     registerPlacement(componentName, bld.placement)
+    registerParent(componentName, bld.parentName)
     val component = applyLayer(componentName, bld)
     bld.repeatType?.generateComponents(component.width ?: 0, component.height ?: 0, componentName, component)?.forEach {
         targetList.add(it)
@@ -138,6 +145,7 @@ fun InterfaceBuilder.layer(
         bld.layerComponents.forEach {
             if (it.layer == null) {
                 it.layer = (id shl 16) or parentOneBased
+                it.internal?.let { name -> registerParent(name, componentName) }
             }
             components.add(it)
         }
@@ -146,7 +154,7 @@ fun InterfaceBuilder.layer(
 
     val children = bld.layerComponents.toMutableList()
     if (targetList === components) {
-        flattenLayerSubtree(parentOneBased, children)
+        flattenLayerSubtree(parentOneBased, componentName, children)
     } else {
         layerNestedChildren[component] = children
     }
@@ -162,6 +170,7 @@ fun InterfaceBuilder.model(
 ) {
     val bld = Model.ModelComponent().apply(block)
     registerPlacement(componentName, bld.placement)
+    registerParent(componentName, bld.parentName)
     val component = applyModel(componentName, bld)
     bld.repeatType?.generateComponents(component.width ?: 0, component.height ?: 0, componentName, component)?.forEach {
         targetList.add(it)
@@ -175,6 +184,7 @@ fun InterfaceBuilder.input(
 ) {
     val bld = Input.InputComponent().apply(block)
     registerPlacement(componentName, bld.placement)
+    registerParent(componentName, bld.parentName)
     val component = applyInput(componentName, bld)
     bld.repeatType?.generateComponents(component.width ?: 0, component.height ?: 0, componentName, component)?.forEach {
         targetList.add(it)
@@ -188,6 +198,7 @@ fun InterfaceBuilder.rectangle(
 ) {
     val bld = Rectangle.RectangleComponent().apply(block)
     registerPlacement(componentName, bld.placement)
+    registerParent(componentName, bld.parentName)
     val component = applyRectangle(componentName, bld)
     bld.repeatType?.generateComponents(component.width ?: 0, component.height ?: 0, componentName, component)?.forEach {
         targetList.add(it)
@@ -201,6 +212,7 @@ fun InterfaceBuilder.line(
 ) {
     val bld = Line.LineComponent().apply(block)
     registerPlacement(componentName, bld.placement)
+    registerParent(componentName, bld.parentName)
     val component = applyLine(componentName, bld)
     bld.repeatType?.generateComponents(component.width ?: 0, component.height ?: 0, componentName, component)?.forEach {
         targetList.add(it)
@@ -215,6 +227,7 @@ fun InterfaceBuilder.graphic(
     val bld = Graphic.GraphicComponent().apply(block)
     registerFrom(componentName, bld.fromComponent)
     registerPlacement(componentName, bld.placement)
+    registerParent(componentName, bld.parentName)
     val component = applyGraphic(componentName, bld)
     bld.repeatType?.generateComponents(component.width ?: 0, component.height ?: 0, componentName, component)?.forEach {
         targetList.add(it)

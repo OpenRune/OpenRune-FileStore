@@ -212,6 +212,11 @@ class SequenceCodec(private val revision: Int) : BuilderDefinitionCodec<Sequence
             writeShort(definition.rangeEnd)
         }
 
+        if (definition.verticalOffset != 0) {
+            writeByte(16)
+            writeByte(definition.verticalOffset)
+        }
+
         if (definition.mask != null) {
             writeByte(17)
 

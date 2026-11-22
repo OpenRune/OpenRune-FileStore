@@ -11,30 +11,29 @@ object EnumTypeTableHook : TypedRsTableRowPostDecode<EnumType>(EnumType::class) 
     @Suppress("UNUSED_PARAMETER")
     override fun applyTyped(mapper: TomlMapper, content: Map<String, TomlValue>, def: EnumType) {
         val intSet = def.defaultInt != 0
+        val longSet = def.defaultLong != 0L
         val strSet = def.defaultString.isNotEmpty()
-        val count = (if (intSet) 1 else 0) + (if (strSet) 1 else 0)
+        val count = (if (intSet) 1 else 0) + (if (longSet) 1 else 0) + (if (strSet) 1 else 0)
 
         val valueBase = def.valueType.baseType
         val expectedDefaultField = when (valueBase) {
             BaseVarType.STRING -> "defaultString"
-            BaseVarType.INTEGER, BaseVarType.LONG -> "defaultInt"
+            BaseVarType.LONG -> "defaultLong"
+            BaseVarType.INTEGER -> "defaultInt"
             BaseVarType.ARRAY -> "none (enum defaults cannot be array)"
-        }
-        val removeField = when (valueBase) {
-            BaseVarType.STRING -> "defaultInt"
-            BaseVarType.INTEGER, BaseVarType.LONG -> "defaultString"
-            BaseVarType.ARRAY -> "defaultInt and defaultString"
         }
         val providedDefaults = buildList {
             if (intSet) add("defaultInt")
+            if (longSet) add("defaultLong")
             if (strSet) add("defaultString")
         }
         require(count <= 1) {
-            "EnumType id=${def.id}: both defaultInt and defaultString are set for valueType '${def.valueType.name}' ($valueBase). Remove $removeField."
+            "EnumType id=${def.id}: ${providedDefaults.joinToString(" and ")} are set for valueType '${def.valueType.name}' ($valueBase). Keep only $expectedDefaultField."
         }
         val defaultMatches = when (valueBase) {
             BaseVarType.STRING -> strSet
-            BaseVarType.INTEGER, BaseVarType.LONG -> intSet
+            BaseVarType.LONG -> longSet
+            BaseVarType.INTEGER -> intSet
             BaseVarType.ARRAY -> false
         }
         require(defaultMatches || providedDefaults.isEmpty()) {
@@ -47,6 +46,14 @@ object EnumTypeTableHook : TypedRsTableRowPostDecode<EnumType>(EnumType::class) 
             }
             require(matchesBaseType(value, def.valueType.baseType)) {
                 "EnumType id=${def.id}: value '$value' for key '$key' does not match valueType '${def.valueType.name}' (${def.valueType.baseType})"
+            }
+        }
+
+        // TOML integers are decoded without the enum's declared type in hand, so a long-valued
+        // enum arrives as Int whenever it happens to fit. Widen it so the codec picks opcode 7.
+        if (valueBase == BaseVarType.LONG) {
+            for (key in def.values.keys.toList()) {
+                def.values[key] = def.values.getValue(key).toString().toLong()
             }
         }
     }

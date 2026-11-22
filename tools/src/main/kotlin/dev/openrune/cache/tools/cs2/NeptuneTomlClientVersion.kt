@@ -36,15 +36,28 @@ internal object NeptuneTomlClientVersion {
         return readClientVersionFromText(text)
     }
 
-    /** Every path listed under [neptuneDirectoryArrayKeys] exists as a directory under [cs2Root]. */
-    internal fun allNeptunePathDirectoriesExist(cs2Root: File, neptuneText: String): Boolean {
+    /**
+     * A config entry as a file: relative ones sit under [cs2Root], absolute ones (the pack paths
+     * [NeptuneProjectManifest] writes) are taken as they are.
+     */
+    internal fun resolveEntry(cs2Root: File, entry: String): File {
+        val trimmed = entry.trimEnd('/', ' ')
+        val direct = File(trimmed)
+        return if (direct.isAbsolute) direct else File(cs2Root, trimmed)
+    }
+
+    /**
+     * Creates every relative directory listed under [neptuneDirectoryArrayKeys] that is missing. Pack
+     * paths are absolute and may be single files, so they are left to the packs.
+     */
+    internal fun ensureListedDirectories(cs2Root: File, neptuneText: String) {
         for (key in neptuneDirectoryArrayKeys) {
-            for (rel in parseTomlStringArray(neptuneText, key)) {
-                val dir = File(cs2Root, rel.trimEnd('/', ' '))
-                if (!dir.isDirectory) return false
+            for (entry in parseTomlStringArray(neptuneText, key)) {
+                if (File(entry).isAbsolute) continue
+                val dir = resolveEntry(cs2Root, entry)
+                if (!dir.exists()) dir.mkdirs()
             }
         }
-        return true
     }
 
     fun ensureNeptuneToml(configFile: File, rev: Int) {
@@ -82,7 +95,7 @@ internal object NeptuneTomlClientVersion {
         val body = templateClientVersionLine.replace(text) { "client_version = $rev" }
         configFile.parentFile?.mkdirs()
         configFile.writeText(body.trimEnd() + "\n")
-        logger.info { "NeptuneToml: created default neptune.toml at ${configFile.absolutePath}" }
+        logger.debug { "NeptuneToml: created default neptune.toml at ${configFile.absolutePath}" }
         return true
     }
 

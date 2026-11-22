@@ -14,8 +14,8 @@ object SymbolsCustomConflictStrip {
     /** id (may be composite like `55521:0`) + symbol name (second TSV field). */
     private val SYMBOL_LINE = Regex("""^\s*(\S+)\s+(\S+)(?:\s+.*)?$""")
 
-    fun strip(cs2Dir: File) {
-        val symbolsDir = File(cs2Dir, "symbols")
+    fun strip(cs2Dir: File, baseSymbolsDir: String = "symbols") {
+        val symbolsDir = File(cs2Dir, baseSymbolsDir)
         val customDir = File(cs2Dir, "symbols_custom")
         if (!symbolsDir.isDirectory || !customDir.isDirectory) {
             return
@@ -29,8 +29,8 @@ object SymbolsCustomConflictStrip {
             val baseSym = File(symbolsDir, customSym.name)
             val removed = stripOverlaps(baseSym, owned)
             if (removed > 0) {
-                logger.info {
-                    "Stripped $removed symbol(s) from symbols/${customSym.name} that overlap symbols_custom"
+                logger.debug {
+                    "Stripped $removed symbol(s) from $baseSymbolsDir/${customSym.name} that overlap symbols_custom"
                 }
             }
         }

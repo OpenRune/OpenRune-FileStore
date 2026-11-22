@@ -19,6 +19,8 @@ import dev.openrune.cache.gameval.GameValHandler.lookupAs
 import dev.openrune.cache.gameval.impl.Interface
 import dev.openrune.cache.gameval.impl.Sprite as GameValSprite
 import dev.openrune.cache.gameval.impl.Table
+import dev.openrune.cache.tools.progress.CacheProgress
+import dev.openrune.cache.tools.progress.DefaultCacheProgress
 import dev.openrune.definition.GameValGroupTypes
 import dev.openrune.definition.GameValGroupTypes.IFTYPES
 import dev.openrune.definition.type.DBTableType
@@ -41,20 +43,29 @@ import java.io.FileWriter
  */
 class SymDumper {
 
-    fun dumpAll(basePath: File, cache: Cache, rev: Int) {
-        dumpSimpleGameValSyms(basePath, cache, rev)
-        dumpVarbits(basePath, cache, rev)
-        dumpArchiveIndexSyms(basePath, cache)
-        dumpInterfaces(basePath, cache, rev)
-        dumpDbTables(basePath, cache)
-        dumpSprites(basePath, cache, rev)
-        dumpEnumSyms(basePath, cache)
-        dumpVarClan(basePath, cache)
-        dumpVarClanSettings(basePath, cache)
-        dumpParam(basePath, cache, rev)
-        dumpWma(basePath, cache, rev)
-        dumpVarcAndVarp(basePath, cache, rev)
-        dumpCategories(basePath, cache, rev)
+    fun dumpAll(basePath: File, cache: Cache, rev: Int, progress: CacheProgress = DefaultCacheProgress()) {
+        val steps: List<Pair<String, () -> Unit>> = listOf(
+            "gamevals" to { dumpSimpleGameValSyms(basePath, cache, rev) },
+            "varbits" to { dumpVarbits(basePath, cache, rev) },
+            "archives" to { dumpArchiveIndexSyms(basePath, cache) },
+            "interfaces" to { dumpInterfaces(basePath, cache, rev) },
+            "dbtables" to { dumpDbTables(basePath, cache) },
+            "sprites" to { dumpSprites(basePath, cache, rev) },
+            "enums" to { dumpEnumSyms(basePath, cache) },
+            "varclan" to { dumpVarClan(basePath, cache) },
+            "varclansettings" to { dumpVarClanSettings(basePath, cache) },
+            "params" to { dumpParam(basePath, cache, rev) },
+            "worldmap" to { dumpWma(basePath, cache, rev) },
+            "varc/varp" to { dumpVarcAndVarp(basePath, cache, rev) },
+            "categories" to { dumpCategories(basePath, cache, rev) },
+        )
+        val bar = progress.begin("Dumping CS2 symbols", steps.size.toLong())
+        for ((name, step) in steps) {
+            bar.message(name)
+            step()
+            bar.step()
+        }
+        bar.close()
     }
 
     private fun writeSymLines(basePath: File, fileName: String, lines: List<String>) {
@@ -334,16 +345,24 @@ class SymDumper {
 
     companion object {
 
-        fun dumpCacheVals(basePath: File, cache: Cache, rev: Int) {
-            SymDumper().dumpAll(basePath, cache, rev)
+        fun dumpCacheVals(basePath: File, cache: Cache, rev: Int, progress: CacheProgress = DefaultCacheProgress()) {
+            SymDumper().dumpAll(basePath, cache, rev, progress)
         }
 
+        /**
+         * The cache's gameval index has one interface table, but CS2 types distinguish `interface`
+         * from `overlayinterface`, so the split has to be declared here. Keep it in step with
+         * `symbols/overlayinterface.sym` in the Joshua-F dump, which is where the real typing lives;
+         * a name missing from this set lands in `interface.sym` and every call passing it to a proc
+         * that wants an `overlayinterface` fails to compile.
+         */
         private val OVERLAY_INTERFACE_NAMES = setOf(
             "settings",
             "chatbox",
             "worldmap",
             "collection",
             "reportabuse",
+            "displayname_menu", // added in 242
         )
 
         private const val STAT_ENUM_ID = 680

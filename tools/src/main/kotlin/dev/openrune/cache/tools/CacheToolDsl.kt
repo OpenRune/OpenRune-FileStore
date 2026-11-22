@@ -11,6 +11,7 @@ import dev.openrune.cache.tools.tasks.impl.defs.PackConfig
 import dev.openrune.cache.tools.tasks.CacheTask
 import dev.openrune.cache.tools.tasks.TaskType
 import dev.openrune.cache.tools.cs2.PackCs2
+import dev.openrune.cache.tools.tasks.impl.CollectGameVals
 import dev.openrune.cache.tools.tasks.impl.PackGameVals
 import dev.openrune.cache.tools.tasks.impl.RemoveBzip
 import dev.openrune.cache.tools.tasks.impl.RemoveXteas
@@ -27,6 +28,8 @@ fun cacheTool(block: CacheToolDsl.() -> Unit): CacheTool {
 class CacheToolDsl {
     var taskType: TaskType? = null
     var revision: Int? = null
+
+    var subRevision: Int = -1
     private var cache: File? = null
     private var serverCache: File? = null
 
@@ -53,6 +56,22 @@ class CacheToolDsl {
 
     private var incrementalDatabase: File? = null
 
+    /**
+     * Indices the server cache leaves empty (models, music, textures...). Only meaningful for
+     * [TaskType.SERVER_CACHE_BUILD]; makes the server cache a compacted rebuild of the live one.
+     */
+    var serverEmptyIndices: Set<Int> = emptySet()
+
+    fun serverEmptyIndices(vararg indices: Int) {
+        serverEmptyIndices = indices.toSet()
+    }
+
+    /**
+     * Rebuild the server cache compactly (default) instead of copying the live files and clearing
+     * indices in place. Set to false for a faster dev loop where the server cache size does not matter.
+     */
+    var serverCompact: Boolean = true
+
     var autoCert: Boolean = false
 
     var autoCertIds: Map<String, Int> = emptyMap()
@@ -75,6 +94,10 @@ class CacheToolDsl {
 
     fun revision(revision: Int) {
         this.revision = revision
+    }
+
+    fun subRevision(subRevision: Int) {
+        this.subRevision = subRevision
     }
 
 
@@ -103,10 +126,12 @@ class CacheToolDsl {
             addedTasks += PackAutoCert(certSettings)
         }
 
-        val defaultGameVals = PackGameVals()
+        if (removedTasks.none { it is CollectGameVals }) {
+            addedTasks += CollectGameVals()
+        }
 
         if (removedTasks.none { it is PackGameVals }) {
-            addedTasks += defaultGameVals
+            addedTasks += PackGameVals()
         }
 
         if (type == TaskType.FRESH_INSTALL) {
@@ -130,6 +155,7 @@ class CacheToolDsl {
         return CacheTool(
             type = type,
             revision = revision,
+            subRevision = subRevision,
             cacheLocation = cacheLocation,
             serverCacheLocation = serverCache,
             extraTasks = cleanedTasks,
@@ -137,7 +163,9 @@ class CacheToolDsl {
             incremental = incremental,
             incrementalDatabase = incrementalDatabase,
             verification = verification,
-            progress = progress
+            progress = progress,
+            serverEmptyIndices = serverEmptyIndices,
+            serverCompact = serverCompact,
         )
     }
 

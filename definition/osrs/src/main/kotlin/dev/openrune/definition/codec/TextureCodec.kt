@@ -74,4 +74,8 @@ class TextureCodec(private val revision: Int) : BuilderDefinitionCodec<TextureTy
     }
 
     override fun createDefinition() = TextureType()
+
+    override fun readLoop(builder: TextureTypeBuilder, buffer: ByteBuf) {
+        builder.read(-1, buffer)
+    }
 }

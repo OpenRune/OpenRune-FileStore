@@ -61,6 +61,7 @@ class NpcTypeBuilder(var id: Int = -1) : MutableTransforms, MutableRecolourable,
     var bgSoundFade: BgSoundFade? = null
     var crossWorldSound: Int = 2
     var randomSound: RandomSound? = null
+    var recolAll: Int = -1
     var examine: String = ""
 
     override var originalColours: MutableList<Int>? = null
@@ -143,6 +144,7 @@ class NpcTypeBuilder(var id: Int = -1) : MutableTransforms, MutableRecolourable,
             bgSoundFade = bgSoundFade,
             crossWorldSound = crossWorldSound,
             randomSound = randomSound,
+            recolAll = recolAll,
         )
         built.examine = examine
         if (extras.isNotEmpty()) built.extra.putAll(extras)
@@ -213,6 +215,7 @@ class NpcTypeBuilder(var id: Int = -1) : MutableTransforms, MutableRecolourable,
             builder.bgSoundFade = type.bgSoundFade
             builder.crossWorldSound = type.crossWorldSound
             builder.randomSound = type.randomSound
+            builder.recolAll = type.recolAll
             builder.examine = type.examine
             // Extras are intentionally not copied: NpcType.extra allocates its backing map on
             // first read, so probing it here would mutate the source. Codec-specific extras do

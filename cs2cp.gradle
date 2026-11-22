@@ -1,0 +1,10 @@
+gradle.projectsEvaluated {
+    def tools = gradle.rootProject.findProject(':tools')
+    tools.tasks.register('dumpToolsCp') {
+        doLast {
+            def out = new File(System.getProperty('cpOut'))
+            out.text = tools.sourceSets.main.runtimeClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)
+            println "wrote ${out.absolutePath}"
+        }
+    }
+}

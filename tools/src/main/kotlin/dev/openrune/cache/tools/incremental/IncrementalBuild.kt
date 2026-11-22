@@ -32,6 +32,12 @@ class IncrementalBuild internal constructor(
 
     val enabled: Boolean get() = state != null && !forced
 
+    /** Persistent state for tasks that keep their own records alongside the pack units, or null when disabled. */
+    internal val store: PackState? get() = if (forced) null else state
+
+    /** Every cache entry a recorded unit wrote so far this build. */
+    fun writtenTargets(): Set<CacheTarget> = writtenThisBuild
+
     fun run(
         task: CacheTask,
         scope: String,

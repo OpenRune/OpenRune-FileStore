@@ -9,14 +9,20 @@ import java.io.File
 
 class UnpackDefaultCs2(
     private val cs2Directory: File,
-    private val subRevision: Int? = null,
+    private val subRevisionOverride: Int? = null,
     private val force: Boolean = false,
+    /** Snapshot the pre-build symbols for Neptune's library baseline if the project has none; see [PackCs2.snapshotBaselineSymbols]. */
+    private val recordBaseline: Boolean = true,
 ) : CacheTask() {
 
     private val logger = InlineLogger()
 
+    /**
+     * Runs first, not in the CS2 stage: installing the project touches no cache data, and doing it before
+     * any packer lets the library baseline be recorded against the cache's original ids.
+     */
     override val priority: TaskPriority
-        get() = TaskPriority.CS2_LAST
+        get() = TaskPriority.GAMEVALS_COLLECT
 
     val cs2Root: File
         get() = cs2Directory
@@ -52,26 +58,24 @@ class UnpackDefaultCs2(
                 val existingRev =
                     NeptuneTomlClientVersion.readClientVersionFromText(text)
 
-                val layoutOk =
-                    NeptuneTomlClientVersion
-                        .allNeptunePathDirectoriesExist(
-                            cs2Directory,
-                            text
-                        )
-
-                if (existingRev == major && layoutOk) {
+                if (existingRev == major) {
+                    // Same revision: the project is current. A directory neptune.toml lists but that is
+                    // missing (a fresh checkout without symbols_custom, say) is recreated, not reinstalled
+                    // over; reinstalling would wipe the user's scripts.
+                    NeptuneTomlClientVersion.ensureListedDirectories(cs2Directory, text)
                     ensureExcludedFromNeptune(neptune)
+                    if (recordBaseline) PackCs2.snapshotBaselineSymbols(cs2Directory, cache, major, progress)
                     return
                 }
 
-                versionChanged = existingRev != major
+                versionChanged = true
             } else {
                 versionChanged = true
             }
         }
 
         if (firstInstall || versionChanged || force) {
-            logger.info {
+            logger.debug {
                 "UnpackDefaultCs2: performing fresh install " +
                         "(firstInstall=$firstInstall, " +
                         "versionChanged=$versionChanged, " +
@@ -82,64 +86,51 @@ class UnpackDefaultCs2(
             cs2Directory.mkdirs()
         }
 
-        val loader = UnpackDefaultCs2::class.java.classLoader
+        val wantedSub = subRevisionOverride ?: subRevision.takeIf { it > 0 }
 
-        val bundleKey = Cs2InstallBundles.resolveBundleKey(
-            major,
-            subRevision,
-            loader
-        )
-
-        if (bundleKey == null) {
-            logger.warn {
-                "UnpackDefaultCs2: no default CS2 bundle for revision $major on the classpath " +
-                        "(expected packcs2/install/$major.zip or packcs2/install/$major.<sub>.zip). " +
-                        "Install a CS2 project manually under ${cs2Directory.absolutePath}"
-            }
-            return
-        }
-
-        val resourcePath = "packcs2/install/$bundleKey.zip"
-
-        val stream = loader.getResourceAsStream(resourcePath)
-        if (stream == null) {
-            logger.warn {
-                "UnpackDefaultCs2: classpath entry missing for $resourcePath."
-            }
-            return
-        }
-
-        val tempZip =
-            File.createTempFile(
-                "openrune-cs2-bundle-",
-                ".zip"
+        val bundle = Cs2InstallBundles.resolve(major, wantedSub)
+            ?: error(
+                "UnpackDefaultCs2: no CS2 bundle for revision $major in the manifest at " +
+                    "${Cs2BundleSource.baseUrl}${Cs2BundleSource.MANIFEST_FILE} or on the classpath " +
+                    "(${Cs2BundleSource.CLASSPATH_DIR}/$major.<sub>.zip). " +
+                    "Install a CS2 project manually under ${cs2Directory.absolutePath}"
             )
+        val bundleKey = bundle.name
+
+        val wantedLabel = if (wantedSub != null) "$major.$wantedSub" else "$major"
+        if (bundleKey != wantedLabel) {
+            logger.debug { "UnpackDefaultCs2: no bundle for $wantedLabel, using the closest one in revision $major: $bundleKey" }
+        }
+        logger.info { "Installing CS2 project $bundleKey into ${cs2Directory.absolutePath}" }
+
+        val zipFile = Cs2BundleSource.fetch(bundle)
+        if (zipFile == null) {
+            logger.warn { "UnpackDefaultCs2: could not obtain bundle $bundleKey." }
+            return
+        }
 
         try {
-            stream.use { input ->
-                tempZip.outputStream().use {
-                    input.copyTo(it)
-                }
-            }
-
-            ZipFile(tempZip).use { zip ->
+            ZipFile(zipFile).use { zip ->
                 Cs2BundleExtract.extract(
                     zip,
-                    cs2Directory
+                    cs2Directory,
+                    progress,
                 )
             }
 
+            Cs2DumpFixups.apply(cs2Directory)
+
             syncNeptuneClientVersion(major)
 
-            logger.info {
+            logger.debug {
                 "UnpackDefaultCs2: unpacked $bundleKey into ${cs2Directory.absolutePath}"
             }
+
+            if (recordBaseline) PackCs2.snapshotBaselineSymbols(cs2Directory, cache, major, progress)
         } catch (e: Exception) {
             logger.error(e) {
                 "UnpackDefaultCs2: failed to unpack $bundleKey: ${e.message}"
             }
-        } finally {
-            tempZip.delete()
         }
     }
 
@@ -153,7 +144,9 @@ class UnpackDefaultCs2(
                 return@forEach
             }
 
-            if (!it.delete()) {
+            // A directory that still holds kept `custom` entries (or the root itself) cannot go; that is
+            // expected, not a failure worth reporting.
+            if (!it.delete() && !it.isDirectory) {
                 logger.warn {
                     "UnpackDefaultCs2: failed to delete ${it.absolutePath}"
                 }
@@ -186,60 +179,29 @@ class UnpackDefaultCs2(
 
 internal object Cs2InstallBundles {
 
-    fun resolveBundleKey(
-        major: Int,
-        subRevision: Int?,
-        loader: ClassLoader
-    ): String? {
-        val candidates = probeZips(major, loader)
+    /** The bundle to install for [major] / [subRevision], chosen from everything [Cs2BundleSource] knows. */
+    fun resolve(major: Int, subRevision: Int?): Cs2BundleSource.Bundle? =
+        pick(Cs2BundleSource.available(major), subRevision)
+
+    fun pick(candidates: List<Cs2BundleSource.Bundle>, subRevision: Int?): Cs2BundleSource.Bundle? {
         if (candidates.isEmpty()) {
             return null
         }
 
-        if (subRevision != null) {
-            return candidates.firstOrNull { it.sub == subRevision }?.stem
+        // Sub revision unknown: the generic <major>.zip if there is one, else the newest sub rev.
+        if (subRevision == null || subRevision <= 0) {
+            return candidates.firstOrNull { it.sub == 0 } ?: candidates.maxByOrNull { it.sub }
         }
 
-        candidates.firstOrNull { it.sub == 0 }?.let { return it.stem }
+        candidates.firstOrNull { it.sub == subRevision }?.let { return it }
 
-        return candidates
-            .maxByOrNull { it.sub }
-            ?.stem
-    }
-
-    private data class BundleRef(
-        val major: Int,
-        val sub: Int,
-        val stem: String
-    )
-
-    private fun probeZips(
-        major: Int,
-        loader: ClassLoader
-    ): List<BundleRef> {
-        val bundles = mutableListOf<BundleRef>()
-
-        // packcs2/install/225.zip
-        if (loader.getResource("packcs2/install/$major.zip") != null) {
-            bundles += BundleRef(
-                major = major,
-                sub = 0,
-                stem = "$major"
-            )
-        }
-
-        for (sub in 1..999) {
-            val path = "packcs2/install/$major.$sub.zip"
-
-            if (loader.getResource(path) != null) {
-                bundles += BundleRef(
-                    major = major,
-                    sub = sub,
-                    stem = "$major.$sub"
-                )
-            }
-        }
-
-        return bundles
+        // A sub revision only gets a bundle when its client update changed scripts, so a missing one
+        // means the scripts are still those of the sub revision before it. Going back is therefore
+        // exact, while going forward would pull in changes this cache does not have; forward is only
+        // a last resort for a sub revision older than every bundle. The candidates are for this major
+        // revision alone, so the search can never cross into another one.
+        val nearestBelow = candidates.filter { it.sub in 1 until subRevision }.maxByOrNull { it.sub }
+        val nearestAbove = candidates.filter { it.sub > subRevision }.minByOrNull { it.sub }
+        return nearestBelow ?: candidates.firstOrNull { it.sub == 0 } ?: nearestAbove
     }
 }

@@ -67,6 +67,7 @@ class PackConfig(
         registerPackType(index = TEXTURES, archive = 0, codec = TextureCodec::class, name = "texture", kType = typeOf<List<TextureType>>())
         registerPackType(OBJECT, ObjectCodec::class, "object", GameValGroupTypes.LOCTYPES, kType = typeOf<List<ObjectType>>())
         registerPackType(ENUM, EnumCodec::class, "enum", kType = typeOf<List<EnumType>>())
+        registerPackType(STRUCT, StructCodec::class, "struct", kType = typeOf<List<StructType>>())
         registerPackType(SPOTANIM, SpotAnimCodec::class, "graphics", GameValGroupTypes.SPOTTYPES, kType = typeOf<List<SpotAnimType>>())
         registerPackType(SPOTANIM, SpotAnimCodec::class, "graphic", GameValGroupTypes.SPOTTYPES, kType = typeOf<List<SpotAnimType>>())
         registerPackType(SEQUENCE, SequenceCodec::class, "animation", GameValGroupTypes.SEQTYPES, kType = typeOf<List<SequenceType>>())
@@ -79,7 +80,7 @@ class PackConfig(
         registerPackType(IDENTKIT, IdentityKitCodec::class, "idk", kType = typeOf<List<IdentityKitType>>())
         registerPackType(INV, InventoryCodec::class, "inventory", GameValGroupTypes.INVTYPES, kType = typeOf<List<InventoryType>>())
         registerPackType(OVERLAY, OverlayCodec::class, "overlay", kType = typeOf<List<OverlayType>>())
-        registerPackType(UNDERLAY, OverlayCodec::class, "underlay", kType = typeOf<List<UnderlayType>>())
+        registerPackType(UNDERLAY, UnderlayCodec::class, "underlay", kType = typeOf<List<UnderlayType>>())
         registerPackType(PARAMS, ParamCodec::class, "params", kType = typeOf<List<ParamType>>())
         registerPackType(VARPLAYER, VarCodec::class, "varp", GameValGroupTypes.VARPTYPES, kType = typeOf<List<VarpType>>())
         registerPackType(VARCLIENT, VarClientCodec::class, "varclient", kType = typeOf<List<VarClientType>>())
@@ -92,7 +93,11 @@ class PackConfig(
         val files = getFiles(directory, "toml")
         if (files.isEmpty()) return
 
-        val blocks = files.flatMap(ConfigBlocks::scan).filter { packTypes.containsKey(it.name) }
+        // A server pass builds on a copy of the live cache, which already holds every shared definition
+        // exactly as this task would write it again. Only the server-only blocks are left to do.
+        val blocks = files.flatMap(ConfigBlocks::scan)
+            .filter { packTypes.containsKey(it.name) }
+            .filter { !serverPass || it.serverOnly }
         if (blocks.isEmpty()) return
 
         val (varpBlocks, otherBlocks) = blocks.partition { it.name == "varp" }

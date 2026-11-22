@@ -58,8 +58,15 @@ open class BaseComponent {
     var placement: Placement? = null
         private set
 
+    var parentName: String? = null
+        private set
+
     fun from(name: String) {
         fromComponent = name.removePrefix("component.").substringAfter(":")
+    }
+
+    fun parent(name: String) {
+        parentName = anchorName(name)
     }
 
     fun insertAfter(name: String) {

@@ -13,7 +13,7 @@ class IdentityKitTypeBuilder(var id: Int = -1) : MutableRecolourable {
     override var modifiedTextureColours: MutableList<Int>? = null
     var bodyPartId: Int = -1
     var models: MutableList<Int>? = null
-    var chatheadModels: MutableList<Int> = mutableListOf(-1, -1, -1, -1, -1)
+    var chatheadModels: MutableList<Int> = mutableListOf(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1)
     var nonSelectable: Boolean = false
 
     fun build(): IdentityKitType = IdentityKitType(

@@ -31,6 +31,9 @@ class BZIP2Compressor : Compressor {
         try {
             ByteArrayInputStream(bytes).use { stream ->
                 val bout = ByteArrayOutputStream()
+                // Block size must stay 1 (100k): the game client's decompressor, and the ports of it in this
+                // library and in OpenRune's filesystem module, use a fixed 100000-entry work array. Level 9
+                // (900k blocks) produces archives none of them can read.
                 CBZip2OutputStream(bout, 1).use { os ->
                     val buf = ByteArray(4096)
                     var len: Int

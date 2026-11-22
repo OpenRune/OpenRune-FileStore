@@ -95,6 +95,7 @@ class ObjectCodec(private val revision: Int) : BuilderDefinitionCodec<ObjectType
 
             40 -> readColours(buffer)
             41 -> readTextures(buffer)
+            42 -> recolAll = buffer.readUnsignedShort()
             61 -> category = buffer.readUnsignedShort()
             62 -> isRotated = true
             64 -> clipped = false
@@ -110,6 +111,7 @@ class ObjectCodec(private val revision: Int) : BuilderDefinitionCodec<ObjectType
             74 -> isHollow = true
             75 -> supportsItems = buffer.readUnsignedByte().toInt()
             77, 92 -> readTransforms(buffer, opcode == 92)
+            97, 98 -> readTransforms(buffer, opcode == 98, mediumIds = true)
             78 -> {
                 ambientSoundId = buffer.readUnsignedShort()
                 soundDistance = buffer.readUnsignedByte().toInt()
@@ -247,6 +249,11 @@ class ObjectCodec(private val revision: Int) : BuilderDefinitionCodec<ObjectType
             definition.originalTextureColours,
             definition.modifiedTextureColours,
         )
+
+        if (definition.recolAll != -1) {
+            writeByte(42)
+            writeShort(definition.recolAll)
+        }
 
         if (definition.category != -1) {
             writeByte(61)
@@ -389,9 +396,14 @@ class ObjectCodec(private val revision: Int) : BuilderDefinitionCodec<ObjectType
             }
         }
 
+        // 242 moved loc transforms to opcodes 97/98, which carry medium-width ids.
+        val mediumTransforms = revisionIsOrAfter(revision, 242)
         writeTransforms(
-            this, 77, 92,
+            this,
+            if (mediumTransforms) 97 else 77,
+            if (mediumTransforms) 98 else 92,
             definition.multiVarBit, definition.multiVarp, definition.multiDefault, definition.transforms,
+            mediumTransforms,
         )
         writeParameters(this, definition.params)
 

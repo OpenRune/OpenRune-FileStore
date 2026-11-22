@@ -12,6 +12,8 @@ abstract class CacheTask(val serverTaskOnly : Boolean = false) {
      * Must not remain `-1` when CS2 tasks execute; use a resolved cache revision (e.g. from `version.dat`).
      */
     open var revision: Int = -1
+
+    open var subRevision: Int = -1
     internal var serverPass : Boolean = false
     open val priority: TaskPriority = TaskPriority.NORMAL
 

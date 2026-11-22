@@ -15,7 +15,11 @@ enum class GameValGroupTypes(val id: Int, val groupName: String, val revision : 
     SPRITETYPES(12, "sprites"),
     IFTYPES(13, "components"),
     IFTYPES_V2(14, "components",232),
-    VARCS(15, "varcs",232);
+    VARCS(15, "varcs",232),
+    SYNTHTYPES(16, "synth", 242),
+    MIDITYPES(17, "midi", 242),
+    JINGLETYPES(18, "jingles", 242),
+    AMBIENTSOUNDTYPES(19, "ambientsounds", 242);
 
 
     companion object {

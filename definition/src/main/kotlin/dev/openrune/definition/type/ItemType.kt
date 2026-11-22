@@ -77,6 +77,9 @@ data class ItemType(
     val placeholderLink: Int = -1,
     val placeholderTemplate: Int = -1,
     val subops: Array<Array<String?>?>? = null,
+    val recolAll: Int = -1,
+    val keepOnlyDuringSeqs: List<Int>? = null,
+    val unlockable: Boolean = false,
 
     ) : Definition, Recolourable, Parameterized {
 

@@ -42,7 +42,7 @@ object SpriteData {
 
         spritePalette = IntArray(paletteSize)
         for (i in 1 until paletteSize) {
-            spritePalette[i] = buffer.readMedium()
+            spritePalette[i] = buffer.readUnsignedMedium()
             if (spritePalette[i] == 0) {
                 spritePalette[i] = 1
             }
