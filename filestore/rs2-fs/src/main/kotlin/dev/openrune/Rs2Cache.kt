@@ -5,7 +5,11 @@ import dev.openrune.definition.codec.QuickChatCategoryCodec
 import dev.openrune.definition.codec.QuickChatPhraseCodec
 import dev.openrune.definition.codec.Rs2AchievementCodec
 import dev.openrune.definition.codec.Rs2MapElementCodec
+import dev.openrune.definition.codec.Rs2MaterialDecoder
+import dev.openrune.definition.codec.Rs2ModelDecoder
 import dev.openrune.definition.codec.Rs2QuestCodec
+import dev.openrune.definition.type.Rs2MaterialType
+import dev.openrune.definition.type.Rs2ModelType
 import dev.openrune.definition.type.MapSceneIconType
 import dev.openrune.definition.type.Rs2AchievementType
 import dev.openrune.definition.type.Rs2MapElementType
@@ -16,6 +20,7 @@ import dev.openrune.definition.type.SpriteType
 import dev.openrune.rs2.OpenRs2ArchiveStore
 import dev.openrune.rs2.OpenRs2CacheArchive
 import dev.openrune.rs2.Rs2ConfigGroup
+import dev.openrune.rs2.Rs2ConfigLocation
 import dev.openrune.rs2.Rs2Index
 import dev.openrune.rs2.Rs2Manifest
 import dev.openrune.rs2.Rs2Sprite
@@ -66,8 +71,61 @@ class Rs2Cache private constructor(val cache: Cache, val build: Int? = null) : A
         }
     }
 
+    fun hasIndex(index: Int): Boolean = cache.exists(index)
+
+    fun groups(index: Int): List<Int> =
+        cache.list(index).asSequence().map { it.id }.sorted().toList()
+
+    fun files(index: Int, group: Int): List<Int> =
+        cache.list(index, group).asSequence().map { it.id }.sorted().toList()
+
+    fun groupBytes(index: Int, group: Int, file: Int = 0): ByteArray {
+        val buf = cache.read(index, group, file)
+        try {
+            return ByteArray(buf.readableBytes()).also { buf.readBytes(it) }
+        } finally {
+            buf.release()
+        }
+    }
+
     fun spriteGroups(archive: Int = Rs2Index.SPRITES): List<Int> =
         cache.list(archive).asSequence().map { it.id }.sorted().toList()
+
+    private val materialGroups: Map<Int, Int> by lazy {
+        if (!cache.exists(Rs2Index.MATERIALS)) {
+            emptyMap()
+        } else {
+            val groups = LinkedHashMap<Int, Int>()
+            cache.list(Rs2Index.MATERIALS).forEach { group ->
+                cache.list(Rs2Index.MATERIALS, group.id).forEach { file -> groups[file.id] = group.id }
+            }
+            groups
+        }
+    }
+
+    fun materialIds(): List<Int> = materialGroups.keys.sorted()
+
+    fun readMaterial(id: Int): Rs2MaterialType {
+        val group = materialGroups[id] ?: throw java.io.FileNotFoundException("No material $id")
+        val buf = cache.read(Rs2Index.MATERIALS, group, id)
+        try {
+            return Rs2MaterialDecoder.decode(id, buf)
+        } finally {
+            buf.release()
+        }
+    }
+
+    fun modelIds(): List<Int> =
+        if (!cache.exists(Rs2Index.MODELS_RT7)) emptyList() else groups(Rs2Index.MODELS_RT7)
+
+    fun readModel(id: Int): Rs2ModelType {
+        val buf = cache.read(Rs2Index.MODELS_RT7, id, 0)
+        try {
+            return Rs2ModelDecoder.decode(id, buf, build ?: Int.MAX_VALUE)
+        } finally {
+            buf.release()
+        }
+    }
 
     fun quickChatCategoryIds(): List<Int> =
         cache.list(Rs2Index.QUICKCHAT, QUICKCHAT_CATEGORY_GROUP).asSequence().map { it.id }.sorted().toList()
@@ -153,6 +211,58 @@ class Rs2Cache private constructor(val cache: Cache, val build: Int? = null) : A
             buf.release()
         }
     }
+
+    fun configIds(location: Rs2ConfigLocation): List<Int> {
+        val archive = location.archive
+        if (archive != null && archivePopulated(archive.index)) {
+            return cache.list(archive.index).asSequence().flatMap { group ->
+                cache.list(archive.index, group.id).asSequence()
+                    .map { (group.id shl archive.bits) + it.id }
+            }.sorted().toList()
+        }
+        val group = location.group ?: return emptyList()
+        return runCatching {
+            cache.list(group.index, group.group).asSequence().map { it.id }.sorted().toList()
+        }.getOrDefault(emptyList())
+    }
+
+    fun <T : dev.openrune.definition.Definition> readConfig(
+        location: Rs2ConfigLocation,
+        id: Int,
+        codec: dev.openrune.definition.DefinitionCodec<T>,
+    ): T {
+        val archive = location.archive
+        val buf = if (archive != null && archivePopulated(archive.index)) {
+            cache.read(archive.index, id ushr archive.bits, id and ((1 shl archive.bits) - 1))
+        } else {
+            val group = location.group ?: throw java.io.FileNotFoundException("No location for config $id")
+            cache.read(group.index, group.group, id)
+        }
+        try {
+            return codec.loadData(id, buf)
+        } finally {
+            buf.release()
+        }
+    }
+
+    fun configBytes(location: Rs2ConfigLocation, id: Int): ByteArray {
+        val archive = location.archive
+        val buf = if (archive != null && archivePopulated(archive.index)) {
+            cache.read(archive.index, id ushr archive.bits, id and ((1 shl archive.bits) - 1))
+        } else {
+            val group = location.group ?: throw java.io.FileNotFoundException("No location for config $id")
+            cache.read(group.index, group.group, id)
+        }
+        try {
+            return ByteArray(buf.readableBytes()).also { buf.getBytes(buf.readerIndex(), it) }
+        } finally {
+            buf.release()
+        }
+    }
+
+    private fun archivePopulated(index: Int): Boolean = runCatching {
+        cache.exists(index) && cache.list(index).hasNext()
+    }.getOrDefault(false)
 
     fun warnIfArchiveTooEarly(archiveName: String) {
         build?.let { Rs2Manifest.warnIfArchiveTooEarly(archiveName, it) }

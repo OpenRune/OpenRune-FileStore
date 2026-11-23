@@ -13,6 +13,11 @@ data class VarBitType(
     val endBit: Int = 0,
 
 ) : Definition {
+    private var extraProperties: MutableMap<String, Any?>? = null
+
+    override val extra: MutableMap<String, Any?>
+        get() = extraProperties ?: LinkedHashMap<String, Any?>(8).also { extraProperties = it }
+
 
     fun toBuilder(): VarBitTypeBuilder = VarBitTypeBuilder.from(this)
 }

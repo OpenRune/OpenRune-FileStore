@@ -7,17 +7,19 @@ import dev.openrune.definition.MutableParameterized
 class StructTypeBuilder(var id: Int = -1) : MutableParameterized {
 
     override var params: MutableMap<Int, Any>? = null
+    var pluginApi: Boolean = true
 
     fun build(): StructType = StructType(
         id = id,
         params = params,
-    )
+    ).also { if (!pluginApi) it.rs2 = StructType.Rs2(pluginApi = false) }
 
     companion object {
         /** Copies every field of [type] into a fresh builder. Map contents are copied too. */
         fun from(type: StructType): StructTypeBuilder {
             val builder = StructTypeBuilder(type.id)
             builder.params = type.params?.toMutableMap()
+            builder.pluginApi = type.rs2?.pluginApi ?: true
             return builder
         }
     }

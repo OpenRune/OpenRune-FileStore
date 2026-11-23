@@ -53,9 +53,13 @@ fun writeParameters(writer: ByteBuf, params: Map<Int, Any>?) {
     if (params == null) return
 
     writer.writeByte(249)
-    writer.writeByte(params.size)
+    writeParameterBody(writer, params)
+}
 
-    for ((id, value) in params) {
+fun writeParameterBody(writer: ByteBuf, params: Map<Int, Any>?) {
+    writer.writeByte(params?.size ?: 0)
+
+    for ((id, value) in params.orEmpty()) {
         when (value) {
             is Int -> {
                 writer.writeByte(0)

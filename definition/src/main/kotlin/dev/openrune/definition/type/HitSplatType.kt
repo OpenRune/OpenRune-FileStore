@@ -28,6 +28,11 @@ data class HitSplatType(
     override val transforms: List<Int>? = null,
 
 ) : Definition, Transforms {
+    private var extraProperties: MutableMap<String, Any?>? = null
+
+    override val extra: MutableMap<String, Any?>
+        get() = extraProperties ?: LinkedHashMap<String, Any?>(8).also { extraProperties = it }
+
 
     fun toBuilder(): HitSplatTypeBuilder = HitSplatTypeBuilder.from(this)
 }

@@ -125,8 +125,8 @@ fun ByteBuf.writeByte(value: Boolean) {
 
 fun ByteBuf.writeSmart(value: Int) {
     when (value) {
-        in 0..127 -> writeByte(value + 32768)
-        in 0..32767 -> writeShort(value)
+        in 0..127 -> writeByte(value)
+        in 128..32767 -> writeShort(value or 0x8000)
         else -> throw IllegalArgumentException("writeSmart out of range: $value")
     }
 }
@@ -171,7 +171,7 @@ fun ByteBuf.toArray(): ByteArray {
 private const val HALF_UBYTE = 0x80
 
 fun ByteBuf.writeNullableLargeSmartCorrect(value: Int?): ByteBuf = when {
-    value == null -> {
+    value == null || value == -1 -> {
         writeShort(0x7FFF)
     }
     value < Short.MAX_VALUE -> {

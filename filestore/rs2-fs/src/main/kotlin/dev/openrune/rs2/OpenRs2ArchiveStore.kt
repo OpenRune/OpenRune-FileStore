@@ -13,9 +13,11 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -157,10 +159,7 @@ class OpenRs2ArchiveStore(
 
         return when (response.statusCode()) {
             200 -> {
-                cachePath(request.uri())?.let { path ->
-                    Files.createDirectories(path.parent)
-                    Files.write(path, response.body())
-                }
+                cachePath(request.uri())?.let { path -> writeAtomically(path, response.body()) }
                 Unpooled.wrappedBuffer(response.body())
             }
             404 -> throw FileNotFoundException("Archive $archive group $group not found for $scope/$id")
@@ -169,6 +168,21 @@ class OpenRs2ArchiveStore(
     }
 
     private fun cachePath(uri: URI): Path? = resolvedCacheDir?.resolve(uri.path.removePrefix("/"))
+
+    private fun writeAtomically(path: Path, body: ByteArray) {
+        Files.createDirectories(path.parent)
+        val temp = Files.createTempFile(path.parent, path.fileName.toString(), ".part")
+        try {
+            Files.write(temp, body)
+            try {
+                Files.move(temp, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+            } catch (e: AtomicMoveNotSupportedException) {
+                Files.move(temp, path, StandardCopyOption.REPLACE_EXISTING)
+            }
+        } finally {
+            Files.deleteIfExists(temp)
+        }
+    }
 
     private fun <T> send(request: HttpRequest, bodyHandler: HttpResponse.BodyHandler<T>): HttpResponse<T> {
         return try {

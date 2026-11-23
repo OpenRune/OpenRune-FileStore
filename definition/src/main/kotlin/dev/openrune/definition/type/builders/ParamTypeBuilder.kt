@@ -11,6 +11,7 @@ class ParamTypeBuilder(var id: Int = -1) {
     var defaultInt: Int = 0
     var defaultString: String? = null
     var defaultLong: Long = 0L
+    var typeFromId: Boolean = false
 
     fun build(): ParamType = ParamType(
         id = id,
@@ -19,7 +20,7 @@ class ParamTypeBuilder(var id: Int = -1) {
         defaultInt = defaultInt,
         defaultString = defaultString,
         defaultLong = defaultLong,
-    )
+    ).also { if (typeFromId) it.rs2 = ParamType.Rs2(typeFromId = true) }
 
     companion object {
         /** Copies every field of [type] into a fresh builder. */
@@ -30,6 +31,7 @@ class ParamTypeBuilder(var id: Int = -1) {
             builder.defaultInt = type.defaultInt
             builder.defaultString = type.defaultString
             builder.defaultLong = type.defaultLong
+            builder.typeFromId = type.rs2?.typeFromId ?: false
             return builder
         }
     }

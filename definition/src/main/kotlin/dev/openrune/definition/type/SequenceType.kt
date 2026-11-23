@@ -36,6 +36,11 @@ data class SequenceType(
     val debugName : String = ""
 
 ) : Definition, Sound {
+    private var extraProperties: MutableMap<String, Any?>? = null
+
+    override val extra: MutableMap<String, Any?>
+        get() = extraProperties ?: LinkedHashMap<String, Any?>(8).also { extraProperties = it }
+
 
     fun toBuilder(): SequenceTypeBuilder = SequenceTypeBuilder.from(this)
 

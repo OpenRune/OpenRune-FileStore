@@ -64,10 +64,8 @@ abstract class ReadOnlyCache(
         val keys = if (xtea != null && indexId == MAPS) xtea else null
         val decompressed = context.decompress(sectorData, keys) ?: return null
         if (fileCount == 1) {
-            val fileId = fileIds[archiveId]?.last() ?: return null
-            return Array(fileId + 1) {
-                if (it == fileId) decompressed else null
-            }
+            fileIds[archiveId]?.last() ?: return null
+            return arrayOf(decompressed)
         }
 
         val reader = ByteBuffer.wrap(decompressed)

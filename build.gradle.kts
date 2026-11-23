@@ -90,6 +90,7 @@ val definitionRs2Version = buildNumber
 val filestoreVersion = buildNumber
 val filestoreOsrsFsVersion = buildNumber
 val filestoreRs2FsVersion = buildNumber
+val filestoreMergedFsVersion = buildNumber
 val toolsVersion = buildNumber
 val displeeVersion = buildNumber
 
@@ -163,6 +164,12 @@ publishing {
                         filestoreRs2.appendNode("version", filestoreRs2FsVersion)
                         filestoreRs2.appendNode("scope", "compile")
 
+                        val filestoreMerged = appendNode("dependency")
+                        filestoreMerged.appendNode("groupId", "dev.or2")
+                        filestoreMerged.appendNode("artifactId", "merged-fs")
+                        filestoreMerged.appendNode("version", filestoreMergedFsVersion)
+                        filestoreMerged.appendNode("scope", "compile")
+
                         val tools = appendNode("dependency")
                         tools.appendNode("groupId", "dev.or2")
                         tools.appendNode("artifactId", "tools")
@@ -174,6 +181,44 @@ publishing {
                         displee.appendNode("artifactId", "displee")
                         displee.appendNode("version", toolsVersion)
                         displee.appendNode("scope", "compile")
+                    }
+                }
+            }
+        }
+
+        create<MavenPublication>("allRs2") {
+            artifactId = "all-rs2"
+
+            pom {
+                name.set("OpenRune - all-rs2")
+                description.set("Aggregate module including all RS3-related dependencies.")
+                url.set("https://github.com/OpenRune/openrune-aggregates")
+
+                withXml {
+                    asNode().appendNode("dependencies").apply {
+                        val definition = appendNode("dependency")
+                        definition.appendNode("groupId", "dev.or2")
+                        definition.appendNode("artifactId", "definition")
+                        definition.appendNode("version", definitionVersion)
+                        definition.appendNode("scope", "compile")
+
+                        val definitionRs2 = appendNode("dependency")
+                        definitionRs2.appendNode("groupId", "dev.or2")
+                        definitionRs2.appendNode("artifactId", "rs2")
+                        definitionRs2.appendNode("version", definitionRs2Version)
+                        definitionRs2.appendNode("scope", "compile")
+
+                        val filestoreRs2 = appendNode("dependency")
+                        filestoreRs2.appendNode("groupId", "dev.or2")
+                        filestoreRs2.appendNode("artifactId", "rs2-fs")
+                        filestoreRs2.appendNode("version", filestoreRs2FsVersion)
+                        filestoreRs2.appendNode("scope", "compile")
+
+                        val buffer = appendNode("dependency")
+                        buffer.appendNode("groupId", "io.netty")
+                        buffer.appendNode("artifactId", "netty-buffer")
+                        buffer.appendNode("version", nettyBufferVersion)
+                        buffer.appendNode("scope", "compile")
                     }
                 }
             }
@@ -211,4 +256,27 @@ publishing {
             }
         }
     }
+}
+
+/**
+ * Publishes the RS3 stack and nothing else: `definition`, `rs2`, `rs2-fs` and the `all-rs2`
+ * aggregate. No OSRS artifact is touched, so the two sides stay independently consumable.
+ *
+ *   ./gradlew publishRs2                 -> the hosting repo at HOSTING_DIRECTORY
+ *   ./gradlew publishRs2ToMavenLocal     -> ~/.m2, for testing a consumer before pushing
+ */
+val rs2Modules = listOf(":definition", ":definition:rs2", ":filestore:rs2-fs")
+
+tasks.register("publishRs2") {
+    group = "openrune"
+    description = "Publishes definition, rs2, rs2-fs and all-rs2 to the hosting repository."
+    dependsOn(rs2Modules.map { "$it:publishMavenJavaPublicationToMavenRepository" })
+    dependsOn("publishAllRs2PublicationToMavenRepository")
+}
+
+tasks.register("publishRs2ToMavenLocal") {
+    group = "openrune"
+    description = "Publishes definition, rs2, rs2-fs and all-rs2 to the local Maven cache."
+    dependsOn(rs2Modules.map { "$it:publishMavenJavaPublicationToMavenLocal" })
+    dependsOn("publishAllRs2PublicationToMavenLocal")
 }

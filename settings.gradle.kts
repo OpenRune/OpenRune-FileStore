@@ -2,7 +2,7 @@ rootProject.name = "filestore"
 
 include("filesystem")
 include("definition", "definition:osrs", "definition:rs2", "definition:opcode")
-include("filestore", "filestore:osrs-fs", "filestore:rs2-fs")
+include("filestore", "filestore:osrs-fs", "filestore:rs2-fs", "filestore:merged-fs")
 
 include("tools")
 include("displee")

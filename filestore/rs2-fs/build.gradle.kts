@@ -10,12 +10,12 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
 }
 
-tasks.register<JavaExec>("collectRs3GroupIronData") {
-    group = "rs3"
+tasks.register<JavaExec>("collectRs2GroupIronData") {
+    group = "rs2"
     description = "Dumps RS3 quest and achievement data from the latest openrs2 build as JSON. Optional: -Pout=<dir>"
     classpath = sourceSets.main.get().runtimeClasspath
-    mainClass.set("dev.openrune.rs2.tasks.CollectRs3GroupIronData")
-    val out = (project.findProperty("out") as String?) ?: layout.buildDirectory.dir("rs3-data").get().asFile.path
+    mainClass.set("dev.openrune.rs2.tasks.CollectRs2GroupIronData")
+    val out = (project.findProperty("out") as String?) ?: layout.buildDirectory.dir("rs2-data").get().asFile.path
     args("--out", out)
 }
 
@@ -31,6 +31,10 @@ tasks.test {
     System.getProperty("msiscan")?.let { systemProperty("msiscan", it) }
     // Opt in to Rs2MapElementScanTest with `-Dmelscan=true`; it is skipped otherwise.
     System.getProperty("melscan")?.let { systemProperty("melscan", it) }
+    // Opt in to Rs2LiveCacheCodecTest with `-Dlivecache=true`; it is skipped otherwise.
+    System.getProperty("livecache")?.let { systemProperty("livecache", it) }
+    // Opt in to Rs2RoundTripDiffProbe with `-Ddiffprobe=true`; it is skipped otherwise.
+    System.getProperty("diffprobe")?.let { systemProperty("diffprobe", it) }
     System.getProperty("questscan")?.let { systemProperty("questscan", it) }
     System.getProperty("achscan")?.let { systemProperty("achscan", it) }
     // Rs2AllBuildsSpriteScanTest prints per-build progress as it runs - stream it live

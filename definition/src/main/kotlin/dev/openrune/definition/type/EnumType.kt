@@ -5,6 +5,8 @@ import dev.openrune.definition.type.builders.EnumTypeBuilder
 import dev.openrune.toml.rsconfig.RsTableHeaders
 import dev.openrune.toml.serialization.TomlField
 import dev.openrune.definition.Definition
+import dev.openrune.definition.Rs2Opcode
+import dev.openrune.definition.Rs2OpcodeOrdered
 import dev.openrune.definition.util.CacheVarLiteral
 import dev.openrune.seralizer.CacheVarLiteralSeralizier
 import dev.openrune.seralizer.EnumTypeTableHook
@@ -24,8 +26,19 @@ data class EnumType(
     val defaultLong: Long = 0L,
     val defaultString: String = "",
     @param:TomlField(serializer = ParamSerializer::class)
-    val values: MutableMap<Int, Any> = HashMap()
-) : Definition {
+    val values: MutableMap<Int, Any> = LinkedHashMap(),
+) : Definition, Rs2OpcodeOrdered {
+
+    override val opcodeOrder: MutableList<Rs2Opcode> = mutableListOf()
+
+    var rs2: Rs2? = null
+
+    data class Rs2(
+        val dense: Boolean = false,
+        val capacity: Int? = null,
+        val typesFromId: Boolean = false,
+        val pluginApi: Boolean = true,
+    )
 
     fun toBuilder(): EnumTypeBuilder = EnumTypeBuilder.from(this)
 

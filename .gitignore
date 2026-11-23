@@ -33,3 +33,4 @@ tools/build/*
 worldmap-out/
 /filestore/rs2-fs/build
 /definition/rs2/build
+/filestore/merged-fs/build

@@ -50,12 +50,12 @@ class FileCache(
     }
 
     override fun data(index: Int, archive: Int, file: Int, xtea: IntArray?): ByteArray? {
-        val matchingIndex = fileIndex(index, archive, file)
-        if (matchingIndex == -1) {
+        val position = fileIndex(index, archive, file)
+        if (position == -1) {
             return null
         }
         val files = fileData(index, archive, xtea) ?: return null
-        return files.getOrNull(matchingIndex)
+        return files.getOrNull(position)
     }
 
     override fun fileData(index: Int, archive: Int, xtea: IntArray?): Array<ByteArray?>? {
