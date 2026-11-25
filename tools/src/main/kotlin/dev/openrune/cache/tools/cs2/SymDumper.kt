@@ -22,7 +22,7 @@ import dev.openrune.cache.gameval.impl.Table
 import dev.openrune.cache.tools.progress.CacheProgress
 import dev.openrune.cache.tools.progress.DefaultCacheProgress
 import dev.openrune.definition.GameValGroupTypes
-import dev.openrune.definition.GameValGroupTypes.IFTYPES
+import dev.openrune.definition.GameValGroupTypesOSRS.IFTYPES
 import dev.openrune.definition.type.DBTableType
 import dev.openrune.definition.type.EnumType
 import dev.openrune.definition.type.ItemType

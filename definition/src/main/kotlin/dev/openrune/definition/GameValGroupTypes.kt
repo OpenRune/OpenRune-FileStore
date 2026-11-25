@@ -1,6 +1,10 @@
 package dev.openrune.definition
 
-enum class GameValGroupTypes(val id: Int, val groupName: String, val revision : Int = -1) {
+enum class GameValGroupTypesOSRS(
+    override val id: Int,
+    override val groupName: String,
+    override val revision: Int = -1,
+) : GameValGroup {
     OBJTYPES(0, "items"),
     NPCTYPES(1, "npcs"),
     INVTYPES(2, "inv"),
@@ -14,20 +18,25 @@ enum class GameValGroupTypes(val id: Int, val groupName: String, val revision : 
     SOUNDTYPES(11, "jingles"),
     SPRITETYPES(12, "sprites"),
     IFTYPES(13, "components"),
-    IFTYPES_V2(14, "components",232),
-    VARCS(15, "varcs",232),
+    IFTYPES_V2(14, "components", 232),
+    VARCS(15, "varcs", 232),
     SYNTHTYPES(16, "synth", 242),
     MIDITYPES(17, "midi", 242),
     JINGLETYPES(18, "jingles", 242),
     AMBIENTSOUNDTYPES(19, "ambientsounds", 242);
 
+    override val index: Int get() = GAMEVAL_INDEX
 
     companion object {
-        private val idMap = GameValGroupTypes.entries.associateBy { it.id }
+        const val GAMEVAL_INDEX = 24
 
-        fun fromId(id: Int): GameValGroupTypes =
+        private val idMap = entries.associateBy { it.id }
+
+        fun fromId(id: Int): GameValGroupTypesOSRS =
             idMap[id] ?: error("Unknown group type: $id")
     }
 
     override fun toString(): String = groupName
 }
+
+typealias GameValGroupTypes = GameValGroupTypesOSRS

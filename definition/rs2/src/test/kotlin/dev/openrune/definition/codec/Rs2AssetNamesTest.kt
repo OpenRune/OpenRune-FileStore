@@ -90,7 +90,28 @@ class Rs2AssetNamesTest {
 
         assertEquals(listOf("quest_points"), vars.map { it.name })
         assertEquals(listOf("some_bit"), bits.map { it.name })
-        assertEquals(listOf(2), bits.map { it.id })
+        assertEquals(listOf(0), bits.map { it.id })
+    }
+
+    @Test
+    fun `varbit ids are numbered from the var they follow`() {
+        val raw = pack(
+            2,
+            listOf(
+                10 to "first_var",
+                11 to "_bit_a",
+                12 to "_bit_b",
+                20 to "second_var",
+                21 to "_bit_c",
+            ),
+        )
+        val names = Rs2AssetNames.decode(Unpooled.wrappedBuffer(raw))
+
+        val (vars, bits) = Rs2AssetNames.splitVarNames(Rs2AssetNameGroup.VAR_PLAYER, names)
+
+        assertEquals(listOf(10, 20), vars.map { it.id })
+        assertEquals(listOf("bit_a", "bit_b", "bit_c"), bits.map { it.name })
+        assertEquals(listOf(0, 1, 0), bits.map { it.id })
     }
 
     @Test
@@ -106,10 +127,10 @@ class Rs2AssetNamesTest {
 
     @Test
     fun `group ids map to the osrs table names where they match`() {
-        assertEquals("obj", Rs2AssetNameGroup.fromId(36)?.table)
-        assertEquals("npc", Rs2AssetNameGroup.fromId(35)?.table)
-        assertEquals("loc", Rs2AssetNameGroup.fromId(28)?.table)
-        assertEquals("component", Rs2AssetNameGroup.fromId(0)?.table)
+        assertEquals("obj", Rs2AssetNameGroup.fromId(36)?.groupName)
+        assertEquals("npc", Rs2AssetNameGroup.fromId(35)?.groupName)
+        assertEquals("loc", Rs2AssetNameGroup.fromId(28)?.groupName)
+        assertEquals("component", Rs2AssetNameGroup.fromId(0)?.groupName)
         assertEquals(null, Rs2AssetNameGroup.fromId(999))
     }
 }

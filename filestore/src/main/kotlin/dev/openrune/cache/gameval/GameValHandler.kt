@@ -8,8 +8,11 @@ import dev.openrune.cache.gameval.GameValHandler.lookupAs
 import dev.openrune.cache.gameval.impl.Interface
 import dev.openrune.cache.gameval.impl.Sprite
 import dev.openrune.cache.gameval.impl.Table
-import dev.openrune.definition.GameValGroupTypes
-import dev.openrune.definition.GameValGroupTypes.*
+import dev.openrune.definition.GameValGroup
+import dev.openrune.definition.GameValGroupTypeRS3
+import dev.openrune.definition.GameValGroupTypesOSRS
+import dev.openrune.definition.GameValGroupTypesOSRS.*
+import dev.openrune.definition.codec.Rs2AssetNames
 import dev.openrune.definition.util.readString
 import dev.openrune.definition.util.toArray
 import dev.openrune.definition.util.writeString
@@ -35,7 +38,7 @@ object GameValHandler {
     }
 
     private fun assertNoDuplicateGameValKeys(
-        type: GameValGroupTypes,
+        type: GameValGroup,
         elements: List<GameValElement>
     ) {
         val seen = mutableMapOf<String, Int>()
@@ -59,7 +62,7 @@ object GameValHandler {
      * - [SOUNDTYPES] (11) -> [JINGLETYPES] (18) at 242, when the single sound group was split into
      *   sfx / midi / jingle / ambient. Archive 11 only ever held jingles, so it maps straight across.
      */
-    private fun replacementGroup(type: GameValGroupTypes): GameValGroupTypes? = when (type) {
+    private fun replacementGroup(type: GameValGroup): GameValGroup? = when (type) {
         IFTYPES -> IFTYPES_V2
         SOUNDTYPES -> JINGLETYPES
         else -> null
@@ -69,9 +72,9 @@ object GameValHandler {
      * Reads go by which archive holds data: that stays right for a cache whose revision disagrees with
      * its gameval layout, which happens whenever an older tool packed it.
      */
-    private fun resolveGroupForRead(type: GameValGroupTypes, cache: Cache): GameValGroupTypes {
+    private fun resolveGroupForRead(type: GameValGroup, cache: Cache): GameValGroup {
         val replacement = replacementGroup(type) ?: return type
-        return if (cache.files(GAMEVALS, type.id).isEmpty()) replacement else type
+        return if (cache.files(type.index, type.id).isEmpty()) replacement else type
     }
 
     /**
@@ -79,13 +82,13 @@ object GameValHandler {
      * archive a read would ignore. Only when neither is populated — a cache being built from
      * scratch, where emptiness says nothing — does the revision pick the target.
      */
-    private fun resolveGroupForWrite(type: GameValGroupTypes, cache: Cache, cacheRevision: Int): GameValGroupTypes {
+    private fun resolveGroupForWrite(type: GameValGroup, cache: Cache, cacheRevision: Int): GameValGroup {
         val replacement = replacementGroup(type) ?: return type
-        if (cache.files(GAMEVALS, type.id).isNotEmpty()) return type
-        if (cache.files(GAMEVALS, replacement.id).isNotEmpty()) return replacement
+        if (cache.files(type.index, type.id).isNotEmpty()) return type
+        if (cache.files(replacement.index, replacement.id).isNotEmpty()) return replacement
 
         val rev = if (cacheRevision == -1) {
-            readCacheRevision(cache, "${type.name} is unsupported in this revision")
+            readCacheRevision(cache, "${type.groupName} is unsupported in this revision")
         } else {
             cacheRevision
         }
@@ -93,18 +96,21 @@ object GameValHandler {
     }
 
     fun readGameVal(
-        type: GameValGroupTypes,
+        type: GameValGroup,
         cache: Cache,
-        cacheRevision: Int = -1
+        cacheRevision: Int = -1,
+        spriteNameHashes: Map<Int, Int>? = null,
     ): List<GameValElement> {
+
+        if (type is GameValGroupTypeRS3) return readRs3GameVal(type, cache, spriteNameHashes)
 
         var type = type
 
         if (type.revision != -1) {
-            val rev = if (cacheRevision == -1) readCacheRevision(cache,"${type.name} is unsupported in this revision") else cacheRevision
+            val rev = if (cacheRevision == -1) readCacheRevision(cache,"${type.groupName} is unsupported in this revision") else cacheRevision
             if (rev < type.revision) {
                 logger.debug {
-                    "Skipping GameVal group '${type.name}' (id=${type.id}): " +
+                    "Skipping GameVal group '${type.groupName}' (id=${type.id}): " +
                             "requires cache revision ${type.revision}, but cache revision is $rev"
                 }
             }
@@ -114,17 +120,17 @@ object GameValHandler {
         type = resolveGroupForRead(type, cache)
 
         val archive = type.id
-        val files = cache.files(GAMEVALS, archive)
+        val files = cache.files(type.index, archive)
         val elements = ArrayList<GameValElement>(files.size)
         for (file in files) {
-            val data = cache.data(GAMEVALS, archive, file)
+            val data = cache.data(type.index, archive, file)
             elements.addAll(unpackGameVal(type, file, data))
         }
 
         return GameValList(elements)
     }
 
-    fun unpackGameVal(type: GameValGroupTypes, id: Int, bytes: ByteArray?): List<GameValElement> {
+    fun unpackGameVal(type: GameValGroup, id: Int, bytes: ByteArray?): List<GameValElement> {
         if (bytes == null) return emptyList()
         val data = Unpooled.wrappedBuffer(bytes)
         val elements = ArrayList<GameValElement>(1)
@@ -197,19 +203,25 @@ object GameValHandler {
         return elements
     }
 
-    fun encodeGameVals(type: GameValGroupTypes, values: List<GameValElement>, cache: Cache, cacheRevision : Int = -1) {
+    fun encodeGameVals(type: GameValGroup, values: List<GameValElement>, cache: Cache, cacheRevision : Int = -1) {
+
+        if (type is GameValGroupTypeRS3) {
+            encodeRs3GameVals(type, values, cache)
+            return
+        }
+
 
         val resolvedType = resolveGroupForWrite(type, cache, cacheRevision)
 
         assertNoDuplicateGameValKeys(resolvedType,values)
         if (resolvedType.revision != -1) {
 
-            val rev = if (cacheRevision == -1) readCacheRevision(cache, "${resolvedType.name} is unsupported in this revision")
+            val rev = if (cacheRevision == -1) readCacheRevision(cache, "${resolvedType.groupName} is unsupported in this revision")
             else cacheRevision
 
             if (rev < resolvedType.revision) {
                 logger.debug {
-                    "Skipping encoding of GameVal group '${resolvedType.name}' " +
+                    "Skipping encoding of GameVal group '${resolvedType.groupName}' " +
                      "(requires rev ${resolvedType.revision}, cache rev=$rev)"
                 }
                 return
@@ -231,7 +243,7 @@ object GameValHandler {
                             writeByte(0)
                         }
 
-                        cache.write(GAMEVALS, resolvedType.id, table.id, writer.toArray())
+                        cache.write(resolvedType.index, resolvedType.id, table.id, writer.toArray())
                     }
                 }
             }
@@ -249,7 +261,7 @@ object GameValHandler {
                             writeByte(0)
                         }
                     }
-                    cache.write(GAMEVALS, resolvedType.id, element.id, writer.toArray())
+                    cache.write(resolvedType.index, resolvedType.id, element.id, writer.toArray())
                 }
             }
 
@@ -266,7 +278,7 @@ object GameValHandler {
                             writeShort(0xFFFF)
                         }
                     }
-                    cache.write(GAMEVALS, resolvedType.id, element.id, writer.toArray())
+                    cache.write(resolvedType.index, resolvedType.id, element.id, writer.toArray())
                 }
             }
 
@@ -279,11 +291,102 @@ object GameValHandler {
                         }
                         else -> element.elementAs<GameValElement>()?.name?.let(GameValHandler::standardizeGamevalName)
                     }
-                    data?.encodeToByteArray()?.let { cache.write(GAMEVALS, resolvedType.id, element.id, it) }
+                    data?.encodeToByteArray()?.let { cache.write(resolvedType.index, resolvedType.id, element.id, it) }
                 }
             }
         }
     }
+
+    /**
+     * RS3 keeps a whole group's names in one packed table rather than a file per id, so the group is
+     * read and decoded in one go. Var groups carry their varbit names inline behind an `_` prefix -
+     * [readGameValVarBits] returns those, [readGameVal] the vars themselves.
+     */
+    private fun readRs3GameVal(
+        type: GameValGroupTypeRS3,
+        cache: Cache,
+        spriteNameHashes: Map<Int, Int>?,
+    ): List<GameValElement> {
+        val names = readRs3Names(type, cache) ?: return GameValList(emptyList())
+        if (type.hasVarBitNames) return GameValList(Rs2AssetNames.splitVarNames(type, names).first)
+        return GameValList(
+            names.entries.mapNotNull { entry ->
+                val name = entry.name ?: return@mapNotNull null
+                when (type) {
+                    GameValGroupTypeRS3.GRAPHIC -> rs3Sprite(name, entry.id, cache, spriteNameHashes)
+                    GameValGroupTypeRS3.COMPONENT -> GameValElement(name.replace("__", ":"), entry.id)
+                    else -> GameValElement(name, entry.id)
+                }
+            }
+        )
+    }
+
+    fun readGameValVarBits(type: GameValGroupTypeRS3, cache: Cache): List<GameValElement> {
+        if (!type.hasVarBitNames) return GameValList(emptyList())
+        val names = readRs3Names(type, cache) ?: return GameValList(emptyList())
+        return GameValList(Rs2AssetNames.splitVarNames(type, names).second)
+    }
+
+    private fun readRs3Names(type: GameValGroupTypeRS3, cache: Cache): Rs2AssetNames.Names? {
+        val bytes = cache.data(type.index, type.id, 0) ?: return null
+        return runCatching { Rs2AssetNames.decode(Unpooled.wrappedBuffer(bytes)) }.getOrElse { error ->
+            logger.warn { "Failed to decode RS3 gameval group '${type.groupName}' (id=${type.id}): $error" }
+            null
+        }
+    }
+
+    /**
+     * Sprite names lose their comma on the way into the table (`some_name,1` -> `some_name_1`), so the
+     * comma form is put back only when its hash matches the sprite group the name belongs to.
+     */
+    private fun rs3Sprite(
+        name: String,
+        id: Int,
+        cache: Cache,
+        spriteNameHashes: Map<Int, Int>?,
+    ): GameValElement {
+        val underscore = name.lastIndexOf('_')
+        if (underscore != -1) {
+            val candidate = name.substring(0, underscore) + "," + name.substring(underscore + 1)
+            if (spriteNameMatches(candidate.hashCode(), id, cache, spriteNameHashes)) {
+                return Sprite(name.substring(0, underscore), name.substring(underscore + 1).toIntOrNull() ?: -1, id)
+            }
+        }
+        return Sprite(name, -1, id)
+    }
+
+    /**
+     * [spriteNameHashes] is the sprite index's group-id to name-hash table, needed because the comma
+     * can only be recovered by matching the candidate against the name the sprite group actually has.
+     * Without it the only source is the cache being read, which is the right answer for a whole RS3
+     * cache and no answer at all for one holding gamevals alone.
+     */
+    private fun spriteNameMatches(
+        hash: Int,
+        id: Int,
+        cache: Cache,
+        spriteNameHashes: Map<Int, Int>?,
+    ): Boolean {
+        if (spriteNameHashes != null) return spriteNameHashes[id] == hash
+        return runCatching { cache.archiveId(RS3_SPRITE_INDEX, hash) }.getOrDefault(-1) == id
+    }
+
+    private fun encodeRs3GameVals(type: GameValGroupTypeRS3, values: List<GameValElement>, cache: Cache) {
+        assertNoDuplicateGameValKeys(type, values)
+        val entries = values.sortedBy { it.id }.map { element ->
+            val name = when {
+                element is Sprite && element.index != -1 -> "${element.name}_${element.index}"
+                type == GameValGroupTypeRS3.COMPONENT -> element.name.replace(":", "__")
+                else -> element.name
+            }
+            Rs2AssetNames.Entry(element.id, standardizeGamevalName(name))
+        }
+        val dense = entries.withIndex().all { (index, entry) -> entry.id == index }
+        val packType = if (dense) 1 else 2
+        cache.write(type.index, type.id, 0, Rs2AssetNames.encode(Rs2AssetNames.Names(packType, entries)))
+    }
+
+    private const val RS3_SPRITE_INDEX = 8
 
     private val TAGS = Regex("<[^>]*>")
     private val AT_CODES = Regex("@[^@\\s]+@?")

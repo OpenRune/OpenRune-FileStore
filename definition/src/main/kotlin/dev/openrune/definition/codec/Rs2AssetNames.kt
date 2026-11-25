@@ -87,11 +87,14 @@ object Rs2AssetNames {
         if (!group.hasVarBitNames) return names.elements to emptyList()
         val vars = ArrayList<GameValElement>()
         val bits = ArrayList<GameValElement>()
-        for (element in names.elements) {
-            if (element.name.startsWith("_")) {
-                bits += GameValElement(element.name.removePrefix("_"), element.id)
+        var lastNoPrefix = -1
+        for (entry in names.entries) {
+            val name = entry.name ?: continue
+            if (name.startsWith("_")) {
+                bits += GameValElement(name.removePrefix("_"), entry.id - lastNoPrefix - 1)
             } else {
-                vars += element
+                lastNoPrefix = entry.id
+                vars += GameValElement(name, entry.id)
             }
         }
         return vars to bits

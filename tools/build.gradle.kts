@@ -44,4 +44,5 @@ tasks.register<JavaExec>("runPackCache") {
     description = "Packs a fresh OSRS cache with the RS3 content listed in PackCache."
     classpath = sourceSets.main.get().runtimeClasspath
     mainClass.set("dev.openrune.cache.tools.tasks.impl.rs2.PackCache")
+    maxHeapSize = "6g"
 }

@@ -8,7 +8,7 @@ import dev.openrune.cache.tools.typeDumper.impl.IfTypes
 import dev.openrune.cache.tools.typeDumper.impl.TablesAndRows
 import dev.openrune.cache.util.Namer
 import dev.openrune.definition.GameValGroupTypes
-import dev.openrune.definition.GameValGroupTypes.*
+import dev.openrune.definition.GameValGroupTypesOSRS.*
 import dev.openrune.definition.util.readString
 import dev.openrune.filesystem.Cache
 import io.netty.buffer.Unpooled

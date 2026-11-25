@@ -10,8 +10,8 @@ import dev.openrune.cache.tools.typeDumper.TypeDumper
 import dev.openrune.cache.util.Namer
 import dev.openrune.cache.util.Namer.Companion.formatForClassName
 import dev.openrune.definition.GameValGroupTypes
-import dev.openrune.definition.GameValGroupTypes.ROWTYPES
-import dev.openrune.definition.GameValGroupTypes.TABLETYPES
+import dev.openrune.definition.GameValGroupTypesOSRS.ROWTYPES
+import dev.openrune.definition.GameValGroupTypesOSRS.TABLETYPES
 import dev.openrune.filesystem.Cache
 
 class TablesAndRows(

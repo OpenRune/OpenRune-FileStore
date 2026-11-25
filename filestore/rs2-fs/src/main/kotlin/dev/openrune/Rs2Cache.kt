@@ -76,6 +76,17 @@ class Rs2Cache private constructor(val cache: Cache, val build: Int? = null) : A
     fun groups(index: Int): List<Int> =
         cache.list(index).asSequence().map { it.id }.sorted().toList()
 
+    /** Group id to name hash for [index], for the groups that carry a name. */
+    fun groupNameHashes(index: Int): Map<Int, Int> {
+        if (!cache.exists(index)) return emptyMap()
+        val hashes = LinkedHashMap<Int, Int>()
+        cache.list(index).forEach { group ->
+            val hash = group.nameHash
+            if (hash != -1) hashes[group.id] = hash
+        }
+        return hashes
+    }
+
     fun files(index: Int, group: Int): List<Int> =
         cache.list(index, group).asSequence().map { it.id }.sorted().toList()
 
