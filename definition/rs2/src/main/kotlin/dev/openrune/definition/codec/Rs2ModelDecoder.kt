@@ -49,7 +49,7 @@ object Rs2ModelDecoder {
             buffer.skipBytes(vertexCount * 3 * if (positionFormat == 1) 4 else 2)
             buffer.skipBytes(vertexCount * 3)
             buffer.skipBytes(vertexCount * 4)
-            buffer.skipBytes(vertexCount * 2)
+            buffer.skipBytes(vertexCount * 2 * 2)
         }
         if (flags and Rs2ModelType.FLAG_HAS_BONE_IDS != 0) {
             buffer.skipBytes(vertexCount * 2)
