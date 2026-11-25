@@ -33,9 +33,17 @@ object Rs2Staging {
                 configs.forEach { type ->
                     val ids = rs2.configIds(type.location)
                     println("Staging ${ids.size} ${type.name}")
+                    val failed = mutableListOf<Int>()
                     ids.forEach { id ->
-                        val bytes = rs2.configBytes(type.location, id)
-                        cache.write(type.index, type.archiveOf(id), type.fileOf(id), bytes)
+                        try {
+                            val bytes = rs2.configBytes(type.location, id)
+                            cache.write(type.index, type.archiveOf(id), type.fileOf(id), bytes)
+                        } catch (e: Exception) {
+                            failed += id
+                        }
+                    }
+                    if (failed.isNotEmpty()) {
+                        println("Staging ${type.name}: ${failed.size} unreadable ids skipped ${failed.take(20)}")
                     }
                 }
                 archives.forEach { index ->
